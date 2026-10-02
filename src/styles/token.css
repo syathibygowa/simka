@@ -1,0 +1,88 @@
+/* =====================================================================
+   SIMKA PRO · Token warna dan tema
+   Semua warna teks sudah diuji kontrasnya (WCAG AA, ≥ 4,5:1) terhadap
+   latar permukaan di tema terang dan gelap.
+   ===================================================================== */
+:root {
+  --latar: 250 246 243;        /* #FAF6F3 putih hangat */
+  --permukaan: 255 255 255;
+  --permukaan-2: 245 238 234;  /* #F5EEEA */
+  --garis: 233 222 216;        /* #E9DED8 */
+  --teks: 31 20 22;            /* #1F1416 hitam hangat  — 16:1 */
+  --teks-2: 84 66 69;          /* #544245               — 9:1  */
+  --teks-3: 112 94 97;         /* #705E61               — 5,6:1 */
+  --merah: 199 51 47;          /* #C7332F merah utama   — 5,2:1 */
+  --aksen: 153 10 4;           /* #990A04 merah tua     */
+  --bayang: 94 42 48;          /* marun untuk bayangan  */
+  --gradasi-utama: linear-gradient(135deg, #8E1C19 0%, #C7332F 52%, #B4472A 100%);
+  --gradasi-tipis: linear-gradient(135deg, #C7332F, #F39A4E);
+  color-scheme: light;
+}
+
+.dark {
+  --latar: 22 15 17;           /* #160F11 */
+  --permukaan: 33 23 25;       /* #211719 */
+  --permukaan-2: 43 31 34;     /* #2B1F22 */
+  --garis: 63 47 51;           /* #3F2F33 */
+  --teks: 248 238 235;         /* #F8EEEB — 15:1 */
+  --teks-2: 214 197 194;       /* #D6C5C2 — 10:1 */
+  --teks-3: 178 160 157;       /* #B2A09D — 6,7:1 */
+  --merah: 255 128 112;        /* #FF8070 — 6,3:1 */
+  --aksen: 255 170 150;
+  --bayang: 0 0 0;
+  --gradasi-utama: linear-gradient(135deg, #5C1210 0%, #9E2622 50%, #B9512A 100%);
+  color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------------
+   Warna per menu/tab. Setiap kelas .w-* memberi --c (warna utama ikon/aksen)
+   dan --c2 (warna pasangan untuk kartu statistik). Nilai tema gelap lebih
+   terang agar tetap kontras di latar gelap.
+   --------------------------------------------------------------------- */
+.w-beranda    { --c: #C7332F; --c2: #E07A2E; }
+.w-presensi   { --c: #1E7D4F; --c2: #0B7F81; }
+.w-pegawai    { --c: #2F5FA8; --c2: #3B4CB0; }
+.w-santri     { --c: #0B7F81; --c2: #2F5FA8; }
+.w-tahfizh    { --c: #8C6200; --c2: #C2541A; }
+.w-pengajuan  { --c: #6D44B8; --c2: #B42A5E; }
+.w-klinik     { --c: #B42A5E; --c2: #6D44B8; }
+.w-security   { --c: #3B4CB0; --c2: #0B7F81; }
+.w-laporan    { --c: #B5501A; --c2: #8C6200; }
+.w-tatausaha  { --c: #7A4E2D; --c2: #B5501A; }
+.w-gaji       { --c: #156E5A; --c2: #1E7D4F; }
+.w-pengumuman { --c: #A13A86; --c2: #6D44B8; }
+.w-notifikasi { --c: #9A5B00; --c2: #C7332F; }
+.w-hakakses   { --c: #46525F; --c2: #2F5FA8; }
+.w-pengaturan { --c: #5E2A30; --c2: #B42A5E; }
+.w-profil     { --c: #2C6680; --c2: #0B7F81; }
+.w-tugas      { --c: #B5501A; --c2: #C7332F; }
+.w-verifikasi { --c: #2F5FA8; --c2: #6D44B8; }
+.w-sistem     { --c: #46525F; --c2: #156E5A; }
+
+.dark .w-beranda    { --c: #FF8A7A; --c2: #FFB074; }
+.dark .w-presensi   { --c: #5BD69A; --c2: #4FD1D3; }
+.dark .w-pegawai    { --c: #8AB4F8; --c2: #9AA6FF; }
+.dark .w-santri     { --c: #4FD1D3; --c2: #8AB4F8; }
+.dark .w-tahfizh    { --c: #F2C24B; --c2: #FFB074; }
+.dark .w-pengajuan  { --c: #C3A6FF; --c2: #FF8FB8; }
+.dark .w-klinik     { --c: #FF8FB8; --c2: #C3A6FF; }
+.dark .w-security   { --c: #9AA6FF; --c2: #4FD1D3; }
+.dark .w-laporan    { --c: #FFB074; --c2: #F2C24B; }
+.dark .w-tatausaha  { --c: #E0B48C; --c2: #FFB074; }
+.dark .w-gaji       { --c: #6FD9BE; --c2: #5BD69A; }
+.dark .w-pengumuman { --c: #F49AD9; --c2: #C3A6FF; }
+.dark .w-notifikasi { --c: #FFC266; --c2: #FF8A7A; }
+.dark .w-hakakses   { --c: #B9C6D3; --c2: #8AB4F8; }
+.dark .w-pengaturan { --c: #E8A4AC; --c2: #FF8FB8; }
+.dark .w-profil     { --c: #93C9E3; --c2: #4FD1D3; }
+.dark .w-tugas      { --c: #FFB074; --c2: #FF8A7A; }
+.dark .w-verifikasi { --c: #8AB4F8; --c2: #C3A6FF; }
+.dark .w-sistem     { --c: #B9C6D3; --c2: #6FD9BE; }
+
+/* Warna notifikasi dari database (kolom warna) */
+.n-merah  { --c: #C7332F; } .n-hijau { --c: #1E7D4F; } .n-biru { --c: #2F5FA8; }
+.n-emas   { --c: #8C6200; } .n-ungu  { --c: #6D44B8; } .n-mawar { --c: #B42A5E; }
+.n-teal   { --c: #0B7F81; } .n-jingga { --c: #B5501A; }
+.dark .n-merah { --c: #FF8A7A; } .dark .n-hijau { --c: #5BD69A; } .dark .n-biru { --c: #8AB4F8; }
+.dark .n-emas  { --c: #F2C24B; } .dark .n-ungu  { --c: #C3A6FF; } .dark .n-mawar { --c: #FF8FB8; }
+.dark .n-teal  { --c: #4FD1D3; } .dark .n-jingga { --c: #FFB074; }

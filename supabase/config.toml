@@ -1,0 +1,17 @@
+# SIMKA PRO · konfigurasi Supabase CLI (bagian Edge Functions)
+# Fungsi publik (tanpa JWT pengguna) diberi verify_jwt = false; pemeriksaan
+# kewenangan dilakukan di dalam fungsi.
+[functions.masuk]
+verify_jwt = false
+
+[functions.daftar]
+verify_jwt = false
+
+[functions.reset-sandi]
+verify_jwt = false
+
+[functions.kelola-akun]
+verify_jwt = true
+
+[functions.salin-logo]
+verify_jwt = true
