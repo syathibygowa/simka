@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/sesi.js | v1.1 | Tahap 6 | 03/10/2026
+// SIMKA PRO | src/stores/sesi.js | v1.2 | Fase 2 – Tahap 5 Jadwal shift | 03/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO, panggilFungsi } from '@/lib/supabase'
@@ -9,7 +9,7 @@ const simpan = (k, v) => { try { v == null ? localStorage.removeItem(k) : localS
 const baca = (k) => { try { return localStorage.getItem(k) } catch { return null } }
 
 export const useSesi = defineStore('sesi', {
-  state: () => ({ pengguna: null, fitur: {}, siap: false, wajibGantiSandi: false }),
+  state: () => ({ pengguna: null, fitur: {}, siap: false, wajibGantiSandi: false, punyaShift: false }),
   getters: {
     masuk: (s) => !!s.pengguna,
     peran: (s) => s.pengguna?.peran ?? 'pegawai',
@@ -47,6 +47,12 @@ export const useSesi = defineStore('sesi', {
       this.wajibGantiSandi = data.wajib_ganti_sandi
       const { data: fitur } = await supabase.rpc('fitur_saya')
       this.fitur = fitur || {}
+      // Pegawai yang memegang pola shift melihat menu Jadwal Shift
+      try {
+        const { data: sh } = await supabase.from('employee_schedules').select('id, task_patterns!inner(jenis)')
+          .eq('employee_id', data.id).eq('aktif', true).eq('task_patterns.jenis', 'shift').limit(1)
+        this.punyaShift = !!sh?.length
+      } catch { this.punyaShift = false }
     },
 
     /** Masuk dengan username + kata sandi (melalui Edge Function "masuk"). */

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/pegawai.js | v1.1 | Fase 1 – Data pegawai | 03/10/2026
+// SIMKA PRO | src/stores/pegawai.js | v1.2 | Fase 2 – Tahap 5 Jadwal shift | 03/10/2026
 // Data kepegawaian: daftar, simpan (beserta jabatan, satu transaksi di server), impor Excel,
 // riwayat kepegawaian, dan hapus (superadmin, hanya data tanpa akun/ditolak).
 import { defineStore } from 'pinia'
@@ -7,10 +7,14 @@ import { PEGAWAI_DEMO } from '@/lib/demo'
 import { pesanGalat } from './lembaga'
 import { useOrganisasi } from './organisasi'
 
+const KODE_DEMO = { // label jabatan pada data contoh → kode jabatan fungsional
+  'Muhaffizh': 'MUHAFFIZH', 'Wali kelas': 'WALI_KELAS', 'Guru mapel': 'GURU', 'Musyrif': 'MUSYRIF', 'Petugas kesehatan': 'MEDIS',
+  'Petugas keamanan': 'SECURITY', 'Pembina ekskul': 'PEMBINA_EKSKUL', 'Staf bidang': 'STAF_BIDANG', 'Petugas sarpras': 'SARPRAS', 'Petugas media': 'MEDIA',
+}
 /** Mode demo: lengkapi data contoh dengan id unit dan jabatan agar formulir dapat dicoba. */
 function lengkapiDemo(p, org) {
   const unit = org.units.find((u) => u.nama === p.nama_unit)
-  const fid = (p.jabatan_fungsional || []).map((n) => org.fungsional.find((f) => f.nama.toLowerCase().startsWith(n.toLowerCase().split(' ')[0]))?.id).filter(Boolean)
+  const fid = (p.jabatan_fungsional || []).map((n) => org.fungsional.find((f) => f.kode === KODE_DEMO[n])?.id).filter(Boolean)
   const sid = org.struktural.find((s) => s.nama === p.jabatan_struktural)?.id || null
   return { ...p, org_unit_id: unit?.id || null, fungsional_ids: fid, structural_position_id: sid, unit_struktural_id: sid ? unit?.id : null }
 }

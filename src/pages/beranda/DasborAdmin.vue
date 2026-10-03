@@ -1,15 +1,16 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.1 | Fase 1 – Akun dan hak akses | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.2 | Fase 2 – Tahap 7 Statistik, rekap, pengingat | 03/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import {
   PhUsersThree, PhHourglass, PhUserCircleDashed, PhGenderMale, PhGenderFemale, PhPulse,
-  PhUserCheck, PhPrinter, PhLightning, PhCaretRight,
+  PhUserCheck, PhPrinter, PhLightning, PhCaretRight, PhSealCheck, PhChartBar,
 } from '@phosphor-icons/vue'
 import { useStatistik } from '@/stores/statistik'
 import { usePegawai } from '@/stores/pegawai'
 import { formatPendek } from '@/lib/tanggal'
 import Sapaan from './Sapaan.vue'
 import IndikatorLangsung from './IndikatorLangsung.vue'
+import StatistikPresensi from './StatistikPresensi.vue'
 import SebaranBidang from './SebaranBidang.vue'
 import AksiCepat from './AksiCepat.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
@@ -22,6 +23,8 @@ const menunggu = computed(() => peg.daftar.filter((p) => p.status_akun === 'menu
 const lembar = ref(false)
 onMounted(() => { if (!peg.daftar.length) peg.muat() })
 const AKSI = [
+  { label: 'Verval presensi', ket: 'Presensi luar area, izin sesi, kecurigaan', ikon: PhSealCheck, warna: 'verval', ke: '/verval-presensi' },
+  { label: 'Rekap presensi', ket: 'Harian dan bulanan, cetak F4 dan Excel', ikon: PhChartBar, warna: 'rekap', ke: '/rekap-presensi' },
   { label: 'Verifikasi akun', ket: 'Periksa pendaftaran pegawai baru', ikon: PhUserCheck, warna: 'verifikasi', ke: '/verifikasi' },
   { label: 'Data pegawai', ket: 'Lihat, cari, dan cetak data', ikon: PhUsersThree, warna: 'pegawai', ke: '/pegawai' },
   { label: 'Cetak daftar pegawai', ket: 'Dokumen F4 dengan kop pondok', ikon: PhPrinter, warna: 'laporan', ke: '/pegawai' },
@@ -30,6 +33,8 @@ const AKSI = [
 <template>
   <div class="space-y-5 lg:space-y-6">
     <Sapaan :keterangan="d.menunggu_verifikasi ? `Ada ${d.menunggu_verifikasi} pendaftaran pegawai yang menunggu verifikasi Anda.` : 'Tidak ada pendaftaran yang menunggu verifikasi.'" />
+
+    <StatistikPresensi />
 
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="judul-bagian">Kendali data pegawai</h2>

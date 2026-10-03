@@ -1,3 +1,4 @@
+/* SIMKA PRO | src/styles/token.css | v1.4 | Fase 2 – Tahap 7 Statistik, rekap, pengingat | 03/10/2026 */
 /* =====================================================================
    SIMKA PRO · Token warna dan tema
    Semua warna teks sudah diuji kontrasnya (WCAG AA, ≥ 4,5:1) terhadap
@@ -58,6 +59,10 @@
 .w-tugas      { --c: #B5501A; --c2: #C7332F; }
 .w-verifikasi { --c: #2F5FA8; --c2: #6D44B8; }
 .w-sistem     { --c: #46525F; --c2: #156E5A; }
+.w-aturpresensi { --c: #4A6B12; --c2: #1E7D4F; }
+.w-shift      { --c: #0E6A9E; --c2: #3B4CB0; }
+.w-verval     { --c: #7B2D8E; --c2: #B42A5E; }
+.w-rekap      { --c: #1D6B5F; --c2: #B5501A; }
 
 .dark .w-beranda    { --c: #FF8A7A; --c2: #FFB074; }
 .dark .w-presensi   { --c: #5BD69A; --c2: #4FD1D3; }
@@ -78,6 +83,10 @@
 .dark .w-tugas      { --c: #FFB074; --c2: #FF8A7A; }
 .dark .w-verifikasi { --c: #8AB4F8; --c2: #C3A6FF; }
 .dark .w-sistem     { --c: #B9C6D3; --c2: #6FD9BE; }
+.dark .w-aturpresensi { --c: #B8E06A; --c2: #5BD69A; }
+.dark .w-shift      { --c: #7CC8F2; --c2: #9AA6FF; }
+.dark .w-verval     { --c: #D9A3F0; --c2: #FF8FB8; }
+.dark .w-rekap      { --c: #7FD8C6; --c2: #FFB074; }
 
 /* Warna notifikasi dari database (kolom warna) */
 .n-merah  { --c: #C7332F; } .n-hijau { --c: #1E7D4F; } .n-biru { --c: #2F5FA8; }

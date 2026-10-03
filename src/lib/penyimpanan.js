@@ -1,3 +1,4 @@
+// SIMKA PRO | src/lib/penyimpanan.js | v1.1 | Fase 2 – Tahap 6 Verval dan koreksi | 03/10/2026
 // Adapter penyimpanan berkas (Bagian 39 & 41).
 // Database menyimpan PENYEDIA + KUNCI berkas, bukan tautan Drive langsung.
 // Alur: kompres di HP → unggah ke bucket "antrian" → catat storage_objects(status antri)
@@ -70,8 +71,29 @@ export async function alamatBerkas(id) {
     const { data } = await supabase.storage.from(o.bucket).createSignedUrl(o.kunci, 600);
     return data?.signedUrl || null;
   }
-  // gdrive: tautan sementara dilayani GAS setelah hak akses diperiksa (Fase 3, berkas pegawai)
-  return null;
+  // gdrive: diambil lewat Edge Function "berkas" (hak akses diperiksa server, GAS mengambil dari Drive)
+  return await ambilBerkasUrl(id);
+}
+
+const cacheBerkas = new Map();
+/** Ambil berkas privat lewat Edge Function "berkas" → alamat blob: sementara (disimpan selama sesi). */
+export async function ambilBerkasUrl(id) {
+  if (!id) return null;
+  if (cacheBerkas.has(id)) return cacheBerkas.get(id);
+  const { data: { session } = {} } = await supabase.auth.getSession();
+  const r = await fetch(`${SUPABASE_URL}/functions/v1/berkas`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: import.meta.env.VITE_SUPABASE_ANON_KEY, Authorization: `Bearer ${session?.access_token}` },
+    body: JSON.stringify({ id }),
+  });
+  if (!r.ok) {
+    let pesan = 'Berkas tidak dapat ditampilkan.';
+    try { pesan = (await r.json()).galat || pesan; } catch { /* bukan JSON */ }
+    throw new Error(pesan);
+  }
+  const url = URL.createObjectURL(await r.blob());
+  cacheBerkas.set(id, url);
+  return url;
 }
 
 /** Alamat aset statis aplikasi (kop bawaan /kop/*.jpg) atau URL penuh. */

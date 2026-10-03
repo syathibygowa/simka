@@ -1,16 +1,29 @@
+<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.2 | Fase 2 – Tahap 4 Halaman presensi | 03/10/2026 -->
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { PhFingerprint, PhCaretRight, PhSquaresFour } from '@phosphor-icons/vue'
 import { useRouter } from 'vue-router'
 import { useNotifikasi } from '@/stores/notifikasi'
 import { useSesi } from '@/stores/sesi'
 import { menuUntuk } from '@/lib/menu'
+import { useDataPresensi } from '@/stores/presensi'
+import { formatJam } from '@/lib/tanggal'
+import { lencanaSesi } from '@/lib/presensi'
 import Sapaan from './Sapaan.vue'
 import ItemNotifikasi from '@/components/ItemNotifikasi.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 
-const notif = useNotifikasi(); const sesi = useSesi(); const router = useRouter()
-const menu = computed(() => menuUntuk(sesi.peran).filter((m) => !['beranda', 'notifikasi', 'profil'].includes(m.kode)).slice(0, 8))
+const notif = useNotifikasi(); const sesi = useSesi(); const router = useRouter(); const dp = useDataPresensi()
+onMounted(() => dp.muatHarian())
+// Ringkasan presensi hari ini pada kartu sapaan
+const ringkas = computed(() => {
+  if (!dp.harian) return 'Memuat sesi hari ini…'
+  if (!dp.sesi.length) return 'Tidak ada sesi presensi hari ini'
+  if (dp.terbuka.length) return `Sesi terbuka: ${dp.terbuka.map((s) => s.nama_sesi).join(', ')} – presensi sekarang`
+  const b = dp.berikut
+  return `${dp.selesaiWajib} dari ${dp.jumlahWajib} sesi tercatat${b ? ` · berikutnya ${b.nama_sesi} ${formatJam(b.mulai)}` : ''}`
+})
+const menu = computed(() => menuUntuk(sesi.peran, { shift: sesi.punyaShift }).filter((m) => !['beranda', 'notifikasi', 'profil'].includes(m.kode)).slice(0, 8))
 </script>
 <template>
   <div class="space-y-5 lg:space-y-6">
@@ -19,7 +32,7 @@ const menu = computed(() => menuUntuk(sesi.peran).filter((m) => !['beranda', 'no
         <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[#E2F1E8] text-[#1E7D4F]"><PhFingerprint :size="32" weight="duotone" /></span>
         <span class="flex-1">
           <span class="block text-lg font-extrabold leading-tight">Presensi hari ini</span>
-          <span class="block text-sm text-[#544245]">Presensi GPS dengan selfie dibuka pada Fase 2</span>
+          <span class="block text-sm text-[#544245]">{{ ringkas }}</span>
         </span>
         <PhCaretRight :size="22" class="text-[#705E61]" />
       </router-link>
@@ -34,6 +47,19 @@ const menu = computed(() => menuUntuk(sesi.peran).filter((m) => !['beranda', 'no
         <ul class="space-y-1">
           <ItemNotifikasi v-for="n in notif.terbaru" :key="n.id" :n="n" ringkas />
           <li v-if="!notif.daftar.length" class="py-8 text-center text-sm text-teks3">Belum ada notifikasi.</li>
+        </ul>
+      </section>
+      <section v-if="dp.sesi.length" class="kartu order-first p-4 lg:col-span-2">
+        <div class="mb-2 flex items-center justify-between">
+          <h2 class="judul-bagian">Sesi hari ini</h2>
+          <router-link to="/presensi" class="tombol-teks h-9 min-h-0 text-sm">Buka presensi</router-link>
+        </div>
+        <ul class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          <li v-for="s in dp.sesi" :key="s.session_id + s.tanggal" :class="['min-w-[9.5rem] shrink-0 rounded-2xl border border-garis p-3', 'w-' + lencanaSesi(s).w]">
+            <p class="text-sm font-extrabold tabular-nums">{{ formatJam(s.mulai) }}–{{ formatJam(s.selesai) }}</p>
+            <p class="truncate text-sm font-semibold">{{ s.nama_sesi }}</p>
+            <span class="lencana mt-1">{{ lencanaSesi(s).n }}</span>
+          </li>
         </ul>
       </section>
       <section class="kartu p-5">

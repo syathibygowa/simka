@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v1.5 | Fase 1 – Jabatan dan tunjangan | 03/10/2026
+// SIMKA PRO | src/router/index.js | v2.0 | Fase 2 – Tahap 7 Statistik, rekap, pengingat | 03/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -26,7 +26,11 @@ const routes = [
       { path: 'pegawai/:id/ubah', component: () => import('@/pages/pegawai/FormPegawai.vue'), meta: { judul: 'Ubah Data Pegawai', peran: ADMIN, kembali: '/pegawai' } },
       { path: 'pegawai/:id', component: () => import('@/pages/pegawai/DetailPegawai.vue'), meta: { judul: 'Biodata Pegawai', peran: ADMIN, cetak: true, kembali: '/pegawai' } },
       { path: 'jabatan-tunjangan/:tab?', component: () => import('@/pages/tunjangan/JabatanTunjangan.vue'), props: true, meta: { judul: 'Jabatan dan Tunjangan', peran: ['superadmin'], kembali: '/tugas' } },
-      { path: 'presensi', component: () => import('@/pages/umum/Segera.vue'), props: { kode: 'presensi' }, meta: { judul: 'Presensi' } },
+      { path: 'presensi', component: () => import('@/pages/presensi/Presensi.vue'), meta: { judul: 'Presensi' } },
+      { path: 'atur-presensi/:tab?', component: () => import('@/pages/presensi/AturPresensi.vue'), props: true, meta: { judul: 'Pengaturan Presensi', peran: ADMIN, kembali: '/tugas' } },
+      { path: 'verval-presensi/:tab?', component: () => import('@/pages/verval/VervalPresensi.vue'), props: true, meta: { judul: 'Verval Presensi', peran: ADMIN, kembali: '/tugas' } },
+      { path: 'rekap-presensi/:tab?', component: () => import('@/pages/rekap/RekapPresensi.vue'), props: true, meta: { judul: 'Rekap Presensi', peran: ADMIN, kembali: '/tugas' } },
+      { path: 'jadwal-shift', component: () => import('@/pages/shift/JadwalShift.vue'), meta: { judul: 'Jadwal Shift', kembali: '/tugas' } },
       { path: 'verifikasi/:tab?', component: () => import('@/pages/akun/Verifikasi.vue'), props: true, meta: { judul: 'Verifikasi dan Akun', peran: ADMIN, kembali: '/tugas' } },
       { path: 'organisasi/:tab?', component: () => import('@/pages/organisasi/Organisasi.vue'), props: true, meta: { judul: 'Struktur Organisasi', peran: ['superadmin'], cetak: true, kembali: '/tugas' } },
       { path: 'hak-akses/:tab?', component: () => import('@/pages/hakakses/HakAkses.vue'), props: true, meta: { judul: 'Hak Akses Fitur', peran: ['superadmin'], kembali: '/tugas' } },

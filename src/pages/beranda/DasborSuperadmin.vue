@@ -1,13 +1,15 @@
+<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.1 | Fase 2 – Tahap 7 Statistik, rekap, pengingat | 03/10/2026 -->
 <script setup>
 import { ref, computed } from 'vue'
 import {
   PhUsersThree, PhUserCheck, PhHourglass, PhUserCircleDashed, PhKey, PhTreeStructure, PhCloudArrowUp,
-  PhPulse, PhGearSix, PhPrinter, PhLightning, PhHeartbeat, PhWarningCircle, PhCheckCircle,
+  PhPulse, PhGearSix, PhPrinter, PhLightning, PhHeartbeat, PhWarningCircle, PhCheckCircle, PhChartBar, PhMapPinArea,
 } from '@phosphor-icons/vue'
 import { useStatistik } from '@/stores/statistik'
 import { formatRelatif, formatWaktu } from '@/lib/tanggal'
 import Sapaan from './Sapaan.vue'
 import IndikatorLangsung from './IndikatorLangsung.vue'
+import StatistikPresensi from './StatistikPresensi.vue'
 import SebaranBidang from './SebaranBidang.vue'
 import AksiCepat from './AksiCepat.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
@@ -28,6 +30,8 @@ const jamHeartbeat = computed(() => d.value.heartbeat_terakhir ? (Date.now() - n
 const layananSehat = computed(() => jamHeartbeat.value !== null && jamHeartbeat.value < 30 && !d.value.berkas_gagal)
 
 const AKSI = [
+  { label: 'Rekap presensi', ket: 'Harian dan bulanan, cetak F4 dan Excel', ikon: PhChartBar, warna: 'rekap', ke: '/rekap-presensi' },
+  { label: 'Pengaturan presensi', ket: 'Titik GPS, pola sesi, jadwal', ikon: PhMapPinArea, warna: 'aturpresensi', ke: '/atur-presensi' },
   { label: 'Pengaturan lembaga', ket: 'Identitas, kalender, kop, penanda tangan', ikon: PhGearSix, warna: 'pengaturan', ke: '/pengaturan' },
   { label: 'Hak akses fitur', ket: 'Per jabatan, bidang, dan individu', ikon: PhKey, warna: 'hakakses', ke: '/hak-akses' },
   { label: 'Struktur organisasi', ket: 'Bidang, unit, dan jabatan', ikon: PhTreeStructure, warna: 'sistem', ke: '/organisasi' },
@@ -37,6 +41,8 @@ const AKSI = [
 <template>
   <div class="space-y-5 lg:space-y-6">
     <Sapaan keterangan="Anda memegang kendali penuh atas data dan pengaturan sistem SIMKA PRO." />
+
+    <StatistikPresensi />
 
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="judul-bagian">Ringkasan pondok</h2>

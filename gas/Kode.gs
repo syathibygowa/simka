@@ -1,4 +1,4 @@
-// SIMKA PRO | gas/Kode.gs | v1.1 | Tahap 5 | 03/10/2026
+// SIMKA PRO | gas/Kode.gs | v1.2 | Fase 2 – Tahap 6 Verval dan koreksi | 03/10/2026
 /**
  * SIMKA PRO · Jembatan Google Apps Script (Gmail pondok: syathiby.gowa@gmail.com)
  * ---------------------------------------------------------------------------
@@ -23,6 +23,9 @@
  *      Salin URL Web app ke Supabase secret GAS_URL; salin GAS_SECRET ke secret GAS_SECRET.
  *
  * Perubahan v1.1: email memakai MailApp (izin lebih sempit), tambah aturAwal() dan ujiEmail().
+ * Perubahan v1.2: aksi 'ambil_berkas' agar admin dapat melihat selfie di Drive lewat Edge Function "berkas".
+ *   Setelah menempel kode ini: Deploy → Manage deployments → ikon pensil → Version: New version → Deploy
+ *   (URL Web app tetap sama, tidak perlu mengubah secret GAS_URL).
  */
 
 // Nilai publik (bukan rahasia)
@@ -94,6 +97,8 @@ function doPost(e) {
       MailApp.sendEmail({ to: d.ke, subject: d.subjek, htmlBody: d.html,
         body: 'Buka email ini dengan tampilan HTML.', name: NAMA_PENGIRIM });
       hasil = { ok: true, sisaKuota: MailApp.getRemainingDailyQuota() };
+    } else if (d.aksi === 'ambil_berkas') {
+      hasil = ambilBerkas_(d.id);
     } else if (d.aksi === 'ping') {
       hasil = { ok: true, waktu: new Date().toISOString(), sisaKuota: MailApp.getRemainingDailyQuota() };
     } else {
@@ -103,6 +108,25 @@ function doPost(e) {
     hasil = { ok: false, galat: String(err) };
   }
   return ContentService.createTextOutput(JSON.stringify(hasil)).setMimeType(ContentService.MimeType.JSON);
+}
+
+/** Ambil satu berkas di dalam folder SIMKA PRO sebagai base64 (maks. 5 MB). */
+function ambilBerkas_(id) {
+  if (!id) throw new Error('ID berkas wajib diisi');
+  const berkas = DriveApp.getFileById(id);
+  // Pastikan berkas berada di bawah folder SIMKA PRO (maks. 6 tingkat)
+  const akar = prop_('DRIVE_ROOT_ID');
+  let ok = false; let induk = berkas.getParents(); let tingkat = 0;
+  while (induk.hasNext() && tingkat < 6 && !ok) {
+    const f = induk.next();
+    if (f.getId() === akar) { ok = true; break; }
+    induk = f.getParents(); tingkat++;
+  }
+  if (!ok) throw new Error('Berkas di luar folder SIMKA PRO');
+  const blob = berkas.getBlob();
+  const bita = blob.getBytes();
+  if (bita.length > 5 * 1024 * 1024) throw new Error('Berkas terlalu besar untuk ditampilkan');
+  return { ok: true, mime: blob.getContentType(), nama: berkas.getName(), data: Utilities.base64Encode(bita) };
 }
 
 function doGet() {

@@ -1,18 +1,22 @@
-// SIMKA PRO | src/lib/menu.js | v1.1 | Fase 1 – Jabatan dan tunjangan | 03/10/2026
+// SIMKA PRO | src/lib/menu.js | v1.6 | Fase 2 – Tahap 7 Statistik, rekap, pengingat | 03/10/2026
 // Daftar menu SIMKA PRO. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
 // pada fase berikutnya; menu tersebut tampil dengan lencana fase.
 import {
   PhHouse, PhFingerprint, PhUsersThree, PhStudent, PhBookOpenText, PhFileText, PhFirstAidKit,
   PhShieldCheck, PhChartBar, PhEnvelopeSimple, PhWallet, PhMegaphone, PhKey, PhGearSix, PhBell,
-  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins,
+  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp,
 } from '@phosphor-icons/vue'
 
 const ADMIN = ['admin', 'superadmin']
 export const MENU = [
   { kode: 'beranda',    nama: 'Beranda',         ikon: PhHouse,          warna: 'beranda',    ke: '/',                  grup: 'Utama' },
   { kode: 'notifikasi', nama: 'Notifikasi',      ikon: PhBell,           warna: 'notifikasi', ke: '/notifikasi',        grup: 'Utama' },
-  { kode: 'presensi',   nama: 'Presensi',        ikon: PhFingerprint,    warna: 'presensi',   ke: '/presensi',          grup: 'Kepegawaian', fase: 2 },
+  { kode: 'presensi',   nama: 'Presensi',        ikon: PhFingerprint,    warna: 'presensi',   ke: '/presensi',          grup: 'Kepegawaian' },
+  { kode: 'aturpresensi', nama: 'Pengaturan Presensi', ikon: PhMapPinArea, warna: 'aturpresensi', ke: '/atur-presensi', grup: 'Kepegawaian', peran: ADMIN },
+  { kode: 'vervalpresensi', nama: 'Verval Presensi', ikon: PhSealCheck,   warna: 'verval',     ke: '/verval-presensi',   grup: 'Kepegawaian', peran: ADMIN },
+  { kode: 'rekappresensi', nama: 'Rekap Presensi', ikon: PhChartLineUp,  warna: 'rekap',      ke: '/rekap-presensi',    grup: 'Kepegawaian', peran: ADMIN },
+  { kode: 'jadwalshift', nama: 'Jadwal Shift',   ikon: PhCalendarStar,   warna: 'shift',      ke: '/jadwal-shift',      grup: 'Kepegawaian', syarat: 'shift' },
   { kode: 'pegawai',    nama: 'Data Pegawai',    ikon: PhUsersThree,     warna: 'pegawai',    ke: '/pegawai',           grup: 'Kepegawaian', peran: ADMIN },
   { kode: 'tunjangan',  nama: 'Jabatan dan Tunjangan', ikon: PhCoins,    warna: 'gaji',       ke: '/jabatan-tunjangan', grup: 'Kepegawaian', peran: ['superadmin'] },
   { kode: 'verifikasi', nama: 'Verifikasi Akun', ikon: PhUserCheck,      warna: 'verifikasi', ke: '/verifikasi',        grup: 'Kepegawaian', peran: ADMIN },
@@ -42,5 +46,7 @@ export const NAV_BAWAH = [
 ]
 
 export const GRUP = ['Utama', 'Kepegawaian', 'Santri', 'Layanan', 'Administrasi', 'Sistem']
-export const menuUntuk = (peran) => MENU.filter((m) => !m.peran || m.peran.includes(peran))
+/** Menu sesuai peran. ciri.shift = pegawai memegang pola shift (menu Jadwal Shift tampil juga untuk admin). */
+export const menuUntuk = (peran, ciri = {}) => MENU.filter((m) => (!m.peran || m.peran.includes(peran))
+  && (!m.syarat || ADMIN.includes(peran) || ciri[m.syarat]))
 export const cariMenu = (kode) => MENU.find((m) => m.kode === kode)
