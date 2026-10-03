@@ -1,0 +1,10 @@
+# SIMKA PRO | .gitignore | v1.0 | Fase 1 – Fondasi | 03/10/2026
+node_modules
+dist
+dist-demo
+.env
+.env.local
+.env.*.local
+supabase/.temp
+supabase/.branches
+.DS_Store
