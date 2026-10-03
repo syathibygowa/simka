@@ -1,3 +1,4 @@
+// SIMKA PRO | src/router/index.js | v1.1 | Fase 1 – Pengaturan | 03/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -20,7 +21,7 @@ const routes = [
       { path: 'verifikasi', component: () => import('@/pages/umum/Disiapkan.vue'), props: { kode: 'verifikasi' }, meta: { judul: 'Verifikasi Akun', peran: ADMIN, kembali: '/tugas' } },
       { path: 'organisasi', component: () => import('@/pages/umum/Disiapkan.vue'), props: { kode: 'organisasi' }, meta: { judul: 'Struktur Organisasi', peran: ['superadmin'], kembali: '/tugas' } },
       { path: 'hak-akses', component: () => import('@/pages/umum/Disiapkan.vue'), props: { kode: 'hakakses' }, meta: { judul: 'Hak Akses', peran: ['superadmin'], kembali: '/tugas' } },
-      { path: 'pengaturan', component: () => import('@/pages/umum/Disiapkan.vue'), props: { kode: 'pengaturan' }, meta: { judul: 'Pengaturan', peran: ['superadmin'], kembali: '/tugas' } },
+      { path: 'pengaturan/:tab?', component: () => import('@/pages/pengaturan/Pengaturan.vue'), props: true, meta: { judul: 'Pengaturan', peran: ['superadmin'], kembali: '/tugas' } },
       { path: 'segera/:kode', component: () => import('@/pages/umum/Segera.vue'), props: true, meta: { judul: 'Segera hadir', kembali: '/tugas' } },
       { path: ':salah(.*)*', component: () => import('@/pages/umum/TidakDitemukan.vue'), meta: { judul: 'Halaman tidak ditemukan', kembali: '/' } },
     ],

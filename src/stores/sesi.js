@@ -1,3 +1,4 @@
+// SIMKA PRO | src/stores/sesi.js | v1.1 | Tahap 6 | 03/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO, panggilFungsi } from '@/lib/supabase'
@@ -41,6 +42,7 @@ export const useSesi = defineStore('sesi', {
       const { data, error } = await supabase.from('v_pegawai').select('*').eq('user_id', user.id).maybeSingle()
       if (error || !data) { await supabase.auth.signOut(); throw new Error('Data pegawai untuk akun ini tidak ditemukan.') }
       const jabatan = [data.jabatan_struktural, ...(data.jabatan_fungsional || [])].filter(Boolean).join(', ')
+        || (data.peran === 'superadmin' ? 'Pengelola sistem' : data.peran === 'admin' ? 'Admin' : 'Pegawai')
       this.pengguna = { ...data, jabatan }
       this.wajibGantiSandi = data.wajib_ganti_sandi
       const { data: fitur } = await supabase.rpc('fitur_saya')

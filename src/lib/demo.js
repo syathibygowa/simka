@@ -1,3 +1,4 @@
+// SIMKA PRO | src/lib/demo.js | v1.1 | Fase 1 – Pengaturan | 03/10/2026
 // Data contoh untuk MODE DEMO. Nama pegawai di bawah fiktif.
 const menitLalu = (m) => new Date(Date.now() - m * 60000).toISOString()
 
@@ -68,3 +69,67 @@ export function statistikDemo() {
     notifikasi_belum_dibaca: 0,
   }
 }
+
+// ---------- Data contoh pengaturan lembaga (mengikuti isi awal migrasi 0400) ----------
+const KEMENAG = 'https://cdn.kemenag.go.id/storage/archives/logo-kemenag-png-1png.png'
+const LOGO_PONDOK = 'https://i.ibb.co.com/W4kqQScd/PPS-IMAM-ASY-SYATHIBY.png'
+const ALAMAT_KOP = 'Jalan Poros Malino KM.04, Ling. Bontobaddo, Kel. Bontoramba, Kab. Gowa Kode Pos 92119'
+export const LEMBAGA_DEMO = () => ({
+  identitas: {
+    nama_lengkap: "Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa",
+    nama_singkat: 'IMAM ASY-SYATHIBY', tagline: "Generasi Qur'ani dan Berprestasi",
+    npsn: '70023617', nspp: '502373060054', telepon: '085243324006', email: 'syathiby.gowa@gmail.com',
+    alamat: 'Jl. Poros Malino Sungguminasa, Lingkungan Bontobaddo No.KM.04, Bontoramba, Kec. Somba Opu, Kabupaten Gowa, Sulawesi Selatan 92119',
+    kota_surat: 'Gowa', logo_url: LOGO_PONDOK, logo_kemenag_url: KEMENAG, ikon_url: 'https://i.ibb.co.com/Kjq1b2Kw/Icon-SIMKA.png',
+  },
+  hijriah: { koreksi_hari: 0 },
+  integrasi: { gas_url: '', drive_folder_nama: 'SIMKA PRO', drive_folder_id: '', email_pengirim: 'syathiby.gowa@gmail.com', nama_pengirim: 'SIMKA PRO Imam Asy-Syathiby', domain_aplikasi: '' },
+  letterheads: [
+    { id: 'k1', kode: 'pondok', nama: 'Kop Pondok', kode_unit: 'PPTQ-IAS', bentuk: 'gambar', gambar_url: 'kop/kop-pondok.jpg', logo_kiri_url: KEMENAG, logo_kanan_url: LOGO_PONDOK,
+      baris: [{ teks: 'KEMENTERIAN AGAMA KABUPATEN GOWA', tebal: false, ukuran: 13 }, { teks: "PONDOK PESANTREN TAHFIZHUL QUR'AN", tebal: true, ukuran: 15 }, { teks: 'IMAM ASY-SYATHIBY WAHDAH ISLAMIYAH GOWA', tebal: true, ukuran: 15 }, { teks: 'NPSN. 70023617  NSPP. 502373060054  e-Mail: syathiby.gowa@gmail.com', tebal: false, ukuran: 10 }],
+      pita_teks: ALAMAT_KOP + ' | Telp. 085243324006', pita_warna: '#F8E02F', aktif: true, urutan: 1 },
+    { id: 'k2', kode: 'wustha', nama: 'Kop Kesetaraan Wustha', kode_unit: 'KW-IAS', bentuk: 'gambar', gambar_url: 'kop/kop-wustha.jpg', logo_kiri_url: KEMENAG, logo_kanan_url: null,
+      baris: [{ teks: 'KEMENTERIAN AGAMA KABUPATEN GOWA', tebal: false, ukuran: 13 }, { teks: "KESETARAAN WUSTHA PPS TAHFIZHUL QUR'AN", tebal: true, ukuran: 15 }, { teks: 'IMAM ASY-SYATHIBY WAHDAH ISLAMIYAH GOWA', tebal: true, ukuran: 15 }],
+      pita_teks: ALAMAT_KOP + ' | Telp. 082194934531', pita_warna: '#F8E02F', aktif: true, urutan: 2 },
+    { id: 'k3', kode: 'sma', nama: 'Kop SMA', kode_unit: 'SMAS-IAS', bentuk: 'gambar', gambar_url: 'kop/kop-sma.jpg', logo_kiri_url: null, logo_kanan_url: null,
+      baris: [{ teks: 'PEMERINTAH PROVINSI SULAWESI SELATAN', tebal: false, ukuran: 12 }, { teks: "SMAS TAHFIZHUL QUR'AN IMAM ASY-SYATIBY W.I", tebal: true, ukuran: 15 }],
+      pita_teks: ALAMAT_KOP + ' | Telp. 085256006743', pita_warna: '#F8E02F', aktif: true, urutan: 3 },
+    { id: 'k4', kode: 'yayasan', nama: 'Kop Yayasan', kode_unit: 'YPIA', bentuk: 'gambar', gambar_url: 'kop/kop-yayasan.jpg', logo_kiri_url: null, logo_kanan_url: null,
+      baris: [{ teks: 'YAYASAN PESANTREN IMAM ASYSYATIBY (YPIA)', tebal: true, ukuran: 15 }, { teks: 'WAHDAH ISLAMIYAH', tebal: true, ukuran: 14 }],
+      pita_teks: 'Nomor Induk Berusaha. 0205230018097', pita_warna: '#F8E02F', aktif: true, urutan: 4 },
+  ],
+  signatories: [
+    { id: 's1', jabatan_tertulis: 'Direktur', nama: 'Siswandi Safari, S.Pd.I., Lc., S.H., M.Ag.', niy: '1983020910201401', aktif: true, urutan: 1 },
+    { id: 's2', jabatan_tertulis: 'Kepala Kesetaraan Wustha (SMP)', nama: 'Chamdar Nur, S.Pd.I., SH., Lc., M.Pd.', niy: '1983042805201401', aktif: true, urutan: 2 },
+    { id: 's3', jabatan_tertulis: 'Kepala SMA', nama: 'H. Afrianto, Lc, M.H.', niy: '1994042801202001', aktif: true, urutan: 3 },
+  ],
+  signer_rules: [
+    { jenis_dokumen: 'pengajuan_pegawai', nama_dokumen: 'Surat izin/sakit/cuti pegawai', kiri: 'atasan_terakhir', kanan: 'pemohon', mode: 'elektronik', kop_kode: 'pondok', urutan: 1 },
+    { jenis_dokumen: 'rekap_pegawai', nama_dokumen: 'Rekap kehadiran pegawai', kiri: 's1', kanan: 'pencetak', mode: 'elektronik', kop_kode: 'pondok', urutan: 3 },
+    { jenis_dokumen: 'slip_gaji', nama_dokumen: 'Slip gaji', kiri: 'bendahara', kanan: 'pegawai', mode: 'elektronik', kop_kode: 'pondok', urutan: 5 },
+    { jenis_dokumen: 'kartu_pegawai', nama_dokumen: 'Kartu pegawai', kiri: 's1', kanan: null, mode: 'elektronik', kop_kode: 'pondok', urutan: 7 },
+    { jenis_dokumen: 'daftar_pegawai', nama_dokumen: 'Daftar dan rekap kepegawaian', kiri: 's1', kanan: 'pencetak', mode: 'elektronik', kop_kode: 'pondok', urutan: 10 },
+  ],
+  academic_years: [{ id: 't1', nama: '2026/2027', mulai: '2026-07-13', selesai: '2027-06-30', semester: 1, aktif: true, terkunci: false }],
+  holiday_calendars: [
+    { jenis_tugas: 'sekolah', nama: 'Sekolah (Wustha dan SMA)', hari_libur: [0], catatan: 'Ahad libur' },
+    { jenis_tugas: 'tahfizh', nama: 'Halaqah tahfizh', hari_libur: [0], catatan: 'Ahad libur' },
+    { jenis_tugas: 'asrama', nama: 'Asrama (musyrif)', hari_libur: [], catatan: 'Tetap masuk hari Ahad' },
+    { jenis_tugas: 'security', nama: 'Security', hari_libur: [], catatan: 'Bergiliran; libur diatur pada jadwal shift' },
+    { jenis_tugas: 'medis', nama: 'Klinik (medis)', hari_libur: [], catatan: 'Diatur pada jadwal shift' },
+    { jenis_tugas: 'kantor', nama: 'Kantor dan staf', hari_libur: [0], catatan: 'Ahad libur' },
+  ],
+  holidays: [
+    { id: 'h1', tanggal_mulai: '2026-12-25', tanggal_akhir: '2026-12-25', nama: 'Libur Natal', jenis: 'libur_nasional', berlaku_untuk: ['semua'] },
+  ],
+  doc_number_formats: [
+    { kode: 'surat', nama: 'Surat tata usaha (D/K)', pola: '{DK}.{URUT3}/{PERIHAL}/{UNIT}/{BLN_H_ROMAWI}/{THN_H}', grup_urut: 'surat', reset: 'tahun_hijriah', aktif: true },
+    { kode: 'sk', nama: 'Surat Keputusan (SK)', pola: '{DK}.{URUT3}/{PERIHAL}/{UNIT}/{BLN_H_ROMAWI}/{THN_H}', grup_urut: 'sk', reset: 'tahun_hijriah', aktif: true },
+    { kode: 'pengajuan', nama: 'Dokumen pengajuan pegawai', pola: 'PGJ.{URUT3}/{UNIT}/{BLN_ROMAWI}/{THN}', grup_urut: 'pengajuan', reset: 'tahun_masehi', aktif: true },
+    { kode: 'slip', nama: 'Slip gaji', pola: 'SLIP.{URUT3}/{UNIT}/{BLN}/{THN}', grup_urut: 'slip', reset: 'bulan_masehi', aktif: true },
+  ],
+  letter_subject_codes: [
+    { kode: 'QR', arti: 'Qarar', keterangan: 'Surat Keputusan (SK)', urutan: 1 }, { kode: 'AM', arti: 'Amanah', keterangan: 'Tugas, mandat, instruksi, kuasa, perjalanan dinas', urutan: 3 },
+    { kode: 'DW', arti: "Da'wah", keterangan: 'Undangan dan panggilan', urutan: 6 }, { kode: 'NZ', arti: 'Nahwa Dzalik', keterangan: 'Lain-lain', urutan: 9 },
+  ],
+})

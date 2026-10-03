@@ -1,3 +1,4 @@
+/* SIMKA PRO | src/styles/cetak.css | v1.1 | Fase 1 – Pengaturan | 03/10/2026 */
 /* =====================================================================
    SIMKA PRO · Standar cetak dokumen
    Kertas F4 215 × 330 mm, margin 2 cm, garis tabel ½ pt,
@@ -63,6 +64,8 @@
   html, body { background: #fff !important; color: #000 !important; }
   html.dark { color-scheme: light; }
   .layar-saja { display: none !important; }
+  /* Dokumen di luar aplikasi (dipindah ke <body>): sembunyikan seluruh tampilan aplikasi */
+  body:has(> .cetak-saja) #app { display: none !important; }
   .cetak-saja { display: block !important; }
   .lembar-f4 { width: auto; min-height: 0; padding: 0; margin: 0; box-shadow: none; }
   main, .isi-utama { padding: 0 !important; margin: 0 !important; max-width: none !important; }

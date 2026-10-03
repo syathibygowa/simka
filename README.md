@@ -14,7 +14,7 @@ Acuan: Blueprint SIMKA PRO Versi 2.0 (final) dan Dokumen Serah Terima.
 | `src/stores/` | Sesi, tema, notifikasi, statistik langsung, data pegawai |
 | `src/components/cetak/` | Kerangka dokumen F4 (kop, judul, tabel, tanda tangan) |
 | `supabase/migrations/` | Skema, fungsi, RLS, isi awal, storage, pg_cron |
-| `supabase/functions/` | Edge Functions: masuk, daftar, reset-sandi, kelola-akun, salin-logo |
+| `supabase/functions/` | Edge Functions satu berkas (siap tempel di dashboard): masuk, daftar, reset-sandi, kelola-akun, salin-logo |
 | `gas/` | Google Apps Script: pemindah berkas ke Drive, email, heartbeat, backup, retensi |
 
 ## Menjalankan

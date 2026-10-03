@@ -1,3 +1,4 @@
+<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.1 | Fase 1 – Pengaturan | 03/10/2026 -->
 <script setup>
 import { useRouter } from 'vue-router'
 import { PhSignOut, PhPalette, PhBell, PhInfo } from '@phosphor-icons/vue'
@@ -7,6 +8,7 @@ import { MODE_DEMO } from '@/lib/supabase'
 import PilihTema from '@/components/PilihTema.vue'
 import AvatarPengguna from '@/components/AvatarPengguna.vue'
 import PolaKhatam from '@/components/PolaKhatam.vue'
+import { VERSI_APLIKASI, KETERANGAN_VERSI } from '@/lib/versi'
 
 const sesi = useSesi(); const notif = useNotifikasi(); const router = useRouter()
 const PERAN = { superadmin: 'Superadmin', admin: 'Admin', pegawai: 'Pegawai' }
@@ -48,7 +50,7 @@ function ganti(p) { sesi.masukDemo(p); notif.berhenti(); notif.muat(); router.pu
       <span class="chip-ikon h-10 w-10"><PhSignOut :size="22" weight="duotone" /></span>
       <span class="font-bold">Keluar dari akun</span>
     </button>
-    <p class="pb-2 text-center text-xs text-teks3">SIMKA PRO versi 0.1 – Fase 1 (Fondasi)</p>
+    <p class="pb-2 text-center text-xs text-teks3">SIMKA PRO versi {{ VERSI_APLIKASI }} – {{ KETERANGAN_VERSI }}</p>
   </div>
 </template>
 <style scoped>.kepala { background: var(--gradasi-utama); }</style>

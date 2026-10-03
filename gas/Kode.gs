@@ -1,3 +1,4 @@
+// SIMKA PRO | gas/Kode.gs | v1.1 | Tahap 5 | 03/10/2026
 /**
  * SIMKA PRO · Jembatan Google Apps Script (Gmail pondok: syathiby.gowa@gmail.com)
  * ---------------------------------------------------------------------------
@@ -8,16 +9,26 @@
  *   4. retensiHarian     : membuang foto yang melewati masa simpan (selfie 6 bulan, dll.)
  *   5. backupMingguan    : menyalin tabel penting ke Google Sheets
  *
- * Script Properties (Project Settings → Script properties) — JANGAN ditulis di kode:
- *   SUPABASE_URL          https://xxxx.supabase.co
- *   SUPABASE_SERVICE_KEY  service_role key (rahasia)
- *   GAS_SECRET            rahasia bersama dengan Edge Function (sama dengan secret GAS_SECRET)
- *   DRIVE_ROOT_ID         ID folder Drive "SIMKA PRO"
- *   EMAIL_PERINGATAN      syathiby.gowa@gmail.com
+ * Script Properties (Project Settings → Script properties):
+ *   SUPABASE_SERVICE_KEY  service_role key (RAHASIA) → satu-satunya yang diisi manual
+ *   SUPABASE_URL, GAS_SECRET, DRIVE_ROOT_ID, EMAIL_PERINGATAN → diisi otomatis oleh aturAwal()
  *
- * Pemasangan: jalankan pasangPemicu() satu kali, lalu Deploy → New deployment → Web app
- *   Execute as: Me · Who has access: Anyone. Salin URL Web app ke secret GAS_URL.
+ * Urutan pemasangan (v1.1):
+ *   1. Isi SUPABASE_SERVICE_KEY di Script properties.
+ *   2. Jalankan aturAwal()     → membuat folder Drive "SIMKA PRO" dan GAS_SECRET.
+ *   3. Jalankan ujiKoneksi()   → memeriksa Supabase, Drive, dan kuota email.
+ *   4. Jalankan ujiEmail()     → mengirim email uji ke EMAIL_PERINGATAN.
+ *   5. Jalankan pasangPemicu() → memasang 4 jadwal otomatis.
+ *   6. Deploy → New deployment → Web app (Execute as: Me, Who has access: Anyone).
+ *      Salin URL Web app ke Supabase secret GAS_URL; salin GAS_SECRET ke secret GAS_SECRET.
+ *
+ * Perubahan v1.1: email memakai MailApp (izin lebih sempit), tambah aturAwal() dan ujiEmail().
  */
+
+// Nilai publik (bukan rahasia)
+const SUPABASE_URL_BAWAAN = 'https://xtvoxjnivpugzztoevjh.supabase.co';
+const EMAIL_PERINGATAN_BAWAAN = 'syathiby.gowa@gmail.com';
+const NAMA_FOLDER_DRIVE = 'SIMKA PRO';
 
 const NAMA_PENGIRIM = 'SIMKA PRO Imam Asy-Syathiby';
 const TABEL_BACKUP = ['employees', 'employee_functions', 'employee_structurals', 'employment_history',
@@ -80,9 +91,8 @@ function doPost(e) {
       hasil = { ok: false, galat: 'Tidak berwenang' };
     } else if (d.aksi === 'email') {
       if (!d.ke || !d.subjek) throw new Error('Penerima dan subjek wajib diisi');
-      GmailApp.sendEmail(d.ke, d.subjek, 'Buka email ini dengan tampilan HTML.', {
-        htmlBody: d.html, name: NAMA_PENGIRIM, noReply: false,
-      });
+      MailApp.sendEmail({ to: d.ke, subject: d.subjek, htmlBody: d.html,
+        body: 'Buka email ini dengan tampilan HTML.', name: NAMA_PENGIRIM });
       hasil = { ok: true, sisaKuota: MailApp.getRemainingDailyQuota() };
     } else if (d.aksi === 'ping') {
       hasil = { ok: true, waktu: new Date().toISOString(), sisaKuota: MailApp.getRemainingDailyQuota() };
@@ -233,7 +243,40 @@ function pasangPemicu() {
   Logger.log('Pemicu terpasang: ' + ScriptApp.getProjectTriggers().length);
 }
 
-/** Uji cepat setelah Script Properties diisi. */
+/** Langkah 2: isi otomatis properti selain service key, buat folder Drive dan GAS_SECRET. */
+function aturAwal() {
+  const p = PropertiesService.getScriptProperties();
+  if (!p.getProperty('SUPABASE_SERVICE_KEY')) {
+    throw new Error('Isi dulu SUPABASE_SERVICE_KEY di Project Settings → Script properties.');
+  }
+  p.setProperty('SUPABASE_URL', SUPABASE_URL_BAWAAN);
+  if (!p.getProperty('EMAIL_PERINGATAN')) p.setProperty('EMAIL_PERINGATAN', EMAIL_PERINGATAN_BAWAAN);
+
+  if (!p.getProperty('DRIVE_ROOT_ID')) {
+    const it = DriveApp.getRootFolder().getFoldersByName(NAMA_FOLDER_DRIVE);
+    const folder = it.hasNext() ? it.next() : DriveApp.getRootFolder().createFolder(NAMA_FOLDER_DRIVE);
+    p.setProperty('DRIVE_ROOT_ID', folder.getId());
+  }
+  if (!p.getProperty('GAS_SECRET')) {
+    p.setProperty('GAS_SECRET', (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, ''));
+  }
+  Logger.log('Folder Drive  : ' + DriveApp.getFolderById(p.getProperty('DRIVE_ROOT_ID')).getUrl());
+  Logger.log('GAS_SECRET    : ' + p.getProperty('GAS_SECRET'));
+  Logger.log('Salin GAS_SECRET di atas ke Supabase → Edge Functions → Secrets (nama: GAS_SECRET).');
+}
+
+/** Langkah 4: kirim email uji ke EMAIL_PERINGATAN. */
+function ujiEmail() {
+  MailApp.sendEmail({
+    to: prop_('EMAIL_PERINGATAN'), subject: '[SIMKA PRO] Email uji',
+    htmlBody: '<p>Assalamu\'alaikum. Jembatan email SIMKA PRO sudah berfungsi.</p><p>Waktu: ' +
+      Utilities.formatDate(new Date(), 'Asia/Makassar', 'dd/MM/yyyy HH:mm') + ' WITA</p>',
+    name: NAMA_PENGIRIM,
+  });
+  Logger.log('Email uji terkirim ke ' + prop_('EMAIL_PERINGATAN') + '. Sisa kuota: ' + MailApp.getRemainingDailyQuota());
+}
+
+/** Langkah 3: uji cepat setelah aturAwal(). */
 function ujiKoneksi() {
   Logger.log('Supabase: ' + JSON.stringify(sb_('/rest/v1/heartbeat?select=id&limit=1')));
   Logger.log('Folder Drive: ' + DriveApp.getFolderById(prop_('DRIVE_ROOT_ID')).getName());

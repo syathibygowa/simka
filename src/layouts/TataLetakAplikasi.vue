@@ -1,3 +1,4 @@
+<!-- SIMKA PRO | src/layouts/TataLetakAplikasi.vue | v1.1 | Fase 1 – Pengaturan | 03/10/2026 -->
 <script setup>
 // Tata letak responsif: desktop = sidebar + bilah atas; mobile = bilah aplikasi ringkas,
 // navigasi bawah, kartu, FAB, dan bottom sheet (ala aplikasi Android).
@@ -11,6 +12,7 @@ import MenuAkun from '@/components/MenuAkun.vue'
 import TombolCetak from '@/components/TombolCetak.vue'
 import AvatarPengguna from '@/components/AvatarPengguna.vue'
 import DaftarToast from '@/components/DaftarToast.vue'
+import DialogKonfirmasi from '@/components/DialogKonfirmasi.vue'
 import { useNotifikasi } from '@/stores/notifikasi'
 import { MODE_DEMO } from '@/lib/supabase'
 import { formatHari, formatHijriah, formatJam, sekarang } from '@/lib/tanggal'
@@ -51,11 +53,12 @@ const kembali = () => (history.length > 1 ? router.back() : router.push(route.me
 
       <main class="isi-utama mx-auto max-w-[1280px] px-4 pb-[calc(110px+env(safe-area-inset-bottom))] pt-4 sm:px-6 lg:px-8 lg:pb-12 lg:pt-6">
         <router-view v-slot="{ Component }">
-          <component :is="Component" :key="route.path" />
+          <component :is="Component" :key="route.matched[route.matched.length - 1]?.path" />
         </router-view>
       </main>
     </div>
     <NavBawah />
     <DaftarToast />
+    <DialogKonfirmasi />
   </div>
 </template>
