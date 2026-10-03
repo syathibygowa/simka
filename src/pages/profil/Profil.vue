@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.4 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.5 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026 -->
 <script setup>
 import { useRouter } from 'vue-router'
 import { PhSignOut, PhPalette, PhBell, PhInfo, PhLockKey } from '@phosphor-icons/vue'
@@ -10,13 +10,14 @@ import AvatarPengguna from '@/components/AvatarPengguna.vue'
 import PolaKhatam from '@/components/PolaKhatam.vue'
 import KartuDorong from '@/components/KartuDorong.vue'
 import { usePengumuman } from '@/stores/pengumuman'
+import { usePengajuan } from '@/stores/pengajuan'
 import { VERSI_APLIKASI, KETERANGAN_VERSI, WAKTU_BUILD } from '@/lib/versi'
 import { formatPendek, formatJam } from '@/lib/tanggal'
 
-const sesi = useSesi(); const notif = useNotifikasi(); const router = useRouter(); const pengumuman = usePengumuman()
+const sesi = useSesi(); const notif = useNotifikasi(); const router = useRouter(); const pengumuman = usePengumuman(); const pengajuan = usePengajuan()
 const PERAN = { superadmin: 'Superadmin', admin: 'Admin', pegawai: 'Pegawai' }
-async function keluar() { notif.berhenti(); pengumuman.berhenti(); await sesi.keluar(); router.replace('/masuk') }
-function ganti(p) { sesi.masukDemo(p); notif.berhenti(); pengumuman.berhenti(); notif.muat(); router.push('/') }
+async function keluar() { notif.berhenti(); pengumuman.berhenti(); pengajuan.berhenti(); await sesi.keluar(); router.replace('/masuk') }
+function ganti(p) { sesi.masukDemo(p); notif.berhenti(); pengumuman.berhenti(); pengajuan.berhenti(); notif.muat(); router.push('/') }
 </script>
 <template>
   <div class="mx-auto max-w-2xl space-y-4">

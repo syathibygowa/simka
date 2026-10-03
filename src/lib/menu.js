@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v1.7 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026
+// SIMKA PRO | src/lib/menu.js | v1.8 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026
 // Daftar menu SIMKA PRO. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
 // pada fase berikutnya; menu tersebut tampil dengan lencana fase.
@@ -20,7 +20,7 @@ export const MENU = [
   { kode: 'pegawai',    nama: 'Data Pegawai',    ikon: PhUsersThree,     warna: 'pegawai',    ke: '/pegawai',           grup: 'Kepegawaian', peran: ADMIN },
   { kode: 'tunjangan',  nama: 'Jabatan dan Tunjangan', ikon: PhCoins,    warna: 'gaji',       ke: '/jabatan-tunjangan', grup: 'Kepegawaian', peran: ['superadmin'] },
   { kode: 'verifikasi', nama: 'Verifikasi Akun', ikon: PhUserCheck,      warna: 'verifikasi', ke: '/verifikasi',        grup: 'Kepegawaian', peran: ADMIN },
-  { kode: 'pengajuan',  nama: 'Pengajuan',       ikon: PhFileText,       warna: 'pengajuan',  ke: '/segera/pengajuan',  grup: 'Kepegawaian', fase: 3 },
+  { kode: 'pengajuan',  nama: 'Pengajuan',       ikon: PhFileText,       warna: 'pengajuan',  ke: '/pengajuan',         grup: 'Kepegawaian' },
   { kode: 'jurnal',     nama: 'Jurnal Harian',   ikon: PhNotebook,       warna: 'tatausaha',  ke: '/segera/jurnal',     grup: 'Kepegawaian', fase: 3 },
   { kode: 'kartu',      nama: 'Kartu Pegawai',   ikon: PhIdentificationCard, warna: 'profil', ke: '/segera/kartu',      grup: 'Kepegawaian', fase: 3 },
   { kode: 'santri',     nama: 'Santri',          ikon: PhStudent,        warna: 'santri',     ke: '/segera/santri',     grup: 'Santri', fase: 4 },

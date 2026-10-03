@@ -1,4 +1,4 @@
-// SIMKA PRO | supabase/functions/berkas/index.ts | v1.0 | Fase 2 – Tahap 6 Verval dan koreksi | 03/10/2026
+// SIMKA PRO | supabase/functions/berkas/index.ts | v1.1 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026
 // Versi satu berkas (modul bersama sudah digabung) agar dapat ditempel di editor dashboard Supabase.
 // Pengaturan fungsi di dashboard: Verify JWT = MENYALA.
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
@@ -159,7 +159,12 @@ layani(async (req) => {
 
   const { data: o } = await admin.from('storage_objects').select('*').eq('id', b.id).maybeSingle()
   if (!o || o.status === 'dihapus') throw new Galat('Berkas tidak ditemukan atau sudah dihapus karena melewati masa simpan.', 404)
-  const berhak = o.publik || o.pemilik_id === p.id || p.peran === 'admin' || p.peran === 'superadmin'
+  let berhak = o.publik || o.pemilik_id === p.id || p.peran === 'admin' || p.peran === 'superadmin'
+  if (!berhak) {
+    // Hak tambahan dari database (mis. penyetuju pengajuan melihat lampiran bukti)
+    const { data: boleh } = await admin.rpc('boleh_lihat_berkas', { p_obj: o.id, p_emp: p.id })
+    berhak = boleh === true
+  }
   if (!berhak) throw new Galat('Anda tidak berhak melihat berkas ini.', 403)
 
   let bita: Uint8Array<ArrayBuffer>; let mime = o.mime || 'application/octet-stream'

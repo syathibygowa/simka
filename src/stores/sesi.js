@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/sesi.js | v1.3 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026
+// SIMKA PRO | src/stores/sesi.js | v1.4 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO, panggilFungsi } from '@/lib/supabase'
@@ -70,7 +70,7 @@ export const useSesi = defineStore('sesi', {
       return r
     },
 
-    masukDemo(peran) { this.pengguna = { ...PENGGUNA_DEMO[peran] }; this.izinAdmin = peran === 'admin' ? ['verval_akun', 'kelola_pegawai', 'audit_log', 'verval_presensi'] : []; simpan('simka.demo.peran', peran) },
+    masukDemo(peran) { this.pengguna = { ...PENGGUNA_DEMO[peran] }; this.izinAdmin = peran === 'admin' ? ['verval_akun', 'kelola_pegawai', 'audit_log', 'verval_presensi', 'lihat_pengajuan', 'atur_pengajuan'] : []; simpan('simka.demo.peran', peran) },
 
     async keluar() {
       if (!MODE_DEMO) await supabase.auth.signOut()
