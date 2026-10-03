@@ -1,4 +1,4 @@
-// SIMKA PRO | supabase/functions/kelola-akun/index.ts | v1.0 | Tahap 4 | 03/10/2026
+// SIMKA PRO | supabase/functions/kelola-akun/index.ts | v1.1 | Fase 1 – Akun dan hak akses | 03/10/2026
 // Versi satu berkas (modul bersama sudah digabung) agar dapat ditempel di editor dashboard Supabase.
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
@@ -315,7 +315,7 @@ layani(async (req) => {
       }
       await admin.rpc("kirim_notifikasi", {
         p_employee: p.id, p_judul: b.peran === "admin" ? "Anda ditetapkan sebagai admin" : "Peran admin Anda dicabut",
-        p_isi: b.peran === "admin" ? "Menu admin kini tersedia di akun Anda." : null, p_tautan: "/beranda",
+        p_isi: b.peran === "admin" ? "Menu admin kini tersedia di akun Anda." : null, p_tautan: "/",
         p_ikon: "ShieldCheck", p_warna: "mawar",
       });
       await audit(admin, saya.id, "ubah_peran", `Mengubah peran ${p.nama_lengkap} menjadi ${b.peran}`, { izin: b.izin }, "employees", p.id);

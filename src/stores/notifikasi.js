@@ -1,3 +1,4 @@
+// SIMKA PRO | src/stores/notifikasi.js | v1.1 | Fase 1 – Akun dan hak akses | 03/10/2026
 // Notifikasi per akun: dibaca/belum dibaca, langsung (Supabase Realtime),
 // dan setiap notifikasi membuka halaman terkait (kolom "tautan").
 import { defineStore } from 'pinia'
@@ -55,7 +56,7 @@ export const useNotifikasi = defineStore('notifikasi', {
       pengatur = setTimeout(() => {
         const n = peran === 'pegawai'
           ? { judul: 'Jadwal tugas Anda diperbarui', isi: 'Admin menambahkan tugas Wali kelas pada profil Anda.', tautan: '/profil', ikon: 'ListChecks', warna: 'ungu' }
-          : { judul: 'Pendaftaran pegawai baru', isi: 'Ust. Ahmad Zaki mendaftar dan menunggu verifikasi akun.', tautan: '/pegawai/p9', ikon: 'UserPlus', warna: 'biru' }
+          : { judul: 'Pendaftaran pegawai baru', isi: 'Ust. Ahmad Zaki mendaftar dan menunggu verifikasi akun.', tautan: '/verifikasi/menunggu', ikon: 'UserPlus', warna: 'biru' }
         this.terima({ id: `baru-${Date.now()}`, ...n, created_at: new Date().toISOString(), dibaca_pada: null })
       }, 25000)
     },

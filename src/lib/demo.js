@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demo.js | v1.2 | Fase 1 – Struktur organisasi | 03/10/2026
+// SIMKA PRO | src/lib/demo.js | v1.3 | Fase 1 – Akun dan hak akses | 03/10/2026
 // Data contoh untuk MODE DEMO. Nama pegawai di bawah fiktif.
 const menitLalu = (m) => new Date(Date.now() - m * 60000).toISOString()
 
@@ -28,14 +28,14 @@ export const PEGAWAI_DEMO = [
 
 export const NOTIFIKASI_DEMO = {
   superadmin: [
-    { judul: 'Pendaftaran pegawai baru', isi: 'Ustzh. Aisyah Putri, S.Pd. menunggu verifikasi akun.', tautan: '/pegawai/p10', ikon: 'UserPlus', warna: 'biru', menit: 6 },
-    { judul: 'Pendaftaran pegawai baru', isi: 'Ust. Yusuf Maulana, S.Pd. menunggu verifikasi akun.', tautan: '/pegawai/p6', ikon: 'UserPlus', warna: 'biru', menit: 52 },
+    { judul: 'Pendaftaran pegawai baru', isi: 'Ustzh. Aisyah Putri, S.Pd. menunggu verifikasi akun.', tautan: '/verifikasi/menunggu', ikon: 'UserPlus', warna: 'biru', menit: 6 },
+    { judul: 'Pendaftaran pegawai baru', isi: 'Ust. Yusuf Maulana, S.Pd. menunggu verifikasi akun.', tautan: '/verifikasi/menunggu', ikon: 'UserPlus', warna: 'biru', menit: 52 },
     { judul: 'Periksa kop surat', isi: 'Empat kop resmi sudah terpasang. Lakukan cetak uji F4 sebelum dipakai.', tautan: '/pengaturan', ikon: 'Printer', warna: 'emas', menit: 180, dibaca: true },
     { judul: 'Pemindahan berkas ke Drive berjalan', isi: 'Antrian berkas kosong. Semua berkas sudah tersimpan di Google Drive.', tautan: '/', ikon: 'CloudArrowUp', warna: 'hijau', menit: 1500, dibaca: true },
   ],
   admin: [
-    { judul: 'Pendaftaran pegawai baru', isi: 'Ustzh. Aisyah Putri, S.Pd. menunggu verifikasi akun.', tautan: '/pegawai/p10', ikon: 'UserPlus', warna: 'biru', menit: 6 },
-    { judul: 'Pendaftaran pegawai baru', isi: 'Ust. Yusuf Maulana, S.Pd. menunggu verifikasi akun.', tautan: '/pegawai/p6', ikon: 'UserPlus', warna: 'biru', menit: 52 },
+    { judul: 'Pendaftaran pegawai baru', isi: 'Ustzh. Aisyah Putri, S.Pd. menunggu verifikasi akun.', tautan: '/verifikasi/menunggu', ikon: 'UserPlus', warna: 'biru', menit: 6 },
+    { judul: 'Pendaftaran pegawai baru', isi: 'Ust. Yusuf Maulana, S.Pd. menunggu verifikasi akun.', tautan: '/verifikasi/menunggu', ikon: 'UserPlus', warna: 'biru', menit: 52 },
     { judul: 'Data pegawai belum lengkap', isi: 'Ust. Ahmad Zaki belum memiliki NIY dan akun.', tautan: '/pegawai/p9', ikon: 'WarningCircle', warna: 'jingga', menit: 240, dibaca: true },
   ],
   pegawai: [
@@ -166,3 +166,19 @@ export const ORGANISASI_DEMO = () => {
     jumlahStruktural: { s1: 1, s2: 1, s3: 1, s4: 6 },
   }
 }
+
+// ---------- Data contoh hak akses (mengikuti isi awal migrasi 0400) ----------
+export const FITUR_DEMO = [
+  ['data_pegawai', 'Data kepegawaian', 'Kepegawaian', 1], ['presensi', 'Presensi', 'Kepegawaian', 2], ['pengajuan', 'Pengajuan izin, sakit, cuti', 'Kepegawaian', 3],
+  ['jurnal_harian', 'Jurnal harian', 'Kepegawaian', 3], ['berkas_pegawai', 'Berkas pegawai', 'Kepegawaian', 3], ['kartu_pegawai', 'Kartu pegawai', 'Kepegawaian', 3],
+  ['data_santri', 'Data santri', 'Santri', 4], ['absensi_kelas', 'Absensi kelas', 'Santri', 4], ['absensi_halaqah', 'Absensi halaqah', 'Santri', 4],
+  ['absensi_asrama', 'Absensi asrama', 'Santri', 4], ['tahfizh', 'Tahfizh', 'Santri', 5], ['klinik', 'Klinik', 'Layanan', 6], ['gerbang', 'Gerbang dan izin keluar', 'Layanan', 7],
+  ['pantauan', 'Pantauan langsung', 'Layanan', 7], ['tata_usaha', 'Tata usaha', 'Administrasi', 10], ['slip_gaji', 'Slip gaji', 'Administrasi', 11],
+  ['laporan', 'Laporan dan ekspor', 'Administrasi', 8], ['pengumuman', 'Pengumuman', 'Sistem', 3], ['pengaturan_lembaga', 'Pengaturan lembaga', 'Sistem', 1],
+  ['hak_akses', 'Hak akses', 'Sistem', 1], ['audit_log', 'Audit log', 'Sistem', 3],
+].map(([kode, nama, kelompok, fase], i) => ({ kode, nama, kelompok, fase, urutan: i }))
+export const IZIN_ADMIN_DEMO = [
+  { kode: 'verval_akun', nama: 'Verifikasi akun pegawai baru', urutan: 1 }, { kode: 'kelola_pegawai', nama: 'Mengelola data kepegawaian dan impor Excel', urutan: 2 },
+  { kode: 'kalender', nama: 'Mengelola hari libur dan kalender', urutan: 3 }, { kode: 'audit_log', nama: 'Melihat audit log seluruh pegawai', urutan: 4 },
+  { kode: 'verval_presensi', nama: 'Verval presensi di luar area (Fase 2)', urutan: 5 },
+]

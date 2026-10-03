@@ -1,3 +1,4 @@
+<!-- SIMKA PRO | src/pages/auth/Masuk.vue | v1.1 | Fase 1 – Akun dan hak akses | 03/10/2026 -->
 <script setup>
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -12,7 +13,7 @@ import PilihTema from '@/components/PilihTema.vue'
 const sesi = useSesi(); const router = useRouter(); const route = useRoute()
 const username = ref(''); const sandi = ref(''); const lihat = ref(false)
 const galat = ref(''); const proses = ref(false)
-const lanjut = () => router.replace(route.query.lanjut || '/')
+const lanjut = () => router.replace(sesi.wajibGantiSandi ? '/ganti-sandi' : (route.query.lanjut || '/'))
 
 async function kirim() {
   galat.value = ''
@@ -71,6 +72,10 @@ const PERAN_DEMO = [
           </div>
           <p v-if="galat" class="rounded-xl bg-[#C7332F]/10 px-3.5 py-2.5 text-sm font-semibold text-merah" role="alert">{{ galat }}</p>
           <button class="tombol-utama w-full" :disabled="proses || MODE_DEMO">{{ proses ? 'Memeriksa…' : 'Masuk' }}</button>
+          <div class="flex flex-wrap justify-between gap-2 text-sm">
+            <router-link to="/lupa-sandi" class="font-semibold text-merah">Lupa kata sandi?</router-link>
+            <span class="text-teks2">Belum punya akun? <router-link to="/daftar" class="font-semibold text-merah">Daftar</router-link></span>
+          </div>
         </form>
 
         <div v-if="MODE_DEMO" class="mt-8">

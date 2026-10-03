@@ -1,7 +1,7 @@
-<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.1 | Fase 1 – Pengaturan | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.2 | Fase 1 – Akun dan hak akses | 03/10/2026 -->
 <script setup>
 import { useRouter } from 'vue-router'
-import { PhSignOut, PhPalette, PhBell, PhInfo } from '@phosphor-icons/vue'
+import { PhSignOut, PhPalette, PhBell, PhInfo, PhLockKey } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import { useNotifikasi } from '@/stores/notifikasi'
 import { MODE_DEMO } from '@/lib/supabase'
@@ -36,6 +36,11 @@ function ganti(p) { sesi.masukDemo(p); notif.berhenti(); notif.muat(); router.pu
     <router-link to="/notifikasi" class="kartu w-notifikasi flex items-center gap-3 p-5 hover:bg-permukaan2">
       <span class="chip-ikon h-10 w-10"><PhBell :size="22" weight="duotone" /></span>
       <span class="flex-1"><span class="block font-bold">Notifikasi</span><span class="block text-sm text-teks3">{{ notif.belumDibaca ? `${notif.belumDibaca} belum dibaca` : 'Semua sudah dibaca' }}</span></span>
+    </router-link>
+
+    <router-link to="/ganti-sandi" class="kartu w-tahfizh flex items-center gap-3 p-5 hover:bg-permukaan2">
+      <span class="chip-ikon h-10 w-10"><PhLockKey :size="22" weight="duotone" /></span>
+      <span class="flex-1"><span class="block font-bold">Ganti kata sandi</span><span class="block text-sm text-teks3">Disarankan berkala, minimal 8 karakter berisi huruf dan angka</span></span>
     </router-link>
 
     <section v-if="MODE_DEMO" class="kartu w-tahfizh p-5">

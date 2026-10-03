@@ -1,3 +1,4 @@
+<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.1 | Fase 1 – Akun dan hak akses | 03/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import {
@@ -51,7 +52,7 @@ const AKSI = [
         </div>
         <ul v-if="menunggu.length" class="divide-y divide-garis">
           <li v-for="p in menunggu" :key="p.id">
-            <router-link :to="`/pegawai/${p.id}`" class="flex min-h-[56px] items-center gap-3 py-2">
+            <router-link to="/verifikasi/menunggu" class="flex min-h-[56px] items-center gap-3 py-2">
               <span class="chip-ikon h-10 w-10"><PhHourglass :size="20" weight="duotone" /></span>
               <span class="min-w-0 flex-1">
                 <span class="block truncate font-semibold">{{ p.nama_lengkap }}</span>
