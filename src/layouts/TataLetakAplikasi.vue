@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/layouts/TataLetakAplikasi.vue | v1.1 | Fase 1 – Pengaturan | 03/10/2026 -->
+<!-- SIMKA PRO | src/layouts/TataLetakAplikasi.vue | v1.2 | Fase 1 – Perbaikan | 03/10/2026 -->
 <script setup>
 // Tata letak responsif: desktop = sidebar + bilah atas; mobile = bilah aplikasi ringkas,
 // navigasi bawah, kartu, FAB, dan bottom sheet (ala aplikasi Android).
@@ -14,10 +14,11 @@ import AvatarPengguna from '@/components/AvatarPengguna.vue'
 import DaftarToast from '@/components/DaftarToast.vue'
 import DialogKonfirmasi from '@/components/DialogKonfirmasi.vue'
 import { useNotifikasi } from '@/stores/notifikasi'
+import { useUI } from '@/stores/ui'
 import { MODE_DEMO } from '@/lib/supabase'
 import { formatHari, formatHijriah, formatJam, sekarang } from '@/lib/tanggal'
 
-const route = useRoute(); const router = useRouter(); const notif = useNotifikasi()
+const route = useRoute(); const router = useRouter(); const notif = useNotifikasi(); const ui = useUI()
 const judul = computed(() => route.meta.judul || 'SIMKA PRO')
 const jam = ref(sekarang())
 let detak
@@ -28,7 +29,7 @@ const kembali = () => (history.length > 1 ? router.back() : router.push(route.me
 <template>
   <div class="min-h-dvh">
     <NavSamping />
-    <div class="lg:pl-[272px]">
+    <div :class="['transition-[padding] duration-200', ui.sidebarCiut ? 'lg:pl-[76px]' : 'lg:pl-[272px]']">
       <!-- Bilah atas desktop -->
       <header class="layar-saja sticky top-0 z-20 hidden h-[72px] items-center gap-4 border-b border-garis bg-latar/90 px-8 backdrop-blur lg:flex">
         <div class="min-w-0 flex-1">

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/DetailPegawai.vue | v1.1 | Fase 1 – Data pegawai | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/DetailPegawai.vue | v1.2 | Fase 1 – Perbaikan | 03/10/2026 -->
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -90,7 +90,7 @@ const baris = computed(() => !p.value ? [] : [
       <div class="mt-4 flex flex-wrap gap-2">
         <router-link :to="`/pegawai/${p.id}/ubah`" class="tombol-utama"><PhPencilSimple :size="20" weight="duotone" /> Ubah data</router-link>
         <button v-if="bolehHapus" class="tombol-garis" @click="hapus"><PhTrash :size="20" weight="duotone" /> Hapus</button>
-        <button class="tombol-garis" @click="pratinjau = !pratinjau"><PhEye :size="20" weight="duotone" /> {{ pratinjau ? 'Tutup pratinjau' : 'Pratinjau biodata' }}</button>
+        <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau biodata</button>
         <TombolCetak label="Cetak biodata" />
       </div>
 
@@ -109,8 +109,8 @@ const baris = computed(() => !p.value ? [] : [
       </section>
     </div>
 
-    <div :class="pratinjau && 'wadah-pratinjau mt-4 overflow-x-auto rounded-kartu bg-[#E9E3E0] p-4 dark:bg-[#0F0A0B] sm:p-8'">
-      <DokumenCetak judul="Biodata Pegawai" :pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+    <div>
+      <DokumenCetak judul="Biodata Pegawai"  v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
         <table class="tabel">
           <colgroup><col style="width:7%"><col style="width:33%"><col style="width:60%"></colgroup>
           <thead><tr><th>No.</th><th>Data</th><th>Keterangan</th></tr></thead>
@@ -127,5 +127,5 @@ const baris = computed(() => !p.value ? [] : [
 </template>
 <style scoped>
 .kepala { background: var(--gradasi-utama); }
-@media print { .wadah-pratinjau { background: none !important; padding: 0 !important; margin: 0 !important; } }
+
 </style>

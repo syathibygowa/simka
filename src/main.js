@@ -1,3 +1,4 @@
+// SIMKA PRO | src/main.js | v1.1 | Fase 1 – Perbaikan pembaruan | 03/10/2026
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import '@fontsource/plus-jakarta-sans/400.css'
@@ -15,3 +16,14 @@ app.use(createPinia())
 useTema().pasang()
 app.use(router)
 app.mount('#app')
+
+// Pembaruan otomatis: saat versi baru terpasang di GitHub Pages, aplikasi memuat ulang dengan sendirinya
+// (dan memeriksa pembaruan setiap 30 menit selama aplikasi terbuka).
+if (import.meta.env.MODE !== 'demo') {
+  import('virtual:pwa-register').then(({ registerSW }) => {
+    registerSW({
+      immediate: true,
+      onRegisteredSW(_, reg) { if (reg) setInterval(() => reg.update(), 30 * 60 * 1000) },
+    })
+  })
+}

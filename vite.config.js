@@ -1,3 +1,4 @@
+// SIMKA PRO | vite.config.js | v1.1 | Fase 1 – Perbaikan pembaruan | 03/10/2026
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -10,13 +11,15 @@ export default defineConfig(({ mode }) => {
   const demo = mode === 'demo'
   return {
     base: env.VITE_BASE || './',
+    define: { __WAKTU_BUILD__: JSON.stringify(new Date().toISOString()) },
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
     plugins: [
       vue(),
-      demo
-        ? viteSingleFile()
-        : VitePWA({
+      demo && viteSingleFile(),
+      VitePWA({
+            disable: demo,            // mode demo: tanpa service worker
             registerType: 'autoUpdate',
+            injectRegister: false,    // didaftarkan di main.js agar halaman memuat ulang otomatis saat ada versi baru
             includeAssets: ['ikon.svg'],
             manifest: {
               name: 'SIMKA PRO Imam Asy-Syathiby',
@@ -35,7 +38,10 @@ export default defineConfig(({ mode }) => {
                 { src: 'ikon/ikon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
               ],
             },
-            workbox: { navigateFallback: 'index.html', globPatterns: ['**/*.{js,css,html,svg,png,jpg,woff2}'] },
+            workbox: {
+              navigateFallback: 'index.html', globPatterns: ['**/*.{js,css,html,svg,png,jpg,woff2}'],
+              cleanupOutdatedCaches: true, clientsClaim: true, skipWaiting: true,
+            },
           }),
     ],
     build: demo

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/RekapPegawai.vue | v1.0 | Fase 1 – Data pegawai | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/RekapPegawai.vue | v1.1 | Fase 1 – Perbaikan | 03/10/2026 -->
 <script setup>
 // Rekap kepegawaian: per status, pendidikan, masa kerja, dan bidang, dirinci menurut jenis kelamin.
 import { ref, computed, onMounted } from 'vue'
@@ -66,7 +66,7 @@ function ekspor() {
           <h2 class="text-lg font-bold">{{ jumlah.total }} pegawai aktif</h2>
           <p class="text-sm text-teks3">{{ jumlah.L }} laki-laki dan {{ jumlah.P }} perempuan. Pegawai cuti panjang, nonaktif, dan keluar tidak dihitung.</p>
         </div>
-        <button class="tombol-garis" @click="pratinjau = !pratinjau"><PhEye :size="20" weight="duotone" /> {{ pratinjau ? 'Tutup pratinjau' : 'Pratinjau cetak' }}</button>
+        <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak</button>
         <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
         <TombolCetak class="hidden lg:inline-flex" />
       </div>
@@ -84,9 +84,8 @@ function ekspor() {
       </div>
     </div>
 
-    <div :class="pratinjau && 'wadah-pratinjau mt-6 overflow-x-auto rounded-kartu bg-[#E9E3E0] p-4 dark:bg-[#0F0A0B] sm:p-8'">
-      <p v-if="pratinjau" class="layar-saja mb-3 text-center text-sm font-semibold text-[#544245] dark:text-[#D6C5C2]">Pratinjau kertas F4 (215 × 330 mm, margin 2 cm)</p>
-      <DokumenCetak judul="Rekap Kepegawaian" :subjudul="`Pegawai aktif keadaan per ${formatPanjang(new Date())}`" :pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+    <div>
+      <DokumenCetak judul="Rekap Kepegawaian" :subjudul="`Pegawai aktif keadaan per ${formatPanjang(new Date())}`"  v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
         <template v-for="(t, ti) in TABEL" :key="t.judul">
           <p :style="{ margin: ti ? '10pt 0 4pt' : '4pt 0 4pt' }">{{ String.fromCharCode(65 + ti) }}. {{ t.judul.replace('Menurut', 'Rekap menurut') }}</p>
           <table class="tabel">
@@ -106,4 +105,4 @@ function ekspor() {
     </div>
   </div>
 </template>
-<style scoped>@media print { .wadah-pratinjau { background: none !important; padding: 0 !important; margin: 0 !important; } }</style>
+

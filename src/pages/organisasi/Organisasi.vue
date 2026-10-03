@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/organisasi/Organisasi.vue | v1.0 | Fase 1 – Struktur organisasi | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/organisasi/Organisasi.vue | v1.1 | Fase 1 – Perbaikan | 03/10/2026 -->
 <script setup>
 import { computed, onMounted, ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
@@ -39,7 +39,7 @@ const induk = (u) => org.cariUnit(u.parent_id)?.nama || '–'
             <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="t.ikon" :size="20" weight="duotone" /></span><span class="whitespace-nowrap">{{ t.n }}</span>
           </button>
         </nav>
-        <button class="tombol-garis hidden lg:inline-flex" @click="pratinjau = !pratinjau"><PhEye :size="20" weight="duotone" /> {{ pratinjau ? 'Tutup pratinjau' : 'Pratinjau cetak' }}</button>
+        <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak</button>
       </div>
       <p v-if="!org.dimuat" class="py-10 text-center text-teks3">Memuat struktur organisasi…</p>
       <div v-else :class="'w-' + aktif.w">
@@ -49,9 +49,8 @@ const induk = (u) => org.cariUnit(u.parent_id)?.nama || '–'
     </div>
 
     <!-- Dokumen cetak: daftar bidang/unit dan jabatan -->
-    <div v-if="org.dimuat" :class="pratinjau && 'wadah-pratinjau mt-6 overflow-x-auto rounded-kartu bg-[#E9E3E0] p-4 dark:bg-[#0F0A0B] sm:p-8'">
-      <p v-if="pratinjau" class="layar-saja mb-3 text-center text-sm font-semibold text-[#544245] dark:text-[#D6C5C2]">Pratinjau kertas F4 (215 × 330 mm, margin 2 cm)</p>
-      <DokumenCetak judul="Struktur Organisasi" :subjudul="`Keadaan per ${formatPanjang(new Date())}`" :pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+    <div v-if="org.dimuat">
+      <DokumenCetak judul="Struktur Organisasi" :subjudul="`Keadaan per ${formatPanjang(new Date())}`"  v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
         <table class="tabel">
           <colgroup><col style="width:7%"><col style="width:35%"><col style="width:17%"><col style="width:11%"><col style="width:19%"><col style="width:11%"></colgroup>
           <thead><tr><th>No.</th><th>Bidang/Unit</th><th>Kode</th><th>Jenis</th><th>Induk</th><th>Pegawai</th></tr></thead>
@@ -83,5 +82,5 @@ const induk = (u) => org.cariUnit(u.parent_id)?.nama || '–'
 </template>
 <style scoped>
 .tab.aktif { border-color: color-mix(in srgb, var(--c) 35%, transparent); background: color-mix(in srgb, var(--c) 12%, rgb(var(--permukaan))); }
-@media print { .wadah-pratinjau { background: none !important; padding: 0 !important; margin: 0 !important; } }
+
 </style>

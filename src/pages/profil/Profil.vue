@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.2 | Fase 1 – Akun dan hak akses | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.3 | Fase 1 – Perbaikan pembaruan | 03/10/2026 -->
 <script setup>
 import { useRouter } from 'vue-router'
 import { PhSignOut, PhPalette, PhBell, PhInfo, PhLockKey } from '@phosphor-icons/vue'
@@ -8,7 +8,8 @@ import { MODE_DEMO } from '@/lib/supabase'
 import PilihTema from '@/components/PilihTema.vue'
 import AvatarPengguna from '@/components/AvatarPengguna.vue'
 import PolaKhatam from '@/components/PolaKhatam.vue'
-import { VERSI_APLIKASI, KETERANGAN_VERSI } from '@/lib/versi'
+import { VERSI_APLIKASI, KETERANGAN_VERSI, WAKTU_BUILD } from '@/lib/versi'
+import { formatPendek, formatJam } from '@/lib/tanggal'
 
 const sesi = useSesi(); const notif = useNotifikasi(); const router = useRouter()
 const PERAN = { superadmin: 'Superadmin', admin: 'Admin', pegawai: 'Pegawai' }
@@ -55,7 +56,8 @@ function ganti(p) { sesi.masukDemo(p); notif.berhenti(); notif.muat(); router.pu
       <span class="chip-ikon h-10 w-10"><PhSignOut :size="22" weight="duotone" /></span>
       <span class="font-bold">Keluar dari akun</span>
     </button>
-    <p class="pb-2 text-center text-xs text-teks3">SIMKA PRO versi {{ VERSI_APLIKASI }} – {{ KETERANGAN_VERSI }}</p>
+    <p class="text-center text-xs text-teks3">SIMKA PRO versi {{ VERSI_APLIKASI }} – {{ KETERANGAN_VERSI }}</p>
+    <p v-if="WAKTU_BUILD" class="pb-2 text-center text-xs text-teks3">Dibangun {{ formatPendek(WAKTU_BUILD) }} pukul {{ formatJam(WAKTU_BUILD) }} WITA</p>
   </div>
 </template>
 <style scoped>.kepala { background: var(--gradasi-utama); }</style>

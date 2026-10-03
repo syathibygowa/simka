@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/lembaga.js | v1.0 | Fase 1 – Pengaturan | 03/10/2026
+// SIMKA PRO | src/stores/lembaga.js | v1.1 | Fase 1 – Perbaikan | 03/10/2026
 // Pengaturan lembaga: identitas, kalender, kop surat, penanda tangan, penomoran, integrasi.
 // Dibaca semua pengguna masuk (kop dan penanda tangan dipakai saat mencetak);
 // diubah hanya oleh superadmin (dijaga RLS di server).
@@ -43,6 +43,14 @@ export const useLembaga = defineStore('lembaga', {
         const hasil = await Promise.all(TABEL.map((t) => supabase.from(t).select('*').order(URUT[t])))
         TABEL.forEach((t, i) => { if (!hasil[i].error) this[t] = hasil[i].data || [] })
       } finally { this.memuat = false; this.dimuat = true }
+    },
+
+    /** Identitas lembaga saja (publik, dipakai juga di halaman masuk untuk logo aplikasi). */
+    async muatIdentitas() {
+      if (this.identitas?.nama_lengkap) return
+      if (MODE_DEMO) { this.identitas = LEMBAGA_DEMO().identitas; return }
+      const { data } = await supabase.from('institution_settings').select('nilai').eq('kunci', 'identitas').maybeSingle()
+      if (data?.nilai) this.identitas = data.nilai
     },
 
     /** Simpan satu kelompok pengaturan (identitas / hijriah / integrasi). */

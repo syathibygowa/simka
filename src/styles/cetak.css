@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/cetak.css | v1.1 | Fase 1 – Pengaturan | 03/10/2026 */
+/* SIMKA PRO | src/styles/cetak.css | v1.2 | Fase 1 – Jabatan dan tunjangan | 03/10/2026 */
 /* =====================================================================
    SIMKA PRO · Standar cetak dokumen
    Kertas F4 215 × 330 mm, margin 2 cm, garis tabel ½ pt,
@@ -71,3 +71,9 @@
   main, .isi-utama { padding: 0 !important; margin: 0 !important; max-width: none !important; }
 }
 @media screen { .cetak-saja:not(.tampil) { display: none; } }
+
+/* Tabel lebar (F4 mendatar): huruf lebih kecil, angka rata kanan */
+.dok table.tabel.kecil { font-size: 8pt; }
+.dok table.tabel.kecil th, .dok table.tabel.kecil td { padding: 2pt 3pt; }
+.dok table.tabel.kecil th { font-size: 7.5pt; overflow-wrap: normal; word-break: normal; }
+.dok table.tabel td.kanan { text-align: right; }

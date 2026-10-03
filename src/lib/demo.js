@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demo.js | v1.3 | Fase 1 – Akun dan hak akses | 03/10/2026
+// SIMKA PRO | src/lib/demo.js | v1.4 | Fase 1 – Jabatan dan tunjangan | 03/10/2026
 // Data contoh untuk MODE DEMO. Nama pegawai di bawah fiktif.
 const menitLalu = (m) => new Date(Date.now() - m * 60000).toISOString()
 
@@ -182,3 +182,24 @@ export const IZIN_ADMIN_DEMO = [
   { kode: 'kalender', nama: 'Mengelola hari libur dan kalender', urutan: 3 }, { kode: 'audit_log', nama: 'Melihat audit log seluruh pegawai', urutan: 4 },
   { kode: 'verval_presensi', nama: 'Verval presensi di luar area (Fase 2)', urutan: 5 },
 ]
+
+// ---------- Data contoh tarif tunjangan (mengikuti isi awal migrasi 1100) ----------
+export const TARIF_DEMO = () => {
+  const b = (kategori, kunci, nama, besaran) => ({ id: `${kategori}-${kunci}`, kategori, kunci, nama, besaran, berlaku_mulai: '2026-01-01', keterangan: null })
+  return [
+    b('struktural', 'DIREKTUR', 'Direktur', 3000000), b('struktural', 'WAKIL_DIREKTUR', 'Wakil Direktur', 2500000), b('struktural', 'KEPALA_BIDANG', 'Kepala Bidang', 2000000),
+    b('struktural', 'WAKIL_KEPALA_BIDANG', 'Wakil Kepala Bidang', 1000000), b('struktural', 'WAKIL_KEPALA_SEKOLAH', 'Wakil Kepala Sekolah', 1200000),
+    b('struktural', 'KEPALA_UNIT', 'Kepala Unit', 1000000), b('struktural', 'BENDAHARA', 'Bendahara', 800000), b('struktural', 'TATA_USAHA', 'Tata Usaha', 700000),
+    b('fungsional', 'MUHAFFIZH', 'Muhaffizh', 500000), b('fungsional', 'MUSYRIF', 'Musyrif', 300000), b('fungsional', 'GURU', 'Guru mapel', 450000),
+    b('fungsional', 'WALI_KELAS', 'Wali kelas', 250000), b('fungsional', 'OPERATOR', 'Operator', 350000), b('fungsional', 'STAF_BIDANG', 'Staf bidang', 300000),
+    b('fungsional', 'STAF_PEMBANTU', 'Staf pembantu', 150000), ...['SECURITY', 'KEBERSIHAN', 'MEDIS', 'LOGISTIK', 'MEDIA', 'SARPRAS'].map((k) => b('fungsional', k, 'Petugas ' + k.toLowerCase(), 700000)),
+    b('pendidikan', 'SD', 'SD', 50000), b('pendidikan', 'SMP', 'SMP', 50000), b('pendidikan', 'SMA', 'SMA', 80000), b('pendidikan', 'S1', 'Sarjana (S1)', 130000),
+    b('pendidikan', 'S1-LN', 'Sarjana luar negeri (S1-LN)', 180000), b('pendidikan', 'S2', 'Magister (S2)', 250000),
+    ...[50, 100, 150, 200, 250, 350, 500, 600, 700, 800, 900, 1000].map((v, i) => b('masa_kerja', String(i + 1), `${i + 1} tahun`, v * 1000)),
+    b('kepegawaian', 'tetap', 'Pegawai tetap', 1000000), b('kepegawaian', 'kontrak', 'Pegawai kontrak', 600000),
+    b('kesehatan', 'tetap', 'Pegawai tetap', 150000), b('kesehatan', 'kontrak', 'Pegawai kontrak', 100000),
+    b('level_muhaffizh', 'mahir', 'Mahir', 300000), b('level_muhaffizh', 'terampil', 'Terampil', 200000), b('level_muhaffizh', 'pemula', 'Pemula', 100000),
+    b('honorer_jam', 'guru_lama', 'Guru lama (per jam)', 20000), b('honorer_jam', 'guru_baru', 'Guru baru (per jam)', 15000),
+    b('honorer_jam', 'muhaffizh_lama', 'Muhaffizh lama (per jam)', 25000), b('honorer_jam', 'muhaffizh_baru', 'Muhaffizh baru (per jam)', 20000),
+  ]
+}

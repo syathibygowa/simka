@@ -1,9 +1,10 @@
+<!-- SIMKA PRO | src/components/NavBawah.vue | v1.1 | Fase 1 – Jabatan dan tunjangan | 03/10/2026 -->
 <script setup>
 // Navigasi bawah ala Android (Material 3): indikator pil berwarna sesuai tab.
 import { useRoute } from 'vue-router'
 import { NAV_BAWAH } from '@/lib/menu'
 const route = useRoute()
-const TUGAS = ['/tugas', '/pegawai', '/segera', '/verifikasi', '/organisasi', '/hak-akses', '/pengaturan', '/notifikasi']
+const TUGAS = ['/tugas', '/pegawai', '/jabatan-tunjangan', '/hak-akses', '/segera', '/verifikasi', '/organisasi', '/hak-akses', '/pengaturan', '/notifikasi']
 const aktif = (t) => t.ke === '/' ? route.path === '/' : t.kode === 'tugas' ? TUGAS.some((p) => route.path.startsWith(p)) : route.path.startsWith(t.ke)
 </script>
 <template>

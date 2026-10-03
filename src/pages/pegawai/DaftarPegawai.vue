@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.1 | Fase 1 – Data pegawai | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.2 | Fase 1 – Perbaikan | 03/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { PhMagnifyingGlass, PhPrinter, PhEye, PhCaretRight, PhUsersThree, PhSlidersHorizontal, PhUserPlus, PhFileXls, PhChartBar, PhDownloadSimple } from '@phosphor-icons/vue'
@@ -69,7 +69,7 @@ const judulCetak = computed(() => saring.value === 'semua' ? 'Daftar Pegawai' : 
         <router-link to="/pegawai/impor" class="w-gaji tombol-garis shrink-0 px-4 text-sm"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Impor Excel</router-link>
         <button class="w-pegawai tombol-garis shrink-0 px-4 text-sm" @click="eksporExcel"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor Excel</button>
         <router-link to="/pegawai/rekap" class="w-laporan tombol-garis shrink-0 px-4 text-sm"><PhChartBar :size="20" weight="duotone" style="color: var(--c)" /> Rekap kepegawaian</router-link>
-        <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = !pratinjau"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> {{ pratinjau ? 'Tutup pratinjau' : 'Pratinjau cetak' }}</button>
+        <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau cetak</button>
         <button class="w-tatausaha tombol-garis shrink-0 px-4 text-sm" @click="opsiCetak = true"><PhSlidersHorizontal :size="20" weight="duotone" style="color: var(--c)" /> Atur dan cetak</button>
       </div>
 
@@ -134,9 +134,8 @@ const judulCetak = computed(() => saring.value === 'semua' ? 'Daftar Pegawai' : 
     </div>
 
     <!-- Dokumen cetak -->
-    <div :class="pratinjau && 'wadah-pratinjau mt-6 overflow-x-auto rounded-kartu bg-[#E9E3E0] p-4 dark:bg-[#0F0A0B] sm:p-8'">
-      <p v-if="pratinjau" class="layar-saja mb-3 text-center text-sm font-semibold text-[#544245] dark:text-[#D6C5C2]">Pratinjau kertas F4 (215 × 330 mm, margin 2 cm)</p>
-      <DokumenCetak :kop="kop" :judul="judulCetak" :subjudul="`Keadaan per ${formatPanjang(tglDok)}`" :pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+    <div>
+      <DokumenCetak :kop="kop" :judul="judulCetak" :subjudul="`Keadaan per ${formatPanjang(tglDok)}`"  v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
         <table class="tabel">
           <colgroup><col style="width:6%"><col style="width:24%"><col style="width:14%"><col style="width:6%"><col style="width:22%"><col style="width:16%"><col style="width:12%"></colgroup>
           <thead><tr><th>No.</th><th>Nama</th><th>NIY</th><th>L/P</th><th>Jabatan</th><th>Bidang/Unit</th><th>Status</th></tr></thead>
@@ -175,5 +174,5 @@ const judulCetak = computed(() => saring.value === 'semua' ? 'Daftar Pegawai' : 
   </div>
 </template>
 <style scoped>
-@media print { .wadah-pratinjau { background: none !important; padding: 0 !important; margin: 0 !important; } }
+
 </style>
