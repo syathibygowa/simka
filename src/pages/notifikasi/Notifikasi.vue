@@ -1,3 +1,4 @@
+<!-- SIMKA PRO | src/pages/notifikasi/Notifikasi.vue | v1.1 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026 -->
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
@@ -5,6 +6,7 @@ import { PhChecks, PhEnvelopeOpen, PhEnvelopeSimple, PhTrash, PhArrowSquareOut, 
 import { useNotifikasi } from '@/stores/notifikasi'
 import ItemNotifikasi from '@/components/ItemNotifikasi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
+import KartuDorong from '@/components/KartuDorong.vue'
 import { formatPanjang, formatPendek, sekarang } from '@/lib/tanggal'
 
 const notif = useNotifikasi(); const router = useRouter()
@@ -27,6 +29,7 @@ async function buka(n) { pilihan.value = null; await notif.tandai(n.id); if (n.t
 </script>
 <template>
   <div class="mx-auto max-w-3xl">
+    <KartuDorong ringkas />
     <div class="mb-4 flex flex-wrap items-center gap-2">
       <div class="flex rounded-full bg-permukaan2 p-1" role="tablist" aria-label="Saring notifikasi">
         <button v-for="t in [{ k: 'semua', n: 'Semua' }, { k: 'belum', n: 'Belum dibaca' }]" :key="t.k" role="tab" :aria-selected="tab === t.k"

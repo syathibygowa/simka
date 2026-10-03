@@ -1,4 +1,4 @@
-// SIMKA PRO | vite.config.js | v1.1 | Fase 1 – Perbaikan pembaruan | 03/10/2026
+// SIMKA PRO | vite.config.js | v1.2 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -41,6 +41,7 @@ export default defineConfig(({ mode }) => {
             workbox: {
               navigateFallback: 'index.html', globPatterns: ['**/*.{js,css,html,svg,png,jpg,woff2}'],
               cleanupOutdatedCaches: true, clientsClaim: true, skipWaiting: true,
+              importScripts: ['sw-dorong.js'],   // notifikasi dorong (web push)
             },
           }),
     ],

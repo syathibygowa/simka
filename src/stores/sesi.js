@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/sesi.js | v1.2 | Fase 2 – Tahap 5 Jadwal shift | 03/10/2026
+// SIMKA PRO | src/stores/sesi.js | v1.3 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO, panggilFungsi } from '@/lib/supabase'
@@ -9,7 +9,7 @@ const simpan = (k, v) => { try { v == null ? localStorage.removeItem(k) : localS
 const baca = (k) => { try { return localStorage.getItem(k) } catch { return null } }
 
 export const useSesi = defineStore('sesi', {
-  state: () => ({ pengguna: null, fitur: {}, siap: false, wajibGantiSandi: false, punyaShift: false }),
+  state: () => ({ pengguna: null, fitur: {}, izinAdmin: [], siap: false, wajibGantiSandi: false, punyaShift: false }),
   getters: {
     masuk: (s) => !!s.pengguna,
     peran: (s) => s.pengguna?.peran ?? 'pegawai',
@@ -22,7 +22,7 @@ export const useSesi = defineStore('sesi', {
     async mulai() {
       if (MODE_DEMO) {
         const p = baca('simka.demo.peran')
-        if (p && PENGGUNA_DEMO[p]) this.pengguna = { ...PENGGUNA_DEMO[p] }
+        if (p && PENGGUNA_DEMO[p]) this.masukDemo(p)
         this.siap = true
         return
       }
@@ -47,6 +47,11 @@ export const useSesi = defineStore('sesi', {
       this.wajibGantiSandi = data.wajib_ganti_sandi
       const { data: fitur } = await supabase.rpc('fitur_saya')
       this.fitur = fitur || {}
+      // Izin admin (dipakai untuk menampilkan menu/tab yang sesuai; keamanan tetap diperiksa server)
+      if (['admin', 'superadmin'].includes(data.peran)) {
+        const { data: izin } = await supabase.rpc('izin_admin_saya')
+        this.izinAdmin = izin || []
+      }
       // Pegawai yang memegang pola shift melihat menu Jadwal Shift
       try {
         const { data: sh } = await supabase.from('employee_schedules').select('id, task_patterns!inner(jenis)')
@@ -65,7 +70,7 @@ export const useSesi = defineStore('sesi', {
       return r
     },
 
-    masukDemo(peran) { this.pengguna = { ...PENGGUNA_DEMO[peran] }; simpan('simka.demo.peran', peran) },
+    masukDemo(peran) { this.pengguna = { ...PENGGUNA_DEMO[peran] }; this.izinAdmin = peran === 'admin' ? ['verval_akun', 'kelola_pegawai', 'audit_log', 'verval_presensi'] : []; simpan('simka.demo.peran', peran) },
 
     async keluar() {
       if (!MODE_DEMO) await supabase.auth.signOut()
@@ -74,6 +79,9 @@ export const useSesi = defineStore('sesi', {
     },
 
     /** Tingkat akses fitur: 0 tidak ada, 1 lihat, 2 input/ubah, 3 kelola. Superadmin selalu 3. */
+    /** Admin memiliki izin tertentu (superadmin selalu). */
+    bolehAdmin(kode) { return this.isSuperadmin || (this.peran === 'admin' && this.izinAdmin.includes(kode)) },
+
     tingkat(kode) {
       if (this.isSuperadmin) return 3
       return Number(this.fitur?.[kode] ?? 0)

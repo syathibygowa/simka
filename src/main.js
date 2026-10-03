@@ -1,4 +1,4 @@
-// SIMKA PRO | src/main.js | v1.1 | Fase 1 – Perbaikan pembaruan | 03/10/2026
+// SIMKA PRO | src/main.js | v1.2 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import '@fontsource/plus-jakarta-sans/400.css'
@@ -25,5 +25,9 @@ if (import.meta.env.MODE !== 'demo') {
       immediate: true,
       onRegisteredSW(_, reg) { if (reg) setInterval(() => reg.update(), 30 * 60 * 1000) },
     })
+  })
+  // Notifikasi HP diketuk saat aplikasi sudah terbuka: buka halaman terkait
+  navigator.serviceWorker?.addEventListener('message', (e) => {
+    if (e.data?.jenis === 'buka-tautan' && e.data.tautan) router.push(e.data.tautan)
   })
 }

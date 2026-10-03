@@ -1,11 +1,11 @@
-// SIMKA PRO | src/lib/menu.js | v1.6 | Fase 2 – Tahap 7 Statistik, rekap, pengingat | 03/10/2026
+// SIMKA PRO | src/lib/menu.js | v1.7 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026
 // Daftar menu SIMKA PRO. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
 // pada fase berikutnya; menu tersebut tampil dengan lencana fase.
 import {
   PhHouse, PhFingerprint, PhUsersThree, PhStudent, PhBookOpenText, PhFileText, PhFirstAidKit,
   PhShieldCheck, PhChartBar, PhEnvelopeSimple, PhWallet, PhMegaphone, PhKey, PhGearSix, PhBell,
-  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp,
+  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise,
 } from '@phosphor-icons/vue'
 
 const ADMIN = ['admin', 'superadmin']
@@ -30,7 +30,8 @@ export const MENU = [
   { kode: 'laporan',    nama: 'Laporan',         ikon: PhChartBar,       warna: 'laporan',    ke: '/segera/laporan',    grup: 'Administrasi', fase: 8 },
   { kode: 'tatausaha',  nama: 'Tata Usaha',      ikon: PhEnvelopeSimple, warna: 'tatausaha',  ke: '/segera/tatausaha',  grup: 'Administrasi', fase: 10 },
   { kode: 'gaji',       nama: 'Gaji',            ikon: PhWallet,         warna: 'gaji',       ke: '/segera/gaji',       grup: 'Administrasi', fase: 11 },
-  { kode: 'pengumuman', nama: 'Pengumuman',      ikon: PhMegaphone,      warna: 'pengumuman', ke: '/segera/pengumuman', grup: 'Sistem', fase: 3 },
+  { kode: 'pengumuman', nama: 'Pengumuman',      ikon: PhMegaphone,      warna: 'pengumuman', ke: '/pengumuman',        grup: 'Utama' },
+  { kode: 'auditlog',   nama: 'Audit Log',       ikon: PhClockCounterClockwise, warna: 'audit', ke: '/audit-log',     grup: 'Sistem' },
   { kode: 'organisasi', nama: 'Struktur Organisasi', ikon: PhTreeStructure, warna: 'sistem',  ke: '/organisasi',        grup: 'Sistem', peran: ['superadmin'] },
   { kode: 'hakakses',   nama: 'Hak Akses',       ikon: PhKey,            warna: 'hakakses',   ke: '/hak-akses',         grup: 'Sistem', peran: ['superadmin'] },
   { kode: 'pengaturan', nama: 'Pengaturan',      ikon: PhGearSix,        warna: 'pengaturan', ke: '/pengaturan',        grup: 'Sistem', peran: ['superadmin'] },

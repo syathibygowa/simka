@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.3 | Fase 1 – Perbaikan pembaruan | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.4 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026 -->
 <script setup>
 import { useRouter } from 'vue-router'
 import { PhSignOut, PhPalette, PhBell, PhInfo, PhLockKey } from '@phosphor-icons/vue'
@@ -8,13 +8,15 @@ import { MODE_DEMO } from '@/lib/supabase'
 import PilihTema from '@/components/PilihTema.vue'
 import AvatarPengguna from '@/components/AvatarPengguna.vue'
 import PolaKhatam from '@/components/PolaKhatam.vue'
+import KartuDorong from '@/components/KartuDorong.vue'
+import { usePengumuman } from '@/stores/pengumuman'
 import { VERSI_APLIKASI, KETERANGAN_VERSI, WAKTU_BUILD } from '@/lib/versi'
 import { formatPendek, formatJam } from '@/lib/tanggal'
 
-const sesi = useSesi(); const notif = useNotifikasi(); const router = useRouter()
+const sesi = useSesi(); const notif = useNotifikasi(); const router = useRouter(); const pengumuman = usePengumuman()
 const PERAN = { superadmin: 'Superadmin', admin: 'Admin', pegawai: 'Pegawai' }
-async function keluar() { notif.berhenti(); await sesi.keluar(); router.replace('/masuk') }
-function ganti(p) { sesi.masukDemo(p); notif.berhenti(); notif.muat(); router.push('/') }
+async function keluar() { notif.berhenti(); pengumuman.berhenti(); await sesi.keluar(); router.replace('/masuk') }
+function ganti(p) { sesi.masukDemo(p); notif.berhenti(); pengumuman.berhenti(); notif.muat(); router.push('/') }
 </script>
 <template>
   <div class="mx-auto max-w-2xl space-y-4">
@@ -38,6 +40,8 @@ function ganti(p) { sesi.masukDemo(p); notif.berhenti(); notif.muat(); router.pu
       <span class="chip-ikon h-10 w-10"><PhBell :size="22" weight="duotone" /></span>
       <span class="flex-1"><span class="block font-bold">Notifikasi</span><span class="block text-sm text-teks3">{{ notif.belumDibaca ? `${notif.belumDibaca} belum dibaca` : 'Semua sudah dibaca' }}</span></span>
     </router-link>
+
+    <KartuDorong />
 
     <router-link to="/ganti-sandi" class="kartu w-tahfizh flex items-center gap-3 p-5 hover:bg-permukaan2">
       <span class="chip-ikon h-10 w-10"><PhLockKey :size="22" weight="duotone" /></span>

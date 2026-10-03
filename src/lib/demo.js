@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demo.js | v1.7 | Fase 2 – Tahap 4 Halaman presensi | 03/10/2026
+// SIMKA PRO | src/lib/demo.js | v1.8 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026
 // Data contoh untuk MODE DEMO. Nama pegawai di bawah fiktif.
 const menitLalu = (m) => new Date(Date.now() - m * 60000).toISOString()
 
@@ -249,3 +249,34 @@ export const PRESENSI_DEMO = () => {
   const pengaturan = { mulai_tanggal: null, jeda_minimal_pulang_menit: 15, batas_akurasi_m: 100, berlaku_cek_detik: 180, retensi_selfie_hari: 183, folder_selfie: 'SIMKA PRO/Presensi', pengingat_menit: 10 }
   return { pola, sesi, titik, pengaturan, polaJabatan }
 }
+
+// ---------------------------------------------------------------------
+// Fase 3: pengumuman dan audit log (data contoh)
+// ---------------------------------------------------------------------
+const hariDepan = (h) => { const d = new Date(Date.now() + h * 86400000); return d.toISOString().slice(0, 10) }
+export const PENGUMUMAN_DEMO = (peran) => {
+  const kelola = peran !== 'pegawai'
+  return [
+    { judul: 'Rapat koordinasi seluruh pegawai', isi: 'Assalamu\'alaikum warahmatullahi wabarakatuh.\n\nDiberitahukan kepada seluruh pegawai bahwa rapat koordinasi awal bulan dilaksanakan pada Kamis pukul 20.00 WITA di Aula Utama. Mohon hadir tepat waktu dan membawa catatan program bidang masing-masing.\n\nJazakumullahu khairan.',
+      penting: true, ringkasan_sasaran: 'Semua pegawai', menit: 40, dibaca: false, penerima: 17, sudah: 9, sampai: hariDepan(3) },
+    { judul: 'Jadwal piket kebersihan asrama pekan ini', isi: 'Jadwal piket pengawasan kebersihan asrama pekan ini sudah diperbarui. Musyrif dimohon memeriksa pembagian kamar dan melaporkan kendala kepada Kepala Bidang Kesantrian.',
+      penting: false, ringkasan_sasaran: 'Bidang Kesantrian; Musyrif', menit: 300, dibaca: true, penerima: 5, sudah: 5 },
+    { judul: 'Pengisian data NIY dan nomor HP', isi: 'Pegawai yang belum melengkapi NIY dan nomor HP di profil dimohon menghubungi admin kepegawaian paling lambat akhir pekan ini.',
+      penting: false, ringkasan_sasaran: 'Semua pegawai', menit: 2900, dibaca: true, penerima: 17, sudah: 14 },
+    { judul: 'Libur pertengahan semester', isi: 'Libur pertengahan semester untuk santri berlangsung tiga hari. Pegawai tetap masuk sesuai jadwal tugas masing-masing.',
+      penting: false, ringkasan_sasaran: 'Semua pegawai', menit: 20000, dibaca: true, penerima: 17, sudah: 17, sampai: hariDepan(-5) },
+  ].map((p, i) => ({
+    id: 'pg' + (i + 1), judul: p.judul, isi: p.isi, penting: p.penting, ringkasan_sasaran: p.ringkasan_sasaran, tampil_sampai: p.sampai || null,
+    created_at: menitLalu(p.menit), updated_at: menitLalu(p.menit), pembuat: 'Ust. Fadhil Rahman, S.Kom.',
+    dibaca_pada: p.dibaca ? menitLalu(p.menit - 5) : null, penerima: kelola ? p.penerima : null, sudah_dibaca: kelola ? p.sudah : null, saya_penerima: true,
+  }))
+}
+
+export const AUDIT_DEMO = () => [
+  { m: 12, pelaku: 'Ust. Fadhil Rahman, S.Kom.', emp: 'd-ad', aksi: 'tambah', tabel: 'announcements', data: { judul: 'Rapat koordinasi seluruh pegawai', penting: true } },
+  { m: 75, pelaku: 'Superadmin SIMKA', emp: 'd-sa', aksi: 'ubah', tabel: 'employees', data: { nama_lengkap: { lama: 'Ust. Hasan Basri', baru: 'Ust. Hasan Basri, Lc.' }, no_hp: { lama: null, baru: '081234567890' } } },
+  { m: 190, pelaku: 'Superadmin SIMKA', emp: 'd-sa', aksi: 'ubah', tabel: 'pattern_sessions', data: { toleransi_terlambat: { lama: 10, baru: 15 } } },
+  { m: 600, pelaku: 'Ust. Fadhil Rahman, S.Kom.', emp: 'd-ad', aksi: 'tambah', tabel: 'shift_rosters', data: { tanggal: hariDepan(1), employee_id: 'p5' } },
+  { m: 1500, pelaku: 'Superadmin SIMKA', emp: 'd-sa', aksi: 'hapus', tabel: 'holidays', data: { nama: 'Libur contoh', tanggal: hariDepan(-2) } },
+  { m: 2880, pelaku: 'Ust. Hasan Basri, Lc.', emp: 'd-pg', aksi: 'ubah', tabel: 'employees', data: { tema: { lama: 'sistem', baru: 'gelap' } } },
+].map((r, i) => ({ id: i + 1, created_at: menitLalu(r.m), employee_id: r.emp, pelaku: r.pelaku, aksi: r.aksi, tabel: r.tabel, data_id: null, ringkasan: null, data: r.data }))

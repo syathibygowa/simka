@@ -1,7 +1,7 @@
-// SIMKA PRO | src/lib/versi.js | v2.4.0 | Fase 2 – Tahap 7 Statistik, rekap, pengingat | 03/10/2026
+// SIMKA PRO | src/lib/versi.js | v3.0.0 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026
 // Nomor versi aplikasi yang tampil di halaman Profil. Naikkan setiap kali kode diunggah ke GitHub.
-export const VERSI_APLIKASI = '2.4.0'
-export const KETERANGAN_VERSI = 'Fase 2 – Presensi pegawai'
+export const VERSI_APLIKASI = '3.0.0'
+export const KETERANGAN_VERSI = 'Fase 3 – Administrasi pegawai'
 
 // Waktu kode dibangun oleh GitHub Actions; dipakai untuk memastikan versi yang tayang adalah yang terbaru.
 /* global __WAKTU_BUILD__ */

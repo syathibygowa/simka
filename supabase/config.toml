@@ -1,3 +1,4 @@
+# SIMKA PRO | supabase/config.toml | v1.1 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026
 # SIMKA PRO · konfigurasi Supabase CLI (bagian Edge Functions)
 # Fungsi publik (tanpa JWT pengguna) diberi verify_jwt = false; pemeriksaan
 # kewenangan dilakukan di dalam fungsi.
@@ -15,3 +16,13 @@ verify_jwt = true
 
 [functions.salin-logo]
 verify_jwt = true
+
+[functions.presensi]
+verify_jwt = true
+
+[functions.berkas]
+verify_jwt = true
+
+# Dipanggil database (pg_net) dengan token internal x-simka-token
+[functions.dorong]
+verify_jwt = false
