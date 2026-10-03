@@ -1,25 +1,30 @@
+<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.1 | Fase 1 – Data pegawai | 03/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { PhMagnifyingGlass, PhPrinter, PhEye, PhCaretRight, PhUsersThree, PhSlidersHorizontal } from '@phosphor-icons/vue'
+import { PhMagnifyingGlass, PhPrinter, PhEye, PhCaretRight, PhUsersThree, PhSlidersHorizontal, PhUserPlus, PhFileXls, PhChartBar, PhDownloadSimple } from '@phosphor-icons/vue'
+import { useRouter } from 'vue-router'
+import * as XLSX from 'xlsx'
+import { KEAKTIFAN, STATUS_KELUARGA, PENDIDIKAN, LEVEL_MUHAFFIZH } from '@/lib/kepegawaian'
 import { usePegawai } from '@/stores/pegawai'
 import { useSesi } from '@/stores/sesi'
-import { formatPanjang, hariIniISO } from '@/lib/tanggal'
+import { formatPanjang, formatPendek, hariIniISO } from '@/lib/tanggal'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
-import TombolCetak from '@/components/TombolCetak.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 
-const peg = usePegawai(); const sesi = useSesi()
+const peg = usePegawai(); const sesi = useSesi(); const router = useRouter()
+const keaktifan = ref('aktif')
 const cari = ref(''); const saring = ref('semua')
 const pratinjau = ref(false); const opsiCetak = ref(false)
 const tglDok = ref(hariIniISO()); const kop = ref('pondok')
 const pimpinan = ref({ jabatan: 'Direktur', nama: '', niy: '' })
 onMounted(async () => { if (!peg.daftar.length) peg.muat(); pimpinan.value = await ambilPenandaTangan('Direktur') })
 
-const STATUS_AKUN = {
+const STATUS_AKUN = { // label status akun
+ 
   aktif: { n: 'Aktif', w: 'presensi' }, menunggu: { n: 'Menunggu verifikasi', w: 'verifikasi' },
   tanpa_akun: { n: 'Belum punya akun', w: 'tahfizh' }, ditolak: { n: 'Ditolak', w: 'klinik' }, nonaktif: { n: 'Nonaktif', w: 'hakakses' },
 }
@@ -29,8 +34,21 @@ const jabatan = (p) => [p.jabatan_struktural, ...(p.jabatan_fungsional || [])].f
 const tampil = computed(() => {
   const q = cari.value.toLowerCase().trim()
   return peg.daftar.filter((p) => (saring.value === 'semua' || p.status_akun === saring.value) &&
+    (keaktifan.value === 'semua' || (p.status_keaktifan || 'aktif') === keaktifan.value) &&
     (!q || [p.nama_lengkap, p.niy, p.nama_unit, jabatan(p)].join(' ').toLowerCase().includes(q)))
 })
+function eksporExcel() {
+  const kolom = ['No.', 'Nama lengkap bergelar', 'NIY', 'Jenis kelamin', 'Tempat lahir', 'Tanggal lahir', 'TMT tugas', 'Masa kerja', 'Status kepegawaian',
+    'Kategori honorer', 'Pendidikan terakhir', 'Status keluarga', 'Nomor HP', 'Email', 'Bidang/Unit', 'Jabatan fungsional', 'Jabatan struktural', 'Level muhaffizh', 'Status keaktifan', 'Status akun']
+  const data = tampil.value.map((p, i) => [i + 1, p.nama_lengkap, p.niy || '', p.jenis_kelamin || '', p.tempat_lahir || '', p.tanggal_lahir ? formatPendek(p.tanggal_lahir) : '',
+    p.tmt_tugas ? formatPendek(p.tmt_tugas) : '', p.masa_kerja?.teks || '', STATUS_PEG[p.status_kepegawaian] || '', p.kategori_honorer || '', PENDIDIKAN[p.pendidikan_terakhir] || '',
+    STATUS_KELUARGA[p.status_keluarga] || '', p.no_hp || '', p.email || '', p.nama_unit || '', (p.jabatan_fungsional || []).join(', '), p.jabatan_struktural || '',
+    LEVEL_MUHAFFIZH[p.level_muhaffizh] || '', KEAKTIFAN[p.status_keaktifan] || '', STATUS_AKUN[p.status_akun]?.n || ''])
+  const ws = XLSX.utils.aoa_to_sheet([kolom, ...data])
+  ws['!cols'] = kolom.map((k, i) => ({ wch: Math.min(40, Math.max(k.length, ...data.map((r) => String(r[i]).length)) + 2) }))
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Data pegawai')
+  XLSX.writeFile(wb, `Data-Pegawai-${formatPendek(new Date()).replace(/\//g, '-')}.xlsx`)
+}
 function cetakSekarang() { opsiCetak.value = false; setTimeout(() => window.print(), 300) }
 const judulCetak = computed(() => saring.value === 'semua' ? 'Daftar Pegawai' : `Daftar Pegawai (${SARING.find((s) => s.k === saring.value).n})`)
 </script>
@@ -42,17 +60,28 @@ const judulCetak = computed(() => saring.value === 'semua' ? 'Daftar Pegawai' : 
         <span class="w-pegawai chip-ikon h-12 w-12"><PhUsersThree :size="28" weight="duotone" /></span>
         <div class="flex-1">
           <h2 class="text-lg font-bold">{{ peg.daftar.length }} pegawai terdata</h2>
-          <p class="text-sm text-teks3">Penambahan data dan impor Excel tersedia pada tahap berikutnya Fase 1.</p>
+          <p class="text-sm text-teks3">{{ tampil.length }} tampil sesuai saringan.</p>
         </div>
-        <button class="tombol-garis" @click="pratinjau = !pratinjau"><PhEye :size="20" weight="duotone" /> {{ pratinjau ? 'Tutup pratinjau' : 'Pratinjau cetak' }}</button>
-        <button class="tombol-garis" @click="opsiCetak = true"><PhSlidersHorizontal :size="20" weight="duotone" /> Atur dokumen</button>
-        <TombolCetak />
+        <router-link to="/pegawai/baru" class="tombol-utama"><PhUserPlus :size="20" weight="duotone" /> Tambah pegawai</router-link>
+      </div>
+      <!-- Aksi: tampil di semua ukuran layar -->
+      <div class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
+        <router-link to="/pegawai/impor" class="w-gaji tombol-garis shrink-0 px-4 text-sm"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Impor Excel</router-link>
+        <button class="w-pegawai tombol-garis shrink-0 px-4 text-sm" @click="eksporExcel"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor Excel</button>
+        <router-link to="/pegawai/rekap" class="w-laporan tombol-garis shrink-0 px-4 text-sm"><PhChartBar :size="20" weight="duotone" style="color: var(--c)" /> Rekap kepegawaian</router-link>
+        <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = !pratinjau"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> {{ pratinjau ? 'Tutup pratinjau' : 'Pratinjau cetak' }}</button>
+        <button class="w-tatausaha tombol-garis shrink-0 px-4 text-sm" @click="opsiCetak = true"><PhSlidersHorizontal :size="20" weight="duotone" style="color: var(--c)" /> Atur dan cetak</button>
       </div>
 
       <!-- Pencarian dan saringan -->
-      <div class="relative">
+      <div class="flex flex-wrap gap-2">
+      <div class="relative min-w-[220px] flex-1">
         <PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIY, bidang, atau jabatan" aria-label="Cari pegawai" />
+      </div>
+      <select v-model="keaktifan" class="isian w-auto" aria-label="Saring status keaktifan">
+        <option value="semua">Semua keaktifan</option><option v-for="(n, k) in KEAKTIFAN" :key="k" :value="k">{{ n }}</option>
+      </select>
       </div>
       <div class="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
         <button v-for="s in SARING" :key="s.k" :aria-pressed="saring === s.k"
@@ -125,7 +154,7 @@ const judulCetak = computed(() => saring.value === 'semua' ? 'Daftar Pegawai' : 
       </DokumenCetak>
     </div>
 
-    <TombolAksi label="Cetak" :ikon="PhPrinter" warna="laporan" @klik="opsiCetak = true" />
+    <TombolAksi label="Tambah" :ikon="PhUserPlus" warna="pegawai" @klik="router.push('/pegawai/baru')" />
     <LembarBawah v-model="opsiCetak" judul="Atur dokumen cetak">
       <div class="space-y-4 pb-2">
         <InputTanggal v-model="tglDok" label="Tanggal dokumen" wajib />

@@ -1,7 +1,12 @@
+<!-- SIMKA PRO | src/pages/pegawai/DetailPegawai.vue | v1.1 | Fase 1 – Data pegawai | 03/10/2026 -->
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { PhIdentificationCard, PhBriefcase, PhPhone, PhCalendarBlank, PhBuildings, PhEye } from '@phosphor-icons/vue'
+import { PhIdentificationCard, PhBriefcase, PhPhone, PhCalendarBlank, PhBuildings, PhEye, PhPencilSimple, PhTrash, PhClockCounterClockwise } from '@phosphor-icons/vue'
+import { useRouter } from 'vue-router'
+import { useUI } from '@/stores/ui'
+import { useOrganisasi } from '@/stores/organisasi'
+import { PENDIDIKAN, STATUS_KELUARGA, KEAKTIFAN, LEVEL_MUHAFFIZH, KATEGORI_HONORER, STATUS_AKUN as AKUN } from '@/lib/kepegawaian'
 import { usePegawai } from '@/stores/pegawai'
 import { formatPanjang, formatPendek } from '@/lib/tanggal'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
@@ -10,10 +15,29 @@ import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import TombolCetak from '@/components/TombolCetak.vue'
 
-const route = useRoute(); const peg = usePegawai(); const sesi = useSesi()
+const route = useRoute(); const router = useRouter(); const peg = usePegawai(); const sesi = useSesi(); const ui = useUI(); const org = useOrganisasi()
 const pimpinan = ref({ jabatan: 'Direktur', nama: '', niy: '' })
 const pratinjau = ref(false)
-onMounted(async () => { if (!peg.daftar.length) await peg.muat(); pimpinan.value = await ambilPenandaTangan('Direktur') })
+onMounted(async () => {
+  if (!peg.daftar.length) await peg.muat()
+  org.muat(); peg.muatRiwayat(route.params.id)
+  pimpinan.value = await ambilPenandaTangan('Direktur')
+})
+const riwayat = computed(() => peg.riwayat[route.params.id] || [])
+const JENIS_RIWAYAT = { status_kepegawaian: 'Status kepegawaian', status_keaktifan: 'Status keaktifan', pendidikan: 'Pendidikan', level_muhaffizh: 'Level muhaffizh',
+  kategori_honorer: 'Kategori honorer', tmt: 'TMT tugas', unit: 'Bidang/unit', jabatan_fungsional: 'Jabatan fungsional', jabatan_struktural: 'Jabatan struktural' }
+function nilaiRiwayat(r, v) {
+  if (!v) return '–'
+  if (r.jenis === 'unit') return org.cariUnit(v)?.nama || v
+  if (r.jenis === 'tmt') return formatPanjang(v)
+  if (r.jenis === 'pendidikan') return PENDIDIKAN[v] || v
+  return KEAKTIFAN[v] || STATUS_PEG[v] || LEVEL_MUHAFFIZH[v] || KATEGORI_HONORER[v] || v
+}
+const bolehHapus = computed(() => sesi.isSuperadmin && p.value && ['tanpa_akun', 'ditolak'].includes(p.value.status_akun))
+async function hapus() {
+  if (!(await ui.konfirmasi({ judul: 'Hapus data pegawai?', pesan: `${p.value.nama_lengkap} beserta jabatan dan riwayatnya akan dihapus permanen.`, ya: 'Hapus', bahaya: true }))) return
+  try { await peg.hapus(p.value.id); ui.toast('Data pegawai dihapus.'); router.replace('/pegawai') } catch (e) { ui.toast(e.message, 'galat') }
+}
 const p = computed(() => peg.cari(route.params.id))
 
 const masaKerja = (tmt) => {
@@ -23,16 +47,18 @@ const masaKerja = (tmt) => {
   return `${Math.floor(bln / 12)} tahun ${bln % 12} bulan`
 }
 const STATUS_PEG = { tetap: 'Tetap', kontrak: 'Kontrak', honorer: 'Honorer' }
-const STATUS_AKUN = { aktif: ['Akun aktif', 'presensi'], menunggu: ['Menunggu verifikasi', 'verifikasi'], tanpa_akun: ['Belum punya akun', 'tahfizh'], ditolak: ['Ditolak', 'klinik'], nonaktif: ['Nonaktif', 'hakakses'] }
+const STATUS_AKUN = Object.fromEntries(Object.entries(AKUN).map(([k, v]) => [k, [v.n, v.w]]))
 const baris = computed(() => !p.value ? [] : [
   ['Nama lengkap', p.value.nama_lengkap], ['NIY', p.value.niy || '–'],
   ['Jenis kelamin', p.value.jenis_kelamin === 'P' ? 'Perempuan' : 'Laki-laki'],
-  ['Tempat, tanggal lahir', p.value.ttl || '–'], ['Pendidikan terakhir', p.value.pendidikan_terakhir || '–'],
+  ['Tempat, tanggal lahir', p.value.ttl || [p.value.tempat_lahir, p.value.tanggal_lahir && formatPanjang(p.value.tanggal_lahir)].filter(Boolean).join(', ') || '–'],
+  ['Pendidikan terakhir', PENDIDIKAN[p.value.pendidikan_terakhir] || '–'], ['Status keluarga', STATUS_KELUARGA[p.value.status_keluarga] || '–'],
   ['Bidang/unit', p.value.nama_unit || '–'], ['Jabatan struktural', p.value.jabatan_struktural || '–'],
   ['Jabatan fungsional', (p.value.jabatan_fungsional || []).join(', ') || '–'],
-  ['Status kepegawaian', STATUS_PEG[p.value.status_kepegawaian] || '–'],
+  ['Status kepegawaian', [STATUS_PEG[p.value.status_kepegawaian], p.value.kategori_honorer && `(honorer ${KATEGORI_HONORER[p.value.kategori_honorer].toLowerCase()})`].filter(Boolean).join(' ') || '–'],
+  ['Status keaktifan', KEAKTIFAN[p.value.status_keaktifan] || '–'],
   ['TMT tugas', p.value.tmt_tugas ? formatPanjang(p.value.tmt_tugas) : '–'], ['Masa kerja', p.value.masa_kerja?.teks || masaKerja(p.value.tmt_tugas)],
-  ['Nomor HP', p.value.no_hp || '–'],
+  ['Nomor HP', p.value.no_hp || '–'], ['Email', p.value.email || '–'],
 ])
 </script>
 <template>
@@ -62,9 +88,25 @@ const baris = computed(() => !p.value ? [] : [
         </div>
       </section>
       <div class="mt-4 flex flex-wrap gap-2">
+        <router-link :to="`/pegawai/${p.id}/ubah`" class="tombol-utama"><PhPencilSimple :size="20" weight="duotone" /> Ubah data</router-link>
+        <button v-if="bolehHapus" class="tombol-garis" @click="hapus"><PhTrash :size="20" weight="duotone" /> Hapus</button>
         <button class="tombol-garis" @click="pratinjau = !pratinjau"><PhEye :size="20" weight="duotone" /> {{ pratinjau ? 'Tutup pratinjau' : 'Pratinjau biodata' }}</button>
         <TombolCetak label="Cetak biodata" />
       </div>
+
+      <section class="kartu w-pengajuan mt-4 p-5">
+        <div class="mb-3 flex items-center gap-3"><span class="chip-ikon h-10 w-10"><PhClockCounterClockwise :size="22" weight="duotone" /></span>
+          <div><h3 class="judul-bagian">Riwayat kepegawaian</h3><p class="text-sm text-teks3">Dasar perhitungan gaji per periode.</p></div></div>
+        <ol v-if="riwayat.length" class="relative ml-2 space-y-3 border-l-2 border-garis pl-5">
+          <li v-for="r in riwayat" :key="r.id" class="relative">
+            <span class="absolute -left-[27px] top-1.5 h-3 w-3 rounded-full" style="background: var(--c)" aria-hidden="true" />
+            <p class="text-sm font-semibold">{{ JENIS_RIWAYAT[r.jenis] || r.jenis }}</p>
+            <p class="text-sm text-teks2">{{ nilaiRiwayat(r, r.nilai_lama) }} → <span class="font-semibold text-teks">{{ nilaiRiwayat(r, r.nilai_baru) }}</span></p>
+            <p class="text-xs text-teks3">Berlaku {{ formatPanjang(r.tanggal_berlaku) }}</p>
+          </li>
+        </ol>
+        <p v-else class="py-3 text-sm text-teks3">Belum ada perubahan tercatat.</p>
+      </section>
     </div>
 
     <div :class="pratinjau && 'wadah-pratinjau mt-4 overflow-x-auto rounded-kartu bg-[#E9E3E0] p-4 dark:bg-[#0F0A0B] sm:p-8'">

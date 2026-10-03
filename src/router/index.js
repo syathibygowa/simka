@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v1.2 | Fase 1 – Struktur organisasi | 03/10/2026
+// SIMKA PRO | src/router/index.js | v1.3 | Fase 1 – Data pegawai | 03/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -16,6 +16,10 @@ const routes = [
       { path: 'tugas', component: () => import('@/pages/umum/Tugas.vue'), meta: { judul: 'Tugas dan menu' } },
       { path: 'profil', component: () => import('@/pages/profil/Profil.vue'), meta: { judul: 'Profil' } },
       { path: 'pegawai', component: () => import('@/pages/pegawai/DaftarPegawai.vue'), meta: { judul: 'Data Pegawai', peran: ADMIN, cetak: true, kembali: '/tugas' } },
+      { path: 'pegawai/baru', component: () => import('@/pages/pegawai/FormPegawai.vue'), meta: { judul: 'Tambah Pegawai', peran: ADMIN, kembali: '/pegawai' } },
+      { path: 'pegawai/impor', component: () => import('@/pages/pegawai/ImporPegawai.vue'), meta: { judul: 'Impor Data Pegawai', peran: ADMIN, kembali: '/pegawai' } },
+      { path: 'pegawai/rekap', component: () => import('@/pages/pegawai/RekapPegawai.vue'), meta: { judul: 'Rekap Kepegawaian', peran: ADMIN, cetak: true, kembali: '/pegawai' } },
+      { path: 'pegawai/:id/ubah', component: () => import('@/pages/pegawai/FormPegawai.vue'), meta: { judul: 'Ubah Data Pegawai', peran: ADMIN, kembali: '/pegawai' } },
       { path: 'pegawai/:id', component: () => import('@/pages/pegawai/DetailPegawai.vue'), meta: { judul: 'Biodata Pegawai', peran: ADMIN, cetak: true, kembali: '/pegawai' } },
       { path: 'presensi', component: () => import('@/pages/umum/Segera.vue'), props: { kode: 'presensi' }, meta: { judul: 'Presensi' } },
       { path: 'verifikasi', component: () => import('@/pages/umum/Disiapkan.vue'), props: { kode: 'verifikasi' }, meta: { judul: 'Verifikasi Akun', peran: ADMIN, kembali: '/tugas' } },
