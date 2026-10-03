@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demo.js | v1.1 | Fase 1 – Pengaturan | 03/10/2026
+// SIMKA PRO | src/lib/demo.js | v1.2 | Fase 1 – Struktur organisasi | 03/10/2026
 // Data contoh untuk MODE DEMO. Nama pegawai di bawah fiktif.
 const menitLalu = (m) => new Date(Date.now() - m * 60000).toISOString()
 
@@ -133,3 +133,36 @@ export const LEMBAGA_DEMO = () => ({
     { kode: 'DW', arti: "Da'wah", keterangan: 'Undangan dan panggilan', urutan: 6 }, { kode: 'NZ', arti: 'Nahwa Dzalik', keterangan: 'Lain-lain', urutan: 9 },
   ],
 })
+
+// ---------- Data contoh struktur organisasi (mengikuti isi awal migrasi 0400) ----------
+export const ORGANISASI_DEMO = () => {
+  const u = (id, parent_id, kode, nama, jenis, urutan, prioritas = false) => ({ id, parent_id, kode, nama, jenis, urutan, prioritas, aktif: true })
+  return {
+    units: [
+      u('u0', null, 'PIMPINAN', 'Pimpinan Pondok', 'pimpinan', 0, true),
+      u('u1', 'u0', 'TAHFIZH', 'Bidang Tahfizh', 'bidang', 1, true), u('u2', 'u0', 'WUSTHA', 'Bidang Kesetaraan Wustha', 'bidang', 2, true),
+      u('u3', 'u0', 'SMA', 'Bidang SMA', 'bidang', 3, true), u('u4', 'u0', 'KESANTRIAN', 'Bidang Kesantrian', 'bidang', 4, true),
+      u('u5', 'u0', 'SARANA', 'Bidang Sarana', 'bidang', 5), u('u6', 'u0', 'MEDIA', 'Bidang Media', 'bidang', 6),
+      u('u7', 'u0', 'BAHASA', 'Bidang Bahasa', 'bidang', 7), u('u8', 'u0', 'UMUM', 'Bidang Umum', 'bidang', 8),
+      u('u9', 'u4', 'KLINIK', 'Unit Klinik', 'unit', 1), u('u10', 'u4', 'SECURITY', 'Unit Security', 'unit', 2),
+      u('u11', 'u8', 'TU', 'Unit Tata Usaha', 'unit', 1), u('u12', 'u8', 'DAPUR', 'Unit Dapur', 'unit', 2),
+    ],
+    fungsional: [
+      ['GURU', 'Guru mata pelajaran', 'rentang', false, false], ['WALI_KELAS', 'Wali kelas', 'rentang', false, true],
+      ['MUHAFFIZH', 'Muhaffizh/Muhaffizhah', 'sesi', false, true], ['MUSYRIF', 'Musyrif/Musyrifah', 'sesi', false, true],
+      ['PEMBINA_EKSKUL', 'Pembina ekskul', 'sesi', false, true], ['OPERATOR', 'Operator', 'rentang', false, false],
+      ['STAF_BIDANG', 'Staf bidang', 'rentang', false, false], ['STAF_PEMBANTU', 'Staf pembantu', 'rentang', false, false],
+      ['MEDIS', 'Petugas kesehatan (medis)', 'shift', true, false], ['SECURITY', 'Petugas keamanan (security)', 'shift', true, false],
+      ['KEBERSIHAN', 'Petugas kebersihan', 'rentang', false, false], ['LOGISTIK', 'Petugas logistik', 'rentang', false, false],
+      ['MEDIA', 'Petugas media', 'rentang', false, false], ['SARPRAS', 'Petugas sarana prasarana', 'rentang', false, false],
+    ].map(([kode, nama, jenis_sesi, tanpa_rangkap, pengasuh], i) => ({ id: 'f' + i, kode, nama, jenis_sesi, tanpa_rangkap, pengasuh, aktif: true, urutan: i + 1 })),
+    struktural: [
+      ['YAYASAN', 'Pengurus Yayasan', 10, true], ['DIREKTUR', 'Direktur (Mudir)', 15, true], ['WAKIL_DIREKTUR', 'Wakil Direktur', 20, true],
+      ['BENDAHARA', 'Bendahara', 25, false], ['KEPALA_BIDANG', 'Kepala Bidang', 30, true], ['WAKIL_KEPALA_BIDANG', 'Wakil Kepala Bidang', 35, false],
+      ['WAKIL_KEPALA_SEKOLAH', 'Wakil Kepala Sekolah', 36, false], ['KEPALA_UNIT', 'Kepala Unit', 40, false], ['TATA_USAHA', 'Tata Usaha', 50, false],
+    ].map(([kode, nama, tingkat, boleh_menyetujui], i) => ({ id: 's' + i, kode, nama, tingkat, boleh_menyetujui, aktif: true, urutan: i + 1 })),
+    jumlahUnit: { u1: 24, u2: 18, u3: 15, u4: 12, u9: 3, u10: 6, u5: 6, u6: 4, u7: 5, u8: 2, u11: 2, u12: 1, u0: 4 },
+    jumlahFungsional: { f0: 30, f1: 14, f2: 24, f3: 16, f4: 8, f8: 3, f9: 6 },
+    jumlahStruktural: { s1: 1, s2: 1, s3: 1, s4: 6 },
+  }
+}
