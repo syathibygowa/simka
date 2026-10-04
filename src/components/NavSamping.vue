@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/NavSamping.vue | v1.4 | Fase 4 – Tahap 1 Data santri | 04/10/2026 -->
+<!-- SIMKA PRO | src/components/NavSamping.vue | v1.5 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026 -->
 <script setup>
 // Sidebar desktop: menu berkelompok, setiap menu dengan ikon dan warna sendiri.
 // Dapat diciutkan (hanya ikon, 76 px); saat diciutkan, sidebar terbuka sementara
@@ -20,7 +20,7 @@ const masuk = () => { if (ui.sidebarCiut) { clearTimeout(tunda); tunda = setTime
 const keluar = () => { clearTimeout(tunda); melayang.value = false }
 const lebar = computed(() => !ui.sidebarCiut || melayang.value)
 const kelompok = computed(() => {
-  const m = menuUntuk(sesi.peran, { shift: sesi.punyaShift, izin: sesi.izinAdmin, fitur: sesi.fitur }).filter((x) => x.kode !== 'profil')
+  const m = menuUntuk(sesi.peran, { shift: sesi.punyaShift, izin: sesi.izinAdmin, fitur: sesi.fitur, kelompok: sesi.kelompokSaya.length > 0 }).filter((x) => x.kode !== 'profil')
   return GRUP.map((g) => ({ g, item: m.filter((x) => x.grup === g) })).filter((k) => k.item.length)
 })
 const aktif = (m) => (m.ke === '/' ? route.path === '/' : route.path.startsWith(m.ke))

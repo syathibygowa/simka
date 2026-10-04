@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.0 | Fase 4 – Tahap 1 Data santri | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.1 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026 -->
 <script setup>
 // Biodata santri: identitas, kontak orang tua/wali (tombol WA), riwayat status dan mutasi;
 // ubah status, mutasi keluar beserta surat keterangan pindah; cetak biodata F4.
@@ -6,12 +6,12 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   PhPencilSimple, PhTrash, PhEye, PhPrinter, PhClockCounterClockwise, PhArrowsLeftRight, PhSignOut, PhGraduationCap,
-  PhCalendarBlank, PhIdentificationCard, PhUsersThree, PhArrowRight, PhFileText, PhToggleLeft,
+  PhCalendarBlank, PhIdentificationCard, PhUsersThree, PhArrowRight, PhFileText, PhToggleLeft, PhChalkboardTeacher, PhBed, PhBookOpenText, PhMedal,
 } from '@phosphor-icons/vue'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
-import { JENJANG, STATUS_SANTRI, HUBUNGAN, labelKelas, inisial, kontakUtama, penandaJenjang } from '@/lib/santri'
+import { JENJANG, STATUS_SANTRI, HUBUNGAN, inisial, kontakUtama, penandaJenjang, JENIS_KELOMPOK, judulKelompok, labelRombel } from '@/lib/santri'
 import { formatPanjang, formatPendek, hariIniISO } from '@/lib/tanggal'
 import { pesanWA } from '@/lib/wa'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
@@ -23,8 +23,12 @@ import TombolWA from '@/components/TombolWA.vue'
 
 const route = useRoute(); const router = useRouter(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
 const s = computed(() => san.cari(route.params.id))
-const riwayat = computed(() => san.riwayat[route.params.id] || { status: [], mutasi: [] })
-const bolehUbah = computed(() => sesi.bolehAdmin('kelola_santri') || sesi.tingkat('data_santri') >= 2)
+const riwayat = computed(() => san.riwayat[route.params.id] || { status: [], mutasi: [], kelompok: [] })
+// Wali kelas yang sedang berlaku juga boleh memperbarui data santri kelasnya (diperiksa juga di server)
+const waliKelas = computed(() => sesi.kelompokSaya.some((k) => k.jenis === 'kelas' && (s.value?.kelompok || []).some((x) => x.id === k.id)))
+const bolehUbah = computed(() => sesi.bolehAdmin('kelola_santri') || sesi.tingkat('data_santri') >= 2 || waliKelas.value)
+const IKON_KELOMPOK = { kelas: PhChalkboardTeacher, kamar: PhBed, halaqah: PhBookOpenText, ekskul: PhMedal, lainnya: PhUsersThree }
+const riwayatKelompokLama = computed(() => (riwayat.value.kelompok || []).filter((r) => r.selesai))
 const bolehKelola = computed(() => sesi.bolehAdmin('kelola_santri'))
 
 const pimpinan = ref({ jabatan: '', nama: '', niy: '' }); const direktur = ref({ jabatan: 'Direktur', nama: '', niy: '' })
@@ -42,7 +46,7 @@ const umur = computed(() => {
   return b.getFullYear() - a.getFullYear() - (b < new Date(b.getFullYear(), a.getMonth(), a.getDate()) ? 1 : 0)
 })
 const ttl = computed(() => [s.value?.tempat_lahir, s.value?.tanggal_lahir && formatPanjang(s.value.tanggal_lahir)].filter(Boolean).join(', ') || '–')
-const pesanKe = (k) => pesanWA('wali_santri', { nama_wali: k.nama, nama_santri: s.value.nama_lengkap, nis: s.value.nis, kelas: labelKelas(s.value), hubungan: HUBUNGAN[k.hubungan] })
+const pesanKe = (k) => pesanWA('wali_santri', { nama_wali: k.nama, nama_santri: s.value.nama_lengkap, nis: s.value.nis, kelas: labelRombel(s.value), hubungan: HUBUNGAN[k.hubungan] })
 
 // ---------- Ubah status ----------
 const lembarStatus = ref(false); const st = ref({ status: '', tanggal: hariIniISO(), alasan: '' }); const proses = ref(false)
@@ -83,7 +87,8 @@ const orangTua = computed(() => (s.value?.kontak || []).filter((k) => k.hubungan
 const baris = computed(() => !s.value ? [] : [
   ['Nama lengkap', s.value.nama_lengkap], ['Nama panggilan', s.value.nama_panggilan || '–'], ['NIS', s.value.nis], ['NISN', s.value.nisn || '–'], ['NIK', s.value.nik || '–'],
   ['Jenis kelamin', s.value.jenis_kelamin === 'P' ? 'Perempuan' : 'Laki-laki'], ['Tempat, tanggal lahir', ttl.value], ['Anak ke-', s.value.anak_ke || '–'],
-  ['Alamat', s.value.alamat || '–'], ['Jenjang', JENJANG[s.value.jenjang]], ['Kelas', `Kelas ${s.value.tingkat}`],
+  ['Alamat', s.value.alamat || '–'], ['Jenjang', JENJANG[s.value.jenjang]], ['Kelas', labelRombel(s.value)],
+  ['Kamar / halaqah', [(s.value.kelompok || []).find((k) => k.jenis === 'kamar')?.nama, (s.value.kelompok || []).find((k) => k.jenis === 'halaqah')?.nama].filter(Boolean).join(' / ') || '–'],
   ['Tahun masuk / angkatan', `${s.value.tahun_masuk} / angkatan ${s.value.angkatan}`], ['Tanggal masuk', s.value.tanggal_masuk ? formatPanjang(s.value.tanggal_masuk) : '–'],
   ['Jalur masuk', s.value.jalur_masuk === 'pindahan' ? 'Pindahan (mutasi masuk)' : 'Santri baru'], ['Asal sekolah', s.value.asal_sekolah || '–'],
   ['Hafalan awal', s.value.hafalan_awal_juz != null && s.value.hafalan_awal_juz !== '' ? `${String(s.value.hafalan_awal_juz).replace('.', ',')} juz` : '–'],
@@ -112,7 +117,7 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
         </div>
         <div class="grid gap-3 border-t border-garis p-5 sm:grid-cols-2">
           <div class="w-laporan flex items-center gap-3"><span class="chip-ikon h-10 w-10"><PhGraduationCap :size="20" weight="duotone" /></span>
-            <div><p class="text-xs text-teks3">Jenjang dan kelas</p><p class="font-semibold">{{ JENJANG[s.jenjang] }} · Kelas {{ s.tingkat }}</p></div></div>
+            <div><p class="text-xs text-teks3">Jenjang dan kelas</p><p class="font-semibold">{{ JENJANG[s.jenjang] }} · {{ labelRombel(s) }}</p></div></div>
           <div class="w-tahfizh flex items-center gap-3"><span class="chip-ikon h-10 w-10"><PhCalendarBlank :size="20" weight="duotone" /></span>
             <div><p class="text-xs text-teks3">Masuk pondok</p><p class="font-semibold">{{ s.tahun_masuk }} · angkatan {{ s.angkatan }}{{ s.jalur_masuk === 'pindahan' ? ' (pindahan)' : '' }}</p></div></div>
           <div class="w-pegawai flex items-center gap-3"><span class="chip-ikon h-10 w-10"><PhIdentificationCard :size="20" weight="duotone" /></span>
@@ -130,6 +135,27 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
         <button v-if="mutasiKeluar" class="tombol-garis w-tatausaha" @click="bukaSuratPindah(mutasiKeluar)"><PhFileText :size="20" weight="duotone" style="color: var(--c)" /> Surat keterangan pindah</button>
         <button v-if="sesi.isSuperadmin" class="tombol-garis" @click="hapus"><PhTrash :size="20" weight="duotone" /> Hapus</button>
       </div>
+
+      <!-- Kelompok tahun ajaran berjalan -->
+      <section class="kartu w-kelompoksantri mt-4 p-5">
+        <div class="mb-3 flex items-center gap-3"><span class="chip-ikon h-10 w-10"><PhChalkboardTeacher :size="22" weight="duotone" /></span>
+          <div><h3 class="judul-bagian">Kelas, kamar, halaqah, dan ekskul</h3><p class="text-sm text-teks3">Tahun ajaran berjalan. Pembagian diatur di menu Kelompok Santri.</p></div></div>
+        <ul class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <li v-for="j in ['kelas', 'kamar', 'halaqah', 'ekskul']" :key="j" :class="['rounded-2xl border border-garis p-3', 'w-' + JENIS_KELOMPOK[j].warna]">
+            <p class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide" style="color: var(--c)"><component :is="IKON_KELOMPOK[j]" :size="16" weight="duotone" />{{ JENIS_KELOMPOK[j].n }}</p>
+            <template v-if="(s.kelompok || []).some((k) => k.jenis === j)">
+              <router-link v-for="k in s.kelompok.filter((x) => x.jenis === j)" :key="k.id" :to="`/kelompok-santri/k/${k.id}`" class="mt-1 block font-semibold hover:underline">{{ judulKelompok(k) }}</router-link>
+            </template>
+            <p v-else class="mt-1 text-sm font-semibold text-teks3">Belum dibagi</p>
+          </li>
+        </ul>
+        <details v-if="riwayatKelompokLama.length" class="mt-3 text-sm">
+          <summary class="cursor-pointer font-semibold text-teks2">Riwayat kelompok sebelumnya ({{ riwayatKelompokLama.length }})</summary>
+          <ul class="mt-2 space-y-1">
+            <li v-for="(r, i) in riwayatKelompokLama" :key="i" class="text-teks2">{{ JENIS_KELOMPOK[r.jenis]?.n }} {{ r.nama }} ({{ r.tahun_ajaran }}): {{ formatPendek(r.mulai) }} – {{ formatPendek(r.selesai) }}{{ r.alasan_keluar ? ' · ' + r.alasan_keluar : '' }}</li>
+          </ul>
+        </details>
+      </section>
 
       <!-- Kontak orang tua/wali -->
       <section class="kartu w-pegawai mt-4 p-5">

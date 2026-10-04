@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/santri.js | v1.0 | Fase 4 – Tahap 1 Data santri | 04/10/2026
+// SIMKA PRO | src/lib/santri.js | v1.1 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026
 // Label baku, pembacaan NIS pondok, normalisasi isian, dan kolom templat Excel data santri.
 import { normalJK, normalHP } from './kepegawaian'
 import { supabase, MODE_DEMO } from './supabase'
@@ -116,3 +116,41 @@ export function kenaliJudul(judul) {
   for (const c of KOLOM_IMPOR) if (bersih(c.j).replace(/\s*\(.*\)\s*$/, '') === t || c.alias.includes(t)) return c.k
   return null
 }
+
+// ---------- Kelompok santri (Tahap 2) ----------
+export const JENIS_KELOMPOK = {
+  kelas:   { n: 'Kelas', jamak: 'Kelas', pengasuh: 'Wali kelas', warna: 'laporan', contoh: 'Contoh: 7A, 10 IPA' },
+  kamar:   { n: 'Kamar', jamak: 'Kamar/asrama', pengasuh: 'Musyrif/musyrifah', warna: 'santri', contoh: 'Contoh: Kamar Abu Bakar' },
+  halaqah: { n: 'Halaqah', jamak: 'Halaqah tahfizh', pengasuh: 'Muhaffizh/muhaffizhah', warna: 'tahfizh', contoh: 'Contoh: Halaqah Ust. Ahmad' },
+  ekskul:  { n: 'Ekskul', jamak: 'Ekskul', pengasuh: 'Pembina/pelatih', warna: 'pengumuman', contoh: 'Contoh: Panahan, Pramuka' },
+  lainnya: { n: 'Lainnya', jamak: 'Kelompok lainnya', pengasuh: 'Pembina', warna: 'hakakses', contoh: 'Contoh: Tim Olimpiade' },
+}
+/** Jabatan fungsional yang lazim mengasuh setiap jenis kelompok (untuk menyarankan pengasuh). */
+export const JABATAN_PENGASUH = { kelas: 'WALI_KELAS', kamar: 'MUSYRIF', halaqah: 'MUHAFFIZH', ekskul: 'PEMBINA_EKSKUL', lainnya: null }
+export const PERAN_PENGASUH = { utama: 'Pengasuh utama', pendamping: 'Pendamping', pengganti: 'Pengganti sementara' }
+/** Kelompok aktif seorang santri menurut jenis, mis. kelompokDari(s, 'kelas') → { id, nama } */
+export const kelompokDari = (s, jenis) => (s?.kelompok || []).find((k) => k.jenis === jenis) || null
+export const namaKelompok = (s, jenis) => (s?.kelompok || []).filter((k) => k.jenis === jenis).map((k) => k.nama).join(', ')
+/** Rombel bila sudah dibagi, selain itu "Kelas 8 Wustha". */
+export const labelRombel = (s) => { const k = kelompokDari(s, 'kelas'); return k ? `Kelas ${k.nama.replace(/^kelas\s*/i, '')}` : labelKelas(s) }
+export const subjudulKelompok = (g) => [
+  g.jenis === 'kelas' && g.tingkat ? `Kelas ${g.tingkat} ${JENJANG_PENDEK[g.jenjang] || ''}`.trim() : null,
+  g.jenis_kelamin === 'L' ? 'Putra' : g.jenis_kelamin === 'P' ? 'Putri' : 'Putra dan putri',
+].filter(Boolean).join(' · ')
+
+/** Penanda tangan kiri untuk daftar kelompok: kelas → kepala jenjang, kamar → Kepala Bidang Kesantrian, halaqah → Kepala Bidang Tahfizh. */
+const BIDANG_DEMO = {
+  kamar: { jabatan: 'Kepala Bidang Kesantrian', nama: 'Ust. Muhammad Ikhsan, S.Pd.I.', niy: '2018010303' },
+  halaqah: { jabatan: 'Kepala Bidang Tahfizh', nama: '', niy: '' },
+}
+export async function penandaKelompok(g) {
+  if (g.jenis === 'kelas') return penandaJenjang(g.jenjang)
+  const pola = g.jenis === 'kamar' ? '%Kesantrian%' : g.jenis === 'halaqah' ? '%Tahfizh%' : 'Direktur'
+  const cadang = g.jenis === 'kamar' ? 'Kepala Bidang Kesantrian' : g.jenis === 'halaqah' ? 'Kepala Bidang Tahfizh' : 'Direktur'
+  if (MODE_DEMO) return BIDANG_DEMO[g.jenis] || { jabatan: 'Direktur', nama: 'Siswandi Safari, S.Pd.I., Lc., S.H., M.Ag.', niy: '1983020910201401' }
+  const { data } = await supabase.from('signatories').select('jabatan_tertulis, nama, niy').eq('aktif', true)
+    .ilike('jabatan_tertulis', pola).order('urutan').limit(1).maybeSingle()
+  return data ? { jabatan: data.jabatan_tertulis, nama: data.nama, niy: data.niy } : { jabatan: cadang, nama: '', niy: '' }
+}
+/** Judul kelompok untuk tampilan, mis. kelas "7A" → "Kelas 7A". */
+export const judulKelompok = (g) => (g?.jenis === 'kelas' && !/^kelas/i.test(g.nama) ? `Kelas ${g.nama}` : g?.nama || '')

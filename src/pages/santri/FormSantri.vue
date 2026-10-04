@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/FormSantri.vue | v1.0 | Fase 4 – Tahap 1 Data santri | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/FormSantri.vue | v1.1 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026 -->
 <script setup>
 // Tambah dan ubah data santri: identitas, pendidikan dan masuk (baru/pindahan), kontak ayah/ibu/wali.
 import { ref, computed, onMounted, watch } from 'vue'
@@ -17,10 +17,12 @@ const f = ref(null); const proses = ref(false); const kontakAwal = ref([])
 
 const kosongKontak = (h) => ({ hubungan: h, nama: '', no_hp: '', pekerjaan: '' })
 onMounted(async () => {
-  if (!(sesi.bolehAdmin('kelola_santri') || sesi.tingkat('data_santri') >= 2)) {
-    ui.toast('Anda tidak berwenang menambah atau mengubah data santri.', 'galat'); return router.replace('/santri')
-  }
   await san.muat()
+  // Wali kelas boleh memperbarui data santri kelasnya (tidak menambah santri baru)
+  const wali = !baru.value && sesi.kelompokSaya.some((k) => k.jenis === 'kelas' && (san.cari(route.params.id)?.kelompok || []).some((x) => x.id === k.id))
+  if (!(sesi.bolehAdmin('kelola_santri') || sesi.tingkat('data_santri') >= 2 || wali)) {
+    ui.toast('Anda tidak berwenang menambah atau mengubah data santri.', 'galat'); return router.replace(baru.value ? '/santri' : `/santri/${route.params.id}`)
+  }
   if (baru.value) {
     f.value = { nis: '', nisn: '', nik: '', nama_lengkap: '', nama_panggilan: '', jenis_kelamin: '', tempat_lahir: '', tanggal_lahir: '', jenjang: 'wustha', tingkat: 7,
       tanggal_masuk: '', jalur_masuk: 'baru', asal_sekolah: '', hafalan_awal_juz: '', anak_ke: '', alamat: '', catatan: '',

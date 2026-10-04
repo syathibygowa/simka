@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.0 | Fase 4 – Tahap 1 Data santri | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.1 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026 -->
 <script setup>
 // Daftar santri sesuai cakupan pengguna (RLS): kartu statistik langsung, cari dan saring,
 // ekspor Excel, cetak daftar F4 berkop jenjang.
@@ -11,7 +11,7 @@ import {
 } from '@phosphor-icons/vue'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
-import { JENJANG, JENJANG_PENDEK, TINGKAT, STATUS_SANTRI, HUBUNGAN, labelKelas, kontakUtama, inisial, kontakDari, penandaJenjang } from '@/lib/santri'
+import { JENJANG, JENJANG_PENDEK, TINGKAT, STATUS_SANTRI, HUBUNGAN, kontakUtama, inisial, kontakDari, penandaJenjang, labelRombel, namaKelompok } from '@/lib/santri'
 import { formatPanjang, formatPendek, hariIniISO } from '@/lib/tanggal'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import KartuStatistik from '@/components/KartuStatistik.vue'
@@ -56,13 +56,13 @@ function pilihJenjang(j) { jenjang.value = j; if (tingkat.value && !tingkatPilih
 function eksporExcel() {
   const kolom = ['No.', 'NIS', 'NISN', 'Nama lengkap', 'Nama panggilan', 'L/P', 'Tempat lahir', 'Tanggal lahir', 'Jenjang', 'Kelas', 'Tahun masuk', 'Angkatan',
     'Tanggal masuk', 'Jalur masuk', 'Asal sekolah', 'Hafalan awal (juz)', 'Anak ke-', 'Alamat', 'Nama ayah', 'HP ayah', 'Pekerjaan ayah', 'Nama ibu', 'HP ibu',
-    'Pekerjaan ibu', 'Nama wali/darurat', 'HP wali/darurat', 'Penerima WA utama', 'Status', 'Status sejak']
+    'Pekerjaan ibu', 'Nama wali/darurat', 'HP wali/darurat', 'Penerima WA utama', 'Rombel', 'Kamar', 'Halaqah', 'Ekskul', 'Status', 'Status sejak']
   const data = tampil.value.map((s, i) => {
     const a = kontakDari(s, 'ayah') || {}, b = kontakDari(s, 'ibu') || {}, w = kontakDari(s, 'wali') || {}
     return [i + 1, s.nis, s.nisn || '', s.nama_lengkap, s.nama_panggilan || '', s.jenis_kelamin, s.tempat_lahir || '', s.tanggal_lahir ? formatPendek(s.tanggal_lahir) : '',
       JENJANG[s.jenjang], s.tingkat, s.tahun_masuk || '', s.angkatan || '', s.tanggal_masuk ? formatPendek(s.tanggal_masuk) : '', s.jalur_masuk === 'pindahan' ? 'Pindahan' : 'Baru',
       s.asal_sekolah || '', s.hafalan_awal_juz ?? '', s.anak_ke || '', s.alamat || '', a.nama || '', a.no_hp || '', a.pekerjaan || '', b.nama || '', b.no_hp || '',
-      b.pekerjaan || '', w.nama || '', w.no_hp || '', HUBUNGAN[kontakUtama(s)?.hubungan] || '', STATUS_SANTRI[s.status]?.n || s.status, formatPendek(s.status_sejak)]
+      b.pekerjaan || '', w.nama || '', w.no_hp || '', HUBUNGAN[kontakUtama(s)?.hubungan] || '', namaKelompok(s, 'kelas'), namaKelompok(s, 'kamar'), namaKelompok(s, 'halaqah'), namaKelompok(s, 'ekskul'), STATUS_SANTRI[s.status]?.n || s.status, formatPendek(s.status_sejak)]
   })
   const ws = XLSX.utils.aoa_to_sheet([kolom, ...data])
   ws['!cols'] = kolom.map((k, i) => ({ wch: Math.min(36, Math.max(k.length, ...data.map((r) => String(r[i]).length)) + 2) }))
@@ -137,14 +137,15 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
         <table class="w-full text-left text-sm">
           <thead class="border-b border-garis bg-permukaan2 text-teks2">
             <tr><th class="px-4 py-3 font-bold">NIS</th><th class="px-4 py-3 font-bold">Nama</th><th class="px-4 py-3 font-bold">L/P</th><th class="px-4 py-3 font-bold">Kelas</th>
-              <th class="px-4 py-3 font-bold">Angkatan</th><th class="px-4 py-3 font-bold">Orang tua/wali utama</th><th class="px-4 py-3 font-bold">Status</th><th class="w-10" /></tr>
+              <th class="px-4 py-3 font-bold">Kamar · halaqah</th><th class="px-4 py-3 font-bold">Angkatan</th><th class="px-4 py-3 font-bold">Orang tua/wali utama</th><th class="px-4 py-3 font-bold">Status</th><th class="w-10" /></tr>
           </thead>
           <tbody class="divide-y divide-garis">
             <tr v-for="s in tampil" :key="s.id" class="cursor-pointer hover:bg-permukaan2" @click="router.push(`/santri/${s.id}`)">
               <td class="px-4 py-3 tabular-nums text-teks2">{{ s.nis }}</td>
               <td class="px-4 py-3 font-semibold text-teks"><router-link :to="`/santri/${s.id}`" class="hover:underline" @click.stop>{{ s.nama_lengkap }}</router-link></td>
               <td class="px-4 py-3 text-teks2">{{ s.jenis_kelamin }}</td>
-              <td class="px-4 py-3 text-teks2">{{ labelKelas(s) }}</td>
+              <td class="px-4 py-3 text-teks2">{{ labelRombel(s) }}</td>
+              <td class="px-4 py-3 text-teks2">{{ [namaKelompok(s, 'kamar'), namaKelompok(s, 'halaqah')].filter(Boolean).join(' · ') || '–' }}</td>
               <td class="px-4 py-3 tabular-nums text-teks2">{{ s.angkatan }} ({{ s.tahun_masuk }})</td>
               <td class="px-4 py-3 text-teks2">{{ kontakUtama(s) ? `${kontakUtama(s).nama || '–'} (${HUBUNGAN[kontakUtama(s).hubungan]})` : '–' }}</td>
               <td class="px-4 py-3"><span :class="['lencana', 'w-' + STATUS_SANTRI[s.status]?.w]">{{ STATUS_SANTRI[s.status]?.n }}</span></td>
@@ -162,7 +163,7 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
             <span :class="['chip-ikon h-11 w-11 text-sm font-extrabold', s.jenis_kelamin === 'P' ? 'w-klinik' : 'w-santri']">{{ inisial(s.nama_lengkap) }}</span>
             <span class="min-w-0 flex-1">
               <span class="block truncate font-bold">{{ s.nama_lengkap }}</span>
-              <span class="block truncate text-sm text-teks3">{{ s.nis }} · {{ labelKelas(s) }}</span>
+              <span class="block truncate text-sm text-teks3">{{ s.nis }} · {{ labelRombel(s) }}{{ namaKelompok(s, 'kamar') ? ' · ' + namaKelompok(s, 'kamar') : '' }}</span>
               <span v-if="s.status !== 'aktif'" :class="['lencana mt-1', 'w-' + STATUS_SANTRI[s.status]?.w]">{{ STATUS_SANTRI[s.status]?.n }}</span>
             </span>
             <PhCaretRight :size="20" class="text-teks3" />
@@ -183,7 +184,7 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
           <tr v-for="(s, i) in tampil" :key="s.id">
             <td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ s.nis }}</td><td class="tengah">{{ s.nisn || '–' }}</td><td>{{ s.nama_lengkap }}</td>
             <td class="tengah">{{ s.jenis_kelamin }}</td><td>{{ [s.tempat_lahir, s.tanggal_lahir && formatPendek(s.tanggal_lahir)].filter(Boolean).join(', ') || '–' }}</td>
-            <td class="tengah">{{ s.tingkat }} {{ JENJANG_PENDEK[s.jenjang] }}</td><td>{{ kontakUtama(s)?.nama || '–' }}</td><td class="tengah">{{ kontakUtama(s)?.no_hp || '–' }}</td>
+            <td class="tengah">{{ labelRombel(s).replace('Kelas ', '') }}</td><td>{{ kontakUtama(s)?.nama || '–' }}</td><td class="tengah">{{ kontakUtama(s)?.no_hp || '–' }}</td>
           </tr>
         </tbody>
       </table>

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/sesi.js | v1.12 | Fase 4 – Tahap 1 Data santri | 04/10/2026
+// SIMKA PRO | src/stores/sesi.js | v1.13 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
 import { muatTemplatWA } from '@/lib/wa'
 import { defineStore } from 'pinia'
@@ -10,12 +10,14 @@ const simpan = (k, v) => { try { v == null ? localStorage.removeItem(k) : localS
 const baca = (k) => { try { return localStorage.getItem(k) } catch { return null } }
 
 export const useSesi = defineStore('sesi', {
-  state: () => ({ pengguna: null, fitur: {}, izinAdmin: [], siap: false, wajibGantiSandi: false, punyaShift: false, fotoUrl: '' }),
+  state: () => ({ pengguna: null, fitur: {}, izinAdmin: [], siap: false, wajibGantiSandi: false, punyaShift: false, fotoUrl: '', kelompokSaya: [] }),
   getters: {
     masuk: (s) => !!s.pengguna,
     peran: (s) => s.pengguna?.peran ?? 'pegawai',
     isSuperadmin: (s) => s.pengguna?.peran === 'superadmin',
     isAdmin: (s) => ['admin', 'superadmin'].includes(s.pengguna?.peran),
+    /** Ciri pengguna untuk menyaring menu (lib/menu.js). */
+    ciriMenu: (s) => ({ shift: s.punyaShift, izin: s.izinAdmin, fitur: s.fitur, kelompok: s.kelompokSaya.length > 0 }),
     namaPendek: (s) => (s.pengguna?.nama_lengkap ?? '').replace(/^(Ust\.|Ustzh\.)\s*/, '').split(',')[0],
     inisial: (s) => (s.pengguna?.nama_lengkap ?? '?').replace(/^(Ust\.|Ustzh\.)\s*/, '').split(/\s+/).slice(0, 2).map((k) => k[0]).join('').toUpperCase(),
   },
@@ -61,6 +63,11 @@ export const useSesi = defineStore('sesi', {
           .eq('employee_id', data.id).eq('aktif', true).eq('task_patterns.jenis', 'shift').limit(1)
         this.punyaShift = !!sh?.length
       } catch { this.punyaShift = false }
+      // Kelompok santri yang sedang diasuh (wali kelas, musyrif, muhaffizh, pembina)
+      try {
+        const { data: kel } = await supabase.from('v_kelompok').select('id, jenis, nama').eq('asuhan_saya', true)
+        this.kelompokSaya = kel || []
+      } catch { this.kelompokSaya = [] }
     },
 
     /** Masuk dengan username + kata sandi (melalui Edge Function "masuk"). */
@@ -73,7 +80,7 @@ export const useSesi = defineStore('sesi', {
       return r
     },
 
-    masukDemo(peran) { this.pengguna = { ...PENGGUNA_DEMO[peran] }; this.izinAdmin = peran === 'admin' ? ['verval_akun', 'kelola_pegawai', 'audit_log', 'verval_presensi', 'atur_presensi', 'kalender', 'lihat_pengajuan', 'atur_pengajuan', 'verval_jurnal', 'atur_jurnal', 'kelola_berkas', 'cetak_kartu', 'kelola_agenda', 'kelola_kelompok', 'atur_beban_kerja', 'kelola_santri'] : []; simpan('simka.demo.peran', peran) },
+    masukDemo(peran) { this.pengguna = { ...PENGGUNA_DEMO[peran] }; this.izinAdmin = peran === 'admin' ? ['verval_akun', 'kelola_pegawai', 'audit_log', 'verval_presensi', 'atur_presensi', 'kalender', 'lihat_pengajuan', 'atur_pengajuan', 'verval_jurnal', 'atur_jurnal', 'kelola_berkas', 'cetak_kartu', 'kelola_agenda', 'kelola_kelompok', 'atur_beban_kerja', 'kelola_santri', 'kelompok_santri'] : []; this.kelompokSaya = peran === 'pegawai' ? [{ id: 'g-7a', jenis: 'kelas', nama: '7A' }, { id: 'g-hhb', jenis: 'halaqah', nama: 'Halaqah Ust. Hasan' }] : []; simpan('simka.demo.peran', peran) },
 
     async keluar() {
       if (!MODE_DEMO) await supabase.auth.signOut()

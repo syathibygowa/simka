@@ -1,9 +1,11 @@
-// SIMKA PRO | src/stores/santri.js | v1.0 | Fase 4 – Tahap 1 Data santri | 04/10/2026
+// SIMKA PRO | src/stores/santri.js | v1.1 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026
 // Data santri: daftar (sesuai cakupan RLS), simpan beserta kontak, impor Excel, status, mutasi keluar,
 // riwayat, dan hapus (superadmin). Semua penulisan lewat fungsi SQL (tabel santri tidak dapat ditulis langsung).
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { SANTRI_DEMO, RIWAYAT_SANTRI_DEMO } from '@/lib/demoSantri'
+import { dataKelompokDemo, kelompokSantriDemo, ID_PEGAWAI_DEMO } from '@/lib/demoKelompok'
+import { useSesi } from './sesi'
 import { pesanGalat } from './lembaga'
 import { hariIniISO } from '@/lib/tanggal'
 
@@ -19,7 +21,20 @@ export const useSantri = defineStore('santri', {
       if (this.dimuat && !paksa) return
       this.memuat = true; this.galat = ''
       try {
-        if (MODE_DEMO) { if (!this.daftar.length) this.daftar = SANTRI_DEMO().sort(urutNama); this.dimuat = true; return }
+        if (MODE_DEMO) {
+          if (!this.daftar.length) {
+            const semua = SANTRI_DEMO().sort(urutNama)
+            const d = dataKelompokDemo(semua)
+            semua.forEach((x) => { x.kelompok = kelompokSantriDemo(x.id) })
+            // Akun demo pegawai hanya melihat santri kelompok asuhannya (seperti RLS)
+            if (useSesi().peran === 'pegawai') {
+              const asuh = d.kelompok.filter((k) => k.pengasuh.some((p) => p.employee_id === ID_PEGAWAI_DEMO)).map((k) => k.id)
+              const ids = new Set(d.anggota.filter((a) => !a.selesai && asuh.includes(a.group_id)).map((a) => a.student_id))
+              this.daftar = semua.filter((x) => ids.has(x.id))
+            } else this.daftar = semua
+          }
+          this.dimuat = true; return
+        }
         const semua = []
         for (let dari = 0; ; dari += 1000) { // dimuat per 1000 baris
           const { data, error } = await supabase.from('v_santri').select('*').order('nama_lengkap').range(dari, dari + 999)
@@ -49,6 +64,8 @@ export const useSantri = defineStore('santri', {
       delete this.riwayat[id]
     },
     cari(id) { return this.daftar.find((x) => x.id === id) },
+    /** Mode demo: perbarui kolom kelompok setelah pembagian berubah. */
+    segarkanKelompokDemo() { this.daftar.forEach((x) => { x.kelompok = kelompokSantriDemo(x.id) }) },
 
     /** Simpan satu santri (baru/ubah) beserta kontak; mengembalikan id. */
     async simpan(isi) {
@@ -93,14 +110,19 @@ export const useSantri = defineStore('santri', {
     },
 
     async muatRiwayat(id) {
-      if (MODE_DEMO) { const s = this.cari(id); this.riwayat[id] = s ? RIWAYAT_SANTRI_DEMO(s) : { status: [], mutasi: [] }; return }
-      const [st, mu] = await Promise.all([
+      if (MODE_DEMO) {
+        const s = this.cari(id); const d = dataKelompokDemo([])
+        const kelompok = d.anggota.filter((a) => a.student_id === id).map((a) => { const g = d.kelompok.find((k) => k.id === a.group_id); return { jenis: g.jenis, nama: g.nama, tahun_ajaran: g.tahun_ajaran, mulai: a.mulai, selesai: a.selesai, alasan_keluar: a.alasan_keluar } })
+        this.riwayat[id] = s ? { ...RIWAYAT_SANTRI_DEMO(s), kelompok } : { status: [], mutasi: [], kelompok: [] }; return
+      }
+      const [st, mu, kl] = await Promise.all([
         supabase.from('student_status_history').select('*, pegawai:oleh(nama_lengkap)').eq('student_id', id).order('created_at', { ascending: false }),
         supabase.from('student_mutations').select('*').eq('student_id', id).order('created_at', { ascending: false }),
+        supabase.rpc('riwayat_kelompok_santri', { p_id: id }),
       ])
       this.riwayat[id] = {
         status: (st.data || []).map((h) => ({ ...h, nama_oleh: h.pegawai?.nama_lengkap || null })),
-        mutasi: mu.data || [],
+        mutasi: mu.data || [], kelompok: kl.data || [],
       }
     },
 
@@ -108,7 +130,7 @@ export const useSantri = defineStore('santri', {
       if (MODE_DEMO) {
         const s = this.cari(id); const lama = s.status
         s.status = status; s.status_sejak = tanggal
-        this.riwayat[id] = this.riwayat[id] || { status: [], mutasi: [] }
+        this.riwayat[id] = this.riwayat[id] || { status: [], mutasi: [], kelompok: [] }
         this.riwayat[id].status.unshift({ id: 'h' + Date.now(), status_lama: lama, status_baru: status, tanggal, alasan, nama_oleh: 'Anda (mode demo)' })
         return
       }
