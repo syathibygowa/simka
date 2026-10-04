@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/cetak.css | v1.3 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026 */
+/* SIMKA PRO | src/styles/cetak.css | v1.4 | Fase 3 – Tahap 3 Jurnal harian | 04/10/2026 */
 /* =====================================================================
    SIMKA PRO · Standar cetak dokumen
    Kertas F4 215 × 330 mm, margin 2 cm, garis tabel ½ pt,
@@ -67,6 +67,8 @@
   /* Dokumen di luar aplikasi (dipindah ke <body>): sembunyikan seluruh tampilan aplikasi */
   body:has(> .cetak-saja) #app { display: none !important; }
   .cetak-saja { display: block !important; }
+  /* Bila satu dokumen sedang dipratinjau, hanya dokumen itu yang dicetak (halaman dengan beberapa dokumen) */
+  body:has(> .cetak-saja.tampil) > .cetak-saja:not(.tampil) { display: none !important; }
   .lembar-f4 { width: auto; min-height: 0; padding: 0; margin: 0; box-shadow: none; }
   main, .isi-utama { padding: 0 !important; margin: 0 !important; max-width: none !important; }
 }

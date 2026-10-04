@@ -1,9 +1,9 @@
-<!-- SIMKA PRO | src/pages/pengaturan/Pengaturan.vue | v1.0 | Fase 1 – Pengaturan | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/Pengaturan.vue | v1.1 | Fase 3 – Tahap 5 Agenda dan template WA | 04/10/2026 -->
 <script setup>
 // Menu Pengaturan lembaga (superadmin). Setiap tab memiliki ikon dan warna sendiri.
 import { computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhBuildings, PhCalendarDots, PhStamp, PhSignature, PhHash, PhPlugsConnected } from '@phosphor-icons/vue'
+import { PhBuildings, PhCalendarDots, PhStamp, PhSignature, PhHash, PhPlugsConnected, PhWhatsappLogo } from '@phosphor-icons/vue'
 import { useLembaga } from '@/stores/lembaga'
 import TabIdentitas from './TabIdentitas.vue'
 import TabKalender from './TabKalender.vue'
@@ -11,6 +11,7 @@ import TabKop from './TabKop.vue'
 import TabPenandaTangan from './TabPenandaTangan.vue'
 import TabPenomoran from './TabPenomoran.vue'
 import TabIntegrasi from './TabIntegrasi.vue'
+import TabTemplateWA from './TabTemplateWA.vue'
 
 const props = defineProps({ tab: { type: String, default: 'identitas' } })
 const router = useRouter()
@@ -27,6 +28,7 @@ const TAB = [
   { k: 'kop', n: 'Kop surat', ikon: PhStamp, w: 'laporan', komp: TabKop },
   { k: 'penanda-tangan', n: 'Penanda tangan', ikon: PhSignature, w: 'pengajuan', komp: TabPenandaTangan },
   { k: 'penomoran', n: 'Penomoran dokumen', ikon: PhHash, w: 'santri', komp: TabPenomoran },
+  { k: 'template-wa', n: 'Template WA', ikon: PhWhatsappLogo, w: 'presensi', komp: TabTemplateWA },
   { k: 'integrasi', n: 'Integrasi', ikon: PhPlugsConnected, w: 'sistem', komp: TabIntegrasi },
 ]
 const aktif = computed(() => TAB.find((t) => t.k === props.tab) || TAB[0])

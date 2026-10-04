@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/token.css | v1.5 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026 */
+/* SIMKA PRO | src/styles/token.css | v1.7 | Fase 3 – Tahap 5 Agenda dan template WA | 04/10/2026 */
 /* =====================================================================
    SIMKA PRO · Token warna dan tema
    Semua warna teks sudah diuji kontrasnya (WCAG AA, ≥ 4,5:1) terhadap
@@ -64,6 +64,8 @@
 .w-verval     { --c: #7B2D8E; --c2: #B42A5E; }
 .w-rekap      { --c: #1D6B5F; --c2: #B5501A; }
 .w-audit      { --c: #4B4F8F; --c2: #46525F; }
+.w-berkas     { --c: #2F5D50; --c2: #0E6A9E; }
+.w-agenda     { --c: #1572B6; --c2: #A13A86; }
 
 .dark .w-beranda    { --c: #FF8A7A; --c2: #FFB074; }
 .dark .w-presensi   { --c: #5BD69A; --c2: #4FD1D3; }
@@ -89,6 +91,8 @@
 .dark .w-verval     { --c: #D9A3F0; --c2: #FF8FB8; }
 .dark .w-rekap      { --c: #7FD8C6; --c2: #FFB074; }
 .dark .w-audit      { --c: #B3B8FF; --c2: #B9C6D3; }
+.dark .w-berkas     { --c: #8FD3BF; --c2: #7CC8F2; }
+.dark .w-agenda     { --c: #8EC9FF; --c2: #F49AD9; }
 
 /* Warna notifikasi dari database (kolom warna) */
 .n-merah  { --c: #C7332F; } .n-hijau { --c: #1E7D4F; } .n-biru { --c: #2F5FA8; }

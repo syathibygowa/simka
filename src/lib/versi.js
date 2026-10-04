@@ -1,6 +1,6 @@
-// SIMKA PRO | src/lib/versi.js | v3.1.0 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026
+// SIMKA PRO | src/lib/versi.js | v3.4.0 | Fase 3 – Tahap 5 Agenda dan template WA | 04/10/2026
 // Nomor versi aplikasi yang tampil di halaman Profil. Naikkan setiap kali kode diunggah ke GitHub.
-export const VERSI_APLIKASI = '3.1.0'
+export const VERSI_APLIKASI = '3.4.0'
 export const KETERANGAN_VERSI = 'Fase 3 – Administrasi pegawai'
 
 // Waktu kode dibangun oleh GitHub Actions; dipakai untuk memastikan versi yang tayang adalah yang terbaru.

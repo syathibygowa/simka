@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v2.2 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026
+// SIMKA PRO | src/router/index.js | v2.5 | Fase 3 – Tahap 5 Agenda dan template WA | 04/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -10,6 +10,7 @@ const routes = [
   { path: '/masuk', component: () => import('@/pages/auth/Masuk.vue'), meta: { publik: true, judul: 'Masuk' } },
   { path: '/daftar', component: () => import('@/pages/auth/Daftar.vue'), meta: { publik: true, judul: 'Daftar akun' } },
   { path: '/lupa-sandi', component: () => import('@/pages/auth/LupaSandi.vue'), meta: { publik: true, judul: 'Lupa kata sandi' } },
+  { path: '/cek-kartu/:kode?', component: () => import('@/pages/kartu/VerifikasiKartu.vue'), props: true, meta: { publik: true, bebas: true, judul: 'Verifikasi kartu pegawai' } },
   { path: '/atur-sandi', component: () => import('@/pages/auth/AturSandi.vue'), meta: { publik: true, bebas: true, judul: 'Atur kata sandi' } },
   { path: '/ganti-sandi', component: () => import('@/pages/auth/GantiSandi.vue'), meta: { judul: 'Ganti kata sandi' } },
   {
@@ -37,6 +38,10 @@ const routes = [
       { path: 'pengaturan/:tab?', component: () => import('@/pages/pengaturan/Pengaturan.vue'), props: true, meta: { judul: 'Pengaturan', peran: ['superadmin'], kembali: '/tugas' } },
       { path: 'pengumuman/:id?', component: () => import('@/pages/pengumuman/Pengumuman.vue'), props: true, meta: { judul: 'Pengumuman', kembali: '/' } },
       { path: 'pengajuan/:id?', component: () => import('@/pages/pengajuan/Pengajuan.vue'), props: true, meta: { judul: 'Pengajuan', kembali: '/tugas' } },
+      { path: 'jurnal/:tab?', component: () => import('@/pages/jurnal/Jurnal.vue'), props: true, meta: { judul: 'Jurnal Harian', kembali: '/tugas' } },
+      { path: 'berkas/:id?', component: () => import('@/pages/berkas/Berkas.vue'), props: true, meta: { judul: 'Berkas Saya', kembali: '/tugas' } },
+      { path: 'kartu', component: () => import('@/pages/kartu/Kartu.vue'), meta: { judul: 'Kartu Pegawai', kembali: '/tugas' } },
+      { path: 'agenda/:id?', component: () => import('@/pages/agenda/Agenda.vue'), props: true, meta: { judul: 'Agenda', kembali: '/' } },
       { path: 'audit-log', component: () => import('@/pages/audit/AuditLog.vue'), meta: { judul: 'Audit Log', kembali: '/tugas' } },
       { path: 'segera/:kode', component: () => import('@/pages/umum/Segera.vue'), props: true, meta: { judul: 'Segera hadir', kembali: '/tugas' } },
       { path: ':salah(.*)*', component: () => import('@/pages/umum/TidakDitemukan.vue'), meta: { judul: 'Halaman tidak ditemukan', kembali: '/' } },
