@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengaturan/TabTemplateWA.vue | v1.1 | Fase 3 – Perbaikan P1 (kartu, kelompok, pengumuman) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/TabTemplateWA.vue | v1.2 | Fase 4 – Tahap 1 Data santri | 04/10/2026 -->
 <script setup>
 // Template pesan WhatsApp (superadmin). Isian dalam kurung kurawal, misalnya {nama}, diganti otomatis saat pesan dibuat.
 // Baris yang hanya berisi isian kosong dibuang. Pratinjau memakai data contoh.
@@ -15,7 +15,8 @@ onMounted(() => tw.muat().catch((e) => ui.toast(e.message, 'galat')))
 const CONTOH = { nama: 'Ust. Hasan Basri, Lc.', username: 'hasanbasri', sandi: 'Rahasia#2026', catatan: 'NIY belum sesuai', judul: 'Rapat koordinasi', tanggal: 'Kamis, 08 Oktober 2026',
   waktu: '20.00–21.30 WITA', lokasi: 'Aula Utama', keterangan: 'Membawa catatan program bidang.', jenis: 'Izin', nomor: 'PGJ.007/PPTQ-IAS/X/2026', pesan: 'Isi pesan bebas.',
   niy: '2019070101', jabatan: 'Muhaffizh', unit: 'Bidang Tahfizh', isi_singkat: 'Rapat koordinasi awal bulan dilaksanakan Kamis…', kategori: 'SK', tautan: 'https://syathibygowa.github.io/simka/#/agenda',
-  pengingat: 'besok', lama: '2 hari', status: 'disetujui', alasan: 'Keperluan keluarga', sesi: 'Halaqah subuh', status_presensi: 'Hadir', catatan_verval: 'Lokasi sesuai tugas luar' }
+  pengingat: 'besok', lama: '2 hari', status: 'disetujui', alasan: 'Keperluan keluarga', sesi: 'Halaqah subuh', status_presensi: 'Hadir', catatan_verval: 'Lokasi sesuai tugas luar',
+  nama_wali: 'Fauzi', hubungan: 'Ayah', nama_santri: 'Ahmad Fauzan', nis: '2211010', kelas: 'Kelas 8 Wustha' }
 const variabel = computed(() => [...new Set((f.value?.isi.match(/\{(\w+)\}/g) || []).map((x) => x.slice(1, -1)))])
 const pratinjau = computed(() => (f.value ? isiTemplat(f.value.isi, CONTOH) : ''))
 function ubah(t) { f.value = { ...t } }

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v2.7 | Fase 3 – Perbaikan P5 (ekuivalensi jam) | 04/10/2026
+// SIMKA PRO | src/router/index.js | v2.8 | Fase 4 – Tahap 1 Data santri | 04/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -26,6 +26,11 @@ const routes = [
       { path: 'pegawai/rekap', component: () => import('@/pages/pegawai/RekapPegawai.vue'), meta: { judul: 'Rekap Kepegawaian', peran: ADMIN, cetak: true, kembali: '/pegawai' } },
       { path: 'pegawai/:id/ubah', component: () => import('@/pages/pegawai/FormPegawai.vue'), meta: { judul: 'Ubah Data Pegawai', peran: ADMIN, kembali: '/pegawai' } },
       { path: 'pegawai/:id', component: () => import('@/pages/pegawai/DetailPegawai.vue'), meta: { judul: 'Biodata Pegawai', peran: ADMIN, cetak: true, kembali: '/pegawai' } },
+      { path: 'santri', component: () => import('@/pages/santri/DaftarSantri.vue'), meta: { judul: 'Data Santri', cetak: true, kembali: '/tugas' } },
+      { path: 'santri/baru', component: () => import('@/pages/santri/FormSantri.vue'), meta: { judul: 'Tambah Santri', kembali: '/santri' } },
+      { path: 'santri/impor', component: () => import('@/pages/santri/ImporSantri.vue'), meta: { judul: 'Impor Data Santri', peran: ADMIN, kembali: '/santri' } },
+      { path: 'santri/:id/ubah', component: () => import('@/pages/santri/FormSantri.vue'), meta: { judul: 'Ubah Data Santri', kembali: '/santri' } },
+      { path: 'santri/:id', component: () => import('@/pages/santri/DetailSantri.vue'), meta: { judul: 'Biodata Santri', cetak: true, kembali: '/santri' } },
       { path: 'jabatan-tunjangan/:tab?', component: () => import('@/pages/tunjangan/JabatanTunjangan.vue'), props: true, meta: { judul: 'Jabatan dan Tunjangan', peran: ['superadmin'], kembali: '/tugas' } },
       { path: 'presensi', component: () => import('@/pages/presensi/Presensi.vue'), meta: { judul: 'Presensi' } },
       { path: 'atur-presensi/:tab?', component: () => import('@/pages/presensi/AturPresensi.vue'), props: true, meta: { judul: 'Pengaturan Presensi', peran: ADMIN, kembali: '/tugas' } },

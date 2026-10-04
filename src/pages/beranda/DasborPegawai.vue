@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.3 | Fase 3 – Tahap 6 Dashboard per peran | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.4 | Fase 4 – Tahap 1 Data santri | 04/10/2026 -->
 <script setup>
 import { computed, onMounted } from 'vue'
 import { PhFingerprint, PhCaretRight, PhSquaresFour } from '@phosphor-icons/vue'
@@ -27,7 +27,7 @@ const ringkas = computed(() => {
   const b = dp.berikut
   return `${dp.selesaiWajib} dari ${dp.jumlahWajib} sesi tercatat${b ? ` · berikutnya ${b.nama_sesi} ${formatJam(b.mulai)}` : ''}`
 })
-const menu = computed(() => menuUntuk(sesi.peran, { shift: sesi.punyaShift, izin: sesi.izinAdmin }).filter((m) => !['beranda', 'notifikasi', 'profil'].includes(m.kode)).slice(0, 8))
+const menu = computed(() => menuUntuk(sesi.peran, { shift: sesi.punyaShift, izin: sesi.izinAdmin, fitur: sesi.fitur }).filter((m) => !['beranda', 'notifikasi', 'profil'].includes(m.kode)).slice(0, 8))
 </script>
 <template>
   <div class="space-y-5 lg:space-y-6">

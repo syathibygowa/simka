@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v2.2 | Fase 3 – Perbaikan P5 (ekuivalensi jam) | 04/10/2026
+// SIMKA PRO | src/lib/menu.js | v2.3 | Fase 4 – Tahap 1 Data santri | 04/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -34,7 +34,7 @@ export const MENU = [
   { kode: 'verifikasi', nama: 'Verifikasi Akun', ikon: PhUserCheck,      warna: 'verifikasi', ke: '/verifikasi',        grup: 'Kepegawaian', peran: ADMIN, izin: 'verval_akun' },
   { kode: 'tunjangan',  nama: 'Jabatan dan Tunjangan', ikon: PhCoins,    warna: 'gaji',       ke: '/jabatan-tunjangan', grup: 'Kepegawaian', peran: ['superadmin'] },
   // Fase berikutnya
-  { kode: 'santri',     nama: 'Santri',          ikon: PhStudent,        warna: 'santri',     ke: '/segera/santri',     grup: 'Santri', fase: 4 },
+  { kode: 'santri',     nama: 'Data Santri',     ikon: PhStudent,        warna: 'santri',     ke: '/santri',            grup: 'Santri', fitur: 'data_santri' },
   { kode: 'tahfizh',    nama: 'Tahfizh',         ikon: PhBookOpenText,   warna: 'tahfizh',    ke: '/segera/tahfizh',    grup: 'Santri', fase: 5 },
   { kode: 'klinik',     nama: 'Klinik',          ikon: PhFirstAidKit,    warna: 'klinik',     ke: '/segera/klinik',     grup: 'Layanan', fase: 6 },
   { kode: 'security',   nama: 'Security',        ikon: PhShieldCheck,    warna: 'security',   ke: '/segera/security',   grup: 'Layanan', fase: 7 },
@@ -60,7 +60,9 @@ export const NAV_BAWAH = [
 export const GRUP = ['Utama', 'Presensi', 'Layanan Pegawai', 'Kepegawaian', 'Santri', 'Layanan', 'Administrasi', 'Sistem']
 /** Menu sesuai peran. ciri.shift = pegawai memegang pola shift (menu Jadwal Shift tampil juga untuk admin). */
 /** ciri.izin = izin admin yang dimiliki; menu ber-"izin" hanya tampil bagi superadmin atau admin yang memiliki izin itu. */
+/** ciri.fitur = hak fitur pegawai; menu ber-"fitur" tampil bagi admin/superadmin atau pegawai dengan tingkat ≥ 1. */
 export const menuUntuk = (peran, ciri = {}) => MENU.filter((m) => (!m.peran || m.peran.includes(peran))
   && (!m.syarat || ADMIN.includes(peran) || ciri[m.syarat])
+  && (!m.fitur || ADMIN.includes(peran) || Number(ciri.fitur?.[m.fitur] ?? 0) >= 1)
   && (!m.izin || peran === 'superadmin' || (ciri.izin || []).includes(m.izin)))
 export const cariMenu = (kode) => MENU.find((m) => m.kode === kode)
