@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v2.6 | Fase 3 – Perbaikan P1 (kartu, kelompok, pengumuman) | 04/10/2026
+// SIMKA PRO | src/router/index.js | v2.7 | Fase 3 – Perbaikan P5 (ekuivalensi jam) | 04/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -43,6 +43,7 @@ const routes = [
       { path: 'kartu', component: () => import('@/pages/kartu/Kartu.vue'), meta: { judul: 'Kartu Pegawai', kembali: '/tugas' } },
       { path: 'agenda/:id?', component: () => import('@/pages/agenda/Agenda.vue'), props: true, meta: { judul: 'Agenda', kembali: '/' } },
       { path: 'kelompok-pegawai', component: () => import('@/pages/kelompok/KelompokPegawai.vue'), meta: { judul: 'Kelompok Pegawai', peran: ADMIN, kembali: '/tugas' } },
+      { path: 'beban-kerja/:tab?', component: () => import('@/pages/beban/BebanKerja.vue'), props: true, meta: { judul: 'Ekuivalensi Jam Beban Kerja', kembali: '/tugas' } },
       { path: 'audit-log', component: () => import('@/pages/audit/AuditLog.vue'), meta: { judul: 'Audit Log', kembali: '/tugas' } },
       { path: 'segera/:kode', component: () => import('@/pages/umum/Segera.vue'), props: true, meta: { judul: 'Segera hadir', kembali: '/tugas' } },
       { path: ':salah(.*)*', component: () => import('@/pages/umum/TidakDitemukan.vue'), meta: { judul: 'Halaman tidak ditemukan', kembali: '/' } },
