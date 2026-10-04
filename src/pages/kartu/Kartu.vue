@@ -1,11 +1,11 @@
-<!-- SIMKA PRO | src/pages/kartu/Kartu.vue | v1.1 | Fase 3 – Perbaikan P4 (kartu pegawai portrait) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/kartu/Kartu.vue | v1.2 | Fase 4 – Perbaikan P2 (unduh kartu PNG/JPEG) | 04/10/2026 -->
 <script setup>
 // Kartu pegawai. Kartu saya: lihat depan/belakang, ganti pas foto, cetak, dan ganti kode bila kartu hilang.
 // Cetak massal (admin ber-izin cetak_kartu): pilih pegawai, cetak 9 kartu tegak per F4 (bolak-balik) atau berdampingan.
 // Kartu otomatis tidak berlaku (verifikasi QR) bila pegawai berstatus nonaktif.
 // v1.1: kartu tegak (portrait); foto kartu = foto profil akun (diganti di sini atau di Profil); 9 kartu per F4.
-import { ref, computed, onMounted, watch } from 'vue'
-import { PhIdentificationCard, PhCards, PhCamera, PhPrinter, PhArrowsClockwise, PhMagnifyingGlass, PhCheckSquare, PhSquare, PhInfo, PhQrCode, PhLink } from '@phosphor-icons/vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { PhIdentificationCard, PhCards, PhCamera, PhPrinter, PhArrowsClockwise, PhMagnifyingGlass, PhCheckSquare, PhSquare, PhInfo, PhQrCode, PhLink, PhImage, PhDownloadSimple } from '@phosphor-icons/vue'
 import { useKartu } from '@/stores/kartu'
 import { useLembaga } from '@/stores/lembaga'
 import { usePegawai } from '@/stores/pegawai'
@@ -15,6 +15,9 @@ import { useUI } from '@/stores/ui'
 import { MODE_DEMO } from '@/lib/supabase'
 import { alamatBerkas } from '@/lib/penyimpanan'
 import { alamatVerifikasi } from '@/lib/kartu'
+import { toPng, toJpeg } from 'html-to-image'
+import logoLokal from '@/assets/logo-pondok.png'
+import { namaRapi } from '@/lib/penyimpanan'
 import KartuPegawai from '@/components/KartuPegawai.vue'
 import LembarKartu from '@/components/cetak/LembarKartu.vue'
 
@@ -41,6 +44,36 @@ async function gantiKode() {
   try { saya.value.kode = await kt.gantiKode(saya.value.employee_id); ui.toast('Kode kartu diganti. Cetak ulang kartu Anda.', 'info') } catch (e) { ui.toast(e.message, 'galat') }
 }
 function cetakSaya() { cetakData.value = [saya.value]; mode.value = 'berdampingan'; pratinjau.value = true }
+// ---------- Unduh gambar kartu (PNG/JPEG) ----------
+// Kartu digambar ulang di luar layar tanpa skala tampilan, lalu diubah menjadi gambar ±600 dpi (cetak 54 × 85,6 mm).
+const wadahUnduh = ref(null); const mengunduh = ref(''); const identitasUnduh = ref(null)
+// Logo dari situs lain sering menolak dibaca (CORS) sehingga hilang dari gambar: diubah ke data URL, bila gagal pakai logo bawaan aplikasi
+async function keDataUrl(url) {
+  const r = await fetch(url, { mode: 'cors' }); if (!r.ok) throw new Error('gagal')
+  const b = await r.blob(); return await new Promise((ok) => { const f = new FileReader(); f.onload = () => ok(f.result); f.readAsDataURL(b) })
+}
+const PIKSEL_KOSONG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+async function unduhGambar(format) {
+  if (!wadahUnduh.value || mengunduh.value) return
+  mengunduh.value = format
+  try {
+    let logo = lembaga.identitas?.logo_url
+    try { logo = logo ? await keDataUrl(logo) : logoLokal } catch { logo = logoLokal }
+    identitasUnduh.value = { ...lembaga.identitas, logo_url: logo }
+    await nextTick(); await document.fonts?.ready
+    await Promise.all([...wadahUnduh.value.querySelectorAll('img')].map((img) => (img.complete ? null : new Promise((r) => { img.onload = r; img.onerror = r }))))
+    const opsi = { pixelRatio: 6, backgroundColor: format === 'png' ? undefined : '#ffffff', imagePlaceholder: PIKSEL_KOSONG }
+    const nama = namaRapi(saya.value.nama) || 'Pegawai'
+    for (const sisi of ['depan', 'belakang']) {
+      const node = wadahUnduh.value.querySelector(`[data-sisi="${sisi}"] .kartu-p`)
+      const url = format === 'png' ? await toPng(node, opsi) : await toJpeg(node, { ...opsi, quality: 0.95 })
+      const a = document.createElement('a'); a.href = url; a.download = `Kartu-Pegawai-${nama}-${sisi}.${format === 'png' ? 'png' : 'jpg'}`
+      document.body.appendChild(a); a.click(); a.remove()
+      await new Promise((r) => setTimeout(r, 400)) // beri jeda agar peramban menerima dua unduhan
+    }
+    ui.toast(`Kartu (depan dan belakang) diunduh sebagai ${format.toUpperCase()}.`, 'info')
+  } catch { ui.toast('Gambar kartu gagal dibuat. Coba lagi atau gunakan Cetak kartu.', 'galat') } finally { mengunduh.value = '' }
+}
 async function salinTautan() { try { await navigator.clipboard.writeText(alamatVerifikasi(saya.value.kode)); ui.toast('Tautan verifikasi disalin.', 'info') } catch { ui.toast(alamatVerifikasi(saya.value.kode), 'info') } }
 
 // ---------- Cetak massal ----------
@@ -91,6 +124,11 @@ async function siapkanMassal() {
             <input type="file" accept="image/*" class="sr-only" :disabled="proses" @change="gantiFoto" /></label>
           <p class="text-xs text-teks3">Foto kartu sama dengan foto profil akun. Gunakan foto tegak berlatar polos dan berpakaian rapi; foto dipotong otomatis 3:4.</p>
           <button class="tombol-utama w-full" @click="cetakSaya"><PhPrinter :size="20" weight="duotone" /> Cetak kartu (F4)</button>
+          <div class="grid grid-cols-2 gap-2">
+            <button class="tombol-garis" :disabled="!!mengunduh" @click="unduhGambar('png')"><PhImage :size="20" weight="duotone" /> {{ mengunduh === 'png' ? 'Membuat…' : 'Unduh PNG' }}</button>
+            <button class="tombol-garis" :disabled="!!mengunduh" @click="unduhGambar('jpeg')"><PhDownloadSimple :size="20" weight="duotone" /> {{ mengunduh === 'jpeg' ? 'Membuat…' : 'Unduh JPEG' }}</button>
+          </div>
+          <p class="text-xs text-teks3">Gambar depan dan belakang (±600 dpi) dapat dibagikan atau dicetak di percetakan kartu ukuran 54 × 85,6 mm.</p>
           <button class="tombol-garis w-full" @click="gantiKode"><PhArrowsClockwise :size="20" /> Kartu hilang? Ganti kode</button>
           <p v-if="!saya.niy" class="flex gap-2 rounded-xl bg-permukaan2 p-3 text-sm text-teks2"><PhInfo :size="18" class="mt-0.5 shrink-0" />NIY Anda belum tercatat. Hubungi admin kepegawaian sebelum mencetak kartu.</p>
         </div>
@@ -127,6 +165,11 @@ async function siapkanMassal() {
       </ul>
     </template>
 
+    <!-- Salinan kartu di luar layar untuk dibuat gambar (tanpa skala tampilan) -->
+    <div v-if="saya" ref="wadahUnduh" class="layar-saja" style="position: fixed; left: -10000px; top: 0; pointer-events: none" aria-hidden="true">
+      <div data-sisi="depan"><KartuPegawai :d="saya" sisi="depan" :foto="foto[saya.employee_id]" :identitas="identitasUnduh || lembaga.identitas" :direktur="direktur" /></div>
+      <div data-sisi="belakang"><KartuPegawai :d="saya" sisi="belakang" :foto="foto[saya.employee_id]" :identitas="identitasUnduh || lembaga.identitas" :direktur="direktur" /></div>
+    </div>
     <LembarKartu v-model:pratinjau="pratinjau" :kartu="cetakData" :foto="foto" :identitas="lembaga.identitas" :direktur="direktur" :mode="mode" />
   </div>
 </template>

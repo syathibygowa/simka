@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/santri.js | v1.2 | Fase 4 – Perbaikan P1 dan Tahap 3 | 04/10/2026
+// SIMKA PRO | src/lib/santri.js | v1.3 | Fase 4 – Perbaikan P2 (pengasuh sesuai tupoksi) | 04/10/2026
 // Label baku, pembacaan NIS pondok, normalisasi isian, dan kolom templat Excel data santri.
 import { normalJK, normalHP } from './kepegawaian'
 import { supabase, MODE_DEMO } from './supabase'
@@ -133,8 +133,8 @@ export const JENIS_KELOMPOK = {
   ekskul:  { n: 'Ekskul', jamak: 'Ekskul', pengasuh: 'Pembina/pelatih', warna: 'pengumuman', contoh: 'Contoh: Panahan, Pramuka' },
   lainnya: { n: 'Lainnya', jamak: 'Kelompok lainnya', pengasuh: 'Pembina', warna: 'hakakses', contoh: 'Contoh: Tim Olimpiade' },
 }
-/** Jabatan fungsional yang lazim mengasuh setiap jenis kelompok (untuk menyarankan pengasuh). */
-export const JABATAN_PENGASUH = { kelas: 'WALI_KELAS', kamar: 'MUSYRIF', halaqah: 'MUHAFFIZH', ekskul: 'PEMBINA_EKSKUL', lainnya: null }
+/** Jabatan fungsional WAJIB bagi pengasuh (kelas, kamar, halaqah). Ekskul dan kelompok lainnya tidak terikat jabatan. */
+export const JABATAN_PENGASUH = { kelas: 'WALI_KELAS', kamar: 'MUSYRIF', halaqah: 'MUHAFFIZH', ekskul: null, lainnya: null }
 export const PERAN_PENGASUH = { utama: 'Pengasuh utama', pendamping: 'Pendamping', pengganti: 'Pengganti sementara' }
 /** Kelompok aktif seorang santri menurut jenis, mis. kelompokDari(s, 'kelas') → { id, nama } */
 export const kelompokDari = (s, jenis) => (s?.kelompok || []).find((k) => k.jenis === jenis) || null

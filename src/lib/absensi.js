@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/absensi.js | v1.0 | Fase 4 – Tahap 3 Absensi HISBAT | 04/10/2026
+// SIMKA PRO | src/lib/absensi.js | v1.1 | Fase 4 – Tahap 4 Ekskul | 04/10/2026
 // Kode HISBAT, label sesi, dan ringkasan kehadiran santri. Di aplikasi kode dipakai agar cepat diketuk;
 // pada laporan cetak status ditulis dengan kata lengkap.
 export const KODE = {
@@ -14,7 +14,10 @@ export const JENIS_ABSENSI = {
   kelas: { n: 'Kelas', pengampu: 'Wali kelas', warna: 'laporan', fitur: 'absensi_kelas' },
   halaqah: { n: 'Halaqah', pengampu: 'Muhaffizh', warna: 'tahfizh', fitur: 'absensi_halaqah' },
   asrama: { n: 'Asrama', pengampu: 'Musyrif', warna: 'santri', fitur: 'absensi_asrama' },
+  ekskul: { n: 'Ekskul', pengampu: 'Pembina', warna: 'ekskul', fitur: 'absensi_ekskul' },
 }
+/** Program pokok (dasar persentase kehadiran santri). Ekskul adalah kegiatan eksternal dan tidak dihitung. */
+export const PROGRAM_POKOK = ['kelas', 'halaqah', 'asrama']
 export const STATUS_SESI = {
   terisi: { n: 'Sudah diisi', w: 'presensi' },
   terbuka: { n: 'Sedang berlangsung', w: 'shift' },
@@ -34,7 +37,7 @@ export function susunRekap(baris) {
   const kosong = () => ({ sesi: 0, hadir: 0, izin: 0, sakit: 0, bolos: 0, absen: 0, terlambat: 0 })
   const peta = {}
   for (const r of baris) {
-    const p = (peta[r.student_id] ||= { kelas: kosong(), halaqah: kosong(), asrama: kosong(), pokok: kosong() })
+    const p = (peta[r.student_id] ||= { kelas: kosong(), halaqah: kosong(), asrama: kosong(), ekskul: kosong(), pokok: kosong() })
     for (const k of ['sesi', 'hadir', 'izin', 'sakit', 'bolos', 'absen', 'terlambat']) {
       if (p[r.jenis]) p[r.jenis][k] += r[k]
       if (['kelas', 'halaqah', 'asrama'].includes(r.jenis)) p.pokok[k] += r[k]

@@ -1,9 +1,10 @@
-// SIMKA PRO | src/stores/kelompokSantri.js | v1.0 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026
+// SIMKA PRO | src/stores/kelompokSantri.js | v1.1 | Fase 4 – Tahap 4 Ekskul | 04/10/2026
 // Kelompok santri (kelas, kamar, halaqah, ekskul, lainnya): daftar per tahun ajaran, anggota beserta riwayat,
 // pengasuh, impor pembagian. Penulisan lewat fungsi SQL (tabel tidak dapat ditulis langsung).
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { dataKelompokDemo, ID_PEGAWAI_DEMO } from '@/lib/demoKelompok'
+import { JADWAL_EKSKUL_DEMO } from '@/lib/demoAbsensi'
 import { pesanGalat } from './lembaga'
 import { useSesi } from './sesi'
 import { useSantri } from './santri'
@@ -14,7 +15,7 @@ const urutKelompok = (a, b) => URUT.indexOf(a.jenis) - URUT.indexOf(b.jenis) || 
   || (a.urutan || 0) - (b.urutan || 0) || a.nama.localeCompare(b.nama, 'id', { numeric: true })
 
 export const useKelompokSantri = defineStore('kelompokSantri', {
-  state: () => ({ daftar: [], tahunAjaran: [], taDipilih: '', memuat: false, galat: '', anggota: {} }),
+  state: () => ({ daftar: [], tahunAjaran: [], taDipilih: '', memuat: false, galat: '', anggota: {}, jadwal: {} }),
   getters: {
     taAktif: (s) => s.tahunAjaran.find((t) => t.aktif) || null,
     taSekarang: (s) => s.tahunAjaran.find((t) => t.id === s.taDipilih) || s.tahunAjaran.find((t) => t.aktif) || null,
@@ -144,6 +145,22 @@ export const useKelompokSantri = defineStore('kelompokSantri', {
       if (error) throw new Error(pesanGalat(error))
       await Promise.all([this.muat(), this.muatAnggota(id), useSantri().muat(true)])
       return data
+    },
+
+    /** Jadwal pertemuan semua ekskul yang terlihat: { [group_id]: [{ id, hari, jam_mulai, jam_selesai, tempat }] } */
+    async muatJadwal() {
+      if (MODE_DEMO) { this.jadwal = JSON.parse(JSON.stringify(JADWAL_EKSKUL_DEMO)); return }
+      const { data, error } = await supabase.from('extracurricular_schedules').select('id, group_id, hari, jam_mulai, jam_selesai, tempat').eq('aktif', true).order('hari').order('jam_mulai')
+      if (error) throw new Error(pesanGalat(error))
+      const peta = {}; for (const j of data) (peta[j.group_id] ||= []).push({ ...j, jam_mulai: j.jam_mulai.slice(0, 5), jam_selesai: j.jam_selesai.slice(0, 5) })
+      this.jadwal = peta
+    },
+    /** Ganti jadwal satu ekskul. Jadwal otomatis menjadi sesi presensi pembina/pelatihnya. */
+    async simpanJadwal(group, baris) {
+      if (MODE_DEMO) { JADWAL_EKSKUL_DEMO[group] = baris.map((b, i) => ({ ...b, id: b.id || `jb${Date.now()}${i}` })); this.jadwal[group] = JADWAL_EKSKUL_DEMO[group]; return }
+      const { error } = await supabase.rpc('simpan_jadwal_ekskul', { p_group: group, p_jadwal: baris })
+      if (error) throw new Error(pesanGalat(error))
+      await this.muatJadwal()
     },
 
     /** Impor pembagian: baris [{ nis, kelas, kamar, halaqah, ekskul }] → hasil per baris. */

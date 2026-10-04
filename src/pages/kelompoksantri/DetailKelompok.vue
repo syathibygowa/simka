@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/DetailKelompok.vue | v1.0 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/DetailKelompok.vue | v1.1 | Fase 4 – Perbaikan P2 (pengasuh sesuai tupoksi) | 04/10/2026 -->
 <script setup>
 // Satu kelompok santri: identitas, pengasuh (utama, pendamping, pengganti bertanggal), grup WA, anggota beserta
 // riwayat pindah, tambah/pindah/keluarkan anggota, naqib halaqah, ekspor Excel, dan cetak daftar F4.
@@ -12,6 +12,7 @@ import {
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import { useSantri } from '@/stores/santri'
 import { usePegawai } from '@/stores/pegawai'
+import { useOrganisasi } from '@/stores/organisasi'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 import { JENIS_KELOMPOK, PERAN_PENGASUH, JABATAN_PENGASUH, JENJANG_PENDEK, subjudulKelompok, judulKelompok, kelompokDari, kontakUtama, inisial, penandaKelompok, labelRombel } from '@/lib/santri'
@@ -25,7 +26,7 @@ import TombolAksi from '@/components/TombolAksi.vue'
 import LembarKelompok from './LembarKelompok.vue'
 
 const route = useRoute(); const router = useRouter()
-const kel = useKelompokSantri(); const san = useSantri(); const peg = usePegawai(); const sesi = useSesi(); const ui = useUI()
+const kel = useKelompokSantri(); const san = useSantri(); const peg = usePegawai(); const org = useOrganisasi(); const sesi = useSesi(); const ui = useUI()
 const id = computed(() => route.params.id)
 const g = computed(() => kel.cari(id.value))
 const bolehAtur = computed(() => (sesi.bolehAdmin('kelompok_santri') || sesi.tingkat('kelompok_santri') >= 2) && !g.value?.ta_terkunci)
@@ -102,16 +103,20 @@ async function jadikanNaqib(sid) {
 // ---------- Pengasuh ----------
 const lembarPengasuh = ref(false); const daftarPengasuh = ref([]); const cariPegawai = ref('')
 async function bukaPengasuh() {
-  if (!peg.daftar.length) await peg.muat()
+  await Promise.all([peg.daftar.length ? null : peg.muat(), org.muat()])
   daftarPengasuh.value = (g.value.pengasuh || []).map((p) => ({ employee_id: p.employee_id, nama: p.nama, peran: p.peran, mulai: p.mulai || '', sampai: p.sampai || '', catatan: p.catatan || '' }))
   cariPegawai.value = ''; lembarPengasuh.value = true
 }
+// Kelas, kamar, halaqah: hanya pegawai yang memegang jabatan fungsional tupoksi terkait (diperiksa juga di server).
+// Ekskul dan kelompok lainnya tidak terikat jabatan.
 const kodeJabatan = computed(() => JABATAN_PENGASUH[g.value?.jenis])
+const jabatanWajib = computed(() => (kodeJabatan.value ? org.fungsional.find((f) => f.kode === kodeJabatan.value) : null))
 const calonPengasuh = computed(() => {
   const q = cariPegawai.value.toLowerCase().trim(); const ada = new Set(daftarPengasuh.value.map((p) => p.employee_id))
-  const sesuai = (p) => !kodeJabatan.value || (p.jabatan_fungsional || []).some((n) => n.toLowerCase().startsWith(({ WALI_KELAS: 'wali kelas', MUSYRIF: 'musyrif', MUHAFFIZH: 'muhaffizh', PEMBINA_EKSKUL: 'pembina ekskul' })[kodeJabatan.value]))
-  return peg.daftar.filter((p) => (p.status_keaktifan || 'aktif') === 'aktif' && !ada.has(p.id) && (!q || p.nama_lengkap.toLowerCase().includes(q)))
-    .map((p) => ({ ...p, sesuai: sesuai(p) })).sort((a, b) => b.sesuai - a.sesuai || a.nama_lengkap.localeCompare(b.nama_lengkap, 'id')).slice(0, q ? 30 : 8)
+  return peg.daftar.filter((p) => (p.status_keaktifan || 'aktif') === 'aktif' && !ada.has(p.id)
+      && (!jabatanWajib.value || (p.fungsional_ids || []).includes(jabatanWajib.value.id))
+      && (!q || p.nama_lengkap.toLowerCase().includes(q)))
+    .sort((a, b) => a.nama_lengkap.localeCompare(b.nama_lengkap, 'id')).slice(0, q ? 40 : 12)
 })
 function tambahPengasuh(p) { daftarPengasuh.value.push({ employee_id: p.id, nama: p.nama_lengkap, peran: daftarPengasuh.value.some((x) => x.peran === 'utama') ? 'pendamping' : 'utama', mulai: '', sampai: '', catatan: '' }); cariPegawai.value = '' }
 async function simpanPengasuh() {
@@ -320,7 +325,8 @@ const IKON_PERAN = { utama: 'tahfizh', pendamping: 'pegawai', pengganti: 'pengaj
       <div class="space-y-3 pb-2">
         <ul class="space-y-2">
           <li v-for="(p, i) in daftarPengasuh" :key="p.employee_id" class="rounded-2xl border border-garis p-3">
-            <div class="flex items-center gap-2"><p class="flex-1 font-semibold">{{ p.nama }}</p>
+            <div class="flex items-center gap-2"><p class="flex-1 font-semibold">{{ p.nama }}
+                <span v-if="jabatanWajib && !(peg.cari(p.employee_id)?.fungsional_ids || []).includes(jabatanWajib.id)" class="block text-xs font-semibold text-merah">Belum berjabatan {{ jabatanWajib.nama.toLowerCase() }}: hapus atau lengkapi jabatannya di Data Pegawai.</span></p>
               <button class="tombol-ikon h-9 w-9" :aria-label="`Hapus ${p.nama}`" @click="daftarPengasuh.splice(i, 1)"><PhX :size="18" /></button></div>
             <div class="mt-2 grid grid-cols-3 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" :aria-label="`Peran ${p.nama}`">
               <button v-for="(n, k) in PERAN_PENGASUH" :key="k" type="button" role="radio" :aria-checked="p.peran === k" @click="p.peran = k"
@@ -333,6 +339,7 @@ const IKON_PERAN = { utama: 'tahfizh', pendamping: 'pegawai', pengganti: 'pengaj
           </li>
           <li v-if="!daftarPengasuh.length" class="rounded-xl bg-permukaan2 p-3 text-sm text-teks3">Belum ada pengasuh. Cari pegawai di bawah.</li>
         </ul>
+        <p class="text-sm text-teks2">{{ jabatanWajib ? `Hanya pegawai yang ditugaskan sebagai ${jabatanWajib.nama.toLowerCase()} yang dapat dipilih.` : 'Pembina dapat dipilih dari semua pegawai aktif, termasuk pelatih dari luar.' }}</p>
         <div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cariPegawai" type="search" class="isian pl-11" placeholder="Cari nama pegawai" aria-label="Cari pegawai" /></div>
         <ul class="max-h-[30dvh] divide-y divide-garis overflow-y-auto rounded-xl border border-garis">
@@ -341,10 +348,9 @@ const IKON_PERAN = { utama: 'tahfizh', pendamping: 'pegawai', pengganti: 'pengaj
               <PhPlus :size="18" class="shrink-0 text-teks3" />
               <span class="min-w-0 flex-1"><span class="block truncate font-semibold">{{ p.nama_lengkap }}</span>
                 <span class="block truncate text-xs text-teks3">{{ (p.jabatan_fungsional || []).join(', ') || 'Jabatan belum diisi' }}</span></span>
-              <span v-if="p.sesuai" class="lencana w-presensi">Sesuai jabatan</span>
             </button>
           </li>
-          <li v-if="!calonPengasuh.length" class="p-3 text-center text-sm text-teks3">{{ peg.daftar.length ? 'Tidak ada pegawai yang cocok.' : 'Daftar pegawai hanya tersedia untuk admin.' }}</li>
+          <li v-if="!calonPengasuh.length" class="p-3 text-center text-sm text-teks3">{{ !peg.daftar.length ? 'Daftar pegawai hanya tersedia untuk admin.' : jabatanWajib ? `Tidak ada pegawai berjabatan ${jabatanWajib.nama.toLowerCase()} yang cocok. Tetapkan jabatannya di Data Pegawai.` : 'Tidak ada pegawai yang cocok.' }}</li>
         </ul>
         <p class="text-xs text-teks3">Pengganti bersifat saling membantu: tidak ada honor tambahan dan tidak ada potongan bagi yang digantikan. Aksesnya berakhir otomatis setelah tanggal "Sampai".</p>
         <button class="tombol-utama w-full" :disabled="proses" @click="simpanPengasuh">{{ proses ? 'Menyimpan…' : 'Simpan pengasuh' }}</button>

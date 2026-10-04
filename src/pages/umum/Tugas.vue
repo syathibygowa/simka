@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/umum/Tugas.vue | v1.4 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/umum/Tugas.vue | v1.5 | Fase 4 – Tahap 4 Ekskul | 04/10/2026 -->
 <script setup>
 // Peluncur menu ala aplikasi Android: semua menu sesuai peran, berkelompok, berwarna.
 import { computed } from 'vue'
@@ -6,7 +6,7 @@ import { useSesi } from '@/stores/sesi'
 import { menuUntuk, GRUP } from '@/lib/menu'
 const sesi = useSesi()
 const kelompok = computed(() => {
-  const m = menuUntuk(sesi.peran, { shift: sesi.punyaShift, izin: sesi.izinAdmin, fitur: sesi.fitur, kelompok: sesi.kelompokSaya.length > 0 }).filter((x) => !['beranda', 'profil'].includes(x.kode))
+  const m = menuUntuk(sesi.peran, sesi.ciriMenu).filter((x) => !['beranda', 'profil'].includes(x.kode))
   return GRUP.map((g) => ({ g, item: m.filter((x) => x.grup === g) })).filter((k) => k.item.length)
 })
 </script>

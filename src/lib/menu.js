@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v2.5 | Fase 4 – Tahap 3 Absensi HISBAT | 04/10/2026
+// SIMKA PRO | src/lib/menu.js | v2.6 | Fase 4 – Tahap 4 Ekskul | 04/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -6,7 +6,7 @@
 import {
   PhHouse, PhFingerprint, PhUsersThree, PhStudent, PhBookOpenText, PhFileText, PhFirstAidKit,
   PhShieldCheck, PhChartBar, PhEnvelopeSimple, PhWallet, PhMegaphone, PhKey, PhGearSix, PhBell,
-  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset,
+  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal,
 } from '@phosphor-icons/vue'
 
 const ADMIN = ['admin', 'superadmin']
@@ -39,6 +39,8 @@ export const MENU = [
     syarat: (c) => c.kelompok || Number(c.fitur?.data_santri ?? 0) >= 1 || Number(c.fitur?.kelompok_santri ?? 0) >= 1 },
   { kode: 'absensisantri', nama: 'Absensi Santri', ikon: PhCheckSquareOffset, warna: 'absensi', ke: '/absensi-santri', grup: 'Santri',
     syarat: (c) => c.kelompok || Number(c.fitur?.absensi_kelas ?? 0) >= 1 },
+  { kode: 'ekskul', nama: 'Ekskul', ikon: PhMedal, warna: 'ekskul', ke: '/ekskul', grup: 'Santri',
+    syarat: (c) => (c.jenisKelompok || []).includes('ekskul') || Number(c.fitur?.absensi_ekskul ?? 0) >= 1 },
   { kode: 'tahfizh',    nama: 'Tahfizh',         ikon: PhBookOpenText,   warna: 'tahfizh',    ke: '/segera/tahfizh',    grup: 'Santri', fase: 5 },
   { kode: 'klinik',     nama: 'Klinik',          ikon: PhFirstAidKit,    warna: 'klinik',     ke: '/segera/klinik',     grup: 'Layanan', fase: 6 },
   { kode: 'security',   nama: 'Security',        ikon: PhShieldCheck,    warna: 'security',   ke: '/segera/security',   grup: 'Layanan', fase: 7 },

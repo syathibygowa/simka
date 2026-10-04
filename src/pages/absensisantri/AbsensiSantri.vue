@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/AbsensiSantri.vue | v1.0 | Fase 4 – Tahap 3 Absensi HISBAT | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/AbsensiSantri.vue | v1.1 | Fase 4 – Tahap 4 Ekskul | 04/10/2026 -->
 <script setup>
 // Absensi santri HISBAT. Tab: Sesi saya (pengasuh), Pantauan (admin/pimpinan: semua kelompok, langsung),
 // Rekap (per kelompok dan periode; Excel, cetak F4, WA ke wali).
@@ -7,7 +7,7 @@ import { useRouter } from 'vue-router'
 import { PhListChecks, PhBroadcast, PhChartBar, PhCaretRight, PhCheckCircle, PhHourglassMedium, PhWarningCircle, PhUsersThree, PhUserSwitch } from '@phosphor-icons/vue'
 import { useAbsensiSantri } from '@/stores/absensiSantri'
 import { useSesi } from '@/stores/sesi'
-import { JENIS_ABSENSI, STATUS_SESI, jam, persen, teksPersen } from '@/lib/absensi'
+import { JENIS_ABSENSI, STATUS_SESI, PROGRAM_POKOK, jam, persen, teksPersen } from '@/lib/absensi'
 import { judulKelompok } from '@/lib/santri'
 import { hariIniISO, formatHari, formatJam } from '@/lib/tanggal'
 import KartuStatistik from '@/components/KartuStatistik.vue'
@@ -17,7 +17,7 @@ import TabRekapAbsensi from './TabRekapAbsensi.vue'
 const props = defineProps({ tab: { type: String, default: '' } })
 const router = useRouter(); const abs = useAbsensiSantri(); const sesi = useSesi()
 const bolehPantau = computed(() => sesi.isAdmin || (sesi.tingkat('absensi_kelas') >= 1 && sesi.tingkat('data_santri') >= 1))
-const punyaAsuhan = computed(() => sesi.kelompokSaya.some((k) => ['kelas', 'halaqah', 'kamar'].includes(k.jenis)))
+const punyaAsuhan = computed(() => sesi.kelompokSaya.some((k) => ['kelas', 'halaqah', 'kamar', 'ekskul'].includes(k.jenis)))
 const TAB = computed(() => [
   ...(punyaAsuhan.value || !bolehPantau.value ? [{ k: 'sesi', n: 'Sesi saya', ikon: PhListChecks, w: 'absensi' }] : []),
   ...(bolehPantau.value ? [{ k: 'pantauan', n: 'Pantauan', ikon: PhBroadcast, w: 'shift' }] : []),
@@ -33,13 +33,15 @@ onBeforeUnmount(() => { clearInterval(jeda); abs.berhenti() })
 watch([aktif, tanggal], muat)
 
 const daftar = computed(() => abs.sesiHari.filter((s) => (!saringJenis.value || s.jenis === saringJenis.value) && (!saringStatus.value || s.status === saringStatus.value)))
-const terisi = computed(() => abs.sesiHari.filter((s) => s.status === 'terisi'))
+// Statistik hanya program pokok (kelas, halaqah, asrama); ekskul kegiatan eksternal
+const pokok = computed(() => abs.sesiHari.filter((s) => PROGRAM_POKOK.includes(s.jenis)))
+const terisi = computed(() => pokok.value.filter((s) => s.status === 'terisi'))
 const statistik = computed(() => {
   const t = terisi.value; const sum = (k) => t.reduce((n, s) => n + (s[k] || 0), 0)
   const ang = t.reduce((n, s) => n + (s.jumlah_anggota || 0), 0)
   return [
-    { judul: 'Sesi terisi', nilai: `${t.length}/${abs.sesiHari.length}`, ikon: PhCheckCircle, warna: 'presensi', ket: 'Sesi hari ini yang sudah diabsen' },
-    { judul: 'Belum diisi', nilai: abs.sesiHari.filter((s) => ['lewat', 'tidak_terisi', 'terbuka'].includes(s.status)).length, ikon: PhHourglassMedium, warna: 'klinik', ket: 'Sedang berlangsung atau lewat jam' },
+    { judul: 'Sesi terisi', nilai: `${t.length}/${pokok.value.length}`, ikon: PhCheckCircle, warna: 'presensi', ket: 'Sesi program pokok hari ini yang sudah diabsen' },
+    { judul: 'Belum diisi', nilai: pokok.value.filter((s) => ['lewat', 'tidak_terisi', 'terbuka'].includes(s.status)).length, ikon: PhHourglassMedium, warna: 'klinik', ket: 'Sedang berlangsung atau lewat jam' },
     { judul: 'Kehadiran', nilai: teksPersen(persen(sum('jumlah_hadir'), ang)), ikon: PhUsersThree, warna: 'absensi', ket: `${sum('jumlah_hadir')} dari ${ang} kehadiran tercatat` },
     { judul: 'Izin · Sakit · Absen', nilai: `${sum('jumlah_izin')} · ${sum('jumlah_sakit')} · ${sum('jumlah_absen')}`, ikon: PhWarningCircle, warna: 'pengajuan', ket: `Bolos ${sum('jumlah_bolos')} · Terlambat ${sum('jumlah_terlambat')}` },
   ]
@@ -98,6 +100,7 @@ const pilihTab = (k) => router.replace(`/absensi-santri/${k}`)
             <p v-if="s.status === 'terisi'" class="text-sm"><b class="tabular-nums" style="color: var(--c)">{{ s.jumlah_hadir }}/{{ s.jumlah_anggota }} hadir</b>
               <span class="text-teks2">{{ [s.jumlah_izin && `I ${s.jumlah_izin}`, s.jumlah_sakit && `S ${s.jumlah_sakit}`, s.jumlah_bolos && `B ${s.jumlah_bolos}`, s.jumlah_absen && `A ${s.jumlah_absen}`, s.jumlah_terlambat && `T ${s.jumlah_terlambat}`].filter(Boolean).map((x) => ' · ' + x).join('') }}</span></p>
             <p v-else class="text-sm text-teks2">{{ s.jumlah_anggota }} santri</p>
+            <p v-if="s.jenis === 'ekskul' && (s.topik || s.tempat)" class="text-xs text-teks3">{{ [s.tempat, s.topik && 'Materi: ' + s.topik].filter(Boolean).join(' · ') }}</p>
             <p v-if="semua" class="mt-auto border-t border-garis pt-2 text-xs text-teks3">{{ JENIS_ABSENSI[s.jenis].pengampu }}: {{ s.pengampu || 'belum ditetapkan' }}</p>
           </button>
         </li>

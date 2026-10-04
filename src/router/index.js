@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.0 | Fase 4 – Tahap 3 Absensi HISBAT | 04/10/2026
+// SIMKA PRO | src/router/index.js | v3.1 | Fase 4 – Tahap 4 Ekskul | 04/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -33,6 +33,7 @@ const routes = [
       { path: 'santri/:id', component: () => import('@/pages/santri/DetailSantri.vue'), meta: { judul: 'Biodata Santri', cetak: true, kembali: '/santri' } },
       { path: 'absensi-santri/isi/:group/:tanggal/:sesi', component: () => import('@/pages/absensisantri/IsiAbsensi.vue'), meta: { judul: 'Isi Absensi Santri', kembali: '/absensi-santri' } },
       { path: 'absensi-santri/:tab?', component: () => import('@/pages/absensisantri/AbsensiSantri.vue'), props: true, meta: { judul: 'Absensi Santri', kembali: '/tugas' } },
+      { path: 'ekskul/:tab?', component: () => import('@/pages/ekskul/Ekskul.vue'), props: true, meta: { judul: 'Ekskul', kembali: '/tugas' } },
       { path: 'kelompok-santri/impor', component: () => import('@/pages/kelompoksantri/ImporKelompok.vue'), meta: { judul: 'Impor Pembagian Kelompok', kembali: '/kelompok-santri' } },
       { path: 'kelompok-santri/k/:id', component: () => import('@/pages/kelompoksantri/DetailKelompok.vue'), meta: { judul: 'Kelompok Santri', cetak: true, kembali: '/kelompok-santri' } },
       { path: 'kelompok-santri/:tab?', component: () => import('@/pages/kelompoksantri/KelompokSantri.vue'), props: true, meta: { judul: 'Kelompok Santri', kembali: '/tugas' } },

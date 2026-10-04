@@ -1,11 +1,11 @@
-<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.0 | Fase 4 – Tahap 3 Absensi HISBAT | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.1 | Fase 4 – Tahap 4 Ekskul (jurnal materi) | 04/10/2026 -->
 <script setup>
 // Pengisian absensi satu sesi: semua santri bawaan Hadir, ketuk kode HISBAT bagi yang tidak.
 // Pengampu halaqah/asrama diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi.
 // Admin ber-izin absensi_atas_nama dapat mengisi atas nama pengampu (tercatat di riwayat).
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { PhFingerprint, PhCheckCircle, PhFloppyDisk, PhClockCounterClockwise, PhWarningCircle, PhCrown, PhUserSwitch, PhWhatsappLogo, PhArrowCounterClockwise, PhMagnifyingGlass } from '@phosphor-icons/vue'
+import { PhFingerprint, PhCheckCircle, PhFloppyDisk, PhClockCounterClockwise, PhWarningCircle, PhCrown, PhUserSwitch, PhWhatsappLogo, PhArrowCounterClockwise, PhMagnifyingGlass, PhNotebook, PhCamera, PhMapPin } from '@phosphor-icons/vue'
 import { useAbsensiSantri } from '@/stores/absensiSantri'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
@@ -14,6 +14,9 @@ import { KODE, URUT_KODE, JENIS_ABSENSI, jam } from '@/lib/absensi'
 import { inisial, kontakUtama, labelRombel, judulKelompok } from '@/lib/santri'
 import { formatHari, formatWaktu, formatPanjang, formatJam } from '@/lib/tanggal'
 import { pesanWA } from '@/lib/wa'
+import { MODE_DEMO } from '@/lib/supabase'
+import { unggahKeDrive, kompresGambar, namaRapi } from '@/lib/penyimpanan'
+import FotoBerkas from '@/components/FotoBerkas.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
 
@@ -21,6 +24,10 @@ const route = useRoute(); const router = useRouter()
 const abs = useAbsensiSantri(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
 const d = ref(null); const galat = ref(''); const isian = ref({}); const ket = ref({}); const catatan = ref(''); const proses = ref(false)
 const atasNama = ref(''); const cari = ref(''); const lembarWA = ref(false); const awal = ref('')
+// Ekskul: jurnal materi per pertemuan (topik wajib, uraian, foto opsional)
+const jurnal = ref({ topik: '', uraian: '', foto_id: null }); const fotoBaru = ref(null); const pratinjauFoto = ref('')
+const ekskul = computed(() => d.value?.jenis === 'ekskul')
+function pilihFoto(e) { const f = e.target.files?.[0]; e.target.value = ''; if (!f) return; if (!/^image\//.test(f.type)) return ui.toast('Pilih berkas foto.', 'galat'); fotoBaru.value = f; pratinjauFoto.value = URL.createObjectURL(f) }
 
 async function muat() {
   galat.value = ''
@@ -30,8 +37,9 @@ async function muat() {
     isian.value = Object.fromEntries(x.anggota.map((a) => [a.id, 'H'])); ket.value = {}
     for (const p of x.pengecualian) { isian.value[p.student_id] = p.kode; if (p.keterangan) ket.value[p.student_id] = p.keterangan }
     catatan.value = x.sesi_tercatat?.catatan || ''
+    jurnal.value = { topik: x.jurnal?.topik || '', uraian: x.jurnal?.uraian || '', foto_id: x.jurnal?.foto_id || null }; fotoBaru.value = null; pratinjauFoto.value = ''
     atasNama.value = x.pengasuh.find((p) => p.peran === 'utama')?.employee_id || x.pengasuh[0]?.employee_id || ''
-    awal.value = JSON.stringify([isian.value, ket.value, catatan.value])
+    awal.value = JSON.stringify([isian.value, ket.value, catatan.value, jurnal.value])
   } catch (e) { galat.value = e.message }
 }
 onMounted(muat)
@@ -47,7 +55,7 @@ const perluPresensi = computed(() => d.value?.perlu_presensi && d.value.pengasuh
 const tampil = computed(() => { const q = cari.value.toLowerCase().trim(); return (d.value?.anggota || []).filter((a) => !q || `${a.nama} ${a.nis}`.toLowerCase().includes(q)) })
 const hitung = computed(() => Object.fromEntries(URUT_KODE.map((k) => [k, Object.values(isian.value).filter((v) => v === k).length])))
 const hadirDihitung = computed(() => (d.value?.anggota.length || 0) - hitung.value.I - hitung.value.S - hitung.value.A)
-const berubah = computed(() => JSON.stringify([isian.value, ket.value, catatan.value]) !== awal.value)
+const berubah = computed(() => JSON.stringify([isian.value, ket.value, catatan.value, jurnal.value]) !== awal.value || !!fotoBaru.value)
 
 function setel(id, k) { isian.value[id] = k; if (k === 'H') delete ket.value[id] }
 function semuaHadir() { for (const k of Object.keys(isian.value)) isian.value[k] = 'H'; ket.value = {} }
@@ -55,11 +63,18 @@ function presensiDulu() { router.push({ path: '/presensi', query: { lanjut: rout
 
 async function simpan() {
   if (!bolehIsi.value) return
+  if (ekskul.value && jurnal.value.topik.trim().length < 3) return ui.toast('Isi topik/materi pertemuan ekskul (minimal 3 huruf).', 'galat')
   proses.value = true
   try {
+    let fotoId = jurnal.value.foto_id
+    if (ekskul.value && fotoBaru.value && !MODE_DEMO) {
+      const blob = await kompresGambar(fotoBaru.value, { maks: 1280, kualitas: 0.65 }); const t = route.params.tanggal
+      fotoId = await unggahKeDrive(blob, { nama: namaRapi('Ekskul', d.value.kelompok.nama, t, Date.now()) + '.jpg', kategori: 'jurnal_ekskul', folder: `SIMKA PRO/Ekskul/${t.slice(0, 4)}/${t.slice(5, 7)}`, retensiHari: 365 })
+    }
     const pengecualian = Object.entries(isian.value).filter(([, k]) => k !== 'H').map(([student_id, kode]) => ({ student_id, kode, keterangan: ket.value[student_id] || null }))
     await abs.simpan({ group_id: route.params.group, tanggal: route.params.tanggal, sesi: route.params.sesi, pengecualian, catatan: catatan.value.trim() || null,
-      atas_nama_id: modeAtasNama.value ? atasNama.value || null : null })
+      atas_nama_id: modeAtasNama.value ? atasNama.value || null : null,
+      jurnal: ekskul.value ? { topik: jurnal.value.topik.trim(), uraian: jurnal.value.uraian.trim() || null, foto_id: fotoId || null } : undefined })
     ui.toast(`Absensi ${d.value.nama_sesi.toLowerCase()} ${judulKelompok(d.value.kelompok)} tersimpan: ${hadirDihitung.value}/${d.value.anggota.length} hadir.`)
     await muat()
     if (penerimaWA.value.length) lembarWA.value = true
@@ -84,7 +99,7 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
         <div class="kepala p-5 text-white">
           <p class="text-sm font-semibold text-white/90">{{ jenis.n }} · {{ formatHari(d.tanggal) }}</p>
           <h2 class="mt-1 text-2xl font-extrabold text-white">{{ judulKelompok(d.kelompok) }}</h2>
-          <p class="text-sm text-white/90">{{ d.nama_sesi }} · {{ jam(d.jam_mulai) }}–{{ jam(d.jam_selesai) }} WITA</p>
+          <p class="text-sm text-white/90">{{ d.nama_sesi }} · {{ jam(d.jam_mulai) }}–{{ jam(d.jam_selesai) }} WITA<span v-if="d.tempat" class="inline-flex items-center gap-1"> · <PhMapPin :size="14" /> {{ d.tempat }}</span></p>
         </div>
         <div class="grid grid-cols-3 divide-x divide-garis text-center sm:grid-cols-6">
           <div v-for="k in URUT_KODE" :key="k" :class="['p-2.5', 'w-' + KODE[k].w]">
@@ -113,6 +128,23 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
         </select>
         <p class="mt-1 text-xs text-teks3">Tercatat "diinput oleh {{ sesi.pengguna?.nama_lengkap }} atas nama …".</p>
       </div>
+
+      <!-- Jurnal materi ekskul -->
+      <section v-if="ekskul && !perluPresensi" class="kartu w-ekskul mt-4 p-4">
+        <p class="mb-3 flex items-center gap-2 font-bold"><PhNotebook :size="20" weight="duotone" style="color: var(--c)" /> Jurnal materi pertemuan</p>
+        <div class="space-y-3">
+          <div><label class="label-isian" for="jr-topik">Topik/materi <span class="text-merah">*</span></label>
+            <input id="jr-topik" v-model="jurnal.topik" :disabled="!bolehIsi || lewatBatas" class="isian" placeholder="Contoh: Teknik menarik busur dan membidik" /></div>
+          <div><label class="label-isian" for="jr-uraian">Uraian materi</label>
+            <textarea id="jr-uraian" v-model="jurnal.uraian" :disabled="!bolehIsi || lewatBatas" class="isian min-h-[80px]" rows="3" placeholder="Ringkasan kegiatan dan capaian pertemuan" /></div>
+          <div class="flex flex-wrap items-center gap-3">
+            <img v-if="pratinjauFoto" :src="pratinjauFoto" alt="Foto kegiatan baru" class="h-24 w-32 rounded-xl object-cover" />
+            <FotoBerkas v-else-if="jurnal.foto_id" :id="jurnal.foto_id" alt="Foto kegiatan ekskul" ukuran="h-24 w-32" />
+            <label v-if="bolehIsi && !lewatBatas" class="tombol-garis cursor-pointer"><PhCamera :size="20" weight="duotone" /> {{ jurnal.foto_id || pratinjauFoto ? 'Ganti foto' : 'Foto kegiatan (opsional)' }}
+              <input type="file" accept="image/*" capture="environment" class="sr-only" @change="pilihFoto" /></label>
+          </div>
+        </div>
+      </section>
 
       <!-- Daftar santri -->
       <section v-if="!perluPresensi" class="kartu mt-4 p-4">
