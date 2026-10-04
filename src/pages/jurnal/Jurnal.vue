@@ -1,20 +1,22 @@
-<!-- SIMKA PRO | src/pages/jurnal/Jurnal.vue | v1.0 | Fase 3 – Tahap 3 Jurnal harian | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/Jurnal.vue | v1.1 | Fase 4 – Tahap 5 Jadwal pelajaran dan jurnal mengajar | 04/10/2026 -->
 <script setup>
 // Jurnal harian pegawai. Tab: Jurnal saya (semua pegawai), Verval (admin ber-izin verval_jurnal),
 // Rekap (pegawai: dirinya; pimpinan: anggota unit; admin: semua), Template ceklist (admin ber-izin atur_jurnal).
 import { computed, nextTick, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { PhNotebook, PhSealCheck, PhChartBar, PhListChecks } from '@phosphor-icons/vue'
+import { PhNotebook, PhSealCheck, PhChartBar, PhListChecks, PhChalkboardTeacher } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import TabHarian from './TabHarian.vue'
 import TabVervalJurnal from './TabVervalJurnal.vue'
 import TabRekapJurnal from './TabRekapJurnal.vue'
 import TabTemplateJurnal from './TabTemplateJurnal.vue'
+import TabMengajar from './TabMengajar.vue'
 
 const props = defineProps({ tab: { type: String, default: 'harian' } })
 const router = useRouter(); const route = useRoute(); const sesi = useSesi()
 const TAB = computed(() => [
   { k: 'harian', n: 'Jurnal saya', ikon: PhNotebook, w: 'tatausaha' },
+  (sesi.tingkat('jadwal_mengajar') >= 2 || sesi.isAdmin) && { k: 'mengajar', n: 'Jurnal mengajar', ikon: PhChalkboardTeacher, w: 'jadwal' },
   sesi.bolehAdmin('verval_jurnal') && { k: 'verval', n: 'Verval kegiatan', ikon: PhSealCheck, w: 'verval' },
   { k: 'rekap', n: 'Rekap dan laporan', ikon: PhChartBar, w: 'rekap' },
   sesi.bolehAdmin('atur_jurnal') && { k: 'template', n: 'Template ceklist', ikon: PhListChecks, w: 'pengaturan' },
@@ -30,8 +32,9 @@ onMounted(async () => { await nextTick(); document.querySelector('[role=tab][ari
         <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="t.ikon" :size="20" weight="duotone" /></span><span class="whitespace-nowrap">{{ t.n }}</span>
       </button>
     </nav>
-    <div :class="aktif.k === 'harian' && 'mx-auto max-w-3xl'">
+    <div :class="['harian', 'mengajar'].includes(aktif.k) && 'mx-auto max-w-3xl'">
       <TabHarian v-if="aktif.k === 'harian'" :tanggal-awal="route.query.tanggal" />
+      <TabMengajar v-else-if="aktif.k === 'mengajar'" />
       <TabVervalJurnal v-else-if="aktif.k === 'verval'" />
       <TabRekapJurnal v-else-if="aktif.k === 'rekap'" />
       <TabTemplateJurnal v-else-if="aktif.k === 'template'" />
