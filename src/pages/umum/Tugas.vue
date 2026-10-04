@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/umum/Tugas.vue | v1.5 | Fase 4 – Tahap 4 Ekskul | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/umum/Tugas.vue | v1.6 | Fase 4 – Perbaikan P3 (menu 4 kolom ringkas) | 05/10/2026 -->
 <script setup>
 // Peluncur menu ala aplikasi Android: semua menu sesuai peran, berkelompok, berwarna.
 import { computed } from 'vue'
@@ -13,13 +13,14 @@ const kelompok = computed(() => {
 <template>
   <div class="space-y-5">
     <section v-for="k in kelompok" :key="k.g">
-      <h2 class="mb-2 px-1 text-sm font-bold text-teks3">{{ k.g }}</h2>
-      <ul class="grid grid-cols-3 gap-2.5 sm:grid-cols-4 lg:grid-cols-6">
+      <h2 class="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-teks3">{{ k.g }}</h2>
+      <!-- 4 kolom di HP (ikon ringkas), 6 di tablet, 8 di desktop -->
+      <ul class="grid grid-cols-4 gap-x-1.5 gap-y-3 rounded-2xl bg-permukaan p-2.5 shadow-kartu sm:grid-cols-6 lg:grid-cols-8">
         <li v-for="m in k.item" :key="m.kode" :class="'w-' + m.warna">
-          <router-link :to="m.ke" class="kartu relative flex h-full flex-col items-center gap-2 px-2 py-4 text-center hover:bg-permukaan2">
-            <span class="chip-ikon h-12 w-12 rounded-2xl"><component :is="m.ikon" :size="28" weight="duotone" /></span>
-            <span class="text-[0.8rem] font-semibold leading-tight text-teks">{{ m.nama }}</span>
-            <span v-if="m.fase" class="text-[11px] font-semibold text-teks3">Fase {{ m.fase }}</span>
+          <router-link :to="m.ke" class="relative flex h-full flex-col items-center gap-1.5 rounded-xl px-0.5 py-1.5 text-center transition hover:bg-permukaan2 active:scale-95">
+            <span class="chip-ikon h-11 w-11 rounded-2xl"><component :is="m.ikon" :size="24" weight="duotone" /></span>
+            <span class="line-clamp-2 text-[11px] font-semibold leading-tight text-teks">{{ m.nama }}</span>
+            <span v-if="m.fase" class="text-[10px] font-semibold text-teks3">Fase {{ m.fase }}</span>
           </router-link>
         </li>
       </ul>

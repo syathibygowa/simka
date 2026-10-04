@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v2.7 | Fase 4 – Tahap 5 Jadwal pelajaran dan jurnal mengajar | 04/10/2026
+// SIMKA PRO | src/lib/menu.js | v2.9 | Fase 4 – Tahap 6 Tahun ajaran, statistik, laporan | 05/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -6,7 +6,7 @@
 import {
   PhHouse, PhFingerprint, PhUsersThree, PhStudent, PhBookOpenText, PhFileText, PhFirstAidKit,
   PhShieldCheck, PhChartBar, PhEnvelopeSimple, PhWallet, PhMegaphone, PhKey, PhGearSix, PhBell,
-  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots,
+  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus,
 } from '@phosphor-icons/vue'
 
 const ADMIN = ['admin', 'superadmin']
@@ -39,6 +39,8 @@ export const MENU = [
     syarat: (c) => c.kelompok || Number(c.fitur?.data_santri ?? 0) >= 1 || Number(c.fitur?.kelompok_santri ?? 0) >= 1 },
   { kode: 'absensisantri', nama: 'Absensi Santri', ikon: PhCheckSquareOffset, warna: 'absensi', ke: '/absensi-santri', grup: 'Santri',
     syarat: (c) => c.kelompok || Number(c.fitur?.absensi_kelas ?? 0) >= 1 },
+  { kode: 'statistiksantri', nama: 'Statistik Santri', ikon: PhChartPieSlice, warna: 'rekap', ke: '/statistik-santri', grup: 'Santri', fitur: 'data_santri' },
+  { kode: 'tahunajaran', nama: 'Tahun Ajaran Baru', ikon: PhCalendarPlus, warna: 'agenda', ke: '/tahun-ajaran-baru', grup: 'Santri', peran: ADMIN, izin: 'kelompok_santri' },
   { kode: 'jadwalpelajaran', nama: 'Jadwal Pelajaran', ikon: PhCalendarDots, warna: 'jadwal', ke: '/jadwal-pelajaran', grup: 'Santri',
     syarat: (c) => c.kelompok || Number(c.fitur?.jadwal_mengajar ?? 0) >= 1 },
   { kode: 'ekskul', nama: 'Ekskul', ikon: PhMedal, warna: 'ekskul', ke: '/ekskul', grup: 'Santri',
@@ -58,11 +60,13 @@ export const MENU = [
 ]
 
 // Navigasi bawah (mobile) — empat tab seperti aplikasi Android
+/** Navigasi bawah HP: 5 menu, Presensi di tengah sebagai tombol utama yang menonjol. */
 export const NAV_BAWAH = [
-  { kode: 'beranda',  nama: 'Beranda',  ikon: PhHouse,       warna: 'beranda',  ke: '/' },
-  { kode: 'presensi', nama: 'Presensi', ikon: PhFingerprint, warna: 'presensi', ke: '/presensi' },
-  { kode: 'tugas',    nama: 'Tugas',    ikon: PhSquaresFour, warna: 'tugas',    ke: '/tugas' },
-  { kode: 'profil',   nama: 'Profil',   ikon: PhUserCircle,  warna: 'profil',   ke: '/profil' },
+  { kode: 'beranda',  nama: 'Beranda',  ikon: PhHouse,       warna: 'beranda',   ke: '/' },
+  { kode: 'jurnal',   nama: 'Jurnal',   ikon: PhNotebook,    warna: 'tatausaha', ke: '/jurnal' },
+  { kode: 'presensi', nama: 'Presensi', ikon: PhFingerprint, warna: 'presensi',  ke: '/presensi', utama: true },
+  { kode: 'tugas',    nama: 'Tugas',    ikon: PhSquaresFour, warna: 'tugas',     ke: '/tugas' },
+  { kode: 'profil',   nama: 'Profil',   ikon: PhUserCircle,  warna: 'profil',    ke: '/profil' },
 ]
 
 export const GRUP = ['Utama', 'Presensi', 'Layanan Pegawai', 'Kepegawaian', 'Santri', 'Layanan', 'Administrasi', 'Sistem']

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.2 | Fase 3 – Tahap 6 Dashboard per peran | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.3 | Fase 4 – Tahap 6 Tahun ajaran, statistik, laporan | 05/10/2026 -->
 <script setup>
 import { ref, computed } from 'vue'
 import {
@@ -18,6 +18,7 @@ import StatistikPresensi from './StatistikPresensi.vue'
 import SebaranBidang from './SebaranBidang.vue'
 import AksiCepat from './AksiCepat.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
+import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
@@ -65,6 +66,8 @@ const AKSI = [
       <h2 class="judul-bagian">Untuk Anda</h2>
       <RingkasanPribadi :d="br.data.pribadi" />
     </template>
+
+    <KartuSantriBeranda />
 
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="judul-bagian">Ringkasan pondok</h2>

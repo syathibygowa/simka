@@ -1,6 +1,6 @@
-// SIMKA PRO | src/lib/demoKelompok.js | v1.0 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026
+// SIMKA PRO | src/lib/demoKelompok.js | v1.1 | Fase 4 – Tahap 6 Tahun ajaran, statistik, laporan | 05/10/2026
 // Kelompok santri contoh untuk MODE DEMO (dibangun dari data santri contoh). Pengasuh memakai id pegawai contoh (p1 = Ust. Hasan Basri).
-const TA = { id: 'ta1', nama: '2026/2027', aktif: true, terkunci: false }
+const TA = { id: 'ta1', nama: '2026/2027', mulai: '2026-07-13', selesai: '2027-06-30', aktif: true, terkunci: false }
 const hariIni = () => new Date().toISOString().slice(0, 10)
 
 let data = null

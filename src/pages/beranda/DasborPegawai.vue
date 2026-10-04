@@ -1,5 +1,6 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.6 | Fase 4 – Tahap 4 Ekskul | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.8 | Fase 4 – Tahap 6 Tahun ajaran, statistik, laporan | 05/10/2026 -->
 <script setup>
+import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
 import { computed, onMounted } from 'vue'
 import { PhFingerprint, PhCaretRight, PhSquaresFour } from '@phosphor-icons/vue'
 import { useRouter } from 'vue-router'
@@ -15,7 +16,6 @@ import RingkasanPimpinan from './RingkasanPimpinan.vue'
 import IndikatorLangsung from './IndikatorLangsung.vue'
 import { useBeranda } from '@/stores/beranda'
 import ItemNotifikasi from '@/components/ItemNotifikasi.vue'
-import TombolAksi from '@/components/TombolAksi.vue'
 
 const notif = useNotifikasi(); const sesi = useSesi(); const router = useRouter(); const dp = useDataPresensi(); const br = useBeranda()
 onMounted(() => dp.muatHarian())
@@ -47,6 +47,8 @@ const menu = computed(() => menuUntuk(sesi.peran, sesi.ciriMenu).filter((m) => !
       <RingkasanPimpinan :d="br.data.pimpinan" />
     </section>
     <RingkasanPribadi v-if="br.data?.pribadi" :d="br.data.pribadi" />
+    <!-- Pimpinan pemegang hak data santri: kartu statistik santri langsung -->
+    <KartuSantriBeranda v-if="sesi.tingkat('data_santri') >= 1" />
 
     <div class="grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:gap-6">
       <section class="kartu p-3 sm:p-4">
@@ -84,6 +86,6 @@ const menu = computed(() => menuUntuk(sesi.peran, sesi.ciriMenu).filter((m) => !
         </ul>
       </section>
     </div>
-    <TombolAksi label="Presensi" :ikon="PhFingerprint" warna="presensi" @klik="router.push('/presensi')" />
+    <!-- Tombol Presensi kini di tengah navigasi bawah (HP) dan di menu samping (desktop) -->
   </div>
 </template>
