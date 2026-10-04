@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengaturan/TabTemplateWA.vue | v1.2 | Fase 4 – Tahap 1 Data santri | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/TabTemplateWA.vue | v1.3 | Fase 4 – Tahap 3 Absensi HISBAT | 04/10/2026 -->
 <script setup>
 // Template pesan WhatsApp (superadmin). Isian dalam kurung kurawal, misalnya {nama}, diganti otomatis saat pesan dibuat.
 // Baris yang hanya berisi isian kosong dibuang. Pratinjau memakai data contoh.
@@ -16,7 +16,8 @@ const CONTOH = { nama: 'Ust. Hasan Basri, Lc.', username: 'hasanbasri', sandi: '
   waktu: '20.00–21.30 WITA', lokasi: 'Aula Utama', keterangan: 'Membawa catatan program bidang.', jenis: 'Izin', nomor: 'PGJ.007/PPTQ-IAS/X/2026', pesan: 'Isi pesan bebas.',
   niy: '2019070101', jabatan: 'Muhaffizh', unit: 'Bidang Tahfizh', isi_singkat: 'Rapat koordinasi awal bulan dilaksanakan Kamis…', kategori: 'SK', tautan: 'https://syathibygowa.github.io/simka/#/agenda',
   pengingat: 'besok', lama: '2 hari', status: 'disetujui', alasan: 'Keperluan keluarga', sesi: 'Halaqah subuh', status_presensi: 'Hadir', catatan_verval: 'Lokasi sesuai tugas luar',
-  nama_wali: 'Fauzi', hubungan: 'Ayah', nama_santri: 'Ahmad Fauzan', nis: '2211010', kelas: 'Kelas 8 Wustha' }
+  nama_wali: 'Fauzi', hubungan: 'Ayah', nama_santri: 'Ahmad Fauzan', nis: '2211010', kelas: 'Kelas 8A',
+  kegiatan: 'halaqah subuh (Halaqah Ust. Ahmad)', periode: '01 Oktober 2026 s.d. 07 Oktober 2026', rekap: 'Kelas 6/6, Halaqah 17/18 (1 Sakit), Asrama 12/12' }
 const variabel = computed(() => [...new Set((f.value?.isi.match(/\{(\w+)\}/g) || []).map((x) => x.slice(1, -1)))])
 const pratinjau = computed(() => (f.value ? isiTemplat(f.value.isi, CONTOH) : ''))
 function ubah(t) { f.value = { ...t } }

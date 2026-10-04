@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/FormSantri.vue | v1.1 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/FormSantri.vue | v1.2 | Fase 4 – Perbaikan P1 (data santri lengkap) | 04/10/2026 -->
 <script setup>
 // Tambah dan ubah data santri: identitas, pendidikan dan masuk (baru/pindahan), kontak ayah/ibu/wali.
 import { ref, computed, onMounted, watch } from 'vue'
@@ -25,7 +25,7 @@ onMounted(async () => {
   }
   if (baru.value) {
     f.value = { nis: '', nisn: '', nik: '', nama_lengkap: '', nama_panggilan: '', jenis_kelamin: '', tempat_lahir: '', tanggal_lahir: '', jenjang: 'wustha', tingkat: 7,
-      tanggal_masuk: '', jalur_masuk: 'baru', asal_sekolah: '', hafalan_awal_juz: '', anak_ke: '', alamat: '', catatan: '',
+      tanggal_masuk: '', jalur_masuk: 'baru', asal_sekolah: '', hafalan_awal_juz: '', anak_ke: '', alamat: '', catatan: '', no_kk: '', rt: '', rw: '', kelurahan: '', kecamatan: '', kota_kab: '', provinsi: '',
       kontak: ['ayah', 'ibu', 'wali'].map(kosongKontak), utama: 'ayah' }
   } else {
     const s = san.cari(route.params.id)
@@ -35,6 +35,7 @@ onMounted(async () => {
       id: s.id, nis: s.nis, nisn: s.nisn || '', nik: s.nik || '', nama_lengkap: s.nama_lengkap, nama_panggilan: s.nama_panggilan || '', jenis_kelamin: s.jenis_kelamin,
       tempat_lahir: s.tempat_lahir || '', tanggal_lahir: s.tanggal_lahir || '', jenjang: s.jenjang, tingkat: s.tingkat, tanggal_masuk: s.tanggal_masuk || '',
       jalur_masuk: s.jalur_masuk, asal_sekolah: s.asal_sekolah || '', hafalan_awal_juz: s.hafalan_awal_juz ?? '', anak_ke: s.anak_ke || '', alamat: s.alamat || '', catatan: s.catatan || '',
+      no_kk: s.no_kk || '', rt: s.rt || '', rw: s.rw || '', kelurahan: s.kelurahan || '', kecamatan: s.kecamatan || '', kota_kab: s.kota_kab || '', provinsi: s.provinsi || '',
       kontak: ['ayah', 'ibu', 'wali'].map((h) => { const k = (s.kontak || []).find((x) => x.hubungan === h); return k ? { hubungan: h, nama: k.nama || '', no_hp: k.no_hp || '', pekerjaan: k.pekerjaan || '' } : kosongKontak(h) }),
       utama: (s.kontak || []).find((k) => k.utama)?.hubungan || 'ayah',
     }
@@ -55,7 +56,10 @@ async function simpan() {
   if (!/^\d{7}$/.test(d.nis.trim())) return ui.toast('NIS harus 7 angka, contoh 2211010 (masuk 2022, angkatan 11, nomor 010).', 'galat')
   if (d.nama_lengkap.trim().length < 3) return ui.toast('Nama lengkap santri wajib diisi (minimal 3 huruf).', 'galat')
   if (!d.jenis_kelamin) return ui.toast('Pilih jenis kelamin santri.', 'galat')
-  if (d.nisn && !/^\d{10}$/.test(d.nisn.trim())) return ui.toast('NISN harus 10 angka.', 'galat')
+  if (!/^\d{10}$/.test(d.nisn.trim())) return ui.toast('NISN wajib diisi 10 angka.', 'galat')
+  if (!d.tempat_lahir.trim() || !d.tanggal_lahir) return ui.toast('Tempat dan tanggal lahir wajib diisi.', 'galat')
+  if (d.no_kk && !/^\d{16}$/.test(d.no_kk.trim())) return ui.toast('Nomor KK harus 16 angka.', 'galat')
+  for (const [k, n] of [['rt', 'RT'], ['rw', 'RW']]) if (d[k] && !/^\d{1,3}$/.test(String(d[k]).trim())) return ui.toast(`${n} harus angka (paling banyak 3 digit).`, 'galat')
   if (d.nik && !/^\d{16}$/.test(d.nik.trim())) return ui.toast('NIK harus 16 angka.', 'galat')
   if (d.hafalan_awal_juz !== '' && (Number(d.hafalan_awal_juz) < 0 || Number(d.hafalan_awal_juz) > 30)) return ui.toast('Hafalan awal harus 0–30 juz.', 'galat')
   if (d.jalur_masuk === 'pindahan' && !d.asal_sekolah.trim()) return ui.toast('Asal sekolah wajib diisi untuk santri pindahan.', 'galat')
@@ -73,7 +77,7 @@ async function simpan() {
     if (ada) { ada.utama = true; d.utama = ada.hubungan }
   }
   const { utama, ...isi } = d
-  Object.assign(isi, { nis: d.nis.trim(), nisn: d.nisn.trim(), nik: d.nik.trim(), tingkat: Number(d.tingkat), kontak })
+  Object.assign(isi, { nis: d.nis.trim(), nisn: d.nisn.trim(), nik: d.nik.trim(), no_kk: d.no_kk.trim(), tingkat: Number(d.tingkat), kontak })
   proses.value = true
   try {
     const id = await san.simpan(isi)
@@ -99,7 +103,7 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
           <p class="mt-1 text-xs" :class="infoNIS ? 'text-teks2' : 'text-teks3'">
             {{ infoNIS ? `Masuk ${infoNIS.tahun} · Angkatan ${infoNIS.angkatan} · Nomor ${infoNIS.nomor}` : 'Ketik 4 digit awal (tahun + angkatan) lalu ketuk Nomor berikutnya.' }}</p>
         </div>
-        <div><label class="label-isian" for="s-nisn">NISN (10 digit)</label><input id="s-nisn" v-model="f.nisn" class="isian tabular-nums" inputmode="numeric" maxlength="10" /></div>
+        <div><label class="label-isian" for="s-nisn">NISN (10 digit) <span class="text-merah">*</span></label><input id="s-nisn" v-model="f.nisn" class="isian tabular-nums" inputmode="numeric" maxlength="10" /></div>
         <div class="sm:col-span-2"><label class="label-isian" for="s-nama">Nama lengkap <span class="text-merah">*</span></label>
           <input id="s-nama" v-model="f.nama_lengkap" class="isian" placeholder="Sesuai akta kelahiran/ijazah" /></div>
         <div><label class="label-isian" for="s-pgl">Nama panggilan</label><input id="s-pgl" v-model="f.nama_panggilan" class="isian" /></div>
@@ -108,11 +112,18 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
             <button v-for="j in [{ k: 'L', n: 'Laki-laki' }, { k: 'P', n: 'Perempuan' }]" :key="j.k" type="button" role="radio" :aria-checked="f.jenis_kelamin === j.k" @click="f.jenis_kelamin = j.k"
               :class="['min-h-[44px] rounded-xl text-sm font-semibold', f.jenis_kelamin === j.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ j.n }}</button>
           </div></div>
-        <div><label class="label-isian" for="s-tmp">Tempat lahir</label><input id="s-tmp" v-model="f.tempat_lahir" class="isian" /></div>
-        <InputTanggal v-model="f.tanggal_lahir" label="Tanggal lahir" bawaan-kosong />
+        <div><label class="label-isian" for="s-tmp">Tempat lahir <span class="text-merah">*</span></label><input id="s-tmp" v-model="f.tempat_lahir" class="isian" /></div>
+        <InputTanggal v-model="f.tanggal_lahir" label="Tanggal lahir" bawaan-kosong wajib />
         <div><label class="label-isian" for="s-nik">NIK (16 digit)</label><input id="s-nik" v-model="f.nik" class="isian tabular-nums" inputmode="numeric" maxlength="16" /></div>
         <div><label class="label-isian" for="s-anak">Anak ke-</label><input id="s-anak" v-model="f.anak_ke" class="isian" type="number" min="1" max="30" /></div>
-        <div class="sm:col-span-2"><label class="label-isian" for="s-almt">Alamat rumah</label><textarea id="s-almt" v-model="f.alamat" class="isian min-h-[72px]" rows="2" /></div>
+        <div><label class="label-isian" for="s-kk">Nomor KK (16 digit)</label><input id="s-kk" v-model="f.no_kk" class="isian tabular-nums" inputmode="numeric" maxlength="16" /></div>
+        <div class="sm:col-span-2"><label class="label-isian" for="s-almt">Alamat (jalan/dusun)</label><input id="s-almt" v-model="f.alamat" class="isian" placeholder="Contoh: Jl. Poros Malino No. 4 / Dusun Bontobaddo" /></div>
+        <div class="grid grid-cols-2 gap-4"><div><label class="label-isian" for="s-rt">RT</label><input id="s-rt" v-model="f.rt" class="isian tabular-nums" inputmode="numeric" maxlength="3" placeholder="002" /></div>
+          <div><label class="label-isian" for="s-rw">RW</label><input id="s-rw" v-model="f.rw" class="isian tabular-nums" inputmode="numeric" maxlength="3" placeholder="005" /></div></div>
+        <div><label class="label-isian" for="s-kel">Kelurahan/desa</label><input id="s-kel" v-model="f.kelurahan" class="isian" /></div>
+        <div><label class="label-isian" for="s-kec">Kecamatan</label><input id="s-kec" v-model="f.kecamatan" class="isian" /></div>
+        <div><label class="label-isian" for="s-kab">Kabupaten/kota</label><input id="s-kab" v-model="f.kota_kab" class="isian" placeholder="Contoh: Kabupaten Gowa" /></div>
+        <div><label class="label-isian" for="s-prov">Provinsi</label><input id="s-prov" v-model="f.provinsi" class="isian" placeholder="Contoh: Sulawesi Selatan" /></div>
       </div>
     </section>
 

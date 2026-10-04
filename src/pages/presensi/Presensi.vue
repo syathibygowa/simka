@@ -1,11 +1,11 @@
-<!-- SIMKA PRO | src/pages/presensi/Presensi.vue | v1.2 | Fase 2 – Tahap 7 Statistik, rekap, pengingat | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/Presensi.vue | v1.3 | Fase 4 – Tahap 3 Absensi HISBAT | 04/10/2026 -->
 <script setup>
 // Halaman presensi pegawai (Bagian 9 blueprint): kartu lokasi besar, satu tombol bulat,
 // selfie wajib dari kamera langsung dengan watermark, dan deretan sesi hari ini.
 // Alur: baca GPS → periksa lokasi di server → (konfirmasi pulang cepat) → (di luar area: pilih & alasan)
 //       → selfie → kirim. Gagal karena sinyal → "Coba lagi" dengan permintaan yang sama (tidak dobel).
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { PhFingerprint, PhMapPin, PhWarningCircle, PhCheckCircle, PhNavigationArrow, PhClock, PhArrowClockwise, PhGearSix, PhCalendarStar, PhHourglassMedium, PhXCircle, PhInfo } from '@phosphor-icons/vue'
 import { useDataPresensi } from '@/stores/presensi'
 import { useSesi } from '@/stores/sesi'
@@ -16,7 +16,9 @@ import { titikTerdekat, formatJarak, lencanaSesi, STATUS_PULANG, STATUS_PRESENSI
 import KameraSelfie from '@/components/KameraSelfie.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
-const dp = useDataPresensi(); const sesi = useSesi(); const ui = useUI(); const router = useRouter()
+const dp = useDataPresensi(); const sesi = useSesi(); const ui = useUI(); const router = useRouter(); const route = useRoute()
+// Dari Absensi Santri: setelah presensi berhasil, kembali ke halaman absensi (route.query.lanjut)
+const lanjut = computed(() => (typeof route.query.lanjut === 'string' && route.query.lanjut.startsWith('/absensi-santri/') ? route.query.lanjut : ''))
 
 // ---------- Jam server berjalan ----------
 const kini = ref(sekarang()); let detak
@@ -308,7 +310,8 @@ const PILIHAN = [{ k: 'hadir', n: 'Hadir (tugas/dinas di luar)' }, { k: 'izin', 
               <span class="lencana">{{ teksHasil(h) }}</span>
             </li>
           </ul>
-          <button class="tombol-utama w-full" @click="tutupHasil">Selesai</button>
+          <button v-if="lanjut" class="tombol-utama w-full" @click="tutupHasil(); router.replace(lanjut)">Lanjut mengabsen santri</button>
+          <button v-else class="tombol-utama w-full" @click="tutupHasil">Selesai</button>
         </template>
         <template v-else-if="tahap === 'gagal' && galatKirim">
           <div class="flex gap-3 rounded-xl bg-[#C7332F]/10 p-3 text-sm font-semibold text-merah"><PhXCircle :size="22" class="shrink-0" /> {{ galatKirim.pesan }}</div>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.1 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.2 | Fase 4 – Perbaikan P1 dan Tahap 3 | 04/10/2026 -->
 <script setup>
 // Biodata santri: identitas, kontak orang tua/wali (tombol WA), riwayat status dan mutasi;
 // ubah status, mutasi keluar beserta surat keterangan pindah; cetak biodata F4.
@@ -6,7 +6,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   PhPencilSimple, PhTrash, PhEye, PhPrinter, PhClockCounterClockwise, PhArrowsLeftRight, PhSignOut, PhGraduationCap,
-  PhCalendarBlank, PhIdentificationCard, PhUsersThree, PhArrowRight, PhFileText, PhToggleLeft, PhChalkboardTeacher, PhBed, PhBookOpenText, PhMedal,
+  PhCalendarBlank, PhIdentificationCard, PhUsersThree, PhArrowRight, PhFileText, PhToggleLeft, PhChalkboardTeacher, PhBed, PhBookOpenText, PhMedal, PhCheckSquareOffset, PhWarningCircle,
 } from '@phosphor-icons/vue'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
@@ -14,6 +14,9 @@ import { useUI } from '@/stores/ui'
 import { JENJANG, STATUS_SANTRI, HUBUNGAN, inisial, kontakUtama, penandaJenjang, JENIS_KELOMPOK, judulKelompok, labelRombel } from '@/lib/santri'
 import { formatPanjang, formatPendek, hariIniISO } from '@/lib/tanggal'
 import { pesanWA } from '@/lib/wa'
+import { useAbsensiSantri } from '@/stores/absensiSantri'
+import { KODE, JENIS_ABSENSI, susunRekap, persen, teksPersen } from '@/lib/absensi'
+import { alamatLengkap, kurangWajib } from '@/lib/santri'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -37,8 +40,18 @@ async function muatPenanda() {
   pimpinan.value = await penandaJenjang(s.value.jenjang)
   direktur.value = await ambilPenandaTangan('Direktur')
 }
-onMounted(async () => { await san.muat(); san.muatRiwayat(route.params.id); muatPenanda() })
-watch(() => route.params.id, (id) => { if (id) { san.muatRiwayat(id); muatPenanda() } })
+// Kehadiran 30 hari terakhir (absensi HISBAT)
+const abs = useAbsensiSantri(); const hadir = ref(null); const tidakHadir = ref([])
+async function muatKehadiran() {
+  const d = new Date(); const akhir = hariIniISO(); d.setDate(d.getDate() - 29)
+  const awal = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  try {
+    const [r, x] = await Promise.all([abs.rekap(awal, akhir, { santri: route.params.id }), abs.riwayat(route.params.id, awal, akhir)])
+    hadir.value = susunRekap(r)[route.params.id] || null; tidakHadir.value = x
+  } catch { hadir.value = null; tidakHadir.value = [] }
+}
+onMounted(async () => { await san.muat(); san.muatRiwayat(route.params.id); muatPenanda(); muatKehadiran() })
+watch(() => route.params.id, (id) => { if (id) { san.muatRiwayat(id); muatPenanda(); muatKehadiran() } })
 
 const umur = computed(() => {
   if (!s.value?.tanggal_lahir) return null
@@ -85,9 +98,9 @@ const alasanSurat = computed(() => { const a = (mutasiCetak.value?.alasan || '')
 const kopJenjang = computed(() => (s.value?.jenjang === 'sma' ? 'sma' : 'wustha'))
 const orangTua = computed(() => (s.value?.kontak || []).filter((k) => k.hubungan !== 'wali').map((k) => k.nama).filter(Boolean).join(' / ') || kontakUtama(s.value)?.nama || '–')
 const baris = computed(() => !s.value ? [] : [
-  ['Nama lengkap', s.value.nama_lengkap], ['Nama panggilan', s.value.nama_panggilan || '–'], ['NIS', s.value.nis], ['NISN', s.value.nisn || '–'], ['NIK', s.value.nik || '–'],
+  ['Nama lengkap', s.value.nama_lengkap], ['Nama panggilan', s.value.nama_panggilan || '–'], ['NIS', s.value.nis], ['NISN', s.value.nisn || '–'], ['NIK', s.value.nik || '–'], ['Nomor KK', s.value.no_kk || '–'],
   ['Jenis kelamin', s.value.jenis_kelamin === 'P' ? 'Perempuan' : 'Laki-laki'], ['Tempat, tanggal lahir', ttl.value], ['Anak ke-', s.value.anak_ke || '–'],
-  ['Alamat', s.value.alamat || '–'], ['Jenjang', JENJANG[s.value.jenjang]], ['Kelas', labelRombel(s.value)],
+  ['Alamat', alamatLengkap(s.value) || '–'], ['Jenjang', JENJANG[s.value.jenjang]], ['Kelas', labelRombel(s.value)],
   ['Kamar / halaqah', [(s.value.kelompok || []).find((k) => k.jenis === 'kamar')?.nama, (s.value.kelompok || []).find((k) => k.jenis === 'halaqah')?.nama].filter(Boolean).join(' / ') || '–'],
   ['Tahun masuk / angkatan', `${s.value.tahun_masuk} / angkatan ${s.value.angkatan}`], ['Tanggal masuk', s.value.tanggal_masuk ? formatPanjang(s.value.tanggal_masuk) : '–'],
   ['Jalur masuk', s.value.jalur_masuk === 'pindahan' ? 'Pindahan (mutasi masuk)' : 'Santri baru'], ['Asal sekolah', s.value.asal_sekolah || '–'],
@@ -135,6 +148,32 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
         <button v-if="mutasiKeluar" class="tombol-garis w-tatausaha" @click="bukaSuratPindah(mutasiKeluar)"><PhFileText :size="20" weight="duotone" style="color: var(--c)" /> Surat keterangan pindah</button>
         <button v-if="sesi.isSuperadmin" class="tombol-garis" @click="hapus"><PhTrash :size="20" weight="duotone" /> Hapus</button>
       </div>
+
+      <!-- Data wajib belum lengkap -->
+      <div v-if="kurangWajib(s).length" class="kartu w-klinik mt-4 flex flex-wrap items-center gap-3 p-4">
+        <span class="chip-ikon h-10 w-10"><PhWarningCircle :size="22" weight="duotone" /></span>
+        <p class="min-w-[200px] flex-1 text-sm"><b>Data wajib belum lengkap:</b> {{ kurangWajib(s).join(', ') }}. Lengkapi lewat Ubah data atau ekspor–impor Excel.</p>
+        <router-link v-if="bolehUbah" :to="`/santri/${s.id}/ubah`" class="tombol-garis min-h-[40px] px-3 text-sm">Lengkapi</router-link>
+      </div>
+
+      <!-- Kehadiran 30 hari -->
+      <section class="kartu w-absensi mt-4 p-5">
+        <div class="mb-3 flex items-center gap-3"><span class="chip-ikon h-10 w-10"><PhCheckSquareOffset :size="22" weight="duotone" /></span>
+          <div><h3 class="judul-bagian">Kehadiran 30 hari terakhir</h3><p class="text-sm text-teks3">Absensi HISBAT kelas, halaqah, dan asrama.</p></div></div>
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div v-for="j in ['kelas', 'halaqah', 'asrama', 'pokok']" :key="j" :class="['rounded-2xl border border-garis p-3', 'w-' + (j === 'pokok' ? 'absensi' : JENIS_ABSENSI[j].warna)]">
+            <p class="text-xs font-bold uppercase tracking-wide" style="color: var(--c)">{{ j === 'pokok' ? 'Program pokok' : JENIS_ABSENSI[j].n }}</p>
+            <p class="mt-1 text-xl font-extrabold tabular-nums">{{ teksPersen(persen(hadir?.[j].hadir, hadir?.[j].sesi)) }}</p>
+            <p class="text-xs text-teks3">{{ hadir?.[j].sesi ? `${hadir[j].hadir}/${hadir[j].sesi} sesi` : 'belum ada sesi' }}</p>
+          </div>
+        </div>
+        <ul v-if="tidakHadir.length" class="mt-3 divide-y divide-garis text-sm">
+          <li v-for="(x, i) in tidakHadir.slice(0, 8)" :key="i" :class="['flex flex-wrap items-center gap-2 py-2', 'w-' + KODE[x.kode].w]">
+            <span class="lencana">{{ KODE[x.kode].n }}</span><span>{{ formatPendek(x.tanggal) }} · {{ x.nama_sesi }} ({{ x.kelompok }})</span>
+            <span v-if="x.keterangan" class="text-teks3">· {{ x.keterangan }}</span></li>
+        </ul>
+        <p v-else-if="hadir" class="mt-3 text-sm text-teks2">Selalu hadir pada sesi yang tercatat.</p>
+      </section>
 
       <!-- Kelompok tahun ajaran berjalan -->
       <section class="kartu w-kelompoksantri mt-4 p-5">
@@ -224,7 +263,7 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
           <tr><td>Jenis kelamin</td><td>:</td><td>{{ s.jenis_kelamin === 'P' ? 'Perempuan' : 'Laki-laki' }}</td></tr>
           <tr><td>Jenjang / kelas</td><td>:</td><td>{{ JENJANG[mutasiCetak.jenjang || s.jenjang] }} / Kelas {{ mutasiCetak.tingkat || s.tingkat }}</td></tr>
           <tr><td>Nama orang tua</td><td>:</td><td>{{ orangTua }}</td></tr>
-          <tr><td>Alamat</td><td>:</td><td>{{ s.alamat || '–' }}</td></tr>
+          <tr><td>Alamat</td><td>:</td><td>{{ alamatLengkap(s) || '–' }}</td></tr>
         </tbody>
       </table>
       <p style="text-align: justify">adalah benar santri pada {{ JENJANG[mutasiCetak.jenjang || s.jenjang] }} Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa

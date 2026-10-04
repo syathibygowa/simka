@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/ImporSantri.vue | v1.0 | Fase 4 – Tahap 1 Data santri | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/ImporSantri.vue | v1.1 | Fase 4 – Perbaikan P1 (data santri lengkap) | 04/10/2026 -->
 <script setup>
 // Impor data santri dari Excel: unduh templat → pilih berkas → periksa → impor.
 // Judul kolom ekspor aplikasi SPMB/daftar lama juga dikenali (KOLOM_IMPOR.alias). NIS sama = perbarui.
@@ -26,29 +26,37 @@ const bermasalah = computed(() => baris.value.filter((b) => b.galat.length))
 // ---------- Templat ----------
 function unduhTemplat() {
   const wb = XLSX.utils.book_new()
-  const contoh = [
-    ['2211010', 'Ahmad Fauzan', 'L', 'Wustha', '8', '0123456789', 'Fauzan', 'Gowa', '04/03/2012', '', '2', 'Jl. Poros Malino No. 4, Gowa', '13/07/2022', 'Baru', 'SD Inpres Bontoramba', '1',
-      'Fauzi', '081234567890', 'Wiraswasta', 'Siti Aminah', '081298765432', 'Ibu rumah tangga', '', '', '', ''],
-    ['2412005', 'Fatimah Azzahra', 'P', 'SMA', '11', '', '', 'Makassar', '15/05/2009', '', '1', 'Makassar', '01/08/2026', 'Pindahan', 'SMA Negeri 1 Gowa', '3,5',
-      'Rahman', '085211112222', 'PNS', 'Nurhayati', '', '', 'Hasan (paman)', '085233334444', 'Pedagang', ''],
+  const CONTOH = [
+    { nis: '2211010', nisn: '0123456789', nama_lengkap: 'Ahmad Fauzan', jenis_kelamin: 'L', jenjang: 'Wustha', tingkat: '8', nama_panggilan: 'Fauzan', tempat_lahir: 'Gowa',
+      tanggal_lahir: '04/03/2012', nik: '7306010403120001', no_kk: '7306011203090004', anak_ke: '2', alamat: 'Jl. Poros Malino No. 4', rt: '002', rw: '005',
+      kelurahan: 'Bontoramba', kecamatan: 'Somba Opu', kota_kab: 'Kabupaten Gowa', provinsi: 'Sulawesi Selatan', tanggal_masuk: '13/07/2022', jalur_masuk: 'Baru',
+      asal_sekolah: 'SD Inpres Bontoramba', hafalan_awal_juz: '1', nama_ayah: 'Fauzi', hp_ayah: '081234567890', pekerjaan_ayah: 'Wiraswasta', nama_ibu: 'Siti Aminah',
+      hp_ibu: '081298765432', pekerjaan_ibu: 'Ibu rumah tangga' },
+    { nis: '2412005', nisn: '0098765432', nama_lengkap: 'Fatimah Azzahra', jenis_kelamin: 'P', jenjang: 'SMA', tingkat: '11', tempat_lahir: 'Makassar', tanggal_lahir: '15/05/2009',
+      anak_ke: '1', alamat: 'Jl. Sultan Alauddin No. 10', rt: '001', rw: '003', kelurahan: 'Gunung Sari', kecamatan: 'Rappocini', kota_kab: 'Kota Makassar', provinsi: 'Sulawesi Selatan',
+      tanggal_masuk: '01/08/2026', jalur_masuk: 'Pindahan', asal_sekolah: 'SMA Negeri 1 Gowa', hafalan_awal_juz: '3,5', nama_ayah: 'Rahman', hp_ayah: '085211112222', pekerjaan_ayah: 'PNS',
+      nama_ibu: 'Nurhayati', nama_wali: 'Hasan (paman)', hp_wali: '085233334444', pekerjaan_wali: 'Pedagang' },
   ]
+  const contoh = CONTOH.map((o) => KOLOM_IMPOR.map((c) => o[c.k] || ''))
   const ws = XLSX.utils.aoa_to_sheet([KOLOM_IMPOR.map((c) => c.j + (c.wajib ? ' *' : '')), ...contoh])
   ws['!cols'] = KOLOM_IMPOR.map((c) => ({ wch: Math.max(12, Math.min(34, c.j.length + 2)) }))
   XLSX.utils.book_append_sheet(wb, ws, 'Data santri')
   const petunjuk = [
-    ['Petunjuk pengisian templat data santri SIMKA PRO (versi 1.0)'], [''],
+    ['Petunjuk pengisian templat data santri SIMKA PRO (versi 1.1)'], [''],
     ['1. Isi mulai baris ke-2 lembar "Data santri". Hapus dua baris contoh sebelum mengimpor.'],
-    ['2. Kolom bertanda * wajib untuk santri baru. Kolom lain boleh kosong dan dapat dilengkapi kemudian.'],
+    ['2. Kolom bertanda * wajib untuk santri baru: NIS, NISN, nama, jenis kelamin, kelas, tempat lahir, tanggal lahir. Kolom lain boleh kosong dan dilengkapi kemudian.'],
+    ['   Hasil "Ekspor Excel" di Data Santri memakai susunan kolom yang sama: unduh, lengkapi yang kosong, lalu impor kembali.'],
     ['3. NIS 7 angka: 2 digit tahun masuk + 2 digit angkatan + 3 digit nomor santri. Contoh 2211010 = masuk 2022, angkatan 11, nomor 010.'],
     ['4. Kelas ditulis 7–12 (boleh "Kelas 8B", "10 IPA", atau angka Romawi). Jenjang boleh kosong: kelas 7–9 = Wustha, 10–12 = SMA.'],
-    ['5. Tanggal ditulis dd/mm/yyyy, contoh 13/07/2022. Hafalan awal dalam juz, boleh desimal (3,5).'],
+    ['5. Tanggal ditulis dd/mm/yyyy, contoh 13/07/2022. Hafalan awal dalam juz, boleh desimal (3,5). RT dan RW cukup angka (2 → 002).'],
+    ['   NISN, NIK, dan Nomor KK sebaiknya diformat Teks di Excel agar angka 0 di depan dan digit terakhir tidak hilang.'],
     ['6. Baris dengan NIS yang sudah terdaftar akan MEMPERBARUI data lama; sel kosong tidak menghapus data lama.'],
     ['7. Nomor HP orang tua/wali dipakai untuk pesan WA dan kelak login portal wali. Penerima WA utama otomatis: ayah, lalu ibu, lalu wali yang ber-HP (dapat diubah di aplikasi).'],
     ['8. Status santri (nonaktif, mutasi keluar, lulus, berhenti) tidak diimpor; ubah lewat halaman santri agar riwayat dan alasannya tercatat.'],
   ]
   const wp = XLSX.utils.aoa_to_sheet(petunjuk); wp['!cols'] = [{ wch: 120 }]
   XLSX.utils.book_append_sheet(wb, wp, 'Petunjuk')
-  XLSX.writeFile(wb, 'Templat-Impor-Santri-SIMKA-v1.0.xlsx')
+  XLSX.writeFile(wb, 'Templat-Impor-Santri-SIMKA-v1.1.xlsx')
 }
 
 function tanggal(v) {
@@ -108,11 +116,6 @@ function periksa(o, nomorBaris) {
   if (isi.tingkat && !isi.jenjang) isi.jenjang = jenjangDariTingkat(isi.tingkat)
   if (isi.jenjang && !isi.tingkat && ada) isi.tingkat = ada.tingkat
   if (isi.tingkat && isi.jenjang && jenjangDariTingkat(isi.tingkat) !== isi.jenjang) galat.push('Kelas tidak sesuai jenjang (Wustha 7–9, SMA 10–12).')
-  if (!ada) {
-    if (!isi.nama_lengkap) galat.push('Nama lengkap wajib untuk santri baru.')
-    if (!isi.jenis_kelamin) galat.push('Jenis kelamin wajib untuk santri baru.')
-    if (!isi.tingkat) galat.push('Kelas wajib untuk santri baru.')
-  }
   set('nisn', o.nisn, (v) => (/^\d{10}$/.test(s(v).replace(/\s/g, '')) ? s(v).replace(/\s/g, '') : null), 'NISN harus 10 angka.')
   set('nik', o.nik, (v) => (/^\d{16}$/.test(s(v).replace(/[\s']/g, '')) ? s(v).replace(/[\s']/g, '') : null), 'NIK harus 16 angka (format sel Excel sebagai Teks).')
   set('nama_panggilan', o.nama_panggilan)
@@ -120,11 +123,25 @@ function periksa(o, nomorBaris) {
   set('tanggal_lahir', o.tanggal_lahir, tanggal, 'Tanggal lahir tidak sah (tulis dd/mm/yyyy).')
   set('anak_ke', o.anak_ke, (v) => (/^\d{1,2}$/.test(s(v)) ? Number(s(v)) : null), 'Anak ke- harus angka.')
   set('alamat', o.alamat)
+  set('no_kk', o.no_kk, (v) => (/^\d{16}$/.test(s(v).replace(/[\s']/g, '')) ? s(v).replace(/[\s']/g, '') : null), 'Nomor KK harus 16 angka (format sel Excel sebagai Teks).')
+  set('rt', o.rt, (v) => (/^\d{1,3}$/.test(s(v)) ? s(v).padStart(3, '0') : null), 'RT harus angka (paling banyak 3 digit).')
+  set('rw', o.rw, (v) => (/^\d{1,3}$/.test(s(v)) ? s(v).padStart(3, '0') : null), 'RW harus angka (paling banyak 3 digit).')
+  set('kelurahan', o.kelurahan)
+  set('kecamatan', o.kecamatan)
+  set('kota_kab', o.kota_kab)
+  set('provinsi', o.provinsi)
   set('tanggal_masuk', o.tanggal_masuk, tanggal, 'Tanggal masuk tidak sah (tulis dd/mm/yyyy).')
   set('jalur_masuk', o.jalur_masuk, normalJalur, 'Jalur masuk harus Baru atau Pindahan.')
   set('asal_sekolah', o.asal_sekolah)
   set('hafalan_awal_juz', o.hafalan_awal_juz, (v) => { const n = Number(s(v).replace(',', '.').replace(/\s*juz$/i, '')); return n >= 0 && n <= 30 ? n : null }, 'Hafalan awal harus 0–30 juz.')
   set('catatan', o.catatan)
+  if (!ada) {
+    if (!isi.nisn) galat.push('NISN wajib untuk santri baru.')
+    if (!isi.tempat_lahir || !isi.tanggal_lahir) galat.push('Tempat dan tanggal lahir wajib untuk santri baru.')
+    if (!isi.nama_lengkap) galat.push('Nama lengkap wajib untuk santri baru.')
+    if (!isi.jenis_kelamin) galat.push('Jenis kelamin wajib untuk santri baru.')
+    if (!isi.tingkat) galat.push('Kelas wajib untuk santri baru.')
+  }
   const kontak = []
   for (const h of ['ayah', 'ibu', 'wali']) {
     const k = { hubungan: h }

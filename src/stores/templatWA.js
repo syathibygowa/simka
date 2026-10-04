@@ -1,11 +1,11 @@
-// SIMKA PRO | src/stores/templatWA.js | v1.1 | Fase 4 – Tahap 1 Data santri | 04/10/2026
+// SIMKA PRO | src/stores/templatWA.js | v1.2 | Fase 4 – Tahap 3 Absensi HISBAT | 04/10/2026
 // Template pesan WhatsApp (dikelola superadmin).
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { pesanGalat } from './lembaga'
 import { BAWAAN_WA, setelTemplatWA } from '@/lib/wa'
 
-const NAMA = { aktivasi: 'Akun diaktifkan', ditolak: 'Pendaftaran ditolak', sandi_sementara: 'Kata sandi sementara', undangan_agenda: 'Undangan/pengingat agenda', umum: 'Pesan umum kepada pegawai', wali_santri: 'Pesan ke orang tua/wali santri' }
+const NAMA = { aktivasi: 'Akun diaktifkan', ditolak: 'Pendaftaran ditolak', sandi_sementara: 'Kata sandi sementara', undangan_agenda: 'Undangan/pengingat agenda', umum: 'Pesan umum kepada pegawai', wali_santri: 'Pesan ke orang tua/wali santri', absen_santri: 'Ketidakhadiran santri', rekap_santri: 'Rekap kehadiran santri' }
 export const useTemplatWA = defineStore('templatWA', {
   state: () => ({ daftar: [], memuat: false }),
   actions: {

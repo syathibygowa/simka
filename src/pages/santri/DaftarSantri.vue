@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.1 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.2 | Fase 4 – Perbaikan P1 (data santri lengkap) | 04/10/2026 -->
 <script setup>
 // Daftar santri sesuai cakupan pengguna (RLS): kartu statistik langsung, cari dan saring,
 // ekspor Excel, cetak daftar F4 berkop jenjang.
@@ -11,7 +11,7 @@ import {
 } from '@phosphor-icons/vue'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
-import { JENJANG, JENJANG_PENDEK, TINGKAT, STATUS_SANTRI, HUBUNGAN, kontakUtama, inisial, kontakDari, penandaJenjang, labelRombel, namaKelompok } from '@/lib/santri'
+import { JENJANG, JENJANG_PENDEK, TINGKAT, STATUS_SANTRI, HUBUNGAN, kontakUtama, inisial, penandaJenjang, labelRombel, namaKelompok, KOLOM_IMPOR, nilaiEkspor, kurangWajib } from '@/lib/santri'
 import { formatPanjang, formatPendek, hariIniISO } from '@/lib/tanggal'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import KartuStatistik from '@/components/KartuStatistik.vue'
@@ -25,7 +25,7 @@ const san = useSantri(); const sesi = useSesi(); const router = useRouter()
 const bolehUbah = computed(() => sesi.bolehAdmin('kelola_santri') || sesi.tingkat('data_santri') >= 2)
 const bolehImpor = computed(() => sesi.bolehAdmin('kelola_santri'))
 
-const cari = ref(''); const status = ref('aktif'); const jenjang = ref('semua'); const tingkat = ref(''); const jk = ref('')
+const cari = ref(''); const status = ref('aktif'); const jenjang = ref('semua'); const tingkat = ref(''); const jk = ref(''); const lengkap = ref('')
 const pratinjau = ref(false); const opsiCetak = ref(false); const tglDok = ref(hariIniISO())
 const pimpinan = ref({ jabatan: '', nama: '', niy: '' })
 onMounted(() => san.muat())
@@ -38,7 +38,7 @@ const statistik = computed(() => [
   { judul: 'Putri', nilai: aktif.value.filter((s) => s.jenis_kelamin === 'P').length, ikon: PhGenderFemale, warna: 'klinik', ket: 'Santri aktif perempuan' },
   { judul: 'Kesetaraan Wustha', nilai: aktif.value.filter((s) => s.jenjang === 'wustha').length, ikon: PhBooks, warna: 'tahfizh', ket: 'Kelas 7–9' },
   { judul: 'SMA', nilai: aktif.value.filter((s) => s.jenjang === 'sma').length, ikon: PhGraduationCap, warna: 'laporan', ket: 'Kelas 10–12' },
-  { judul: 'Tidak aktif', nilai: san.daftar.length - aktif.value.length, ikon: PhUserMinus, warna: 'hakakses', ket: 'Nonaktif, mutasi, lulus, berhenti' },
+  { judul: 'Data wajib kurang', nilai: aktif.value.filter((s) => kurangWajib(s).length).length, ikon: PhUserMinus, warna: 'klinik', ket: 'NISN, tempat atau tanggal lahir kosong · ketuk untuk menyaring', saring: true },
 ])
 
 const tingkatPilihan = computed(() => (jenjang.value === 'semua' ? [...TINGKAT.wustha, ...TINGKAT.sma] : TINGKAT[jenjang.value]))
@@ -48,25 +48,30 @@ const tampil = computed(() => {
     && (jenjang.value === 'semua' || s.jenjang === jenjang.value)
     && (!tingkat.value || s.tingkat === Number(tingkat.value))
     && (!jk.value || s.jenis_kelamin === jk.value)
+    && (!lengkap.value || (lengkap.value === 'kurang' ? kurangWajib(s).length > 0 : kurangWajib(s).length === 0))
     && (!q || [s.nama_lengkap, s.nama_panggilan, s.nis, s.nisn, ...(s.kontak || []).map((k) => k.nama)].join(' ').toLowerCase().includes(q)))
 })
 function pilihJenjang(j) { jenjang.value = j; if (tingkat.value && !tingkatPilihan.value.includes(Number(tingkat.value))) tingkat.value = '' }
 
 // ---------- Ekspor Excel ----------
+// Ekspor memakai susunan kolom templat impor: unduh → lengkapi data yang kosong → impor kembali (NIS sama = diperbarui).
+// Kolom berawalan "Info:" hanya keterangan dan diabaikan saat diimpor.
 function eksporExcel() {
-  const kolom = ['No.', 'NIS', 'NISN', 'Nama lengkap', 'Nama panggilan', 'L/P', 'Tempat lahir', 'Tanggal lahir', 'Jenjang', 'Kelas', 'Tahun masuk', 'Angkatan',
-    'Tanggal masuk', 'Jalur masuk', 'Asal sekolah', 'Hafalan awal (juz)', 'Anak ke-', 'Alamat', 'Nama ayah', 'HP ayah', 'Pekerjaan ayah', 'Nama ibu', 'HP ibu',
-    'Pekerjaan ibu', 'Nama wali/darurat', 'HP wali/darurat', 'Penerima WA utama', 'Rombel', 'Kamar', 'Halaqah', 'Ekskul', 'Status', 'Status sejak']
-  const data = tampil.value.map((s, i) => {
-    const a = kontakDari(s, 'ayah') || {}, b = kontakDari(s, 'ibu') || {}, w = kontakDari(s, 'wali') || {}
-    return [i + 1, s.nis, s.nisn || '', s.nama_lengkap, s.nama_panggilan || '', s.jenis_kelamin, s.tempat_lahir || '', s.tanggal_lahir ? formatPendek(s.tanggal_lahir) : '',
-      JENJANG[s.jenjang], s.tingkat, s.tahun_masuk || '', s.angkatan || '', s.tanggal_masuk ? formatPendek(s.tanggal_masuk) : '', s.jalur_masuk === 'pindahan' ? 'Pindahan' : 'Baru',
-      s.asal_sekolah || '', s.hafalan_awal_juz ?? '', s.anak_ke || '', s.alamat || '', a.nama || '', a.no_hp || '', a.pekerjaan || '', b.nama || '', b.no_hp || '',
-      b.pekerjaan || '', w.nama || '', w.no_hp || '', HUBUNGAN[kontakUtama(s)?.hubungan] || '', namaKelompok(s, 'kelas'), namaKelompok(s, 'kamar'), namaKelompok(s, 'halaqah'), namaKelompok(s, 'ekskul'), STATUS_SANTRI[s.status]?.n || s.status, formatPendek(s.status_sejak)]
-  })
+  const info = ['Info: Rombel', 'Info: Kamar', 'Info: Halaqah', 'Info: Ekskul', 'Info: Status', 'Info: Data wajib kurang']
+  const kolom = [...KOLOM_IMPOR.map((c) => c.j + (c.wajib ? ' *' : '')), ...info]
+  const data = tampil.value.map((s) => [...KOLOM_IMPOR.map((c) => nilaiEkspor(s, c.k, formatPendek)),
+    namaKelompok(s, 'kelas'), namaKelompok(s, 'kamar'), namaKelompok(s, 'halaqah'), namaKelompok(s, 'ekskul'), STATUS_SANTRI[s.status]?.n || s.status, kurangWajib(s).join(', ')])
   const ws = XLSX.utils.aoa_to_sheet([kolom, ...data])
   ws['!cols'] = kolom.map((k, i) => ({ wch: Math.min(36, Math.max(k.length, ...data.map((r) => String(r[i]).length)) + 2) }))
+  // NIS, NISN, NIK, Nomor KK, RT, RW, dan HP disimpan sebagai teks agar angka 0 di depan tidak hilang
+  for (const r of Object.keys(ws)) if (!r.startsWith('!') && ws[r].t === 's') ws[r].z = '@'
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Data santri')
+  const petunjuk = XLSX.utils.aoa_to_sheet([['Ekspor Data Santri SIMKA PRO (susunan templat impor v1.1)'], [''],
+    ['1. Lengkapi sel yang kosong, terutama kolom bertanda * (NIS, NISN, nama, tempat dan tanggal lahir).'],
+    ['2. Jangan mengubah NIS: NIS dipakai untuk mencocokkan santri saat diimpor kembali.'],
+    ['3. Simpan, lalu impor di Data Santri → Impor Excel. Sel kosong tidak menghapus data lama.'],
+    ['4. Kolom berawalan "Info:" hanya keterangan dan tidak diimpor. Status dan kelompok diubah di aplikasi.']])
+  petunjuk['!cols'] = [{ wch: 110 }]; XLSX.utils.book_append_sheet(wb, petunjuk, 'Petunjuk')
   XLSX.writeFile(wb, `Data-Santri-${formatPendek(new Date()).replace(/\//g, '-')}.xlsx`)
 }
 
@@ -97,7 +102,8 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
 
       <!-- Kartu statistik langsung -->
       <div class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 xl:grid-cols-6">
-        <KartuStatistik v-for="k in statistik" :key="k.judul" class="w-[46%] shrink-0 snap-start sm:w-auto" :judul="k.judul" :nilai="san.memuat && !san.daftar.length ? '…' : k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket" />
+        <KartuStatistik v-for="k in statistik" :key="k.judul" class="w-[46%] shrink-0 snap-start sm:w-auto" :judul="k.judul" :nilai="san.memuat && !san.daftar.length ? '…' : k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket"
+          :class="k.saring && 'cursor-pointer'" @click="k.saring && (lengkap = lengkap === 'kurang' ? '' : 'kurang')" />
       </div>
 
       <!-- Aksi -->
@@ -119,6 +125,9 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
         </select>
         <select v-model="tingkat" class="isian w-auto" aria-label="Saring kelas">
           <option value="">Semua kelas</option><option v-for="t in tingkatPilihan" :key="t" :value="t">Kelas {{ t }}</option>
+        </select>
+        <select v-model="lengkap" class="isian w-auto" aria-label="Saring kelengkapan data">
+          <option value="">Semua kelengkapan</option><option value="kurang">Data wajib kurang</option><option value="lengkap">Data wajib lengkap</option>
         </select>
         <select v-model="jk" class="isian w-auto" aria-label="Saring jenis kelamin">
           <option value="">Putra dan putri</option><option value="L">Putra</option><option value="P">Putri</option>
@@ -148,7 +157,8 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
               <td class="px-4 py-3 text-teks2">{{ [namaKelompok(s, 'kamar'), namaKelompok(s, 'halaqah')].filter(Boolean).join(' · ') || '–' }}</td>
               <td class="px-4 py-3 tabular-nums text-teks2">{{ s.angkatan }} ({{ s.tahun_masuk }})</td>
               <td class="px-4 py-3 text-teks2">{{ kontakUtama(s) ? `${kontakUtama(s).nama || '–'} (${HUBUNGAN[kontakUtama(s).hubungan]})` : '–' }}</td>
-              <td class="px-4 py-3"><span :class="['lencana', 'w-' + STATUS_SANTRI[s.status]?.w]">{{ STATUS_SANTRI[s.status]?.n }}</span></td>
+              <td class="px-4 py-3"><span :class="['lencana', 'w-' + STATUS_SANTRI[s.status]?.w]">{{ STATUS_SANTRI[s.status]?.n }}</span>
+                <span v-if="kurangWajib(s).length" class="lencana w-klinik ml-1" :title="'Kurang: ' + kurangWajib(s).join(', ')">Data kurang</span></td>
               <td class="pr-3"><PhCaretRight :size="18" class="text-teks3" /></td>
             </tr>
           </tbody>
@@ -165,6 +175,7 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
               <span class="block truncate font-bold">{{ s.nama_lengkap }}</span>
               <span class="block truncate text-sm text-teks3">{{ s.nis }} · {{ labelRombel(s) }}{{ namaKelompok(s, 'kamar') ? ' · ' + namaKelompok(s, 'kamar') : '' }}</span>
               <span v-if="s.status !== 'aktif'" :class="['lencana mt-1', 'w-' + STATUS_SANTRI[s.status]?.w]">{{ STATUS_SANTRI[s.status]?.n }}</span>
+              <span v-if="kurangWajib(s).length" class="lencana w-klinik mt-1">Kurang: {{ kurangWajib(s).join(', ') }}</span>
             </span>
             <PhCaretRight :size="20" class="text-teks3" />
           </router-link>

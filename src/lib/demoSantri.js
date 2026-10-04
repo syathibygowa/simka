@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoSantri.js | v1.0 | Fase 4 – Tahap 1 Data santri | 04/10/2026
+// SIMKA PRO | src/lib/demoSantri.js | v1.1 | Fase 4 – Perbaikan P1 (data santri lengkap) | 04/10/2026
 // Data santri contoh untuk MODE DEMO. Semua nama fiktif.
 const PUTRA = ['Ahmad Fauzan', 'Muhammad Rafi', 'Abdullah Hanif', 'Umar Al-Faruq', 'Hamzah Ramadhan', 'Zaid Abdurrahman', 'Ilham Akbar',
   'Fathir Alfarizi', 'Yahya Habibi', 'Salman Alfarisi', 'Bilal Hakim', 'Khalid Syahputra', 'Rasyid Ridha', 'Hasan Basyir']
@@ -26,10 +26,12 @@ function buat() {
     semua.push({
       id: `s${semua.length + 1}`, nis, nisn: i % 5 === 3 ? null : `00${String(98765432 - i * 1371).padStart(8, '0')}`,
       nik: null, nama_lengkap: nama, nama_panggilan: nama.split(' ')[0], jenis_kelamin: jk,
-      tempat_lahir: KOTA[i % KOTA.length], tanggal_lahir: lahir, jenjang, tingkat, tahun_masuk: masuk, angkatan,
+      tempat_lahir: i % 13 === 7 ? null : KOTA[i % KOTA.length], tanggal_lahir: lahir, jenjang, tingkat, tahun_masuk: masuk, angkatan,
       tanggal_masuk: `${masuk}-07-13`, jalur_masuk: pindahan ? 'pindahan' : 'baru',
       asal_sekolah: pindahan ? 'SMP Negeri 2 Sungguminasa' : (jenjang === 'sma' ? 'SMP IT Wahdah' : 'SD Inpres Bontoramba'),
-      hafalan_awal_juz: pindahan ? 2 : null, anak_ke: (i % 4) + 1, alamat: `Jl. Poros Malino No. ${i + 3}, ${KOTA[i % KOTA.length]}`,
+      hafalan_awal_juz: pindahan ? 2 : null, anak_ke: (i % 4) + 1, alamat: `Jl. Poros Malino No. ${i + 3}`, rt: String((i % 6) + 1).padStart(3, '0'), rw: String((i % 4) + 1).padStart(3, '0'),
+      kelurahan: ['Bontoramba', 'Samata', 'Paccinongang', 'Romang Polong'][i % 4], kecamatan: i % 3 ? 'Somba Opu' : 'Pallangga', kota_kab: `Kabupaten ${KOTA[i % KOTA.length]}`,
+      provinsi: 'Sulawesi Selatan', no_kk: i % 4 === 1 ? null : `7306${String(100000000000 + i * 7919).slice(0, 12)}`,
       status: i === 20 ? 'nonaktif' : i === 22 ? 'mutasi_keluar' : 'aktif', status_sejak: '2026-07-13', catatan: null,
       nama_jenjang: jenjang === 'sma' ? 'SMA' : 'Kesetaraan Wustha', kontak,
     })

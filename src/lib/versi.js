@@ -1,6 +1,6 @@
-// SIMKA PRO | src/lib/versi.js | v4.1.0 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026
+// SIMKA PRO | src/lib/versi.js | v4.2.0 | Fase 4 – Tahap 3 Absensi HISBAT | 04/10/2026
 // Nomor versi aplikasi yang tampil di halaman Profil. Naikkan setiap kali kode diunggah ke GitHub.
-export const VERSI_APLIKASI = '4.1.0'
+export const VERSI_APLIKASI = '4.2.0'
 export const KETERANGAN_VERSI = 'Fase 4 – Santri dan akademik dasar'
 
 // Waktu kode dibangun oleh GitHub Actions; dipakai untuk memastikan versi yang tayang adalah yang terbaru.

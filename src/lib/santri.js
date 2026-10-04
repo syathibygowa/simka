@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/santri.js | v1.1 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026
+// SIMKA PRO | src/lib/santri.js | v1.2 | Fase 4 – Perbaikan P1 dan Tahap 3 | 04/10/2026
 // Label baku, pembacaan NIS pondok, normalisasi isian, dan kolom templat Excel data santri.
 import { normalJK, normalHP } from './kepegawaian'
 import { supabase, MODE_DEMO } from './supabase'
@@ -85,17 +85,25 @@ export function normalJalur(v) {
 /** Kolom templat impor. "alias" = judul lain yang juga dikenali (mis. ekspor aplikasi SPMB pondok). */
 export const KOLOM_IMPOR = [
   { k: 'nis', j: 'NIS (7 digit)', wajib: true, alias: ['nis', 'nomor induk', 'no induk', 'nomor induk santri', 'no. induk'] },
+  { k: 'nisn', j: 'NISN', wajib: true, alias: ['nisn', 'nomor induk siswa nasional'] },
   { k: 'nama_lengkap', j: 'Nama lengkap', wajib: true, alias: ['nama', 'nama lengkap', 'nama santri', 'nama siswa', 'nama peserta didik'] },
   { k: 'jenis_kelamin', j: 'Jenis kelamin (L/P)', wajib: true, alias: ['jenis kelamin', 'jk', 'l/p', 'gender'] },
   { k: 'jenjang', j: 'Jenjang (Wustha/SMA)', alias: ['jenjang', 'jenjang sekolah', 'tingkat sekolah', 'sekolah'] },
   { k: 'tingkat', j: 'Kelas (7–12)', wajib: true, alias: ['kelas', 'tingkat', 'rombel', 'tingkat kelas'] },
-  { k: 'nisn', j: 'NISN', alias: ['nisn', 'nomor induk siswa nasional'] },
+
   { k: 'nama_panggilan', j: 'Nama panggilan', alias: ['panggilan', 'nama panggilan'] },
-  { k: 'tempat_lahir', j: 'Tempat lahir', alias: ['tempat lahir', 'tempat'] },
-  { k: 'tanggal_lahir', j: 'Tanggal lahir (dd/mm/yyyy)', alias: ['tanggal lahir', 'tgl lahir', 'tgl. lahir'] },
+  { k: 'tempat_lahir', j: 'Tempat lahir', wajib: true, alias: ['tempat lahir', 'tempat'] },
+  { k: 'tanggal_lahir', j: 'Tanggal lahir (dd/mm/yyyy)', wajib: true, alias: ['tanggal lahir', 'tgl lahir', 'tgl. lahir'] },
   { k: 'nik', j: 'NIK', alias: ['nik', 'nomor induk kependudukan', 'no kk/nik'] },
   { k: 'anak_ke', j: 'Anak ke-', alias: ['anak ke', 'anak ke-'] },
-  { k: 'alamat', j: 'Alamat', alias: ['alamat', 'alamat rumah', 'alamat lengkap'] },
+  { k: 'no_kk', j: 'Nomor KK', alias: ['no kk', 'nomor kk', 'no. kk', 'nomor kartu keluarga', 'kk'] },
+  { k: 'alamat', j: 'Alamat (jalan/dusun)', alias: ['alamat', 'alamat rumah', 'alamat lengkap', 'jalan', 'dusun', 'alamat jalan'] },
+  { k: 'rt', j: 'RT', alias: ['rt'] },
+  { k: 'rw', j: 'RW', alias: ['rw'] },
+  { k: 'kelurahan', j: 'Kelurahan/desa', alias: ['kelurahan', 'desa', 'kelurahan/desa', 'desa/kelurahan'] },
+  { k: 'kecamatan', j: 'Kecamatan', alias: ['kecamatan'] },
+  { k: 'kota_kab', j: 'Kabupaten/kota', alias: ['kabupaten', 'kota', 'kabupaten/kota', 'kota/kabupaten', 'kab/kota'] },
+  { k: 'provinsi', j: 'Provinsi', alias: ['provinsi', 'propinsi'] },
   { k: 'tanggal_masuk', j: 'Tanggal masuk (dd/mm/yyyy)', alias: ['tanggal masuk', 'tgl masuk', 'diterima tanggal'] },
   { k: 'jalur_masuk', j: 'Jalur masuk (Baru/Pindahan)', alias: ['jalur masuk', 'jalur', 'status masuk', 'jenis pendaftaran'] },
   { k: 'asal_sekolah', j: 'Asal sekolah', alias: ['asal sekolah', 'sekolah asal'] },
@@ -154,3 +162,31 @@ export async function penandaKelompok(g) {
 }
 /** Judul kelompok untuk tampilan, mis. kelas "7A" → "Kelas 7A". */
 export const judulKelompok = (g) => (g?.jenis === 'kelas' && !/^kelas/i.test(g.nama) ? `Kelas ${g.nama}` : g?.nama || '')
+
+// ---------- Kelengkapan dan alamat (Perbaikan P1) ----------
+/** Data wajib: NIS, NISN, nama, tempat lahir, tanggal lahir. */
+export const kurangWajib = (s) => [!s.nisn && 'NISN', !s.tempat_lahir && 'Tempat lahir', !s.tanggal_lahir && 'Tanggal lahir'].filter(Boolean)
+/** Alamat lengkap satu baris: jalan/dusun, RT/RW, kelurahan, kecamatan, kabupaten/kota, provinsi. */
+export const alamatLengkap = (s) => [s?.alamat, (s?.rt || s?.rw) && `RT ${s.rt || '–'}/RW ${s.rw || '–'}`, s?.kelurahan && `Kel./Desa ${s.kelurahan}`,
+  s?.kecamatan && `Kec. ${s.kecamatan}`, s?.kota_kab, s?.provinsi].filter(Boolean).join(', ')
+/** Nilai sel ekspor untuk satu kolom impor (ekspor dapat diimpor kembali tanpa diubah). */
+export function nilaiEkspor(s, k, formatTanggal) {
+  const kontak = (h) => (s.kontak || []).find((x) => x.hubungan === h) || {}
+  switch (k) {
+    case 'jenjang': return s.jenjang === 'sma' ? 'SMA' : 'Wustha'
+    case 'jenis_kelamin': return s.jenis_kelamin
+    case 'tanggal_lahir': case 'tanggal_masuk': return s[k] ? formatTanggal(s[k]) : ''
+    case 'jalur_masuk': return s.jalur_masuk === 'pindahan' ? 'Pindahan' : 'Baru'
+    case 'hafalan_awal_juz': return s.hafalan_awal_juz == null ? '' : String(s.hafalan_awal_juz).replace('.', ',')
+    case 'nama_ayah': return kontak('ayah').nama || ''
+    case 'hp_ayah': return kontak('ayah').no_hp || ''
+    case 'pekerjaan_ayah': return kontak('ayah').pekerjaan || ''
+    case 'nama_ibu': return kontak('ibu').nama || ''
+    case 'hp_ibu': return kontak('ibu').no_hp || ''
+    case 'pekerjaan_ibu': return kontak('ibu').pekerjaan || ''
+    case 'nama_wali': return kontak('wali').nama || ''
+    case 'hp_wali': return kontak('wali').no_hp || ''
+    case 'pekerjaan_wali': return kontak('wali').pekerjaan || ''
+    default: return s[k] == null ? '' : String(s[k])
+  }
+}

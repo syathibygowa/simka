@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/wa.js | v1.5 | Fase 4 – Tahap 1 Data santri | 04/10/2026
+// SIMKA PRO | src/lib/wa.js | v1.6 | Fase 4 – Tahap 3 Absensi HISBAT | 04/10/2026
 // Tautan WhatsApp wa.me dari WA pribadi pegawai (Bagian 25). Isi pesan diambil dari template WA yang
 // dikelola superadmin (Pengaturan → Template WA); bila belum dimuat, dipakai isi bawaan di bawah.
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -28,6 +28,8 @@ export const BAWAAN_WA = {
   pengajuan_status: '{salam}, {nama}.\n\nPengajuan {jenis} Anda ({tanggal}, {lama}) saat ini *{status}*.\n{alasan}\n\nRincian dan surat: {tautan}\n\n{penutup}\n{pengirim}',
   pengajuan_pengingat: '{salam}, {nama}.\n\nMohon maaf mengganggu. Ada pengajuan {jenis} dari {pemohon} ({tanggal}, {lama}) yang menunggu persetujuan Anda sebagai {jabatan}.\n\nSilakan diputuskan di SIMKA PRO: {tautan}\n\n{penutup}\n{pengirim}',
   wali_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami dari {nama_singkat} menyampaikan informasi terkait ananda *{nama_santri}* (NIS {nis}, {kelas}).\n\n{pesan}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  absen_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan bahwa ananda *{nama_santri}* ({kelas}) tercatat *{status}* pada {kegiatan}, {tanggal}.\n{keterangan}\n\nMohon perhatian dan kerja samanya.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  rekap_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nRekap kehadiran ananda *{nama_santri}* ({kelas}) periode {periode}:\n{rekap}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   verval_presensi: '{salam}, {nama}.\n\nPresensi Anda pada sesi {sesi}, {tanggal} telah diverval dengan status *{status_presensi}*.\nCatatan: {catatan_verval}\n\n{penutup}\n{pengirim}',
 }
 
@@ -62,7 +64,8 @@ export const ISIAN_WA = [
   { grup: 'Agenda', isian: [['tanggal', 'Hari/tanggal agenda'], ['waktu', 'Jam agenda'], ['lokasi', 'Tempat'], ['keterangan', 'Keterangan agenda'], ['pengingat', 'Keterangan pengingat (mis. besok)']] },
   { grup: 'Pengajuan', isian: [['pemohon', 'Nama pemohon'], ['jenis', 'Jenis pengajuan'], ['lama', 'Lama (hari)'], ['nomor', 'Nomor surat'], ['status', 'Status pengajuan'], ['alasan', 'Alasan/catatan']] },
   { grup: 'Presensi', isian: [['sesi', 'Nama sesi presensi'], ['status_presensi', 'Status presensi'], ['catatan_verval', 'Catatan verval admin']] },
-  { grup: 'Santri dan wali', isian: [['nama_wali', 'Nama orang tua/wali penerima'], ['hubungan', 'Hubungan (Ayah/Ibu/Wali)'], ['nama_santri', 'Nama santri'], ['nis', 'NIS santri'], ['kelas', 'Kelas santri']] },
+  { grup: 'Santri dan wali', isian: [['nama_wali', 'Nama orang tua/wali penerima'], ['hubungan', 'Hubungan (Ayah/Ibu/Wali)'], ['nama_santri', 'Nama santri'], ['nis', 'NIS santri'], ['kelas', 'Kelas santri'],
+    ['kegiatan', 'Kegiatan absensi (mis. halaqah subuh)'], ['periode', 'Periode rekap'], ['rekap', 'Ringkasan kehadiran per kegiatan']] },
   { grup: 'Bebas', isian: [['pesan', 'Isi pesan bebas']] },
 ]
 
