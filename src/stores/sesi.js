@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/sesi.js | v1.7 | Fase 3 – Tahap 5 Agenda dan template WA | 04/10/2026
+// SIMKA PRO | src/stores/sesi.js | v1.8 | Fase 3 – Tahap 6 Dashboard per peran | 04/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
 import { muatTemplatWA } from '@/lib/wa'
 import { defineStore } from 'pinia'
@@ -72,7 +72,7 @@ export const useSesi = defineStore('sesi', {
       return r
     },
 
-    masukDemo(peran) { this.pengguna = { ...PENGGUNA_DEMO[peran] }; this.izinAdmin = peran === 'admin' ? ['verval_akun', 'kelola_pegawai', 'audit_log', 'verval_presensi', 'lihat_pengajuan', 'atur_pengajuan', 'verval_jurnal', 'atur_jurnal', 'kelola_berkas', 'cetak_kartu', 'kelola_agenda', 'kalender'] : []; simpan('simka.demo.peran', peran) },
+    masukDemo(peran) { this.pengguna = { ...PENGGUNA_DEMO[peran] }; this.izinAdmin = peran === 'admin' ? ['verval_akun', 'kelola_pegawai', 'audit_log', 'verval_presensi', 'atur_presensi', 'kalender', 'lihat_pengajuan', 'atur_pengajuan', 'verval_jurnal', 'atur_jurnal', 'kelola_berkas', 'cetak_kartu', 'kelola_agenda'] : []; simpan('simka.demo.peran', peran) },
 
     async keluar() {
       if (!MODE_DEMO) await supabase.auth.signOut()

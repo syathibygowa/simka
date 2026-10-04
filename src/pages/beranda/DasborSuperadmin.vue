@@ -1,13 +1,18 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.1 | Fase 2 – Tahap 7 Statistik, rekap, pengingat | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.2 | Fase 3 – Tahap 6 Dashboard per peran | 04/10/2026 -->
 <script setup>
 import { ref, computed } from 'vue'
 import {
   PhUsersThree, PhUserCheck, PhHourglass, PhUserCircleDashed, PhKey, PhTreeStructure, PhCloudArrowUp,
   PhPulse, PhGearSix, PhPrinter, PhLightning, PhHeartbeat, PhWarningCircle, PhCheckCircle, PhChartBar, PhMapPinArea,
+  PhFileText, PhCalendarCheck, PhFolderOpen, PhSealCheck,
 } from '@phosphor-icons/vue'
 import { useStatistik } from '@/stores/statistik'
 import { formatRelatif, formatWaktu } from '@/lib/tanggal'
 import Sapaan from './Sapaan.vue'
+import RingkasanPribadi from './RingkasanPribadi.vue'
+import RingkasanPimpinan from './RingkasanPimpinan.vue'
+import RingkasanKelola from './RingkasanKelola.vue'
+import { useBeranda } from '@/stores/beranda'
 import IndikatorLangsung from './IndikatorLangsung.vue'
 import StatistikPresensi from './StatistikPresensi.vue'
 import SebaranBidang from './SebaranBidang.vue'
@@ -16,7 +21,7 @@ import KartuStatistik from '@/components/KartuStatistik.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
-const stat = useStatistik()
+const stat = useStatistik(); const br = useBeranda()
 const d = computed(() => stat.data || {})
 const ch = computed(() => stat.berubah)
 const lembar = ref(false)
@@ -30,6 +35,10 @@ const jamHeartbeat = computed(() => d.value.heartbeat_terakhir ? (Date.now() - n
 const layananSehat = computed(() => jamHeartbeat.value !== null && jamHeartbeat.value < 30 && !d.value.berkas_gagal)
 
 const AKSI = [
+  { label: 'Verval jurnal', ket: 'Kegiatan jurnal yang ditulis pegawai', ikon: PhSealCheck, warna: 'verval', ke: '/jurnal/verval' },
+  { label: 'Semua pengajuan', ket: 'Izin, sakit, cuti, dinas luar', ikon: PhFileText, warna: 'pengajuan', ke: '/pengajuan?tab=semua' },
+  { label: 'Agenda dan pengingat', ket: 'Kalender pondok dan undangan', ikon: PhCalendarCheck, warna: 'agenda', ke: '/agenda' },
+  { label: 'Kirim berkas pegawai', ket: 'Info, formulir, surat, SK', ikon: PhFolderOpen, warna: 'berkas', ke: '/berkas' },
   { label: 'Rekap presensi', ket: 'Harian dan bulanan, cetak F4 dan Excel', ikon: PhChartBar, warna: 'rekap', ke: '/rekap-presensi' },
   { label: 'Pengaturan presensi', ket: 'Titik GPS, pola sesi, jadwal', ikon: PhMapPinArea, warna: 'aturpresensi', ke: '/atur-presensi' },
   { label: 'Pengaturan lembaga', ket: 'Identitas, kalender, kop, penanda tangan', ikon: PhGearSix, warna: 'pengaturan', ke: '/pengaturan' },
@@ -43,6 +52,19 @@ const AKSI = [
     <Sapaan keterangan="Anda memegang kendali penuh atas data dan pengaturan sistem SIMKA PRO." />
 
     <StatistikPresensi />
+
+    <template v-if="br.data?.kelola">
+      <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="judul-bagian">Administrasi pegawai</h2><IndikatorLangsung :waktu="br.diperbarui" /></div>
+      <RingkasanKelola :d="br.data.kelola" />
+    </template>
+    <template v-if="br.data?.pimpinan">
+      <h2 class="judul-bagian">Unit yang Anda pimpin</h2>
+      <RingkasanPimpinan :d="br.data.pimpinan" />
+    </template>
+    <template v-if="br.data?.pribadi">
+      <h2 class="judul-bagian">Untuk Anda</h2>
+      <RingkasanPribadi :d="br.data.pribadi" />
+    </template>
 
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="judul-bagian">Ringkasan pondok</h2>

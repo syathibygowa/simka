@@ -1,14 +1,19 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.2 | Fase 2 – Tahap 7 Statistik, rekap, pengingat | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.3 | Fase 3 – Tahap 6 Dashboard per peran | 04/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import {
   PhUsersThree, PhHourglass, PhUserCircleDashed, PhGenderMale, PhGenderFemale, PhPulse,
   PhUserCheck, PhPrinter, PhLightning, PhCaretRight, PhSealCheck, PhChartBar,
+  PhFileText, PhCalendarCheck, PhFolderOpen,
 } from '@phosphor-icons/vue'
 import { useStatistik } from '@/stores/statistik'
 import { usePegawai } from '@/stores/pegawai'
 import { formatPendek } from '@/lib/tanggal'
 import Sapaan from './Sapaan.vue'
+import RingkasanPribadi from './RingkasanPribadi.vue'
+import RingkasanPimpinan from './RingkasanPimpinan.vue'
+import RingkasanKelola from './RingkasanKelola.vue'
+import { useBeranda } from '@/stores/beranda'
 import IndikatorLangsung from './IndikatorLangsung.vue'
 import StatistikPresensi from './StatistikPresensi.vue'
 import SebaranBidang from './SebaranBidang.vue'
@@ -17,12 +22,16 @@ import KartuStatistik from '@/components/KartuStatistik.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
-const stat = useStatistik(); const peg = usePegawai()
+const stat = useStatistik(); const br = useBeranda(); const peg = usePegawai()
 const d = computed(() => stat.data || {}); const ch = computed(() => stat.berubah)
 const menunggu = computed(() => peg.daftar.filter((p) => p.status_akun === 'menunggu'))
 const lembar = ref(false)
 onMounted(() => { if (!peg.daftar.length) peg.muat() })
 const AKSI = [
+  { label: 'Verval jurnal', ket: 'Kegiatan jurnal yang ditulis pegawai', ikon: PhSealCheck, warna: 'verval', ke: '/jurnal/verval' },
+  { label: 'Semua pengajuan', ket: 'Izin, sakit, cuti, dinas luar', ikon: PhFileText, warna: 'pengajuan', ke: '/pengajuan?tab=semua' },
+  { label: 'Agenda dan pengingat', ket: 'Kalender pondok dan undangan', ikon: PhCalendarCheck, warna: 'agenda', ke: '/agenda' },
+  { label: 'Kirim berkas pegawai', ket: 'Info, formulir, surat, SK', ikon: PhFolderOpen, warna: 'berkas', ke: '/berkas' },
   { label: 'Verval presensi', ket: 'Presensi luar area, izin sesi, kecurigaan', ikon: PhSealCheck, warna: 'verval', ke: '/verval-presensi' },
   { label: 'Rekap presensi', ket: 'Harian dan bulanan, cetak F4 dan Excel', ikon: PhChartBar, warna: 'rekap', ke: '/rekap-presensi' },
   { label: 'Verifikasi akun', ket: 'Periksa pendaftaran pegawai baru', ikon: PhUserCheck, warna: 'verifikasi', ke: '/verifikasi' },
@@ -35,6 +44,19 @@ const AKSI = [
     <Sapaan :keterangan="d.menunggu_verifikasi ? `Ada ${d.menunggu_verifikasi} pendaftaran pegawai yang menunggu verifikasi Anda.` : 'Tidak ada pendaftaran yang menunggu verifikasi.'" />
 
     <StatistikPresensi />
+
+    <template v-if="br.data?.kelola">
+      <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="judul-bagian">Administrasi pegawai</h2><IndikatorLangsung :waktu="br.diperbarui" /></div>
+      <RingkasanKelola :d="br.data.kelola" />
+    </template>
+    <template v-if="br.data?.pimpinan">
+      <h2 class="judul-bagian">Unit yang Anda pimpin</h2>
+      <RingkasanPimpinan :d="br.data.pimpinan" />
+    </template>
+    <template v-if="br.data?.pribadi">
+      <h2 class="judul-bagian">Untuk Anda</h2>
+      <RingkasanPribadi :d="br.data.pribadi" />
+    </template>
 
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="judul-bagian">Kendali data pegawai</h2>

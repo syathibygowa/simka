@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.2 | Fase 2 – Tahap 4 Halaman presensi | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.3 | Fase 3 – Tahap 6 Dashboard per peran | 04/10/2026 -->
 <script setup>
 import { computed, onMounted } from 'vue'
 import { PhFingerprint, PhCaretRight, PhSquaresFour } from '@phosphor-icons/vue'
@@ -10,10 +10,14 @@ import { useDataPresensi } from '@/stores/presensi'
 import { formatJam } from '@/lib/tanggal'
 import { lencanaSesi } from '@/lib/presensi'
 import Sapaan from './Sapaan.vue'
+import RingkasanPribadi from './RingkasanPribadi.vue'
+import RingkasanPimpinan from './RingkasanPimpinan.vue'
+import IndikatorLangsung from './IndikatorLangsung.vue'
+import { useBeranda } from '@/stores/beranda'
 import ItemNotifikasi from '@/components/ItemNotifikasi.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 
-const notif = useNotifikasi(); const sesi = useSesi(); const router = useRouter(); const dp = useDataPresensi()
+const notif = useNotifikasi(); const sesi = useSesi(); const router = useRouter(); const dp = useDataPresensi(); const br = useBeranda()
 onMounted(() => dp.muatHarian())
 // Ringkasan presensi hari ini pada kartu sapaan
 const ringkas = computed(() => {
@@ -23,7 +27,7 @@ const ringkas = computed(() => {
   const b = dp.berikut
   return `${dp.selesaiWajib} dari ${dp.jumlahWajib} sesi tercatat${b ? ` · berikutnya ${b.nama_sesi} ${formatJam(b.mulai)}` : ''}`
 })
-const menu = computed(() => menuUntuk(sesi.peran, { shift: sesi.punyaShift }).filter((m) => !['beranda', 'notifikasi', 'profil'].includes(m.kode)).slice(0, 8))
+const menu = computed(() => menuUntuk(sesi.peran, { shift: sesi.punyaShift, izin: sesi.izinAdmin }).filter((m) => !['beranda', 'notifikasi', 'profil'].includes(m.kode)).slice(0, 8))
 </script>
 <template>
   <div class="space-y-5 lg:space-y-6">
@@ -37,6 +41,12 @@ const menu = computed(() => menuUntuk(sesi.peran, { shift: sesi.punyaShift }).fi
         <PhCaretRight :size="22" class="text-[#705E61]" />
       </router-link>
     </Sapaan>
+
+    <section v-if="br.data?.pimpinan" class="space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="judul-bagian">Unit yang Anda pimpin</h2><IndikatorLangsung :waktu="br.diperbarui" /></div>
+      <RingkasanPimpinan :d="br.data.pimpinan" />
+    </section>
+    <RingkasanPribadi v-if="br.data?.pribadi" :d="br.data.pribadi" />
 
     <div class="grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:gap-6">
       <section class="kartu p-3 sm:p-4">
