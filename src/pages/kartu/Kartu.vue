@@ -1,8 +1,9 @@
-<!-- SIMKA PRO | src/pages/kartu/Kartu.vue | v1.0 | Fase 3 – Tahap 4 Berkas Saya dan kartu pegawai | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/kartu/Kartu.vue | v1.1 | Fase 3 – Perbaikan P4 (kartu pegawai portrait) | 04/10/2026 -->
 <script setup>
 // Kartu pegawai. Kartu saya: lihat depan/belakang, ganti pas foto, cetak, dan ganti kode bila kartu hilang.
-// Cetak massal (admin ber-izin cetak_kartu): pilih pegawai, cetak 10 kartu per F4 (bolak-balik) atau berdampingan.
+// Cetak massal (admin ber-izin cetak_kartu): pilih pegawai, cetak 9 kartu tegak per F4 (bolak-balik) atau berdampingan.
 // Kartu otomatis tidak berlaku (verifikasi QR) bila pegawai berstatus nonaktif.
+// v1.1: kartu tegak (portrait); foto kartu = foto profil akun (diganti di sini atau di Profil); 9 kartu per F4.
 import { ref, computed, onMounted, watch } from 'vue'
 import { PhIdentificationCard, PhCards, PhCamera, PhPrinter, PhArrowsClockwise, PhMagnifyingGlass, PhCheckSquare, PhSquare, PhInfo, PhQrCode, PhLink } from '@phosphor-icons/vue'
 import { useKartu } from '@/stores/kartu'
@@ -19,21 +20,21 @@ import LembarKartu from '@/components/cetak/LembarKartu.vue'
 
 const kt = useKartu(); const lembaga = useLembaga(); const peg = usePegawai(); const org = useOrganisasi(); const sesi = useSesi(); const ui = useUI()
 const bolehMassal = computed(() => sesi.bolehAdmin('cetak_kartu'))
-const tab = ref('saya'); const saya = ref(null); const foto = ref({}); const proses = ref(false); const balik = ref(false)
+const tab = ref('saya'); const saya = ref(null); const foto = ref({}); const proses = ref(false)
 const pratinjau = ref(false); const cetakData = ref([]); const mode = ref('berdampingan')
 const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan === 'DIREKTUR' || /^direktur/i.test(s.jabatan_tertulis)) || {})
 
 onMounted(async () => { await lembaga.muat(); muatSaya() })
 async function muatSaya() {
-  try { const [d] = await kt.data(); saya.value = d; if (d?.foto_id) foto.value[d.employee_id] = await alamatBerkas(d.foto_id) } catch (e) { ui.toast(e.message, 'galat') }
+  try { const [d] = await kt.data(); saya.value = d; if (d?.foto_id) foto.value[d.employee_id] = sesi.fotoUrl || await alamatBerkas(d.foto_id); else if (sesi.fotoUrl) foto.value[d.employee_id] = sesi.fotoUrl } catch (e) { ui.toast(e.message, 'galat') }
 }
 async function gantiFoto(e) {
   const b = e.target.files?.[0]; e.target.value = ''
   if (!b) return
   if (!/^image\//.test(b.type)) return ui.toast('Pilih berkas foto.', 'galat')
-  if (MODE_DEMO) { foto.value[saya.value.employee_id] = URL.createObjectURL(b); return ui.toast('Mode demo: foto hanya tampil sementara.', 'info') }
+  if (MODE_DEMO) { const u = URL.createObjectURL(b); foto.value[saya.value.employee_id] = u; sesi.setelFoto('demo', u); return ui.toast('Mode demo: foto hanya tampil sementara.', 'info') }
   proses.value = true
-  try { await kt.pasangFoto(saya.value.employee_id, b); await muatSaya(); ui.toast('Pas foto diperbarui (dipotong 3:4).', 'info') } catch (er) { ui.toast(er.message, 'galat') } finally { proses.value = false }
+  try { const id = await kt.pasangFoto(saya.value.employee_id, b); sesi.setelFoto(id, ''); await sesi.muatFoto(); await muatSaya(); ui.toast('Foto profil dan foto kartu diperbarui (dipotong 3:4).', 'info') } catch (er) { ui.toast(er.message, 'galat') } finally { proses.value = false }
 }
 async function gantiKode() {
   if (!(await ui.konfirmasi({ judul: 'Ganti kode kartu?', pesan: 'Gunakan bila kartu hilang. Kartu lama langsung tidak dapat diverifikasi dan Anda perlu mencetak kartu baru.', ya: 'Ganti kode', bahaya: true }))) return
@@ -75,10 +76,10 @@ async function siapkanMassal() {
       <p v-if="!saya" class="py-10 text-center text-teks3">Menyiapkan kartu…</p>
       <div v-else class="grid gap-5 lg:grid-cols-[auto_1fr]">
         <div class="flex flex-col items-center gap-3">
-          <button type="button" class="balik-kartu" :aria-label="balik ? 'Lihat sisi depan' : 'Lihat sisi belakang'" @click="balik = !balik">
-            <KartuPegawai :d="saya" :sisi="balik ? 'belakang' : 'depan'" :foto="foto[saya.employee_id]" :identitas="lembaga.identitas" :direktur="direktur" />
-          </button>
-          <p class="text-xs text-teks3">Ketuk kartu untuk melihat sisi {{ balik ? 'depan' : 'belakang' }}</p>
+          <div class="pratinjau-kartu flex gap-3">
+            <div class="text-center"><div class="bayang"><KartuPegawai :d="saya" sisi="depan" :foto="foto[saya.employee_id]" :identitas="lembaga.identitas" :direktur="direktur" /></div><p class="mt-1 text-xs text-teks3">Depan</p></div>
+            <div class="text-center"><div class="bayang"><KartuPegawai :d="saya" sisi="belakang" :foto="foto[saya.employee_id]" :identitas="lembaga.identitas" :direktur="direktur" /></div><p class="mt-1 text-xs text-teks3">Belakang</p></div>
+          </div>
         </div>
         <div class="space-y-3">
           <div :class="['kartu p-4', saya.aktif ? 'w-presensi' : 'w-beranda']">
@@ -86,9 +87,9 @@ async function siapkanMassal() {
             <p class="mt-1 text-sm text-teks2">Berlaku selama Anda tercatat sebagai pegawai aktif. Siapa pun dapat memindai kode QR untuk memeriksa keabsahannya.</p>
             <button class="tombol-teks mt-1 text-sm" @click="salinTautan"><PhLink :size="18" /> Salin tautan verifikasi</button>
           </div>
-          <label class="tombol-garis w-full cursor-pointer justify-center" :class="proses && 'opacity-60'"><PhCamera :size="20" weight="duotone" /> {{ saya.foto_id ? 'Ganti pas foto' : 'Unggah pas foto' }}
+          <label class="tombol-garis w-full cursor-pointer justify-center" :class="proses && 'opacity-60'"><PhCamera :size="20" weight="duotone" /> {{ saya.foto_id ? 'Ganti foto profil/kartu' : 'Unggah foto profil/kartu' }}
             <input type="file" accept="image/*" class="sr-only" :disabled="proses" @change="gantiFoto" /></label>
-          <p class="text-xs text-teks3">Gunakan foto tegak berlatar polos, berpakaian rapi. Foto dipotong otomatis 3:4.</p>
+          <p class="text-xs text-teks3">Foto kartu sama dengan foto profil akun. Gunakan foto tegak berlatar polos dan berpakaian rapi; foto dipotong otomatis 3:4.</p>
           <button class="tombol-utama w-full" @click="cetakSaya"><PhPrinter :size="20" weight="duotone" /> Cetak kartu (F4)</button>
           <button class="tombol-garis w-full" @click="gantiKode"><PhArrowsClockwise :size="20" /> Kartu hilang? Ganti kode</button>
           <p v-if="!saya.niy" class="flex gap-2 rounded-xl bg-permukaan2 p-3 text-sm text-teks2"><PhInfo :size="18" class="mt-0.5 shrink-0" />NIY Anda belum tercatat. Hubungi admin kepegawaian sebelum mencetak kartu.</p>
@@ -106,7 +107,7 @@ async function siapkanMassal() {
             <input id="km-cari" v-model="cari" class="isian pl-10" placeholder="Nama atau NIY" /></div></div>
         <fieldset class="sm:col-span-2"><legend class="label-isian">Tata letak cetak</legend>
           <div class="flex flex-wrap gap-2">
-            <label v-for="m in [{ k: 'berdampingan', n: 'Depan–belakang berdampingan (5 pegawai/lembar)' }, { k: 'bolak_balik', n: 'Bolak-balik (10 kartu/lembar, printer dua sisi)' }]" :key="m.k"
+            <label v-for="m in [{ k: 'berdampingan', n: 'Depan–belakang berdampingan (3 pegawai/lembar)' }, { k: 'bolak_balik', n: 'Bolak-balik (9 kartu/lembar, printer dua sisi)' }]" :key="m.k"
               class="flex min-h-[44px] items-center gap-2 rounded-xl border border-garis px-3 text-sm font-semibold"><input v-model="mode" type="radio" :value="m.k" class="h-5 w-5 accent-[#2C6680]" />{{ m.n }}</label>
           </div></fieldset>
       </div>
@@ -131,6 +132,8 @@ async function siapkanMassal() {
 </template>
 <style scoped>
 .tab.aktif { border-color: color-mix(in srgb, var(--c) 35%, transparent); background: color-mix(in srgb, var(--c) 12%, rgb(var(--permukaan))); }
-.balik-kartu { border-radius: 3.2mm; box-shadow: 0 10px 30px -12px rgba(0,0,0,.45); }
-@media (max-width: 380px) { .balik-kartu { zoom: .9; } }
+.bayang { border-radius: 3.2mm; box-shadow: 0 12px 30px -12px rgba(0,0,0,.5); }
+.pratinjau-kartu { zoom: .82; }
+@media (min-width: 400px) { .pratinjau-kartu { zoom: .9; } }
+@media (min-width: 1024px) { .pratinjau-kartu { zoom: 1.15; } }
 </style>

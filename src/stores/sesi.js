@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/sesi.js | v1.9 | Fase 3 – Perbaikan P1 (kartu, kelompok, pengumuman) | 04/10/2026
+// SIMKA PRO | src/stores/sesi.js | v1.10 | Fase 3 – Perbaikan P4 (kartu pegawai portrait) | 04/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
 import { muatTemplatWA } from '@/lib/wa'
 import { defineStore } from 'pinia'
@@ -10,7 +10,7 @@ const simpan = (k, v) => { try { v == null ? localStorage.removeItem(k) : localS
 const baca = (k) => { try { return localStorage.getItem(k) } catch { return null } }
 
 export const useSesi = defineStore('sesi', {
-  state: () => ({ pengguna: null, fitur: {}, izinAdmin: [], siap: false, wajibGantiSandi: false, punyaShift: false }),
+  state: () => ({ pengguna: null, fitur: {}, izinAdmin: [], siap: false, wajibGantiSandi: false, punyaShift: false, fotoUrl: '' }),
   getters: {
     masuk: (s) => !!s.pengguna,
     peran: (s) => s.pengguna?.peran ?? 'pegawai',
@@ -46,6 +46,7 @@ export const useSesi = defineStore('sesi', {
         || (data.peran === 'superadmin' ? 'Pengelola sistem' : data.peran === 'admin' ? 'Admin' : 'Pegawai')
       this.pengguna = { ...data, jabatan }
       this.wajibGantiSandi = data.wajib_ganti_sandi
+      this.muatFoto()
       const { data: fitur } = await supabase.rpc('fitur_saya')
       this.fitur = fitur || {}
       // Izin admin (dipakai untuk menampilkan menu/tab yang sesuai; keamanan tetap diperiksa server)
@@ -81,6 +82,14 @@ export const useSesi = defineStore('sesi', {
     },
 
     /** Tingkat akses fitur: 0 tidak ada, 1 lihat, 2 input/ubah, 3 kelola. Superadmin selalu 3. */
+    /** Foto profil akun (juga dipakai di kartu pegawai). Alamat sementara diambil dari penyimpanan. */
+    async muatFoto() {
+      this.fotoUrl = ''
+      if (!this.pengguna?.foto_id || MODE_DEMO) return
+      try { const { alamatBerkas } = await import('@/lib/penyimpanan'); this.fotoUrl = await alamatBerkas(this.pengguna.foto_id) } catch { this.fotoUrl = '' }
+    },
+    setelFoto(id, url) { if (this.pengguna) this.pengguna.foto_id = id; this.fotoUrl = url || '' },
+
     /** Admin memiliki izin tertentu (superadmin selalu). */
     bolehAdmin(kode) { return this.isSuperadmin || (this.peran === 'admin' && this.izinAdmin.includes(kode)) },
 

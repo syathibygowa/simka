@@ -1,6 +1,6 @@
-// SIMKA PRO | src/lib/versi.js | v3.8.0 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026
+// SIMKA PRO | src/lib/versi.js | v3.9.0 | Fase 3 – Perbaikan P4 (kartu pegawai portrait) | 04/10/2026
 // Nomor versi aplikasi yang tampil di halaman Profil. Naikkan setiap kali kode diunggah ke GitHub.
-export const VERSI_APLIKASI = '3.8.0'
+export const VERSI_APLIKASI = '3.9.0'
 export const KETERANGAN_VERSI = 'Fase 3 – Administrasi pegawai'
 
 // Waktu kode dibangun oleh GitHub Actions; dipakai untuk memastikan versi yang tayang adalah yang terbaru.

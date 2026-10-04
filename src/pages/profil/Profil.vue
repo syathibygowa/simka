@@ -1,7 +1,8 @@
-<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.5 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.6 | Fase 3 – Perbaikan P4 (kartu pegawai portrait) | 04/10/2026 -->
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhSignOut, PhPalette, PhBell, PhInfo, PhLockKey } from '@phosphor-icons/vue'
+import { PhSignOut, PhPalette, PhBell, PhInfo, PhLockKey, PhCamera } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import { useNotifikasi } from '@/stores/notifikasi'
 import { MODE_DEMO } from '@/lib/supabase'
@@ -11,12 +12,24 @@ import PolaKhatam from '@/components/PolaKhatam.vue'
 import KartuDorong from '@/components/KartuDorong.vue'
 import { usePengumuman } from '@/stores/pengumuman'
 import { usePengajuan } from '@/stores/pengajuan'
+import { useKartu } from '@/stores/kartu'
+import { useUI } from '@/stores/ui'
 import { VERSI_APLIKASI, KETERANGAN_VERSI, WAKTU_BUILD } from '@/lib/versi'
 import { formatPendek, formatJam } from '@/lib/tanggal'
 
 const sesi = useSesi(); const notif = useNotifikasi(); const router = useRouter(); const pengumuman = usePengumuman(); const pengajuan = usePengajuan()
 const PERAN = { superadmin: 'Superadmin', admin: 'Admin', pegawai: 'Pegawai' }
 async function keluar() { notif.berhenti(); pengumuman.berhenti(); pengajuan.berhenti(); await sesi.keluar(); router.replace('/masuk') }
+const kt = useKartu(); const uiP = useUI(); const unggahFoto = ref(false)
+async function gantiFoto(e) {
+  const b = e.target.files?.[0]; e.target.value = ''
+  if (!b) return
+  if (!/^image\//.test(b.type)) return uiP.toast('Pilih berkas foto.', 'galat')
+  if (MODE_DEMO) { sesi.setelFoto('demo', URL.createObjectURL(b)); return uiP.toast('Mode demo: foto hanya tampil sementara.', 'info') }
+  unggahFoto.value = true
+  try { const id = await kt.pasangFoto(sesi.pengguna.id, b); sesi.setelFoto(id, ''); await sesi.muatFoto(); uiP.toast('Foto profil diperbarui. Foto ini juga dipakai di kartu pegawai.', 'info') }
+  catch (er) { uiP.toast(er.message, 'galat') } finally { unggahFoto.value = false }
+}
 function ganti(p) { sesi.masukDemo(p); notif.berhenti(); pengumuman.berhenti(); pengajuan.berhenti(); notif.muat(); router.push('/') }
 </script>
 <template>
@@ -24,7 +37,12 @@ function ganti(p) { sesi.masukDemo(p); notif.berhenti(); pengumuman.berhenti(); 
     <section class="kepala relative overflow-hidden rounded-[1.5rem] p-6 text-center text-white">
       <PolaKhatam :opasitas="0.12" />
       <div class="relative flex flex-col items-center">
-        <span class="rounded-full ring-4 ring-white/40"><AvatarPengguna :size="76" /></span>
+        <label class="relative cursor-pointer rounded-full ring-4 ring-white/40" :class="unggahFoto && 'opacity-60'" title="Ganti foto profil">
+          <AvatarPengguna :size="84" />
+          <span class="absolute -bottom-1 -right-1 grid h-8 w-8 place-items-center rounded-full bg-white text-[#8E1C19] shadow"><PhCamera :size="18" weight="fill" /></span>
+          <input type="file" accept="image/*" class="sr-only" :disabled="unggahFoto" aria-label="Ganti foto profil" @change="gantiFoto" />
+        </label>
+        <p class="mt-1 text-xs text-white/85">{{ unggahFoto ? 'Mengunggah foto…' : 'Ketuk foto untuk mengganti (dipakai juga di kartu pegawai)' }}</p>
         <h2 class="mt-3 text-xl font-extrabold text-white">{{ sesi.pengguna?.nama_lengkap }}</h2>
         <p class="text-sm text-white/90">{{ sesi.pengguna?.jabatan }}</p>
         <span class="mt-2 rounded-full bg-white px-3 py-1 text-xs font-bold text-[#8E1C19]">{{ PERAN[sesi.peran] }}</span>

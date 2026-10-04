@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/kartu.js | v1.0 | Fase 3 – Tahap 4 Berkas Saya dan kartu pegawai | 04/10/2026
+// SIMKA PRO | src/stores/kartu.js | v1.1 | Fase 3 – Perbaikan P4 (kartu pegawai portrait) | 04/10/2026
 // Kartu pegawai: data kartu (kode QR dibuat otomatis), ganti kode, pas foto, dan verifikasi publik.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -14,7 +14,7 @@ const DEMO = [
   ['Ust. Abdul Hakim', '2021030104', 'L', 'Petugas keamanan (security)', 'Unit Security', 'A8JH3KD5SF'],
   ['Ustzh. Fatimah Az-Zahra, A.Md.Kep.', '2022070105', 'P', 'Petugas kesehatan (medis)', 'Unit Klinik', 'F6GT4YH2ND'],
 ]
-const demo = (id, i) => { const d = DEMO[i % DEMO.length]; return { employee_id: id, nama: d[0], niy: d[1], jenis_kelamin: d[2], jabatan: d[3], unit: d[4], foto_id: null, kode: d[5], aktif: true } }
+const demo = (id, i) => { const d = DEMO[i % DEMO.length]; return { employee_id: id, nama: d[0], niy: d[1], jenis_kelamin: d[2], jabatan: d[3], jabatan_kartu: d[3].split(',')[0], unit: d[4], foto_id: null, kode: d[5], aktif: true } }
 
 export const useKartu = defineStore('kartu', {
   actions: {
