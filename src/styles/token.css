@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/token.css | v1.7 | Fase 3 – Tahap 5 Agenda dan template WA | 04/10/2026 */
+/* SIMKA PRO | src/styles/token.css | v1.8 | Fase 3 – Perbaikan P2 (agenda lanjutan) | 04/10/2026 */
 /* =====================================================================
    SIMKA PRO · Token warna dan tema
    Semua warna teks sudah diuji kontrasnya (WCAG AA, ≥ 4,5:1) terhadap
@@ -101,3 +101,7 @@
 .dark .n-merah { --c: #FF8A7A; } .dark .n-hijau { --c: #5BD69A; } .dark .n-biru { --c: #8AB4F8; }
 .dark .n-emas  { --c: #F2C24B; } .dark .n-ungu  { --c: #C3A6FF; } .dark .n-mawar { --c: #FF8FB8; }
 .dark .n-teal  { --c: #4FD1D3; } .dark .n-jingga { --c: #FFB074; }
+
+/* Warna agenda pilihan pengguna (24 warna lembut); di tema gelap dicerahkan agar kontras tetap terjaga */
+.warna-agenda { --c: var(--c0); --c2: var(--c0); }
+.dark .warna-agenda { --c: color-mix(in srgb, var(--c0) 58%, white); --c2: var(--c); }

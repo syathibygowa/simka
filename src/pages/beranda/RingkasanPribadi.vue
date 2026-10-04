@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/RingkasanPribadi.vue | v1.0 | Fase 3 – Tahap 6 Dashboard per peran | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/RingkasanPribadi.vue | v1.1 | Fase 3 – Perbaikan P2 (agenda lanjutan) | 04/10/2026 -->
 <script setup>
 // Kartu beranda pribadi (semua pegawai): jurnal hari ini, pengajuan, agenda terdekat, pengumuman dan berkas baru.
 import { computed } from 'vue'
@@ -40,7 +40,7 @@ const STATUS = { menunggu: 'menunggu', disetujui: 'disetujui' }
     </router-link>
 
     <!-- Agenda -->
-    <router-link :to="d.agenda?.[0] ? `/agenda/${d.agenda[0].id}` : '/agenda'" class="kartu w-agenda flex flex-col p-4 hover:-translate-y-0.5 hover:shadow-apung">
+    <router-link :to="d.agenda?.[0] ? { path: `/agenda/${d.agenda[0].id}`, query: { tanggal: d.agenda[0].mulai } } : '/agenda'" class="kartu w-agenda flex flex-col p-4 hover:-translate-y-0.5 hover:shadow-apung">
       <div class="flex items-center gap-2"><span class="chip-ikon h-10 w-10"><PhCalendarCheck :size="22" weight="duotone" /></span><p class="flex-1 font-bold">Agenda terdekat</p><PhCaretRight :size="18" class="text-teks3" /></div>
       <ul v-if="d.agenda?.length" class="mt-2 space-y-1.5">
         <li v-for="a in d.agenda.slice(0, 2)" :key="a.id" class="text-sm"><span class="block truncate font-semibold">{{ a.judul }}</span>
