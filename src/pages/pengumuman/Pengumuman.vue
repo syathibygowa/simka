@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.1 | Fase 3 – Perbaikan P1 (kartu, kelompok, pengumuman) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.2 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026 -->
 <script setup>
 // Pengumuman: semua pegawai membaca pengumuman yang ditujukan kepadanya (tanda dibaca/belum).
 // Admin, superadmin, dan pegawai yang diberi hak fitur "pengumuman" (tingkat 2+) dapat membuat,
@@ -19,6 +19,8 @@ import TombolAksi from '@/components/TombolAksi.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import PilihSasaran from '@/components/PilihSasaran.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
+import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
+import { pesanWA, halamanAplikasi } from '@/lib/wa'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
 const props = defineProps({ id: String })
@@ -93,7 +95,7 @@ async function hapus(p) {
 async function lihatPembaca(p) {
   try { pembaca.value = { p, daftar: await pg.pembaca(p.id) }; saringBaca.value = 'semua' } catch (e) { ui.toast(e.message, 'galat') }
 }
-const pembacaTampil = computed(() => (pembaca.value?.daftar || []).filter((r) => saringBaca.value === 'semua' || (saringBaca.value === 'sudah' ? r.dibaca_pada : !r.dibaca_pada)))
+const pesanPengumuman = (r) => pesanWA('pengumuman', { nama: r.nama, unit: r.unit, judul: pembaca.value.p.judul, isi_singkat: pembaca.value.p.isi.length > 280 ? pembaca.value.p.isi.slice(0, 277) + '…' : pembaca.value.p.isi, tautan: halamanAplikasi(`/pengumuman/${pembaca.value.p.id}`) })
 const persen = (p) => (p.penerima ? Math.round((100 * (p.sudah_dibaca || 0)) / p.penerima) : 0)
 const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.test(s.jabatan_tertulis)) || lembaga.signatories[0] || {})
 </script>
@@ -172,7 +174,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
         <div class="mt-4 flex flex-wrap gap-2">
           <button class="tombol-garis" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Cetak</button>
           <template v-if="kelola">
-            <button class="tombol-garis" @click="lihatPembaca(terpilih)"><PhUsers :size="20" weight="duotone" /> Pembaca</button>
+            <button class="tombol-garis" @click="lihatPembaca(terpilih)"><PhUsers :size="20" weight="duotone" /> Pembaca dan WA</button>
             <button class="tombol-garis" @click="ubah(terpilih)"><PhPencilSimple :size="20" weight="duotone" /> Ubah</button>
             <button class="tombol-garis w-beranda" style="color: var(--c)" @click="hapus(terpilih)"><PhTrash :size="20" weight="duotone" /> Hapus</button>
           </template>
@@ -211,21 +213,12 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
       </form>
     </LembarBawah>
 
-    <!-- Pembaca -->
+    <!-- Pembaca dan WA -->
     <LembarBawah :model-value="!!pembaca" @update:model-value="(v) => !v && (pembaca = null)" judul="Pembaca pengumuman">
       <div v-if="pembaca" class="pb-2">
-        <p class="text-sm text-teks2">{{ pembaca.p.judul }}</p>
-        <div class="my-3 flex flex-wrap gap-1.5">
-          <button v-for="s in [{ k: 'semua', n: `Semua (${pembaca.daftar.length})` }, { k: 'sudah', n: `Sudah (${pembaca.daftar.filter((r) => r.dibaca_pada).length})` }, { k: 'belum', n: `Belum (${pembaca.daftar.filter((r) => !r.dibaca_pada).length})` }]"
-            :key="s.k" @click="saringBaca = s.k" :class="['min-h-[40px] rounded-full border px-3.5 text-sm font-semibold', saringBaca === s.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2']">{{ s.n }}</button>
-        </div>
-        <ul class="divide-y divide-garis">
-          <li v-for="r in pembacaTampil" :key="r.employee_id" class="flex items-center gap-3 py-2.5">
-            <span :class="['chip-ikon h-9 w-9', r.dibaca_pada ? 'w-presensi' : 'w-hakakses']"><PhEnvelopeSimpleOpen :size="20" weight="duotone" /></span>
-            <div class="min-w-0 flex-1"><p class="font-semibold">{{ r.nama }}</p><p class="text-xs text-teks3">{{ r.unit || '–' }}</p></div>
-            <span class="text-right text-xs font-semibold text-teks2">{{ r.dibaca_pada ? formatWaktu(r.dibaca_pada) : 'Belum dibaca' }}</span>
-          </li>
-        </ul>
+        <p class="mb-3 text-sm text-teks2">{{ pembaca.p.judul }} · {{ pembaca.daftar.filter((r) => r.dibaca_pada).length }} dari {{ pembaca.daftar.length }} sudah membaca</p>
+        <DaftarKirimWA :penerima="pembaca.daftar.map((r) => ({ ...r, keterangan: r.dibaca_pada ? `dibaca ${formatWaktu(r.dibaca_pada)}` : 'belum dibaca' }))" :pesan="pesanPengumuman" :kunci="'pengumuman-' + pembaca.p.id"
+          :saringan="[{ k: 'belum', n: 'Belum dibaca', f: (r) => !r.dibaca_pada }, { k: 'sudah', n: 'Sudah dibaca', f: (r) => !!r.dibaca_pada }, { k: 'semua', n: 'Semua', f: () => true }]" />
       </div>
     </LembarBawah>
 

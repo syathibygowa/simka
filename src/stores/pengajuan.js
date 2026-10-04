@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/pengajuan.js | v1.0 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026
+// SIMKA PRO | src/stores/pengajuan.js | v1.1 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026
 // Pengajuan izin, sakit, dinas luar, dan cuti: ajukan (dengan pemeriksaan aturan di server), persetujuan berjenjang,
 // pembatalan, ketentuan (jenis, kuota, jenjang), dan Plt.
 import { defineStore } from 'pinia'
@@ -63,6 +63,12 @@ export const usePengajuan = defineStore('pengajuan', {
     async detail(id) {
       if (MODE_DEMO) return demo.detail(id, useSesi())
       return await rpc('detail_pengajuan', { p_id: id })
+    },
+    /** Kontak WA: pemohon dan calon penyetuju jenjang yang sedang menunggu. */
+    async kontak(id) {
+      if (MODE_DEMO) return [{ peran: 'pemohon', employee_id: 'd-pg', nama: 'Ust. Hasan Basri, Lc.', no_hp: '081234567801' },
+        { peran: 'penyetuju', employee_id: 'p3', nama: 'Siswandi Safari, S.Pd.I., Lc., S.H., M.Ag.', jabatan: 'Direktur', no_hp: '081234567803' }]
+      return (await rpc('kontak_pengajuan', { p_id: id })) || []
     },
     async putuskan(id, setuju, catatan) {
       if (MODE_DEMO) return demo.putuskan(id, setuju, catatan, useSesi().pengguna)

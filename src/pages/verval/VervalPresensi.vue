@@ -1,10 +1,11 @@
-<!-- SIMKA PRO | src/pages/verval/VervalPresensi.vue | v1.0 | Fase 2 – Tahap 6 Verval dan koreksi | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/verval/VervalPresensi.vue | v1.1 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026 -->
 <script setup>
 // Verval Presensi (admin ber-izin verval_presensi dan superadmin):
 //   Antrian verval (luar area, pulang luar area, izin sesi) → keputusan final beralasan
 //   Koreksi bertingkat (admin mengajukan → superadmin memutuskan)
 //   Panel kecurigaan (koordinat identik, akurasi tidak wajar, perangkat bersama, selfie identik)
 //   Data presensi per pegawai per tanggal + riwayat status; superadmin dapat mengubah langsung / catat manual.
+//   v1.1: setelah verval, admin dapat mengabari pegawai lewat WA; tombol WA di setiap antrian.
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { PhTray, PhListChecks, PhWarningOctagon, PhMagnifyingGlass, PhMapPin, PhArrowSquareOut, PhClockCounterClockwise, PhPencilSimple, PhPlus, PhCheck, PhX, PhInfo, PhArrowClockwise } from '@phosphor-icons/vue'
@@ -19,6 +20,8 @@ import FotoBerkas from '@/components/FotoBerkas.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import LembarKeputusan from './LembarKeputusan.vue'
+import TombolWA from '@/components/TombolWA.vue'
+import { pesanWA, halamanAplikasi } from '@/lib/wa'
 
 const props = defineProps({ tab: { type: String, default: 'antrian' } })
 const router = useRouter(); const vv = useVerval(); const peg = usePegawai(); const atur = useAturPresensi(); const sesi = useSesi(); const ui = useUI()
@@ -60,8 +63,16 @@ function vervalA(a) {
   bukaLembar({ judul: datang ? 'Verval presensi' : 'Verval presensi pulang', ringkasan: `${a.nama} · ${a.nama_sesi} ${formatPendek(a.tanggal)} · ${usulan(a)}`,
     pilihan: datang ? PILIH_DATANG : PILIH_PULANG, bawaan: datang ? (a.usulan_status === 'izin' || a.usulan_status === 'sakit' ? a.usulan_status : a.terlambat_menit ? 'terlambat' : 'dinas_luar') : (a.cepat_pulang_menit ? 'cepat' : 'tepat'),
     catatan: 'Hasil verval bersifat final. Perubahan berikutnya melalui permintaan koreksi yang disetujui superadmin.', labelTombol: 'Simpan verval', pesan: 'Verval tersimpan. Pegawai mendapat notifikasi.',
-    aksi: ({ status, alasan }) => vv.verval(a.id, a.bagian, status, alasan) })
+    aksi: async ({ status, alasan }) => {
+      await vv.verval(a.id, a.bagian, status, alasan)
+      const p = peg.cari(a.employee_id)
+      waSetelah.value = { nama: a.nama, hp: p?.no_hp, pesan: pesanWA('verval_presensi', { nama: a.nama, sesi: a.nama_sesi, tanggal: formatHari(a.tanggal),
+        status_presensi: (datang ? STATUS_PRESENSI[status] : STATUS_PULANG[status])?.n || status, catatan_verval: alasan, unit: p?.nama_unit }) }
+    } })
 }
+const waSetelah = ref(null)
+const hpPegawai = (id) => peg.cari(id)?.no_hp
+const pesanTanya = (a) => pesanWA('umum', { nama: a.nama, pesan: `Mohon konfirmasi presensi Anda pada sesi ${a.nama_sesi}, ${formatHari(a.tanggal)} (${usulan(a).toLowerCase()}). Silakan balas pesan ini atau buka ${halamanAplikasi('/presensi')}.` })
 function putuskanK(k, setuju) {
   if (setuju) return ui.konfirmasi({ judul: 'Setujui koreksi?', pesan: `${k.nama} · ${k.nama_sesi} ${formatPendek(k.tanggal)}: ${STATUS_PRESENSI[k.status_lama]?.n} → ${STATUS_PRESENSI[k.status_baru]?.n}.`, ya: 'Setujui' })
     .then((ya) => ya && vv.putuskanKoreksi(k.id, true, null).then(() => ui.toast('Koreksi disetujui.')).catch((e) => ui.toast(e.message, 'galat')))
@@ -151,7 +162,10 @@ const JENIS_RIWAYAT = { presensi: 'Presensi', penutupan: 'Penutupan otomatis', v
                 <a :href="peta(a.ev)" target="_blank" rel="noopener" class="inline-flex items-center gap-0.5 font-semibold text-merah"><PhMapPin :size="14" /> Lihat peta <PhArrowSquareOut :size="12" /></a>
               </p>
               <p v-else class="mt-1 text-xs text-teks3">Diajukan {{ formatRelatif(a.dibuat) }}</p>
-              <button class="tombol-utama mt-2 min-h-[40px] px-4 text-sm" @click="vervalA(a)"><PhCheck :size="18" weight="bold" /> Verval</button>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <button class="tombol-utama min-h-[40px] px-4 text-sm" @click="vervalA(a)"><PhCheck :size="18" weight="bold" /> Verval</button>
+                <TombolWA kecil :hp="hpPegawai(a.employee_id)" label="Tanya via WA" :pesan="pesanTanya(a)" />
+              </div>
             </div>
           </li>
         </ul>
@@ -261,6 +275,13 @@ const JENIS_RIWAYAT = { presensi: 'Presensi', penutupan: 'Penutupan otomatis', v
         </li>
         <li v-if="!riwayat.isi.length" class="text-sm text-teks3">Belum ada riwayat.</li>
       </ol>
+    </LembarBawah>
+    <LembarBawah :model-value="!!waSetelah" @update:model-value="(v) => !v && (waSetelah = null)" judul="Kabari pegawai lewat WA">
+      <div v-if="waSetelah" class="space-y-3 pb-2">
+        <p class="text-sm text-teks2">Verval tersimpan dan {{ waSetelah.nama }} sudah mendapat notifikasi di aplikasi. Bila perlu, kabari juga lewat WA:</p>
+        <p class="whitespace-pre-line rounded-xl bg-permukaan2 p-3 text-sm">{{ waSetelah.pesan }}</p>
+        <div class="flex gap-2"><TombolWA :hp="waSetelah.hp" label="Kirim WA" :pesan="waSetelah.pesan" /><button class="tombol-garis" @click="waSetelah = null">Tidak perlu</button></div>
+      </div>
     </LembarBawah>
   </div>
 </template>

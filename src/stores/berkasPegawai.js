@@ -1,5 +1,5 @@
-// SIMKA PRO | src/stores/berkasPegawai.js | v1.0 | Fase 3 – Tahap 4 Berkas Saya dan kartu pegawai | 04/10/2026
-// Berkas Saya: info, formulir, surat, dan SK yang dikirim kepada pegawai tertentu; catatan pembukaan.
+// SIMKA PRO | src/stores/berkasPegawai.js | v1.1 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026
+// Berkas Saya: berkas dengan kategori yang dapat dibuat sendiri, dikirim kepada pegawai tertentu; ubah, tambah penerima, catatan pembukaan.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { pesanGalat } from './lembaga'
@@ -17,16 +17,38 @@ const DEMO = (kelola) => [
   dibuka_pertama: i > 1 ? lalu(m - 30) : null, jumlah_buka: i > 1 ? 1 : 0, saya_penerima: true, penerima: kelola ? pen : null, sudah_buka: kelola ? buka : null }))
 
 export const useBerkasPegawai = defineStore('berkasPegawai', {
-  state: () => ({ daftar: [], memuat: false }),
+  state: () => ({ daftar: [], kategori: [], memuat: false }),
+  getters: {
+    kat: (s) => (kode) => s.kategori.find((k) => k.kode === kode) || { kode, nama: kode, ikon: 'File', warna: 'hakakses' },
+    kategoriAktif: (s) => s.kategori.filter((k) => k.aktif).sort((a, b) => a.urutan - b.urutan),
+  },
   actions: {
     bolehKelola() { return useSesi().bolehAdmin('kelola_berkas') },
+    async muatKategori() {
+      if (MODE_DEMO) { if (!this.kategori.length) this.kategori = [['info', 'Info', 'Info', 'pengumuman', 1], ['formulir', 'Formulir', 'ClipboardText', 'shift', 2], ['surat', 'Surat', 'EnvelopeSimple', 'pegawai', 3], ['sk', 'SK', 'Stamp', 'beranda', 4], ['sertifikat', 'Sertifikat', 'Certificate', 'tahfizh', 5], ['lainnya', 'Lainnya', 'File', 'hakakses', 99]].map(([kode, nama, ikon, warna, urutan]) => ({ kode, nama, ikon, warna, urutan, aktif: true })); return }
+      const { data, error } = await supabase.from('document_categories').select('*').order('urutan')
+      if (error) throw new Error(pesanGalat(error))
+      this.kategori = data || []
+    },
+    async simpanKategori(k, baru) {
+      const isi = { kode: k.kode, nama: k.nama.trim(), ikon: k.ikon || 'File', warna: k.warna || 'hakakses', urutan: Number(k.urutan) || 0, aktif: k.aktif !== false }
+      if (!MODE_DEMO) {
+        const { error } = baru ? await supabase.from('document_categories').insert(isi) : await supabase.from('document_categories').update(isi).eq('kode', k.kode)
+        if (error) throw new Error(error.code === '23505' ? 'Kode kategori sudah dipakai.' : pesanGalat(error))
+      }
+      const i = this.kategori.findIndex((x) => x.kode === k.kode); if (i >= 0) this.kategori[i] = isi; else this.kategori.push(isi)
+    },
     async muat() {
       this.memuat = true
+      if (!this.kategori.length) await this.muatKategori()
       try { this.daftar = MODE_DEMO ? (this.daftar.length ? this.daftar : DEMO(this.bolehKelola())) : (await rpc('daftar_berkas_pegawai', { p_kelola: this.bolehKelola() })) || [] }
       finally { this.memuat = false }
     },
     async simpan(isi) {
-      if (MODE_DEMO) { this.daftar.unshift({ ...isi, id: 'bk' + Date.now(), created_at: new Date().toISOString(), saya_penerima: true, penerima: 5, sudah_buka: 0, ringkasan_sasaran: isi.ringkasan }); return }
+      if (MODE_DEMO) {
+        if (isi.id) { Object.assign(this.daftar.find((d) => d.id === isi.id), isi); return isi.id }
+        const id = 'bk' + Date.now(); this.daftar.unshift({ ...isi, id, created_at: new Date().toISOString(), saya_penerima: true, penerima: 5, sudah_buka: 0, ringkasan_sasaran: isi.ringkasan }); return id
+      }
       const id = await rpc('simpan_berkas_pegawai', { p: isi }); await this.muat(); return id
     },
     async hapus(id) { if (!MODE_DEMO) await rpc('hapus_berkas_pegawai', { p_id: id }); this.daftar = this.daftar.filter((d) => d.id !== id) },
@@ -37,7 +59,7 @@ export const useBerkasPegawai = defineStore('berkasPegawai', {
     },
     async pembuka(id) {
       if (MODE_DEMO) return [['Ust. Hasan Basri, Lc.', 'Bidang Tahfizh', 40], ['Ust. Muhammad Ikhsan, S.Pd.I.', 'Bidang Kesantrian', null], ['Ust. Abdul Hakim', 'Unit Security', 300]]
-        .map(([nama, unit, m], i) => ({ employee_id: 'p' + i, nama, unit, dibuka_pertama: m ? lalu(m) : null, dibuka_terakhir: m ? lalu(m - 5) : null, jumlah_buka: m ? 2 : 0 }))
+        .map(([nama, unit, m], i) => ({ employee_id: 'p' + i, nama, unit, no_hp: i === 2 ? null : '08123456780' + i, dibuka_pertama: m ? lalu(m) : null, dibuka_terakhir: m ? lalu(m - 5) : null, jumlah_buka: m ? 2 : 0 }))
       return (await rpc('pembuka_berkas', { p_id: id })) || []
     },
   },

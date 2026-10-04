@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/wa.js | v1.3 | Fase 3 – Perbaikan P1 (kartu, kelompok, pengumuman) | 04/10/2026
+// SIMKA PRO | src/lib/wa.js | v1.4 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026
 // Tautan WhatsApp wa.me dari WA pribadi pegawai (Bagian 25). Isi pesan diambil dari template WA yang
 // dikelola superadmin (Pengaturan → Template WA); bila belum dimuat, dipakai isi bawaan di bawah.
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -23,6 +23,11 @@ export const BAWAAN_WA = {
   sandi_sementara: "Assalamu'alaikum warahmatullahi wabarakatuh, {nama}.\n\nKata sandi sementara akun SIMKA PRO Anda:\nUsername: *{username}*\nKata sandi: *{sandi}*\n\nSilakan masuk di {alamat_aplikasi} lalu ganti kata sandi saat diminta. Jangan bagikan pesan ini kepada siapa pun.\nAdmin SIMKA PRO Imam Asy-Syathiby",
   undangan_agenda: "Assalamu'alaikum warahmatullahi wabarakatuh, {nama}.\n\nMengingatkan agenda *{judul}*\nHari/tanggal: {tanggal}\nWaktu: {waktu}\nTempat: {lokasi}\n\n{keterangan}\n\nJazakumullahu khairan.\n{pengirim}",
   umum: "Assalamu'alaikum warahmatullahi wabarakatuh, {nama}.\n\n{pesan}\n\nJazakumullahu khairan.\n{pengirim}",
+  pengumuman: '{salam}, {nama}.\n\n*{judul}*\n{isi_singkat}\n\nSelengkapnya di SIMKA PRO: {tautan}\n\n{penutup}\n{pengirim}',
+  berkas_baru: '{salam}, {nama}.\n\nAda {kategori} untuk Anda di menu Berkas Saya SIMKA PRO:\n*{judul}*\n\nSilakan dibuka di {tautan}\n\n{penutup}\n{pengirim}',
+  pengajuan_status: '{salam}, {nama}.\n\nPengajuan {jenis} Anda ({tanggal}, {lama}) saat ini *{status}*.\n{alasan}\n\nRincian dan surat: {tautan}\n\n{penutup}\n{pengirim}',
+  pengajuan_pengingat: '{salam}, {nama}.\n\nMohon maaf mengganggu. Ada pengajuan {jenis} dari {pemohon} ({tanggal}, {lama}) yang menunggu persetujuan Anda sebagai {jabatan}.\n\nSilakan diputuskan di SIMKA PRO: {tautan}\n\n{penutup}\n{pengirim}',
+  verval_presensi: '{salam}, {nama}.\n\nPresensi Anda pada sesi {sesi}, {tanggal} telah diverval dengan status *{status_presensi}*.\nCatatan: {catatan_verval}\n\n{penutup}\n{pengirim}',
 }
 
 let simpanan = {}
@@ -54,7 +59,7 @@ export const ISIAN_WA = [
     ['judul', 'Judul pengumuman/berkas/agenda'], ['isi_singkat', 'Cuplikan isi pengumuman'], ['kategori', 'Kategori berkas'], ['tautan', 'Tautan terkait (halaman di SIMKA PRO, Zoom, Drive)'],
   ] },
   { grup: 'Agenda', isian: [['tanggal', 'Hari/tanggal agenda'], ['waktu', 'Jam agenda'], ['lokasi', 'Tempat'], ['keterangan', 'Keterangan agenda'], ['pengingat', 'Keterangan pengingat (mis. besok)']] },
-  { grup: 'Pengajuan', isian: [['jenis', 'Jenis pengajuan'], ['lama', 'Lama (hari)'], ['nomor', 'Nomor surat'], ['status', 'Status pengajuan'], ['alasan', 'Alasan/catatan']] },
+  { grup: 'Pengajuan', isian: [['pemohon', 'Nama pemohon'], ['jenis', 'Jenis pengajuan'], ['lama', 'Lama (hari)'], ['nomor', 'Nomor surat'], ['status', 'Status pengajuan'], ['alasan', 'Alasan/catatan']] },
   { grup: 'Presensi', isian: [['sesi', 'Nama sesi presensi'], ['status_presensi', 'Status presensi'], ['catatan_verval', 'Catatan verval admin']] },
   { grup: 'Bebas', isian: [['pesan', 'Isi pesan bebas']] },
 ]
@@ -83,6 +88,9 @@ export function isiTemplat(isi, data = {}) {
     .replace(/\{(\w+)\}/g, (_, k) => (d[k] == null || d[k] === '' ? '-' : String(d[k])))
     .replace(/\n{3,}/g, '\n\n')
 }
+/** Tautan halaman SIMKA PRO, mis. halamanAplikasi('/berkas/123'). */
+export const halamanAplikasi = (jalur) => `${alamatAplikasi()}#${jalur}`
+
 /** Pesan WA menurut kode template. */
 export const pesanWA = (kode, data) => isiTemplat(simpanan[kode] ?? BAWAAN_WA[kode] ?? '{pesan}', data)
 

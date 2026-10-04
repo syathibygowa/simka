@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/pengumuman.js | v1.1 | Fase 3 – Perbaikan P1 (kartu, kelompok, pengumuman) | 04/10/2026
+// SIMKA PRO | src/stores/pengumuman.js | v1.2 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026
 // Pengumuman: daftar untuk penerima, kelola (admin/superadmin/pemegang hak fitur), tanda dibaca, dan daftar pembaca.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -65,7 +65,7 @@ export const usePengumuman = defineStore('pengumuman', {
     async pembaca(id) {
       if (MODE_DEMO) {
         return [['Ust. Hasan Basri, Lc.', 'Bidang Tahfizh', 30], ['Ustzh. Nurul Aini, S.Pd.', 'Bidang Kesetaraan Wustha', 95], ['Ust. Muhammad Ikhsan, S.Pd.I.', 'Bidang Kesantrian', null], ['Ust. Abdul Hakim', 'Unit Security', null]]
-          .map(([nama, unit, m], i) => ({ employee_id: 'p' + i, nama, unit, dibaca_pada: m == null ? null : new Date(Date.now() - m * 60000).toISOString() }))
+          .map(([nama, unit, m], i) => ({ employee_id: 'p' + i, nama, unit, no_hp: i === 3 ? null : '08123456781' + i, dibaca_pada: m == null ? null : new Date(Date.now() - m * 60000).toISOString() }))
       }
       const { data, error } = await supabase.rpc('pembaca_pengumuman', { p_id: id })
       if (error) throw new Error(pesanGalat(error))

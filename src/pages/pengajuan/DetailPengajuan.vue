@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengajuan/DetailPengajuan.vue | v1.0 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengajuan/DetailPengajuan.vue | v1.1 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026 -->
 <script setup>
 // Rincian satu pengajuan: data pemohon, alur persetujuan (tanda setiap jenjang), lampiran, keputusan
 // (setujui/tolak, superadmin dapat memutus atas nama), pembatalan, dan surat F4 berkop untuk diunduh/dicetak.
@@ -13,17 +13,26 @@ import { formatPanjang, formatPendek, formatWaktu, uraiPendek } from '@/lib/tang
 import { STATUS_PENGAJUAN, STATUS_JENJANG, KELOMPOK, rentangTanggal } from '@/lib/pengajuan'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
+import TombolWA from '@/components/TombolWA.vue'
+import { pesanWA, halamanAplikasi } from '@/lib/wa'
 
 const props = defineProps({ id: String })
 const emit = defineEmits(['berubah'])
 const pg = usePengajuan(); const sesi = useSesi(); const ui = useUI()
 const d = ref(null); const memuat = ref(false); const catatan = ref(''); const proses = ref(false); const pratinjau = ref(false)
 
+const kontak = ref([])
 async function muat() {
   if (!props.id) return
   memuat.value = true
-  try { d.value = await pg.detail(props.id) } catch (e) { ui.toast(e.message, 'galat'); d.value = null } finally { memuat.value = false }
+  try { d.value = await pg.detail(props.id); kontak.value = await pg.kontak(props.id).catch(() => []) } catch (e) { ui.toast(e.message, 'galat'); d.value = null } finally { memuat.value = false }
 }
+const sayaPemohon = computed(() => d.value?.employee_id === sesi.pengguna?.id)
+const pemohonWA = computed(() => kontak.value.find((k) => k.peran === 'pemohon'))
+const penyetujuWA = computed(() => kontak.value.filter((k) => k.peran === 'penyetuju' && k.employee_id !== sesi.pengguna?.id))
+const dataWA = computed(() => d.value && { jenis: d.value.jenis.nama.toLowerCase(), tanggal: rentangTanggal(d.value, formatPendek), lama: `${d.value.jumlah_hari} hari`,
+  status: { menunggu: `menunggu persetujuan ${d.value.jenjang.find((j) => j.status === 'menunggu')?.nama_peran || ''}`.trim(), disetujui: `disetujui (nomor ${d.value.nomor_surat || '-'})`, ditolak: 'ditolak', dibatalkan: 'dibatalkan' }[d.value.status],
+  alasan: d.value.alasan_tolak ? `Catatan: ${d.value.alasan_tolak}` : '', pemohon: d.value.pemohon.nama, tautan: halamanAplikasi(`/pengajuan/${d.value.id}`) })
 watch(() => props.id, () => { catatan.value = ''; muat() }, { immediate: true })
 
 const IKON = { disetujui: PhSealCheck, ditolak: PhXCircle, menunggu: PhHourglassMedium, antre: PhCircleDashed, dilewati: PhSkipForward }
@@ -112,6 +121,16 @@ async function lihatLampiran() {
             <button class="tombol-garis w-beranda flex-1" style="color: var(--c)" :disabled="proses" @click="putuskan(false)"><PhXCircle :size="20" weight="duotone" /> Tolak</button>
           </template>
           <button v-if="d.boleh_batal" class="tombol-garis" :disabled="proses" @click="batalkan"><PhProhibit :size="20" weight="duotone" /> Batalkan pengajuan</button>
+        </div>
+      </div>
+
+      <div v-if="(!sayaPemohon && pemohonWA) || penyetujuWA.length" class="mt-4 rounded-2xl border border-garis p-3">
+        <p class="mb-2 text-sm font-bold">Hubungi lewat WA</p>
+        <div class="flex flex-wrap gap-2">
+          <TombolWA v-if="!sayaPemohon && pemohonWA" kecil :hp="pemohonWA.no_hp" label="Kabari pemohon" :pesan="pesanWA('pengajuan_status', { ...dataWA, nama: pemohonWA.nama })" />
+          <template v-if="d.status === 'menunggu'">
+            <TombolWA v-for="p in penyetujuWA" :key="p.employee_id" kecil :hp="p.no_hp" :label="`Ingatkan ${p.jabatan || 'penyetuju'}`" :pesan="pesanWA('pengajuan_pengingat', { ...dataWA, nama: p.nama, jabatan: p.jabatan })" />
+          </template>
         </div>
       </div>
 

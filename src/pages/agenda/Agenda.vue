@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/agenda/Agenda.vue | v1.1 | Fase 3 – Perbaikan P2 (agenda lanjutan) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/agenda/Agenda.vue | v1.2 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026 -->
 <script setup>
 // Agenda dan kalender pondok. Semua pegawai melihat agenda yang ditujukan kepadanya beserta hari libur pondok
 // dalam kalender bulanan. Admin ber-izin kelola_agenda membuat agenda dengan sasaran dan pengingat H-n;
@@ -13,7 +13,7 @@ import { usePengumuman } from '@/stores/pengumuman'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 import { hariIniISO, formatPanjang, formatHari, formatPendek } from '@/lib/tanggal'
-import { pesanWA, tautanWA } from '@/lib/wa'
+import { pesanWA, halamanAplikasi } from '@/lib/wa'
 import { MODE_DEMO } from '@/lib/supabase'
 import { ambilBerkasUrl, unggahKeDrive, kompresGambar, namaRapi } from '@/lib/penyimpanan'
 import { WARNA_AGENDA, gayaAgenda } from '@/lib/warnaAgenda'
@@ -22,6 +22,7 @@ import TombolAksi from '@/components/TombolAksi.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import PilihSasaran from '@/components/PilihSasaran.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
+import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
 const props = defineProps({ id: String })
@@ -147,7 +148,7 @@ async function hapus(a) {
 // ---------- WA ----------
 const wa = ref(null)
 async function bukaWA(a) { try { wa.value = { a, daftar: await ag.penerima(a.id) } } catch (e) { ui.toast(e.message, 'galat') } }
-const pesan = (a, p) => pesanWA('undangan_agenda', { nama: p.nama, judul: a.judul, tanggal: tanggal(a), waktu: waktu(a), lokasi: a.lokasi, keterangan: [a.keterangan, a.tautan && `${a.nama_tautan || 'Tautan'}: ${a.tautan}`].filter(Boolean).join('\n'), tautan: a.tautan, unit: p.unit })
+const pesan = (a, p) => pesanWA('undangan_agenda', { nama: p.nama, judul: a.judul, tanggal: tanggal(a), waktu: waktu(a), lokasi: a.lokasi, keterangan: [a.keterangan, a.tautan && `${a.nama_tautan || 'Tautan'}: ${a.tautan}`].filter(Boolean).join('\n'), tautan: a.tautan || halamanAplikasi(`/agenda/${a.id}`), unit: p.unit })
 
 // ---------- Cetak ----------
 const pratinjau = ref(false)
@@ -238,7 +239,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
         <p v-if="kelola && terpilih.sumber === 'agenda'" class="mt-3 text-sm text-teks2">Sasaran: {{ terpilih.ringkasan_sasaran }}<template v-if="terpilih.penerima != null"> · {{ terpilih.penerima }} penerima</template></p>
         <p v-if="terpilih.sumber === 'libur'" class="mt-3 text-sm text-teks3">Diatur di Pengaturan → Tahun ajaran dan kalender.</p>
         <div v-if="kelola && terpilih.sumber === 'agenda'" class="mt-4 flex flex-wrap gap-2">
-          <button class="tombol-garis" @click="bukaWA(terpilih)"><PhWhatsappLogo :size="20" weight="duotone" /> Kirim WA</button>
+          <button class="tombol-garis" @click="bukaWA(terpilih)"><PhWhatsappLogo :size="20" weight="duotone" /> Undang/ingatkan via WA</button>
           <button class="tombol-garis" @click="ubah(terpilih)"><PhPencilSimple :size="20" weight="duotone" /> {{ terpilih.ulang ? 'Ubah seri' : 'Ubah' }}</button>
           <button v-if="terpilih.ulang" class="tombol-garis" @click="lewati(terpilih)"><PhSkipForward :size="20" weight="duotone" /> Tiadakan tanggal ini</button>
           <button class="tombol-garis w-beranda" style="color: var(--c)" @click="hapus(terpilih)"><PhTrash :size="20" weight="duotone" /> Hapus</button>
@@ -324,15 +325,10 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
     </LembarBawah>
 
     <!-- WA -->
-    <LembarBawah :model-value="!!wa" @update:model-value="(v) => !v && (wa = null)" judul="Kirim undangan lewat WA">
+    <LembarBawah :model-value="!!wa" @update:model-value="(v) => !v && (wa = null)" judul="Undangan dan pengingat lewat WA">
       <div v-if="wa" class="pb-2">
-        <p class="mb-2 text-sm text-teks2">{{ wa.a.judul }} · template "Undangan/pengingat agenda" (dapat diubah superadmin di Pengaturan → Template WA).</p>
-        <ul class="divide-y divide-garis">
-          <li v-for="p in wa.daftar" :key="p.employee_id" class="flex items-center gap-3 py-2.5">
-            <div class="min-w-0 flex-1"><p class="font-semibold">{{ p.nama }}</p><p class="text-xs text-teks3">{{ p.unit || '–' }}{{ p.no_hp ? '' : ' · nomor HP belum diisi' }}</p></div>
-            <a v-if="p.no_hp" :href="tautanWA(p.no_hp, pesan(wa.a, p))" target="_blank" rel="noopener" class="tombol-garis min-h-[40px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" /> WA</a>
-          </li>
-        </ul>
+        <p class="mb-3 text-sm text-teks2">{{ wa.a.judul }} · {{ tanggal(wa.a) }}</p>
+        <DaftarKirimWA :penerima="wa.daftar" :pesan="(p) => pesan(wa.a, p)" :kunci="`agenda-${wa.a.id}-${wa.a.mulai}`" />
       </div>
     </LembarBawah>
 
