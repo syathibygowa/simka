@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengaturan/TabTemplateWA.vue | v1.0 | Fase 3 – Tahap 5 Agenda dan template WA | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/TabTemplateWA.vue | v1.1 | Fase 3 – Perbaikan P1 (kartu, kelompok, pengumuman) | 04/10/2026 -->
 <script setup>
 // Template pesan WhatsApp (superadmin). Isian dalam kurung kurawal, misalnya {nama}, diganti otomatis saat pesan dibuat.
 // Baris yang hanya berisi isian kosong dibuang. Pratinjau memakai data contoh.
@@ -6,14 +6,16 @@ import { ref, computed, onMounted } from 'vue'
 import { PhPencilSimple, PhPlus, PhFloppyDisk, PhTrash, PhWhatsappLogo, PhArrowCounterClockwise } from '@phosphor-icons/vue'
 import { useTemplatWA } from '@/stores/templatWA'
 import { useUI } from '@/stores/ui'
-import { isiTemplat, BAWAAN_WA } from '@/lib/wa'
+import { isiTemplat, BAWAAN_WA, ISIAN_WA } from '@/lib/wa'
 import LembarBawah from '@/components/LembarBawah.vue'
 
 const tw = useTemplatWA(); const ui = useUI()
 const f = ref(null); const isian = ref(null)
 onMounted(() => tw.muat().catch((e) => ui.toast(e.message, 'galat')))
 const CONTOH = { nama: 'Ust. Hasan Basri, Lc.', username: 'hasanbasri', sandi: 'Rahasia#2026', catatan: 'NIY belum sesuai', judul: 'Rapat koordinasi', tanggal: 'Kamis, 08 Oktober 2026',
-  waktu: '20.00–21.30 WITA', lokasi: 'Aula Utama', keterangan: 'Membawa catatan program bidang.', pengirim: 'Admin SIMKA PRO', jenis: 'izin', nomor: 'PGJ.007/PPTQ-IAS/X/2026', pesan: 'Isi pesan bebas.' }
+  waktu: '20.00–21.30 WITA', lokasi: 'Aula Utama', keterangan: 'Membawa catatan program bidang.', jenis: 'Izin', nomor: 'PGJ.007/PPTQ-IAS/X/2026', pesan: 'Isi pesan bebas.',
+  niy: '2019070101', jabatan: 'Muhaffizh', unit: 'Bidang Tahfizh', isi_singkat: 'Rapat koordinasi awal bulan dilaksanakan Kamis…', kategori: 'SK', tautan: 'https://syathibygowa.github.io/simka/#/agenda',
+  pengingat: 'besok', lama: '2 hari', status: 'disetujui', alasan: 'Keperluan keluarga', sesi: 'Halaqah subuh', status_presensi: 'Hadir', catatan_verval: 'Lokasi sesuai tugas luar' }
 const variabel = computed(() => [...new Set((f.value?.isi.match(/\{(\w+)\}/g) || []).map((x) => x.slice(1, -1)))])
 const pratinjau = computed(() => (f.value ? isiTemplat(f.value.isi, CONTOH) : ''))
 function ubah(t) { f.value = { ...t } }
@@ -33,7 +35,7 @@ async function hapus(t) {
   if (!(await ui.konfirmasi({ judul: 'Hapus template?', pesan: t.nama, ya: 'Hapus', bahaya: true }))) return
   try { await tw.hapus(t.kode); f.value = null } catch (e) { ui.toast(e.message, 'galat') }
 }
-const VAR_UMUM = ['nama', 'pengirim', 'alamat_aplikasi', 'pesan', 'tanggal', 'judul']
+const buka = ref(ISIAN_WA[0].grup)
 </script>
 <template>
   <div class="space-y-3">
@@ -59,8 +61,17 @@ const VAR_UMUM = ['nama', 'pengirim', 'alamat_aplikasi', 'pesan', 'tanggal', 'ju
         <div>
           <label class="label-isian" for="tw-isi">Isi pesan</label>
           <textarea id="tw-isi" ref="isian" v-model="f.isi" class="isian min-h-[11rem] py-2 font-mono text-sm" />
-          <div class="mt-1.5 flex flex-wrap gap-1.5"><span class="text-xs text-teks3">Sisipkan:</span>
-            <button v-for="v in [...new Set([...(f.variabel || []), ...VAR_UMUM])]" :key="v" type="button" class="rounded-full border border-garis px-2.5 py-1 text-xs font-semibold text-teks2" @click="sisip(v)">{{ '{' + v + '}' }}</button></div>
+          <div class="mt-2 rounded-xl border border-garis p-2">
+            <p class="px-1 pb-1 text-xs font-bold text-teks3">Sisipkan isian (ketuk untuk menyisipkan pada posisi kursor)</p>
+            <div class="flex flex-wrap gap-1 border-b border-garis pb-2">
+              <button v-for="g in ISIAN_WA" :key="g.grup" type="button" :class="['rounded-full px-2.5 py-1 text-xs font-semibold', buka === g.grup ? 'bg-[#1E7D4F] text-white' : 'bg-permukaan2 text-teks2']" @click="buka = g.grup">{{ g.grup }}</button>
+            </div>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              <button v-for="[v, ket] in ISIAN_WA.find((g) => g.grup === buka).isian" :key="v" type="button" :title="ket" class="rounded-lg border border-garis px-2 py-1 text-left text-xs hover:bg-permukaan2" @click="sisip(v)">
+                <span class="font-mono font-semibold text-teks">{{ '{' + v + '}' }}</span><span class="block text-[11px] text-teks3">{{ ket }}</span></button>
+            </div>
+            <p class="mt-2 px-1 text-[11px] text-teks3">Isian kelompok Umum selalu terisi. Isian lain terisi bila template dipakai dari menu terkait; yang tidak tersedia ditulis "-" dan baris yang hanya berisi isian kosong dibuang.</p>
+          </div>
           <p class="mt-1 text-xs text-teks3">Tulis *teks* untuk huruf tebal di WhatsApp.</p>
         </div>
         <div class="rounded-xl bg-permukaan2 p-3"><p class="mb-1 text-xs font-bold text-teks3">Pratinjau (data contoh)</p><p class="whitespace-pre-line text-sm">{{ pratinjau }}</p></div>

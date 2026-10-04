@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/pengumuman.js | v1.0 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026
+// SIMKA PRO | src/stores/pengumuman.js | v1.1 | Fase 3 – Perbaikan P1 (kartu, kelompok, pengumuman) | 04/10/2026
 // Pengumuman: daftar untuk penerima, kelola (admin/superadmin/pemegang hak fitur), tanda dibaca, dan daftar pembaca.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v2.0 | Fase 3 – Tahap 6 Dashboard per peran | 04/10/2026
+// SIMKA PRO | src/lib/menu.js | v2.1 | Fase 3 – Perbaikan P1 (kartu, kelompok, pengumuman) | 04/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -6,7 +6,7 @@
 import {
   PhHouse, PhFingerprint, PhUsersThree, PhStudent, PhBookOpenText, PhFileText, PhFirstAidKit,
   PhShieldCheck, PhChartBar, PhEnvelopeSimple, PhWallet, PhMegaphone, PhKey, PhGearSix, PhBell,
-  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck,
+  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour,
 } from '@phosphor-icons/vue'
 
 const ADMIN = ['admin', 'superadmin']
@@ -29,6 +29,7 @@ export const MENU = [
   { kode: 'kartu',      nama: 'Kartu Pegawai',   ikon: PhIdentificationCard, warna: 'profil', ke: '/kartu',             grup: 'Layanan Pegawai' },
   // Kepegawaian (pengelolaan data pegawai)
   { kode: 'pegawai',    nama: 'Data Pegawai',    ikon: PhUsersThree,     warna: 'pegawai',    ke: '/pegawai',           grup: 'Kepegawaian', peran: ADMIN },
+  { kode: 'kelompok',   nama: 'Kelompok Pegawai', ikon: PhUsersFour,     warna: 'pegawai',    ke: '/kelompok-pegawai',  grup: 'Kepegawaian', peran: ADMIN, izin: 'kelola_kelompok' },
   { kode: 'verifikasi', nama: 'Verifikasi Akun', ikon: PhUserCheck,      warna: 'verifikasi', ke: '/verifikasi',        grup: 'Kepegawaian', peran: ADMIN, izin: 'verval_akun' },
   { kode: 'tunjangan',  nama: 'Jabatan dan Tunjangan', ikon: PhCoins,    warna: 'gaji',       ke: '/jabatan-tunjangan', grup: 'Kepegawaian', peran: ['superadmin'] },
   // Fase berikutnya

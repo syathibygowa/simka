@@ -1,21 +1,22 @@
-<!-- SIMKA PRO | src/components/PilihSasaran.vue | v1.0 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026 -->
+<!-- SIMKA PRO | src/components/PilihSasaran.vue | v1.1 | Fase 3 – Perbaikan P1 (kartu, kelompok, pengumuman) | 04/10/2026 -->
 <script setup>
 // Pemilih sasaran bersama (pengumuman, berkas pegawai, agenda): semua pegawai, atau gabungan
-// bidang/unit (beserta cabangnya), jabatan fungsional, jabatan struktural, saringan jenis kelamin,
+// kelompok pegawai (PH, PI, panitia, dll.), bidang/unit (beserta cabangnya), jabatan fungsional, jabatan struktural, saringan jenis kelamin,
 // dan pegawai tertentu. Jumlah penerima dihitung server (fungsi hitung_sasaran).
 import { ref, computed, watch, onMounted } from 'vue'
-import { PhUsersThree, PhFunnel, PhMagnifyingGlass, PhX, PhCheck } from '@phosphor-icons/vue'
+import { PhUsersThree, PhFunnel, PhMagnifyingGlass, PhX, PhCheck, PhUsersFour } from '@phosphor-icons/vue'
 import { useOrganisasi } from '@/stores/organisasi'
 import { usePegawai } from '@/stores/pegawai'
+import { useKelompok } from '@/stores/kelompok'
 
 const model = defineModel({ type: Object, default: () => ({ jenis: 'semua' }) })
 const props = defineProps({ hitung: Function })
 const emit = defineEmits(['ringkasan'])
-const org = useOrganisasi(); const peg = usePegawai()
+const org = useOrganisasi(); const peg = usePegawai(); const kl = useKelompok()
 const cari = ref(''); const jumlah = ref(null)
-onMounted(async () => { await Promise.all([org.muat(), peg.daftar.length ? null : peg.muat()]); hitungUlang() })
+onMounted(async () => { await Promise.all([org.muat(), kl.muat(), peg.daftar.length ? null : peg.muat()]); hitungUlang() })
 
-const s = computed(() => ({ unit: [], fungsional: [], struktural: [], pegawai: [], jk: '', ...model.value }))
+const s = computed(() => ({ unit: [], fungsional: [], struktural: [], pegawai: [], kelompok_pegawai: [], jk: '', ...model.value }))
 const atur = (patch) => { model.value = { ...s.value, ...patch } }
 const balik = (kunci, id) => { const a = new Set(s.value[kunci]); a.has(id) ? a.delete(id) : a.add(id); atur({ [kunci]: [...a] }) }
 const ada = (kunci, id) => s.value[kunci].includes(id)
@@ -30,6 +31,7 @@ const namaPegawai = (id) => peg.cari(id)?.nama_lengkap || 'Pegawai'
 const ringkasan = computed(() => {
   if (s.value.jenis === 'semua') return 'Semua pegawai'
   const b = []
+  const g = s.value.kelompok_pegawai.map((id) => { const k = kl.cari(id); return k ? k.singkatan || k.nama : null }).filter(Boolean); if (g.length) b.push(g.join(', '))
   const u = s.value.unit.map((id) => org.cariUnit(id)?.nama).filter(Boolean); if (u.length) b.push(u.join(', '))
   const f = s.value.fungsional.map((id) => org.fungsional.find((x) => x.id === id)?.nama).filter(Boolean); if (f.length) b.push(f.join(', '))
   const st = s.value.struktural.map((id) => org.struktural.find((x) => x.id === id)?.nama).filter(Boolean); if (st.length) b.push(st.join(', '))
@@ -55,6 +57,13 @@ watch(ringkasan, (v) => emit('ringkasan', v), { immediate: true })
     </div>
 
     <template v-if="s.jenis === 'pilihan'">
+      <fieldset v-if="kl.aktif.length">
+        <legend class="label-isian">Kelompok pegawai (satu klik)</legend>
+        <div class="flex flex-wrap gap-1.5">
+          <button v-for="k in kl.aktif" :key="k.id" type="button" @click="balik('kelompok_pegawai', k.id)" :title="k.nama"
+            :class="['chip', ada('kelompok_pegawai', k.id) && 'pilih']"><component :is="ada('kelompok_pegawai', k.id) ? PhCheck : PhUsersFour" :size="14" weight="bold" />{{ k.singkatan ? `${k.singkatan} – ${k.nama}` : k.nama }}<span class="text-xs text-teks3">({{ k.anggota.length }})</span></button>
+        </div>
+      </fieldset>
       <fieldset>
         <legend class="label-isian">Bidang/unit (termasuk unit di bawahnya)</legend>
         <div class="flex max-h-44 flex-wrap gap-1.5 overflow-y-auto rounded-xl border border-garis p-2">
@@ -97,7 +106,7 @@ watch(ringkasan, (v) => emit('ringkasan', v), { immediate: true })
             <button type="button" class="-mr-1 rounded-full p-0.5" :aria-label="`Hapus ${namaPegawai(id)}`" @click="balik('pegawai', id)"><PhX :size="14" weight="bold" /></button></span>
         </div>
       </div>
-      <p class="text-xs text-teks3">Bidang, jabatan fungsional, dan jabatan struktural digabung (salah satu cocok). Bila ketiganya kosong, berlaku untuk semua pegawai sesuai saringan jenis kelamin. Sasaran wali santri tersedia mulai Fase 9.</p>
+      <p class="text-xs text-teks3">Kelompok, bidang, jabatan fungsional, dan jabatan struktural digabung (salah satu cocok). Bila semuanya kosong, berlaku untuk semua pegawai sesuai saringan jenis kelamin. Sasaran wali santri tersedia mulai Fase 9.</p>
     </template>
 
     <p class="rounded-xl bg-permukaan2 p-3 text-sm text-teks2"><span class="font-bold text-teks">Sasaran:</span> {{ ringkasan }}

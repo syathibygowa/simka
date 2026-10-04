@@ -1,17 +1,19 @@
-<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.0 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.1 | Fase 3 – Perbaikan P1 (kartu, kelompok, pengumuman) | 04/10/2026 -->
 <script setup>
 // Pengumuman: semua pegawai membaca pengumuman yang ditujukan kepadanya (tanda dibaca/belum).
 // Admin, superadmin, dan pegawai yang diberi hak fitur "pengumuman" (tingkat 2+) dapat membuat,
-// mengubah, menghapus, melihat siapa yang sudah membaca, dan mencetak pengumuman (F4 berkop).
+// mengubah, menghapus, melihat siapa yang sudah/belum membaca, dan mencetak pengumuman (F4 berkop).
+// v1.1: lampiran berkas (PDF/foto ke Drive) dan tautan (Drive, Google Form, Zoom, dll.); ekspor Excel pembaca dihapus.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import * as XLSX from 'xlsx'
-import { PhMegaphone, PhPlus, PhMagnifyingGlass, PhPushPin, PhPencilSimple, PhTrash, PhPrinter, PhUsers, PhEnvelopeSimpleOpen, PhFileXls, PhTray, PhListChecks } from '@phosphor-icons/vue'
+import { PhMegaphone, PhPlus, PhMagnifyingGlass, PhPushPin, PhPencilSimple, PhTrash, PhPrinter, PhUsers, PhEnvelopeSimpleOpen, PhTray, PhListChecks, PhPaperclip, PhLink, PhX, PhDownloadSimple } from '@phosphor-icons/vue'
 import { usePengumuman } from '@/stores/pengumuman'
 import { useLembaga } from '@/stores/lembaga'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 import { formatPanjang, formatPendek, formatRelatif, formatWaktu, hariIniISO, uraiPendek } from '@/lib/tanggal'
+import { MODE_DEMO } from '@/lib/supabase'
+import { ambilBerkasUrl, unggahKeDrive, kompresGambar, namaRapi } from '@/lib/penyimpanan'
 import LembarBawah from '@/components/LembarBawah.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
@@ -43,17 +45,42 @@ const tampil = computed(() => {
 })
 const belum = computed(() => pg.daftar.filter((p) => p.saya_penerima && !p.dibaca_pada && masihBerlaku(p)).length)
 
-function baru() { form.value = { judul: '', isi: '', penting: false, tampil_sampai: '', sasaran: { jenis: 'semua' } } }
-function ubah(p) { form.value = { id: p.id, judul: p.judul, isi: p.isi, penting: p.penting, tampil_sampai: p.tampil_sampai || '' } }
+const berkas = ref(null); const membuka = ref(false)
+function baru() { form.value = { judul: '', isi: '', penting: false, tampil_sampai: '', tautan: '', nama_tautan: '', sasaran: { jenis: 'semua' } }; berkas.value = null }
+function ubah(p) { form.value = { id: p.id, judul: p.judul, isi: p.isi, penting: p.penting, tampil_sampai: p.tampil_sampai || '', tautan: p.tautan || '', nama_tautan: p.nama_tautan || '', nama_lampiran: p.nama_lampiran }; berkas.value = null }
+function pilihBerkas(e) {
+  const b = e.target.files?.[0]; e.target.value = ''
+  if (!b) return
+  if (!/^image\/|application\/pdf/.test(b.type)) return ui.toast('Lampiran harus PDF atau foto. Dokumen Word/Excel simpan sebagai PDF, atau bagikan lewat tautan.', 'galat')
+  if (b.type === 'application/pdf' && b.size > 5 * 1024 * 1024) return ui.toast('Ukuran PDF paling besar 5 MB.', 'galat')
+  berkas.value = b
+}
+async function bukaLampiran(p) {
+  if (MODE_DEMO) return ui.toast('Mode demo: lampiran contoh tidak tersedia.', 'info')
+  membuka.value = true
+  try { const u = await ambilBerkasUrl(p.lampiran_id); const a = document.createElement('a'); a.href = u; a.target = '_blank'; a.rel = 'noopener'; a.click() }
+  catch (e) { ui.toast(e.message, 'galat') } finally { membuka.value = false }
+}
+const ukuran = (b) => (!b ? '' : b > 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.round(b / 1024) + ' KB')
 async function simpan() {
   const f = form.value
   if (f.judul.trim().length < 3) return ui.toast('Judul minimal 3 karakter.', 'galat')
   if (f.isi.trim().length < 3) return ui.toast('Isi pengumuman belum diisi.', 'galat')
   if (f.tampil_sampai && f.tampil_sampai < hariIniISO()) return ui.toast('Tanggal "tampil sampai" tidak boleh sebelum hari ini.', 'galat')
+  if (f.tautan.trim() && !/^https?:\/\//.test(f.tautan.trim())) return ui.toast('Tautan harus diawali https://', 'galat')
   if (!f.id && !(await ui.konfirmasi({ judul: 'Terbitkan pengumuman?', pesan: `Sasaran: ${ringkasSasaran.value}. Setiap penerima mendapat notifikasi.`, ya: 'Terbitkan' }))) return
   simpanan.value = true
   try {
-    const id = await pg.simpan({ ...f, ringkasan: ringkasSasaran.value })
+    const isi = { ...f, ringkasan: ringkasSasaran.value }; delete isi.nama_lampiran
+    if (berkas.value) {
+      if (MODE_DEMO) { isi.lampiran_id = 'demo'; isi.nama_lampiran = berkas.value.name }
+      else {
+        const blob = berkas.value.type === 'application/pdf' ? berkas.value : await kompresGambar(berkas.value, { maks: 2000, kualitas: 0.8 })
+        const t = hariIniISO()
+        isi.lampiran_id = await unggahKeDrive(blob, { nama: namaRapi('Pengumuman', f.judul.slice(0, 40), t) + (blob.type === 'application/pdf' ? '.pdf' : '.jpg'), kategori: 'lampiran_pengumuman', folder: `SIMKA PRO/Pengumuman/${t.slice(0, 4)}` })
+      }
+    }
+    const id = await pg.simpan(isi)
     ui.toast(f.id ? 'Pengumuman diperbarui.' : 'Pengumuman diterbitkan dan notifikasi terkirim.', 'info')
     form.value = null
     if (!f.id) router.replace(`/pengumuman/${id}`)
@@ -67,12 +94,6 @@ async function lihatPembaca(p) {
   try { pembaca.value = { p, daftar: await pg.pembaca(p.id) }; saringBaca.value = 'semua' } catch (e) { ui.toast(e.message, 'galat') }
 }
 const pembacaTampil = computed(() => (pembaca.value?.daftar || []).filter((r) => saringBaca.value === 'semua' || (saringBaca.value === 'sudah' ? r.dibaca_pada : !r.dibaca_pada)))
-function eksporPembaca() {
-  const d = pembaca.value; const kolom = ['No.', 'Nama', 'Bidang/Unit', 'Status', 'Waktu dibaca']
-  const data = d.daftar.map((r, i) => [i + 1, r.nama, r.unit || '', r.dibaca_pada ? 'Sudah dibaca' : 'Belum dibaca', r.dibaca_pada ? formatWaktu(r.dibaca_pada) : ''])
-  const ws = XLSX.utils.aoa_to_sheet([kolom, ...data]); ws['!cols'] = [{ wch: 5 }, { wch: 36 }, { wch: 28 }, { wch: 14 }, { wch: 18 }]
-  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Pembaca'); XLSX.writeFile(wb, `Pembaca-Pengumuman-${formatPendek(d.p.created_at).replace(/\//g, '-')}.xlsx`)
-}
 const persen = (p) => (p.penerima ? Math.round((100 * (p.sudah_dibaca || 0)) / p.penerima) : 0)
 const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.test(s.jabatan_tertulis)) || lembaga.signatories[0] || {})
 </script>
@@ -137,6 +158,15 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
         <h3 class="text-xl font-extrabold leading-snug">{{ terpilih.judul }}</h3>
         <p class="mt-1 text-sm text-teks3">{{ formatPanjang(terpilih.created_at) }} · {{ terpilih.pembuat || 'Pengelola' }}<template v-if="terpilih.tampil_sampai"> · tampil sampai {{ formatPanjang(terpilih.tampil_sampai) }}</template></p>
         <p class="mt-4 whitespace-pre-line leading-relaxed text-teks">{{ terpilih.isi }}</p>
+        <div v-if="terpilih.lampiran_id || terpilih.tautan" class="mt-4 space-y-2">
+          <button v-if="terpilih.lampiran_id" class="flex w-full items-center gap-3 rounded-xl border border-garis p-3 text-left hover:bg-permukaan2" :disabled="membuka" @click="bukaLampiran(terpilih)">
+            <span class="chip-ikon h-10 w-10 shrink-0"><PhPaperclip :size="20" weight="duotone" /></span>
+            <span class="min-w-0 flex-1"><span class="block truncate font-semibold">{{ terpilih.nama_lampiran || 'Lampiran' }}</span><span class="block text-xs text-teks3">{{ membuka ? 'Mengambil berkas…' : 'Ketuk untuk membuka' }}{{ terpilih.ukuran_lampiran ? ' · ' + ukuran(terpilih.ukuran_lampiran) : '' }}</span></span>
+            <PhDownloadSimple :size="20" class="text-teks3" /></button>
+          <a v-if="terpilih.tautan" :href="terpilih.tautan" target="_blank" rel="noopener" class="flex items-center gap-3 rounded-xl border border-garis p-3 hover:bg-permukaan2">
+            <span class="chip-ikon h-10 w-10 shrink-0"><PhLink :size="20" weight="duotone" /></span>
+            <span class="min-w-0 flex-1"><span class="block truncate font-semibold">{{ terpilih.nama_tautan || 'Buka tautan' }}</span><span class="block truncate text-xs text-teks3">{{ terpilih.tautan }}</span></span></a>
+        </div>
         <p v-if="kelola" class="mt-4 rounded-xl bg-permukaan2 p-3 text-sm text-teks2">Sasaran: {{ terpilih.ringkasan_sasaran }}
           <template v-if="terpilih.penerima != null"> · {{ terpilih.sudah_dibaca || 0 }} dari {{ terpilih.penerima }} sudah membaca</template></p>
         <div class="mt-4 flex flex-wrap gap-2">
@@ -162,6 +192,18 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
           <label class="flex min-h-[48px] items-center gap-3 self-end rounded-xl border border-garis px-3 text-sm font-semibold">
             <input v-model="form.penting" type="checkbox" class="h-5 w-5 accent-[#C7332F]" /> Tandai penting (disematkan di atas)</label>
         </div>
+        <div>
+          <p class="label-isian">Lampiran berkas (opsional, PDF atau foto maks. 5 MB)</p>
+          <div v-if="berkas || form.nama_lampiran" class="flex items-center gap-3 rounded-xl border border-garis p-3"><PhPaperclip :size="22" class="text-teks2" />
+            <span class="min-w-0 flex-1 truncate text-sm font-semibold">{{ berkas ? berkas.name : form.nama_lampiran }}</span>
+            <label class="tombol-teks cursor-pointer text-sm">Ganti<input type="file" accept="application/pdf,image/*" class="sr-only" @change="pilihBerkas" /></label>
+            <button v-if="berkas" type="button" class="tombol-ikon" aria-label="Batalkan lampiran" @click="berkas = null"><PhX :size="20" /></button></div>
+          <label v-else class="tombol-garis w-full cursor-pointer justify-center"><PhPaperclip :size="20" weight="duotone" /> Pilih berkas<input type="file" accept="application/pdf,image/*" class="sr-only" @change="pilihBerkas" /></label>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-[1fr_12rem]">
+          <div><label class="label-isian" for="pg-tautan">Tautan (opsional)</label><input id="pg-tautan" v-model="form.tautan" class="isian" inputmode="url" placeholder="https://drive.google.com/…" /></div>
+          <div><label class="label-isian" for="pg-ntautan">Nama tautan</label><input id="pg-ntautan" v-model="form.nama_tautan" class="isian" placeholder="Contoh: Daftar hadir" /></div>
+        </div>
         <div v-if="!form.id"><p class="label-isian">Sasaran</p>
           <PilihSasaran v-model="form.sasaran" :hitung="pg.hitungSasaran" @ringkasan="ringkasSasaran = $event" /></div>
         <p v-else class="text-sm text-teks3">Sasaran tidak dapat diubah setelah diterbitkan. Bila perlu, hapus lalu buat pengumuman baru.</p>
@@ -176,7 +218,6 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
         <div class="my-3 flex flex-wrap gap-1.5">
           <button v-for="s in [{ k: 'semua', n: `Semua (${pembaca.daftar.length})` }, { k: 'sudah', n: `Sudah (${pembaca.daftar.filter((r) => r.dibaca_pada).length})` }, { k: 'belum', n: `Belum (${pembaca.daftar.filter((r) => !r.dibaca_pada).length})` }]"
             :key="s.k" @click="saringBaca = s.k" :class="['min-h-[40px] rounded-full border px-3.5 text-sm font-semibold', saringBaca === s.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2']">{{ s.n }}</button>
-          <button class="tombol-teks ml-auto text-sm" @click="eksporPembaca"><PhFileXls :size="18" weight="duotone" /> Excel</button>
         </div>
         <ul class="divide-y divide-garis">
           <li v-for="r in pembacaTampil" :key="r.employee_id" class="flex items-center gap-3 py-2.5">
@@ -192,6 +233,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
     <DokumenCetak v-if="terpilih" v-model:pratinjau="pratinjau" judul="Pengumuman" :subjudul="terpilih.judul" :pencetak="sesi.pengguna?.nama_lengkap">
       <p style="white-space: pre-line; text-align: justify; line-height: 1.6">{{ terpilih.isi }}</p>
       <p style="margin-top: 8pt">Ditujukan kepada: {{ terpilih.ringkasan_sasaran || 'Seluruh pegawai' }}.</p>
+      <p v-if="terpilih.lampiran_id || terpilih.tautan" style="margin-top: 4pt">Lampiran: {{ [terpilih.nama_lampiran, terpilih.tautan && `${terpilih.nama_tautan || 'tautan'} (${terpilih.tautan})`].filter(Boolean).join('; ') }}.</p>
       <template #ttd>
         <TandaTangan :tanggal="uraiPendek(formatPendek(terpilih.created_at))" :kiri="{ pengantar: 'Mengetahui,', jabatan: direktur.jabatan_tertulis || 'Direktur', nama: direktur.nama || '', niy: direktur.niy }"
           :kanan="{ jabatan: 'Pembuat Pengumuman', nama: terpilih.pembuat || '' }" />
