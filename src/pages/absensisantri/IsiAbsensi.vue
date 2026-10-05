@@ -1,11 +1,12 @@
-<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.1 | Fase 4 – Tahap 4 Ekskul (jurnal materi) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.2 | Fase 5 – Tahap 2 Setoran per sesi halaqah | 05/10/2026 -->
 <script setup>
 // Pengisian absensi satu sesi: semua santri bawaan Hadir, ketuk kode HISBAT bagi yang tidak.
 // Pengampu halaqah/asrama diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi.
 // Admin ber-izin absensi_atas_nama dapat mengisi atas nama pengampu (tercatat di riwayat).
+// Halaqah: tab Absensi | Setoran (setoran terbuka setelah absensi tersimpan; ?tab=setoran membuka tab Setoran).
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { PhFingerprint, PhCheckCircle, PhFloppyDisk, PhClockCounterClockwise, PhWarningCircle, PhCrown, PhUserSwitch, PhWhatsappLogo, PhArrowCounterClockwise, PhMagnifyingGlass, PhNotebook, PhCamera, PhMapPin } from '@phosphor-icons/vue'
+import { PhFingerprint, PhCheckCircle, PhFloppyDisk, PhClockCounterClockwise, PhWarningCircle, PhCrown, PhUserSwitch, PhWhatsappLogo, PhArrowCounterClockwise, PhMagnifyingGlass, PhNotebook, PhCamera, PhMapPin, PhListChecks, PhBookOpenText } from '@phosphor-icons/vue'
 import { useAbsensiSantri } from '@/stores/absensiSantri'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
@@ -19,6 +20,7 @@ import { unggahKeDrive, kompresGambar, namaRapi } from '@/lib/penyimpanan'
 import FotoBerkas from '@/components/FotoBerkas.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
+import FormSetoran from '@/pages/tahfizh/FormSetoran.vue'
 
 const route = useRoute(); const router = useRouter()
 const abs = useAbsensiSantri(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
@@ -27,6 +29,9 @@ const atasNama = ref(''); const cari = ref(''); const lembarWA = ref(false); con
 // Ekskul: jurnal materi per pertemuan (topik wajib, uraian, foto opsional)
 const jurnal = ref({ topik: '', uraian: '', foto_id: null }); const fotoBaru = ref(null); const pratinjauFoto = ref('')
 const ekskul = computed(() => d.value?.jenis === 'ekskul')
+const halaqah = computed(() => d.value?.jenis === 'halaqah')
+const tab = ref(route.query.tab === 'setoran' ? 'setoran' : 'absensi')
+function gantiTab(t) { if (t === 'setoran' && berubah.value) { ui.toast('Simpan absensi lebih dulu sebelum mengisi setoran.', 'galat'); return } tab.value = t; router.replace({ query: { ...route.query, tab: t === 'setoran' ? 'setoran' : undefined } }) }
 function pilihFoto(e) { const f = e.target.files?.[0]; e.target.value = ''; if (!f) return; if (!/^image\//.test(f.type)) return ui.toast('Pilih berkas foto.', 'galat'); fotoBaru.value = f; pratinjauFoto.value = URL.createObjectURL(f) }
 
 async function muat() {
@@ -78,6 +83,7 @@ async function simpan() {
     ui.toast(`Absensi ${d.value.nama_sesi.toLowerCase()} ${judulKelompok(d.value.kelompok)} tersimpan: ${hadirDihitung.value}/${d.value.anggota.length} hadir.`)
     await muat()
     if (penerimaWA.value.length) lembarWA.value = true
+    else if (halaqah.value) gantiTab('setoran')   // halaqah: langsung lanjut ke setoran
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 
@@ -108,6 +114,16 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
         <p v-if="d.sesi_tercatat" class="border-t border-garis px-5 py-2.5 text-xs text-teks3">Terakhir diisi {{ formatWaktu(d.sesi_tercatat.diisi_pada) }} WITA oleh {{ d.sesi_tercatat.diinput_oleh }}{{ d.sesi_tercatat.atas_nama ? ` atas nama ${d.sesi_tercatat.pengampu}` : '' }}{{ d.sesi_tercatat.diisi_terlambat ? ' · diisi setelah jendela sesi' : '' }}.</p>
       </section>
 
+      <!-- Tab halaqah: Absensi | Setoran -->
+      <div v-if="halaqah" class="mt-4 grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="tablist" aria-label="Isi halaqah">
+        <button v-for="t in [{ k: 'absensi', n: 'Absensi', i: PhListChecks, w: 'absensi' }, { k: 'setoran', n: 'Setoran hafalan', i: PhBookOpenText, w: 'tahfizh' }]" :key="t.k"
+          role="tab" :aria-selected="tab === t.k" @click="gantiTab(t.k)"
+          :class="['inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl text-sm font-semibold', 'w-' + t.w, tab === t.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">
+          <component :is="t.i" :size="18" weight="duotone" style="color: var(--c)" />{{ t.n }}<span v-if="t.k === 'setoran' && !d.sesi_tercatat" class="text-xs text-teks3">(setelah absensi)</span></button>
+      </div>
+      <FormSetoran v-if="halaqah && tab === 'setoran' && !perluPresensi" class="mt-4" :group="route.params.group" :tanggal="route.params.tanggal" :sesi="route.params.sesi"
+        :absensi="d" :atas-nama-id="modeAtasNama ? atasNama : ''" :tertutup="lewatBatas || belumBuka" />
+      <template v-if="!(halaqah && tab === 'setoran')">
       <!-- Pemberitahuan -->
       <div v-if="perluPresensi" class="kartu w-presensi mt-4 flex flex-wrap items-center gap-3 p-4">
         <span class="chip-ikon h-11 w-11"><PhFingerprint :size="24" weight="duotone" /></span>
@@ -200,10 +216,13 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
         </div>
       </div>
 
+      </template>
+
       <LembarBawah v-model="lembarWA" judul="Kabari wali santri">
         <div class="pb-2">
           <p class="mb-3 text-sm text-teks2">{{ penerimaWA.length }} santri tidak hadir penuh pada sesi ini. Kirim kabar ke orang tua/wali utama (opsional).</p>
           <DaftarKirimWA :penerima="penerimaWA" :pesan="pesanKe" :kunci="`absen-${route.params.group}-${route.params.tanggal}-${route.params.sesi}`" />
+          <button v-if="halaqah" class="tombol-utama mt-4 w-full" @click="lembarWA = false; gantiTab('setoran')"><PhBookOpenText :size="20" weight="duotone" /> Lanjut isi setoran</button>
         </div>
       </LembarBawah>
     </template>

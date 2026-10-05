@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/tahfizh.js | v1.0 | Fase 5 – Tahap 1 Pengaturan tahfizh dan data hafalan awal | 05/10/2026
+// SIMKA PRO | src/lib/tahfizh.js | v1.1 | Fase 5 – Tahap 2 Setoran per sesi halaqah | 05/10/2026
 // Konversi posisi hafalan (Juz + Halaman ↔ total halaman), rentang juz, label program, dan penanda tangan tahfizh.
 // Posisi disimpan di server sebagai TOTAL HALAMAN: 20 halaman = 1 juz (10 juz 2 halaman = 202).
 import { supabase, MODE_DEMO } from './supabase'
@@ -81,4 +81,24 @@ export async function penandaTahfizh() {
 export const labelBulan = (iso) => {
   const [y, m] = String(iso).split('-').map(Number)
   return `${['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][m - 1]} ${y}`
+}
+
+/** Tanda isian setoran janggal (dihitung server). */
+export const TANDA_JANGGAL = {
+  turun: 'Posisi sabaq turun dari sebelumnya',
+  lonjakan: 'Penambahan melebihi batas per sesi',
+  melebihi_sabaq: 'Sabqi/manzil melebihi posisi sabaq',
+}
+/** Periksa satu isian di perangkat (sama dengan aturan server) untuk peringatan langsung. */
+export function periksaIsian({ sabaq_lama, sabqi_lama, manzil_lama, sabaq_hal, sabqi_hal, manzil_hal }, batas = 10) {
+  const t = []; const sb = sabaq_hal ?? sabaq_lama
+  if (sabaq_hal != null && sabaq_hal < sabaq_lama) t.push('turun')
+  if (sabaq_hal != null && sabaq_hal - sabaq_lama > batas) t.push('lonjakan')
+  if ((sabqi_hal ?? sabqi_lama) > sb || (manzil_hal ?? manzil_lama) > sb) t.push('melebihi_sabaq')
+  return t
+}
+/** Status sesi setoran untuk kartu daftar. */
+export const STATUS_SETORAN = {
+  terisi: { n: 'Terisi', w: 'presensi' }, terbuka: { n: 'Belum diisi', w: 'pengajuan' }, lewat: { n: 'Lewat jendela', w: 'laporan' },
+  belum_buka: { n: 'Belum dibuka', w: 'hakakses' }, tidak_terisi: { n: 'Tidak diisi', w: 'klinik' },
 }

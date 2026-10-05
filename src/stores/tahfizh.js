@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/tahfizh.js | v1.0 | Fase 5 – Tahap 1 Pengaturan tahfizh dan data hafalan awal | 05/10/2026
+// SIMKA PRO | src/stores/tahfizh.js | v1.1 | Fase 5 – Tahap 2 Setoran per sesi halaqah | 05/10/2026
 // Tahfizh: hak pengguna, pengaturan per tahun ajaran (KKM, bobot, target, predikat, pekan efektif), penguji,
 // daftar santri beserta program, posisi hafalan, dan capaian juz resmi. Penulisan hanya lewat fungsi SQL.
 import { defineStore } from 'pinia'
@@ -9,6 +9,8 @@ import { pesanGalat } from './lembaga'
 import { useSesi } from './sesi'
 import { useSantri } from './santri'
 import { useKelompokSantri } from './kelompokSantri'
+import { useAbsensiSantri } from './absensiSantri'
+import { setoranDemo } from '@/lib/demoTahfizh'
 
 const rpc = async (nama, arg) => { const { data, error } = await supabase.rpc(nama, arg); if (error) throw new Error(pesanGalat(error)); return data }
 const HAK_KOSONG = { atur: false, validasi: false, pimpinan: false, muhaffizh: false, penguji_kenaikan: false, penguji_sertifikasi: false, lihat: false }
@@ -17,7 +19,7 @@ export const useTahfizh = defineStore('tahfizh', {
   state: () => ({
     hak: { ...HAK_KOSONG }, hakDimuat: false,
     taId: '', pengaturan: null, predikat: [], target: [], bulan: [], penguji: { kenaikan: [], sertifikasi: [] },
-    santri: [], memuat: false, galat: '',
+    santri: [], memuat: false, galat: '', sesiSetoran: [], memuatSetoran: false, saluran: null,
   }),
   getters: {
     targetUntuk: (s) => (program, tingkat) => s.target.find((t) => t.program === program && t.tingkat === Number(tingkat)) || null,
@@ -132,6 +134,80 @@ export const useTahfizh = defineStore('tahfizh', {
       }
       await rpc('simpan_hafalan_awal', { p_santri: id, p: isi }); await this.muatSantri()
     },
+    // ---------- Setoran per sesi halaqah ----------
+    async muatStatusSetoran(tanggal, semua = false) {
+      this.memuatSetoran = true; this.galat = ''
+      try {
+        if (MODE_DEMO) {
+          const abs = useAbsensiSantri(); await abs.muatSesi(tanggal, semua)
+          const peta = setoranDemo()
+          this.sesiSetoran = abs.sesiHari.filter((x) => x.jenis === 'halaqah').map((x) => {
+            const m = peta[`${x.group_id}|${x.tanggal}|${x.sesi}`]
+            const logs = m ? Object.values(m.logs) : []
+            return { ...x, absensi: x.status === 'terisi' ? 'terisi' : x.status, status: m ? 'terisi' : x.status === 'terisi' ? 'terbuka' : x.status,
+              jumlah_bertambah: m ? logs.filter((l) => l.sabaq_hal != null && l.sabaq_hal > l.sabaq_lama).length : null,
+              total_tambah_hal: m ? logs.reduce((n, l) => n + Math.max(0, (l.sabaq_hal ?? l.sabaq_lama) - l.sabaq_lama), 0) : null,
+              jumlah_janggal: m ? logs.filter((l) => l.janggal?.length).length : null, jumlah_tidak_setor: m ? m.tidak_setor : null, diisi_pada: m?.diisi_pada || null }
+          })
+          return
+        }
+        this.sesiSetoran = (await rpc('status_setoran', { p_tanggal: tanggal, p_semua: semua })) || []
+      } catch (e) { this.galat = e.message; this.sesiSetoran = [] } finally { this.memuatSetoran = false }
+    },
+    dengarkanSetoran(fn) {
+      if (MODE_DEMO || this.saluran) return
+      this.saluran = supabase.channel('setoran-tahfizh')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'memorization_sessions' }, () => fn()).subscribe()
+    },
+    berhentiSetoran() { if (this.saluran) { supabase.removeChannel(this.saluran); this.saluran = null } },
+    async detailSetoran(group, tanggal, sesi, absensi = null) {
+      if (MODE_DEMO) {
+        const abs = useAbsensiSantri(); const a = absensi || await abs.detail(group, tanggal, sesi)
+        await this.muatSantri()
+        const m = setoranDemo()[`${group}|${tanggal}|${sesi}`]
+        const kode = Object.fromEntries((a.pengecualian || []).map((x) => [x.student_id, x.kode]))
+        return { session_id: m ? 'ms-demo' : null, absensi_tersimpan: !!a.sesi_tercatat, catatan: m?.catatan || '', diisi_pada: m?.diisi_pada || null,
+          diinput_oleh: m ? useSesi().pengguna?.nama_lengkap : null, diisi_terlambat: false, atas_nama: false, batas_lonjakan_hal: dataTahfizhDemo().pengaturan.batas_lonjakan_hal,
+          boleh_isi: !!a.sesi_tercatat && (a.pengasuh_saya || a.boleh_atas_nama),
+          santri: a.anggota.map((x) => {
+            const t = this.cariSantri(x.id) || {}; const l = m?.logs[x.id]
+            return { id: x.id, nis: x.nis, nama: x.nama, jenis_kelamin: x.jenis_kelamin, program: t.program || 'reguler', kehadiran: kode[x.id] || 'H',
+              sabaq_lama: l ? l.sabaq_lama : t.sabaq_hal || 0, sabqi_lama: l ? l.sabqi_lama : t.sabqi_hal || 0, manzil_lama: l ? l.manzil_lama : t.manzil_hal || 0,
+              juz_sedang: l?.juz_sedang ?? t.juz_sedang ?? null, sabaq_hal: l?.sabaq_hal ?? null, sabqi_hal: l?.sabqi_hal ?? null, manzil_hal: l?.manzil_hal ?? null,
+              tambah_hal: l ? Math.max(0, (l.sabaq_hal ?? l.sabaq_lama) - l.sabaq_lama) : 0, janggal: l?.janggal || [], catatan: l?.catatan || null, total_resmi: t.total_resmi || 0 }
+          }) }
+      }
+      return rpc('detail_setoran', { p_group: group, p_tanggal: tanggal, p_sesi: sesi })
+    },
+    async simpanSetoran(isi, detail) {
+      if (MODE_DEMO) {
+        const peta = setoranDemo(); const logs = {}
+        for (const b of isi.baris) {
+          const s = detail.santri.find((x) => x.id === b.student_id)
+          logs[b.student_id] = { ...b, sabaq_lama: s.sabaq_lama, sabqi_lama: s.sabqi_lama, manzil_lama: s.manzil_lama, janggal: [] }
+          const d = dataTahfizhDemo(); d.santri[b.student_id] = { ...(d.santri[b.student_id] || {}), sabaq_hal: b.sabaq_hal ?? s.sabaq_lama, sabqi_hal: b.sabqi_hal ?? s.sabqi_lama,
+            manzil_hal: b.manzil_hal ?? s.manzil_lama, juz_sedang: b.juz_sedang ?? s.juz_sedang, posisi_pada: new Date().toISOString(), posisi_sumber: 'setoran' }
+        }
+        peta[`${isi.group_id}|${isi.tanggal}|${isi.sesi}`] = { logs, catatan: isi.catatan, diisi_pada: new Date().toISOString(), tidak_setor: detail.santri.filter((x) => ['I', 'S', 'B', 'A'].includes(x.kehadiran)).length }
+        return { id: 'ms-demo', janggal: [] }
+      }
+      const h = await rpc('simpan_setoran', { p: isi }); this.santri = []; return h
+    },
+    async riwayatSetoran(santri, mulai, selesai) {
+      if (MODE_DEMO) {
+        const hasil = []
+        for (const [k, m] of Object.entries(setoranDemo())) {
+          const [, tanggal, sesi] = k.split('|'); const l = m.logs[santri]
+          hasil.push({ tanggal, sesi, nama_sesi: { SUBUH: 'Halaqah subuh', SORE: 'Halaqah sore', MALAM: 'Halaqah malam' }[sesi] || sesi, halaqah: '', kehadiran: 'H',
+            sabaq_lama: l?.sabaq_lama ?? null, sabaq_hal: l?.sabaq_hal ?? null, sabqi_lama: l?.sabqi_lama ?? null, sabqi_hal: l?.sabqi_hal ?? null,
+            manzil_lama: l?.manzil_lama ?? null, manzil_hal: l?.manzil_hal ?? null, tambah_hal: l ? Math.max(0, (l.sabaq_hal ?? l.sabaq_lama) - l.sabaq_lama) : 0,
+            juz_sedang: l?.juz_sedang ?? null, janggal: [], catatan: l?.catatan ?? null, pengampu: 'Ust. Hasan Basri' })
+        }
+        return hasil.sort((a, b) => b.tanggal.localeCompare(a.tanggal))
+      }
+      return (await rpc('riwayat_setoran', { p_santri: santri, p_mulai: mulai, p_selesai: selesai })) || []
+    },
+
     async imporHafalanAwal(baris) {
       if (MODE_DEMO) return baris.map((b, i) => ({ baris: i + 1, ok: false, pesan: 'Mode demo: impor tidak disimpan.' }))
       const h = await rpc('impor_hafalan_awal', { p_baris: baris }); await this.muatSantri(); return h

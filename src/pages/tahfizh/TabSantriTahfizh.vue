@@ -1,8 +1,8 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabSantriTahfizh.vue | v1.0 | Fase 5 – Tahap 1 Pengaturan tahfizh dan data hafalan awal | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabSantriTahfizh.vue | v1.1 | Fase 5 – Tahap 2 Setoran per sesi halaqah | 05/10/2026 -->
 <script setup>
 // Data hafalan santri sesuai cakupan (muhaffizh: halaqahnya; pimpinan/admin: semua): program, posisi sabaq/sabqi/manzil,
 // juz sedang dihafal, ceklist juz resmi. Pemegang validasi tahfizh mengisi data hafalan awal (satu per satu atau impor Excel)
-// dan mengatur program Reguler/Takhassus. Ekspor Excel = susunan templat impor. Cetak daftar F4 mendatar.
+// dan mengatur program Reguler/Takhassus. Rincian santri memuat riwayat setoran 30 hari terakhir. Ekspor Excel = susunan templat impor. Cetak daftar F4 mendatar.
 import { ref, computed, onMounted } from 'vue'
 import * as XLSX from 'xlsx'
 import {
@@ -13,9 +13,10 @@ import { useTahfizh } from '@/stores/tahfizh'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
-import { PROGRAM, KET_POSISI, formatPosisi, ringkasJuz, kategoriJuz, dariHal, penandaTahfizh } from '@/lib/tahfizh'
+import { PROGRAM, KET_POSISI, TANDA_JANGGAL, formatPosisi, ringkasJuz, kategoriJuz, dariHal, penandaTahfizh } from '@/lib/tahfizh'
 import { inisial, JENJANG_PENDEK } from '@/lib/santri'
-import { formatPanjang, formatPendek, formatWaktu, hariIniISO } from '@/lib/tanggal'
+import { formatPanjang, formatPendek, formatWaktu, hariIniISO, formatHari } from '@/lib/tanggal'
+import { KODE } from '@/lib/absensi'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import GridJuz from '@/components/GridJuz.vue'
@@ -57,7 +58,15 @@ const statistik = computed(() => {
 
 // ---------- Rincian dan ubah data awal ----------
 const lembar = ref(false); const pilih = ref(null); const form = ref(null); const proses = ref(false)
+const riwayat = ref([]); const memuatRiwayat = ref(false)
+async function muatRiwayat(id) {
+  memuatRiwayat.value = true; riwayat.value = []
+  try { riwayat.value = await tz.riwayatSetoran(id, null, null) } catch (e) { ui.toast(e.message, 'galat') } finally { memuatRiwayat.value = false }
+}
+const ringkasRiwayat = computed(() => ({ sesi: riwayat.value.length, tambah: riwayat.value.reduce((n, r) => n + Math.max(0, r.tambah_hal || 0), 0),
+  tidak: riwayat.value.filter((r) => ['I', 'S', 'B', 'A'].includes(r.kehadiran)).length }))
 function buka(s) {
+  muatRiwayat(s.student_id)
   pilih.value = s
   form.value = { program: s.program, juz: [...s.juz_awal], sabaq_hal: s.sabaq_hal, sabqi_hal: s.sabqi_hal, manzil_hal: s.manzil_hal, juz_sedang: s.juz_sedang || '' }
   lembar.value = true
@@ -238,9 +247,28 @@ const judulCetak = computed(() => `Daftar Hafalan Santri${halaqah.value && halaq
           <div v-for="k in ['sabaq', 'sabqi', 'manzil']" :key="k" class="rounded-xl bg-permukaan2 p-2.5" :title="KET_POSISI[k]">
             <dt class="text-xs font-semibold capitalize text-teks3">{{ k }}</dt><dd class="font-bold tabular-nums">{{ formatPosisi(pilih[k + '_hal']) }}</dd></div>
         </dl>
+
+        <details class="rounded-xl border border-garis p-3" :open="!bolehUbah">
+          <summary class="cursor-pointer text-sm font-bold">Riwayat setoran 30 hari · {{ ringkasRiwayat.sesi }} sesi, +{{ formatPosisi(ringkasRiwayat.tambah) || 0 }}, {{ ringkasRiwayat.tidak }} tidak setor</summary>
+          <p v-if="memuatRiwayat" class="py-3 text-sm text-teks3">Memuat riwayat…</p>
+          <ul v-else class="mt-2 max-h-[40dvh] divide-y divide-garis overflow-y-auto text-sm">
+            <li v-for="(r, i) in riwayat" :key="i" class="py-2">
+              <div class="flex items-center gap-2"><b class="flex-1">{{ formatHari(r.tanggal) }}</b><span class="text-xs text-teks3">{{ r.nama_sesi }}</span></div>
+              <p v-if="['I', 'S', 'B', 'A'].includes(r.kehadiran)" class="text-xs font-semibold text-merah">Tidak setor · {{ KODE[r.kehadiran].n }}</p>
+              <p v-else-if="r.sabaq_hal == null && r.sabqi_hal == null && r.manzil_hal == null" class="text-xs text-teks3">Sama{{ r.catatan ? ' · ' + r.catatan : '' }}</p>
+              <p v-else class="text-xs text-teks2">
+                <template v-if="r.sabaq_hal != null">Sabaq {{ formatPosisi(r.sabaq_lama) }} → <b>{{ formatPosisi(r.sabaq_hal) }}</b> ({{ r.tambah_hal >= 0 ? '+' : '' }}{{ r.tambah_hal }} hal) </template>
+                <template v-if="r.sabqi_hal != null">· Sabqi → {{ formatPosisi(r.sabqi_hal) }} </template><template v-if="r.manzil_hal != null">· Manzil → {{ formatPosisi(r.manzil_hal) }}</template>
+                <template v-if="r.catatan"> · {{ r.catatan }}</template></p>
+              <p v-if="r.janggal?.length" class="text-xs font-semibold text-[#B5501A] dark:text-[#F5A06B]">⚠ {{ r.janggal.map((t) => TANDA_JANGGAL[t]).join('; ') }}</p>
+            </li>
+            <li v-if="!riwayat.length" class="py-3 text-teks3">Belum ada setoran tercatat 30 hari terakhir.</li>
+          </ul>
+        </details>
       </div>
     </LembarBawah>
 
+    <!-- (riwayat disisipkan di lembar rincian) -->
     <!-- Program massal -->
     <LembarBawah v-model="lembarProgram" judul="Atur program tahfizh">
       <div class="space-y-3 pb-2">
