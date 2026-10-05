@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/akun.js | v1.0 | Fase 1 – Akun dan hak akses | 03/10/2026
+// SIMKA PRO | src/stores/akun.js | v1.1 | Perbaikan: ganti sandi berulang terus-menerus | 05/10/2026
 // Pendaftaran, verifikasi, kelola akun, peran admin, lupa sandi, dan ganti sandi.
 // Semua aksi berwenang dijalankan oleh Edge Function (daftar, kelola-akun, reset-sandi).
 import { defineStore } from 'pinia'
@@ -26,7 +26,10 @@ export const useAkun = defineStore('akun', {
       if (MODE_DEMO) return demo('Kata sandi diperbarui.')
       const { error } = await supabase.auth.updateUser({ password: sandi })
       if (error) throw new Error(/different/i.test(error.message) ? 'Kata sandi baru harus berbeda dari kata sandi lama.' : 'Kata sandi gagal diperbarui. Silakan coba lagi.')
-      await supabase.rpc('selesai_ganti_sandi')
+      // Hapus penanda "wajib ganti sandi". Bila gagal, beri tahu pengguna (dulu galat ini diabaikan sehingga
+      // pengguna diminta mengganti sandi terus-menerus setiap kali masuk).
+      const { error: e2 } = await supabase.rpc('selesai_ganti_sandi')
+      if (e2) throw new Error('Kata sandi baru sudah tersimpan, tetapi status akun gagal diperbarui. Coba simpan sekali lagi atau hubungi admin.')
       return { ok: true, pesan: 'Kata sandi diperbarui.' }
     },
 
