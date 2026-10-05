@@ -1,12 +1,13 @@
-<!-- SIMKA PRO | src/pages/notifikasi/Notifikasi.vue | v1.1 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/notifikasi/Notifikasi.vue | v1.2 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhChecks, PhEnvelopeOpen, PhEnvelopeSimple, PhTrash, PhArrowSquareOut, PhBellSlash } from '@phosphor-icons/vue'
+import { PhChecks, PhEnvelopeOpen, PhEnvelopeSimple, PhTrash, PhArrowSquareOut, PhBellSlash, PhBell } from '@phosphor-icons/vue'
 import { useNotifikasi } from '@/stores/notifikasi'
 import ItemNotifikasi from '@/components/ItemNotifikasi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import KartuDorong from '@/components/KartuDorong.vue'
+import BilahTab from '@/components/BilahTab.vue'
 import { formatPanjang, formatPendek, sekarang } from '@/lib/tanggal'
 
 const notif = useNotifikasi(); const router = useRouter()
@@ -31,12 +32,7 @@ async function buka(n) { pilihan.value = null; await notif.tandai(n.id); if (n.t
   <div class="mx-auto max-w-3xl">
     <KartuDorong ringkas />
     <div class="mb-4 flex flex-wrap items-center gap-2">
-      <div class="flex rounded-full bg-permukaan2 p-1" role="tablist" aria-label="Saring notifikasi">
-        <button v-for="t in [{ k: 'semua', n: 'Semua' }, { k: 'belum', n: 'Belum dibaca' }]" :key="t.k" role="tab" :aria-selected="tab === t.k"
-          :class="['min-h-[40px] rounded-full px-4 text-sm font-semibold transition', tab === t.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']" @click="tab = t.k">
-          {{ t.n }}<span v-if="t.k === 'belum' && notif.belumDibaca" class="ml-1.5 rounded-full bg-[#C7332F] px-1.5 text-xs text-white">{{ notif.belumDibaca }}</span>
-        </button>
-      </div>
+      <BilahTab :tepi="false" v-model="tab" label="Saring notifikasi" :tab="[{ k: 'semua', n: 'Semua', ikon: PhBell, w: 'notifikasi' }, { k: 'belum', n: 'Belum dibaca', ikon: PhEnvelopeSimple, w: 'klinik', lencana: notif.belumDibaca || null }]" />
       <button v-if="notif.belumDibaca" class="tombol-teks ml-auto text-sm" @click="notif.tandaiSemua()"><PhChecks :size="18" weight="bold" /> Tandai semua dibaca</button>
     </div>
 

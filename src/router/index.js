@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.4 | Fase 5 – Tahap 1 Pengaturan tahfizh dan data hafalan awal | 05/10/2026
+// SIMKA PRO | src/router/index.js | v3.5 | Fase 5 – Perbaikan: pegawai memperbarui data kepegawaiannya | 05/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -20,6 +20,7 @@ const routes = [
       { path: 'notifikasi', component: () => import('@/pages/notifikasi/Notifikasi.vue'), meta: { judul: 'Notifikasi', kembali: '/' } },
       { path: 'tugas', component: () => import('@/pages/umum/Tugas.vue'), meta: { judul: 'Tugas dan menu' } },
       { path: 'profil', component: () => import('@/pages/profil/Profil.vue'), meta: { judul: 'Profil' } },
+      { path: 'profil/data', component: () => import('@/pages/profil/DataSaya.vue'), meta: { judul: 'Data Kepegawaian Saya', kembali: '/profil' } },
       { path: 'pegawai', component: () => import('@/pages/pegawai/DaftarPegawai.vue'), meta: { judul: 'Data Pegawai', peran: ADMIN, cetak: true, kembali: '/tugas' } },
       { path: 'pegawai/baru', component: () => import('@/pages/pegawai/FormPegawai.vue'), meta: { judul: 'Tambah Pegawai', peran: ADMIN, kembali: '/pegawai' } },
       { path: 'pegawai/impor', component: () => import('@/pages/pegawai/ImporPegawai.vue'), meta: { judul: 'Impor Data Pegawai', peran: ADMIN, kembali: '/pegawai' } },

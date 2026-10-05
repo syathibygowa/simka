@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/kepegawaian.js | v1.0 | Fase 1 – Data pegawai | 03/10/2026
+// SIMKA PRO | src/lib/kepegawaian.js | v1.1 | Fase 5 – Perbaikan: pegawai memperbarui data kepegawaiannya | 05/10/2026
 // Label baku, normalisasi isian, dan kolom templat Excel data pegawai.
 
 export const STATUS_PEGAWAI = { tetap: 'Tetap', kontrak: 'Kontrak', honorer: 'Honorer' }
@@ -75,4 +75,11 @@ export function kenaliJudul(judul) {
   const t = bersih(judul).replace(/\s*\(.*\)\s*$/, '').replace(/[*:]/g, '').trim()
   for (const c of KOLOM_IMPOR) if (bersih(c.j).replace(/\s*\(.*\)\s*$/, '') === t || c.alias.includes(t)) return c.k
   return null
+}
+
+/** Kolom yang dapat diajukan pegawai lewat Profil → Data kepegawaian saya (Fase 5, migrasi 4100). */
+export const KOLOM_AJUAN = {
+  nama_lengkap: 'Nama lengkap', niy: 'NIY', tempat_lahir: 'Tempat lahir', tanggal_lahir: 'Tanggal lahir', jenis_kelamin: 'Jenis kelamin',
+  tmt_tugas: 'TMT tugas', status_kepegawaian: 'Status kepegawaian', kategori_honorer: 'Kategori honorer', pendidikan_terakhir: 'Pendidikan terakhir',
+  status_keluarga: 'Status keluarga', no_hp: 'Nomor HP/WA', level_muhaffizh: 'Level muhaffizh',
 }

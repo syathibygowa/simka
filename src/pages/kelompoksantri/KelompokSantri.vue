@@ -1,9 +1,10 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/KelompokSantri.vue | v1.0 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/KelompokSantri.vue | v1.1 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
 <script setup>
 // Pengaturan kelompok santri: kelas, kamar, halaqah, ekskul, lainnya per tahun ajaran (tab berwarna).
 // Admin ber-izin kelompok_santri mengatur; pengasuh melihat kelompok asuhannya; pimpinan melihat semua.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import BilahTab from '@/components/BilahTab.vue'
 import * as XLSX from 'xlsx'
 import {
   PhChalkboardTeacher, PhBed, PhBookOpenText, PhMedal, PhUsersThree, PhPlus, PhFileXls, PhDownloadSimple, PhCaretRight,
@@ -89,15 +90,7 @@ function eksporPembagian() {
     </div>
 
     <!-- Tab jenis kelompok (warna berbeda per tab) -->
-    <div class="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" role="tablist">
-      <button v-for="(j, k) in JENIS_KELOMPOK" :key="k" role="tab" :aria-selected="jenis === k" @click="pilih(k)"
-        :class="['inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-full border-2 px-4 text-sm font-semibold transition', 'w-' + j.warna,
-                 jenis === k ? 'text-teks' : 'border-garis bg-permukaan text-teks2']"
-        :style="jenis === k ? 'border-color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent)' : ''">
-        <component :is="IKON[k]" :size="18" weight="duotone" style="color: var(--c)" />{{ j.jamak }}
-        <span class="rounded-full bg-permukaan2 px-2 text-xs tabular-nums">{{ hitung(k) }}</span>
-      </button>
-    </div>
+    <BilahTab class="mt-4" :tab="Object.entries(JENIS_KELOMPOK).map(([k, j]) => ({ k, n: j.jamak, ikon: IKON[k], w: j.warna, jumlah: hitung(k) }))" :model-value="jenis" label="Jenis kelompok" @update:model-value="pilih" />
 
     <p v-if="kel.galat" class="mt-4 rounded-xl bg-[#C7332F]/10 p-3 text-sm font-semibold text-merah">{{ kel.galat }}</p>
 

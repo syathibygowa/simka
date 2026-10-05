@@ -1,8 +1,8 @@
-<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.6 | Fase 3 – Perbaikan P4 (kartu pegawai portrait) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.7 | Fase 5 – Perbaikan: pegawai memperbarui data kepegawaiannya | 05/10/2026 -->
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhSignOut, PhPalette, PhBell, PhInfo, PhLockKey, PhCamera } from '@phosphor-icons/vue'
+import { PhSignOut, PhPalette, PhBell, PhInfo, PhLockKey, PhCamera, PhIdentificationCard } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import { useNotifikasi } from '@/stores/notifikasi'
 import { MODE_DEMO } from '@/lib/supabase'
@@ -61,6 +61,11 @@ function ganti(p) { sesi.masukDemo(p); notif.berhenti(); pengumuman.berhenti(); 
     </router-link>
 
     <KartuDorong />
+
+    <router-link v-if="!sesi.isSuperadmin" to="/profil/data" class="kartu w-pegawai flex items-center gap-3 p-5 hover:bg-permukaan2">
+      <span class="chip-ikon h-10 w-10"><PhIdentificationCard :size="22" weight="duotone" /></span>
+      <span class="flex-1"><span class="block font-bold">Data kepegawaian saya</span><span class="block text-sm text-teks3">Perbarui data diri dan kepegawaian; berlaku setelah diverifikasi superadmin</span></span>
+    </router-link>
 
     <router-link to="/ganti-sandi" class="kartu w-tahfizh flex items-center gap-3 p-5 hover:bg-permukaan2">
       <span class="chip-ikon h-10 w-10"><PhLockKey :size="22" weight="duotone" /></span>

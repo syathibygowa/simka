@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/berkas/Berkas.vue | v1.1 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/berkas/Berkas.vue | v1.2 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
 <script setup>
 // Berkas Saya: berkas untuk pegawai dengan kategori yang dapat dibuat sendiri. Berkas tersimpan di Google Drive pondok
 // dan dibuka lewat tautan sementara (tidak publik); setiap pembukaan tercatat. Tanpa masa berlaku: berkas tetap ada
@@ -15,6 +15,7 @@ import { ambilBerkasUrl, unggahKeDrive, kompresGambar, namaRapi } from '@/lib/pe
 import { formatPanjang, formatRelatif, formatWaktu, hariIniISO } from '@/lib/tanggal'
 import { pesanWA, halamanAplikasi } from '@/lib/wa'
 import LembarBawah from '@/components/LembarBawah.vue'
+import BilahTab from '@/components/BilahTab.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import PilihSasaran from '@/components/PilihSasaran.vue'
 import IkonDinamis, { IKON_KATEGORI } from '@/components/IkonDinamis.vue'
@@ -106,11 +107,7 @@ async function simpanKat(k, baru) {
 <template>
   <div class="w-berkas mx-auto max-w-3xl">
     <div class="mb-3 flex flex-wrap items-center gap-2">
-      <div v-if="kelola" class="flex rounded-full bg-permukaan2 p-1" role="tablist" aria-label="Tampilan berkas">
-        <button v-for="t in [{ k: 'saya', n: 'Berkas saya', i: PhTray }, { k: 'kelola', n: 'Kelola', i: PhListChecks }]" :key="t.k" role="tab" :aria-selected="tab === t.k" @click="tab = t.k"
-          :class="['flex min-h-[40px] items-center gap-1.5 rounded-full px-4 text-sm font-semibold', tab === t.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">
-          <component :is="t.i" :size="18" weight="duotone" />{{ t.n }}<span v-if="t.k === 'saya' && baru" class="rounded-full bg-[#C7332F] px-1.5 text-xs text-white">{{ baru }}</span></button>
-      </div>
+      <BilahTab v-if="kelola" :tepi="false" v-model="tab" label="Tampilan berkas" :tab="[{ k: 'saya', n: 'Berkas saya', ikon: PhTray, w: 'berkas', lencana: baru || null }, { k: 'kelola', n: 'Kelola', ikon: PhListChecks, w: 'hakakses' }]" />
       <button v-if="kelola" class="tombol-garis ml-auto min-h-[40px] text-sm" @click="bukaKategori"><PhTag :size="18" weight="duotone" /> Kategori</button>
       <button v-if="kelola" class="tombol-utama hidden lg:inline-flex" @click="bukaForm"><PhPlus :size="20" weight="bold" /> Kirim berkas</button>
     </div>

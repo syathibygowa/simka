@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/akun/Verifikasi.vue | v1.0 | Fase 1 – Akun dan hak akses | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/akun/Verifikasi.vue | v1.1 | Fase 5 – Perbaikan: pegawai memperbarui data kepegawaiannya | 05/10/2026 -->
 <script setup>
 // Verifikasi pendaftaran dan pengelolaan akun pegawai (admin dengan izin, superadmin).
 import { ref, computed, onMounted } from 'vue'
@@ -16,6 +16,8 @@ import { formatRelatif, formatPanjang } from '@/lib/tanggal'
 import { STATUS_AKUN, PENDIDIKAN } from '@/lib/kepegawaian'
 import { tautanWA, TEMPLAT_WA } from '@/lib/wa'
 import LembarBawah from '@/components/LembarBawah.vue'
+import TabPerubahanData from './TabPerubahanData.vue'
+import { usePerubahanData } from '@/stores/perubahanData'
 
 const props = defineProps({ tab: { type: String, default: 'menunggu' } })
 const router = useRouter()
@@ -34,7 +36,10 @@ const TAB = computed(() => [
   { k: 'menunggu', n: 'Menunggu verifikasi', ikon: PhHourglass, w: 'verifikasi', j: menunggu.value.length },
   { k: 'akun', n: 'Akun pegawai', ikon: PhUsersThree, w: 'pegawai', j: semua.value.length },
   { k: 'ditolak', n: 'Ditolak', ikon: PhUserMinus, w: 'klinik', j: ditolak.value.length },
+  ...(sesi.isSuperadmin ? [{ k: 'perubahan', n: 'Perubahan data', ikon: PhIdentificationCard, w: 'pengajuan', j: pdv.menunggu }] : []),
 ])
+const pdv = usePerubahanData()
+onMounted(() => { if (sesi.isSuperadmin) pdv.muat('menunggu').catch(() => {}) })
 const aktif = computed(() => TAB.value.find((t) => t.k === props.tab) || TAB.value[0])
 const jabatan = (p) => [p.jabatan_struktural, ...(p.jabatan_fungsional || [])].filter(Boolean).join(', ') || '–'
 
@@ -122,7 +127,8 @@ const tutupSemua = () => { v.value = null; k.value = null; hasil.value = null }
     </nav>
 
     <!-- Menunggu -->
-    <section v-if="aktif.k === 'menunggu'" class="w-verifikasi">
+    <TabPerubahanData v-if="aktif.k === 'perubahan'" />
+    <section v-else-if="aktif.k === 'menunggu'" class="w-verifikasi">
       <ul v-if="menunggu.length" class="grid gap-3 lg:grid-cols-2">
         <li v-for="p in menunggu" :key="p.id">
           <button class="kartu flex w-full items-center gap-3 p-4 text-left hover:bg-permukaan2" @click="periksa(p)">

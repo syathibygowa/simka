@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.2 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.3 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
 <script setup>
 // Pengumuman: semua pegawai membaca pengumuman yang ditujukan kepadanya (tanda dibaca/belum).
 // Admin, superadmin, dan pegawai yang diberi hak fitur "pengumuman" (tingkat 2+) dapat membuat,
@@ -15,6 +15,7 @@ import { formatPanjang, formatPendek, formatRelatif, formatWaktu, hariIniISO, ur
 import { MODE_DEMO } from '@/lib/supabase'
 import { ambilBerkasUrl, unggahKeDrive, kompresGambar, namaRapi } from '@/lib/penyimpanan'
 import LembarBawah from '@/components/LembarBawah.vue'
+import BilahTab from '@/components/BilahTab.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import PilihSasaran from '@/components/PilihSasaran.vue'
@@ -103,12 +104,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
   <div class="w-pengumuman mx-auto max-w-3xl">
     <div class="layar-saja">
       <div class="mb-4 flex flex-wrap items-center gap-2">
-        <div v-if="kelola" class="flex rounded-full bg-permukaan2 p-1" role="tablist" aria-label="Tampilan pengumuman">
-          <button v-for="t in [{ k: 'saya', n: 'Untuk saya', i: PhTray }, { k: 'kelola', n: 'Kelola', i: PhListChecks }]" :key="t.k" role="tab" :aria-selected="tab === t.k" @click="tab = t.k"
-            :class="['flex min-h-[40px] items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition', tab === t.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">
-            <component :is="t.i" :size="18" weight="duotone" />{{ t.n }}
-            <span v-if="t.k === 'saya' && belum" class="rounded-full bg-[#C7332F] px-1.5 text-xs text-white">{{ belum }}</span></button>
-        </div>
+        <BilahTab v-if="kelola" :tepi="false" v-model="tab" label="Tampilan pengumuman" :tab="[{ k: 'saya', n: 'Untuk saya', ikon: PhTray, w: 'pengumuman', lencana: belum || null }, { k: 'kelola', n: 'Kelola', ikon: PhListChecks, w: 'hakakses' }]" />
         <button v-if="kelola" class="tombol-utama ml-auto hidden lg:inline-flex" @click="baru"><PhPlus :size="20" weight="bold" /> Buat pengumuman</button>
       </div>
       <div class="mb-3 flex flex-wrap items-center gap-2">

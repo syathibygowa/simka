@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabCapaian.vue | v1.0 | Fase 5 – Tahap 3 Validasi capaian juz dan status bulanan | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabCapaian.vue | v1.1 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
 <script setup>
 // Capaian tahfizh:
 //  * Status bulanan — dihitung otomatis dari setoran (penambahan sabaq sebulan vs target pekan × pekan efektif).
@@ -17,6 +17,7 @@ import { useUI } from '@/stores/ui'
 import { STATUS_BULANAN, STATUS_USULAN, SUMBER_USULAN, PROGRAM, formatPosisi, labelBulan, penandaTahfizh, ringkasJuz } from '@/lib/tahfizh'
 import { formatWaktu, formatPanjang, hariIniISO } from '@/lib/tanggal'
 import KartuStatistik from '@/components/KartuStatistik.vue'
+import BilahTab from '@/components/BilahTab.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import GridJuz from '@/components/GridJuz.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
@@ -123,12 +124,7 @@ async function cetak() { kepala.value = await penandaTahfizh(); pratinjau.value 
 <template>
   <div>
     <div class="layar-saja">
-      <div class="mb-4 grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1 sm:w-[28rem]" role="tablist" aria-label="Bagian capaian">
-        <button role="tab" :aria-selected="bagian === 'bulanan'" @click="bagian = 'bulanan'" :class="['inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl text-sm font-semibold w-agenda', bagian === 'bulanan' ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">
-          <PhCalendarCheck :size="18" weight="duotone" style="color: var(--c)" /> Status bulanan</button>
-        <button role="tab" :aria-selected="bagian === 'usulan'" @click="bagian = 'usulan'" :class="['inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl text-sm font-semibold w-pengajuan', bagian === 'usulan' ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">
-          <PhSealCheck :size="18" weight="duotone" style="color: var(--c)" /> Usulan juz<span v-if="menunggu.length && saringUsulan === 'menunggu'" class="rounded-full bg-[#C7332F] px-1.5 text-xs text-white">{{ menunggu.length }}</span></button>
-      </div>
+      <BilahTab class="mb-4" v-model="bagian" label="Bagian capaian" :tab="[{ k: 'bulanan', n: 'Status bulanan', ikon: PhCalendarCheck, w: 'agenda' }, { k: 'usulan', n: 'Usulan juz', ikon: PhSealCheck, w: 'pengajuan', lencana: saringUsulan === 'menunggu' && menunggu.length ? menunggu.length : null }]" />
 
       <!-- ============ STATUS BULANAN ============ -->
       <template v-if="bagian === 'bulanan'">

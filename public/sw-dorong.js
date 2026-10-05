@@ -1,4 +1,4 @@
-// SIMKA PRO | public/sw-dorong.js | v1.0 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026
+// SIMKA PRO | public/sw-dorong.js | v1.1 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026
 // Dimuat oleh service worker PWA (workbox importScripts). Menampilkan notifikasi dorong dari server
 // dan membuka halaman terkait saat notifikasi diketuk.
 self.addEventListener('push', (event) => {
@@ -8,7 +8,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(self.registration.showNotification(judul, {
     body: d.isi || '',
     icon: 'ikon/ikon-192.png',
-    badge: 'ikon/ikon-192.png',
+    // Ikon kecil bilah status Android: siluet PUTIH di atas latar TRANSPARAN (warna diabaikan Android).
+    badge: 'ikon/badge-96.png',
     tag: d.id || undefined,
     lang: 'id',
     data: { tautan: d.tautan || '/notifikasi', id: d.id || null },

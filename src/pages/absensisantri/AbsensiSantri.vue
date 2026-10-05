@@ -1,9 +1,10 @@
-<!-- SIMKA PRO | src/pages/absensisantri/AbsensiSantri.vue | v1.1 | Fase 4 – Tahap 4 Ekskul | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/AbsensiSantri.vue | v1.2 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
 <script setup>
 // Absensi santri HISBAT. Tab: Sesi saya (pengasuh), Pantauan (admin/pimpinan: semua kelompok, langsung),
 // Rekap (per kelompok dan periode; Excel, cetak F4, WA ke wali).
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import BilahTab from '@/components/BilahTab.vue'
 import { PhListChecks, PhBroadcast, PhChartBar, PhCaretRight, PhCheckCircle, PhHourglassMedium, PhWarningCircle, PhUsersThree, PhUserSwitch } from '@phosphor-icons/vue'
 import { useAbsensiSantri } from '@/stores/absensiSantri'
 import { useSesi } from '@/stores/sesi'
@@ -51,12 +52,7 @@ const pilihTab = (k) => router.replace(`/absensi-santri/${k}`)
 </script>
 <template>
   <div>
-    <div class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" role="tablist">
-      <button v-for="t in TAB" :key="t.k" role="tab" :aria-selected="aktif === t.k" @click="pilihTab(t.k)"
-        :class="['inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-full border-2 px-4 text-sm font-semibold', 'w-' + t.w, aktif === t.k ? 'text-teks' : 'border-garis bg-permukaan text-teks2']"
-        :style="aktif === t.k ? 'border-color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent)' : ''">
-        <component :is="t.ikon" :size="18" weight="duotone" style="color: var(--c)" />{{ t.n }}</button>
-    </div>
+    <BilahTab class="mb-4" :tab="TAB" :model-value="aktif" label="Bagian absensi santri" @update:model-value="pilihTab" />
 
     <TabRekapAbsensi v-if="aktif === 'rekap'" :semua="bolehPantau" />
 

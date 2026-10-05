@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.2 | Fase 5 – Tahap 2 Setoran per sesi halaqah | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.3 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
 <script setup>
 // Pengisian absensi satu sesi: semua santri bawaan Hadir, ketuk kode HISBAT bagi yang tidak.
 // Pengampu halaqah/asrama diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi.
@@ -21,6 +21,7 @@ import FotoBerkas from '@/components/FotoBerkas.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
 import FormSetoran from '@/pages/tahfizh/FormSetoran.vue'
+import BilahTab from '@/components/BilahTab.vue'
 
 const route = useRoute(); const router = useRouter()
 const abs = useAbsensiSantri(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
@@ -115,12 +116,8 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
       </section>
 
       <!-- Tab halaqah: Absensi | Setoran -->
-      <div v-if="halaqah" class="mt-4 grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="tablist" aria-label="Isi halaqah">
-        <button v-for="t in [{ k: 'absensi', n: 'Absensi', i: PhListChecks, w: 'absensi' }, { k: 'setoran', n: 'Setoran hafalan', i: PhBookOpenText, w: 'tahfizh' }]" :key="t.k"
-          role="tab" :aria-selected="tab === t.k" @click="gantiTab(t.k)"
-          :class="['inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl text-sm font-semibold', 'w-' + t.w, tab === t.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">
-          <component :is="t.i" :size="18" weight="duotone" style="color: var(--c)" />{{ t.n }}<span v-if="t.k === 'setoran' && !d.sesi_tercatat" class="text-xs text-teks3">(setelah absensi)</span></button>
-      </div>
+      <BilahTab v-if="halaqah" class="mt-4" :tepi="false" :model-value="tab" label="Isi halaqah" @update:model-value="gantiTab"
+        :tab="[{ k: 'absensi', n: 'Absensi', ikon: PhListChecks, w: 'absensi' }, { k: 'setoran', n: 'Setoran hafalan', ikon: PhBookOpenText, w: 'tahfizh', ket: d.sesi_tercatat ? '' : '(setelah absensi)' }]" />
       <FormSetoran v-if="halaqah && tab === 'setoran' && !perluPresensi" class="mt-4" :group="route.params.group" :tanggal="route.params.tanggal" :sesi="route.params.sesi"
         :absensi="d" :atas-nama-id="modeAtasNama ? atasNama : ''" :tertutup="lewatBatas || belumBuka" />
       <template v-if="!(halaqah && tab === 'setoran')">

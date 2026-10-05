@@ -1,9 +1,10 @@
-<!-- SIMKA PRO | src/pages/jadwal/JadwalPelajaran.vue | v1.0 | Fase 4 – Tahap 5 Jadwal pelajaran dan jurnal mengajar | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/jadwal/JadwalPelajaran.vue | v1.1 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
 <script setup>
 // Jadwal pelajaran. Tab: Jadwal kelas, Jadwal guru, Penugasan mengajar, Pengaturan (mapel dan jam pelajaran),
 // Rekap mengajar. Pengatur: admin ber-izin atur_jadwal (atau hak fitur jadwal_mengajar tingkat 3).
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import BilahTab from '@/components/BilahTab.vue'
 import { PhCalendarDots, PhChalkboardTeacher, PhListChecks, PhGearSix, PhChartBar, PhEye, PhTrash } from '@phosphor-icons/vue'
 import { useJadwal } from '@/stores/jadwal'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
@@ -75,12 +76,7 @@ const namaGuru = computed(() => guruList.value.find((x) => x.id === employeeId.v
 </script>
 <template>
   <div>
-    <div class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" role="tablist">
-      <button v-for="t in TAB" :key="t.k" role="tab" :aria-selected="aktif === t.k" @click="router.replace(`/jadwal-pelajaran/${t.k}`)"
-        :class="['inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-full border-2 px-4 text-sm font-semibold', 'w-' + t.w, aktif === t.k ? 'text-teks' : 'border-garis bg-permukaan text-teks2']"
-        :style="aktif === t.k ? 'border-color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent)' : ''">
-        <component :is="t.ikon" :size="18" weight="duotone" style="color: var(--c)" />{{ t.n }}</button>
-    </div>
+    <BilahTab class="mb-4" :tab="TAB" :model-value="aktif" label="Bagian jadwal pelajaran" @update:model-value="(k) => router.replace(`/jadwal-pelajaran/${k}`)" />
 
     <template v-if="aktif === 'kelas' || aktif === 'guru'">
       <div class="kartu mb-4 flex flex-wrap items-end gap-3 p-4">
