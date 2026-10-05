@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/tahfizh.js | v1.1 | Fase 5 – Tahap 2 Setoran per sesi halaqah | 05/10/2026
+// SIMKA PRO | src/stores/tahfizh.js | v1.2 | Fase 5 – Tahap 3 Validasi capaian juz dan status bulanan | 05/10/2026
 // Tahfizh: hak pengguna, pengaturan per tahun ajaran (KKM, bobot, target, predikat, pekan efektif), penguji,
 // daftar santri beserta program, posisi hafalan, dan capaian juz resmi. Penulisan hanya lewat fungsi SQL.
 import { defineStore } from 'pinia'
@@ -10,7 +10,7 @@ import { useSesi } from './sesi'
 import { useSantri } from './santri'
 import { useKelompokSantri } from './kelompokSantri'
 import { useAbsensiSantri } from './absensiSantri'
-import { setoranDemo } from '@/lib/demoTahfizh'
+import { setoranDemo, capaianDemo } from '@/lib/demoTahfizh'
 
 const rpc = async (nama, arg) => { const { data, error } = await supabase.rpc(nama, arg); if (error) throw new Error(pesanGalat(error)); return data }
 const HAK_KOSONG = { atur: false, validasi: false, pimpinan: false, muhaffizh: false, penguji_kenaikan: false, penguji_sertifikasi: false, lihat: false }
@@ -206,6 +206,60 @@ export const useTahfizh = defineStore('tahfizh', {
         return hasil.sort((a, b) => b.tanggal.localeCompare(a.tanggal))
       }
       return (await rpc('riwayat_setoran', { p_santri: santri, p_mulai: mulai, p_selesai: selesai })) || []
+    },
+
+    // ---------- Capaian bulanan dan usulan juz ----------
+    async capaianBulanan(bulan, group = null) {
+      if (MODE_DEMO) {
+        await this.muatSantri(); if (!this.target.length) await this.muatPengaturan()
+        const c = capaianDemo(); const b = this.bulan.find((x) => x.bulan === bulan); const pekan = b ? b.pekan_efektif : 4
+        return this.santri.filter((s) => !group || s.halaqah_id === group).map((s, i) => {
+          const m = c.bulan[`${s.student_id}|${bulan}`] || {}; const tambah = (i * 7) % 31; const t = this.targetUntuk(s.program, s.tingkat)
+          const target = (t?.pekan_hal || 5) * pekan; const sesi = i % 9 === 4 ? 0 : 20 + (i % 6)
+          const ot = s.total_resmi >= 30 ? 'khatam' : m.murojaah ? 'murojaah' : !sesi ? 'tidak_terdata' : tambah >= target ? 'tercapai' : 'tidak_tercapai'
+          return { student_id: s.student_id, nis: s.nis, nama: s.nama, jenis_kelamin: s.jenis_kelamin, tingkat: s.tingkat, kelas: s.kelas, halaqah_id: s.halaqah_id, halaqah: s.halaqah,
+            program: s.program, posisi_awal_hal: Math.max(0, s.sabaq_hal - tambah), posisi_akhir_hal: s.sabaq_hal, tambah_hal: tambah, target_hal: target, pekan_efektif: pekan,
+            sesi_terdata: sesi, total_resmi: s.total_resmi, status_otomatis: ot, status: m.status || ot, murojaah: !!m.murojaah, alasan_murojaah: m.alasan || null,
+            disahkan: !!m.status, disahkan_pada: m.pada || null, disahkan_oleh: m.status ? useSesi().pengguna?.nama_lengkap : null, muhaffizh_saya: useSesi().peran === 'pegawai' }
+        })
+      }
+      return (await rpc('capaian_bulanan', { p_bulan: bulan, p_group: group })) || []
+    },
+    async tandaiMurojaah(ids, bulan, aktif, alasan) {
+      if (MODE_DEMO) { const c = capaianDemo(); ids.forEach((id) => { c.bulan[`${id}|${bulan}`] = { ...(c.bulan[`${id}|${bulan}`] || {}), murojaah: aktif, alasan } }); return ids.length }
+      return rpc('tandai_murojaah', { p_santri: ids, p_bulan: bulan, p_aktif: aktif, p_alasan: alasan || null })
+    },
+    async sahkanCapaian(bulan, group, baris) {
+      if (MODE_DEMO) { const c = capaianDemo(); baris.filter((r) => !r.disahkan).forEach((r) => { c.bulan[`${r.student_id}|${bulan}`] = { ...(c.bulan[`${r.student_id}|${bulan}`] || {}), status: r.status_otomatis, pada: new Date().toISOString() } }); return baris.length }
+      return rpc('sahkan_capaian_bulan', { p_bulan: bulan, p_group: group || null })
+    },
+    async batalSahkanCapaian(bulan, group, baris) {
+      if (MODE_DEMO) { const c = capaianDemo(); baris.forEach((r) => { const m = c.bulan[`${r.student_id}|${bulan}`]; if (m) { delete m.status; delete m.pada } }); return baris.length }
+      return rpc('batal_sahkan_capaian', { p_bulan: bulan, p_group: group || null })
+    },
+    async daftarUsulan(status = null) {
+      if (MODE_DEMO) return capaianDemo().usulan.filter((u) => !status || u.status === status)
+      return (await rpc('daftar_usulan_juz', { p_status: status })) || []
+    },
+    async usulkanJuz(id, juz, catatan) {
+      if (MODE_DEMO) {
+        const s = this.cariSantri(id); const c = capaianDemo()
+        juz.forEach((j) => c.usulan.unshift({ id: 'u' + Date.now() + j, student_id: id, nis: s.nis, nama: s.nama, halaqah: s.halaqah, juz: j, sumber: 'ceklist', status: 'menunggu',
+          catatan, catatan_validator: null, diusulkan_oleh: useSesi().pengguna?.nama_lengkap, diusulkan_pada: new Date().toISOString(), diputuskan_oleh: null, diputuskan_pada: null, total_resmi: s.total_resmi }))
+        return juz.length
+      }
+      return rpc('usulkan_juz', { p_santri: id, p_juz: juz, p_catatan: catatan || null })
+    },
+    async putuskanUsulan(ids, setuju, catatan) {
+      if (MODE_DEMO) {
+        const c = capaianDemo(); const d = dataTahfizhDemo()
+        c.usulan.filter((u) => ids.includes(u.id)).forEach((u) => {
+          Object.assign(u, { status: setuju ? 'disetujui' : 'dikembalikan', catatan_validator: catatan || null, diputuskan_oleh: useSesi().pengguna?.nama_lengkap, diputuskan_pada: new Date().toISOString() })
+          if (setuju) d.juz[u.student_id] = [...(d.juz[u.student_id] || []), { juz: u.juz, sumber: 'validasi' }]
+        })
+        await this.muatSantri(); return ids.length
+      }
+      const n = await rpc('putuskan_usulan_juz', { p_ids: ids, p_setuju: setuju, p_catatan: catatan || null }); await this.muatSantri(); return n
     },
 
     async imporHafalanAwal(baris) {

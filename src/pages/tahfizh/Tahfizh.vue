@@ -1,14 +1,15 @@
-<!-- SIMKA PRO | src/pages/tahfizh/Tahfizh.vue | v1.1 | Fase 5 – Tahap 2 Setoran per sesi halaqah | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/Tahfizh.vue | v1.2 | Fase 5 – Tahap 3 Validasi capaian juz dan status bulanan | 05/10/2026 -->
 <script setup>
-// Menu Tahfizh. Tahap 2: tab Setoran (sesi halaqah per tanggal). Tahap 1: tab Data hafalan (program, posisi, capaian juz resmi, data awal) dan
+// Menu Tahfizh. Tahap 3: tab Capaian (status bulanan, usulan juz). Tahap 2: tab Setoran (sesi halaqah per tanggal). Tahap 1: tab Data hafalan (program, posisi, capaian juz resmi, data awal) dan
 // Ketentuan (KKM, target, predikat, pekan efektif, penguji; diubah oleh pemegang izin atur_tahfizh).
 // Tab Setoran, Capaian, Ujian, dan Laporan ditambahkan pada tahap berikutnya.
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhBookOpenText, PhListChecks, PhLockSimple, PhNotebook } from '@phosphor-icons/vue'
+import { PhBookOpenText, PhListChecks, PhLockSimple, PhNotebook, PhSealCheck } from '@phosphor-icons/vue'
 import { useTahfizh } from '@/stores/tahfizh'
 import TabSetoran from './TabSetoran.vue'
 import TabSantriTahfizh from './TabSantriTahfizh.vue'
+import TabCapaian from './TabCapaian.vue'
 import TabKetentuanTahfizh from './TabKetentuanTahfizh.vue'
 
 const props = defineProps({ tab: { type: String, default: '' } })
@@ -16,6 +17,7 @@ const router = useRouter(); const tz = useTahfizh()
 onMounted(() => tz.hakDimuat || tz.muatHak())
 const TAB = [
   { k: 'setoran', n: 'Setoran', ikon: PhNotebook, w: 'presensi' },
+  { k: 'capaian', n: 'Capaian', ikon: PhSealCheck, w: 'pengajuan' },
   { k: 'santri', n: 'Data hafalan', ikon: PhBookOpenText, w: 'tahfizh' },
   { k: 'ketentuan', n: 'Ketentuan', ikon: PhListChecks, w: 'pengaturan' },
 ]
@@ -36,6 +38,7 @@ const aktif = computed(() => (TAB.some((t) => t.k === props.tab) ? props.tab : '
     </div>
     <template v-else>
       <TabSetoran v-if="aktif === 'setoran'" />
+      <TabCapaian v-else-if="aktif === 'capaian'" />
       <TabSantriTahfizh v-else-if="aktif === 'santri'" />
       <TabKetentuanTahfizh v-else />
     </template>

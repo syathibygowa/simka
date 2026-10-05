@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoTahfizh.js | v1.1 | Fase 5 – Tahap 2 Setoran per sesi halaqah | 05/10/2026
+// SIMKA PRO | src/lib/demoTahfizh.js | v1.2 | Fase 5 – Tahap 3 Validasi capaian juz dan status bulanan | 05/10/2026
 // Pengaturan dan data hafalan contoh untuk MODE DEMO (mengikuti isi awal migrasi 3800). Semua data fiktif.
 const TA = 'ta1'
 const BULAN = ['2026-07-01', '2026-08-01', '2026-09-01', '2026-10-01', '2026-11-01', '2026-12-01',
@@ -50,3 +50,10 @@ export function isiSantriDemo(daftarSantri) {
 /** Setoran contoh per "group|tanggal|sesi" → { logs: { student_id: {...} }, catatan, diisi_pada, tidak_setor }. Kosong di awal. */
 let setoran = null
 export function setoranDemo() { if (!setoran) setoran = {}; return setoran }
+
+/** Capaian bulanan contoh: murojaah & pengesahan per "student|bulan"; usulan juz contoh. */
+let capaian = null
+export function capaianDemo() {
+  if (!capaian) capaian = { bulan: {}, usulan: [] }
+  return capaian
+}

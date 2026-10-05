@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/GridJuz.vue | v1.0 | Fase 5 – Tahap 1 Pengaturan tahfizh dan data hafalan awal | 05/10/2026 -->
+<!-- SIMKA PRO | src/components/GridJuz.vue | v1.1 | Fase 5 – Tahap 3 Validasi capaian juz dan status bulanan | 05/10/2026 -->
 <script setup>
 // Ceklist juz 1–30 berbentuk kisi. Urutan hafalan bebas (boleh dimulai dari juz 30).
 // v-model = daftar juz terpilih. "terkunci" = juz dari ujian/sertifikasi (tidak dapat diubah di sini).
@@ -7,7 +7,8 @@ import { computed } from 'vue'
 import { PhLockSimple } from '@phosphor-icons/vue'
 
 const pilih = defineModel({ type: Array, default: () => [] })
-const props = defineProps({ terkunci: { type: Array, default: () => [] }, sedang: Number, ringkas: Boolean, bacaSaja: Boolean, label: { type: String, default: 'Ceklist juz' } })
+const props = defineProps({ terkunci: { type: Array, default: () => [] }, sedang: Number, ringkas: Boolean, bacaSaja: Boolean, label: { type: String, default: 'Ceklist juz' },
+  labelPilih: { type: String, default: 'Data awal' }, labelKunci: { type: String, default: 'Lulus ujian/disetujui (terkunci)' } })
 const set = computed(() => new Set([...pilih.value, ...props.terkunci].map(Number)))
 const kunci = computed(() => new Set(props.terkunci.map(Number)))
 function ketuk(j) {
@@ -31,8 +32,8 @@ function ketuk(j) {
       </button>
     </div>
     <p class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-teks3">
-      <span class="inline-flex items-center gap-1"><i class="inline-block h-3 w-3 rounded bg-[#1E7D4F] dark:bg-[#5BD69A]" /> Data awal</span>
-      <span class="inline-flex items-center gap-1"><i class="inline-block h-3 w-3 rounded bg-[#8C6200] dark:bg-[#F2C24B]" /> Lulus ujian/sertifikasi (terkunci)</span>
+      <span class="inline-flex items-center gap-1"><i class="inline-block h-3 w-3 rounded bg-[#1E7D4F] dark:bg-[#5BD69A]" /> {{ labelPilih }}</span>
+      <span class="inline-flex items-center gap-1"><i class="inline-block h-3 w-3 rounded bg-[#8C6200] dark:bg-[#F2C24B]" /> {{ labelKunci }}</span>
       <span v-if="sedang" class="inline-flex items-center gap-1"><i class="inline-block h-3 w-3 rounded border-2 border-[#2F5FA8] dark:border-[#8AB4F8]" /> Sedang dihafal</span>
       <span class="font-semibold text-teks2">{{ set.size }} dari 30 juz</span>
     </p>
