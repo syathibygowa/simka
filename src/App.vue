@@ -1,6 +1,6 @@
-<!-- SIMKA PRO | src/App.vue | v1.2 | Fase 4 – Perbaikan P3 (ikon PWA dari Pengaturan) | 05/10/2026 -->
+<!-- SIMKA PRO | src/App.vue | v1.3 | Perbaikan darurat: pemasangan di HP Xiaomi/Redmi | 06/10/2026 -->
 <script setup>
-// Ikon aplikasi (PWA Android/desktop, layar utama iOS, tab peramban) mengikuti "Ikon SIMKA PRO" dari Pengaturan.
+// Ikon tab peramban dan layar utama iOS mengikuti "Ikon SIMKA PRO" dari Pengaturan (manifest PWA tetap dari build).
 import { watch } from 'vue'
 import { useLembaga } from '@/stores/lembaga'
 import { terapkanIkonPwa } from '@/lib/ikonPwa'

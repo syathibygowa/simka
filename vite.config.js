@@ -1,4 +1,4 @@
-// SIMKA PRO | vite.config.js | v1.2 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026
+// SIMKA PRO | vite.config.js | v1.3 | Perbaikan darurat: pemasangan di HP Xiaomi/Redmi | 06/10/2026
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
               background_color: '#FAF6F3',
               display: 'standalone',
               orientation: 'portrait',
+              id: './',               // identitas aplikasi tetap (tidak berubah antarversi)
               start_url: './',
               scope: './',
               icons: [
