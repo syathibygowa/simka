@@ -1,11 +1,11 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabKetentuanTahfizh.vue | v1.0 | Fase 5 – Tahap 1 Pengaturan tahfizh dan data hafalan awal | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabKetentuanTahfizh.vue | v1.1 | Fase 5 – Tahap 4 Ujian kenaikan juz dan sertifikasi | 05/10/2026 -->
 <script setup>
 // Ketentuan tahfizh per tahun ajaran: umum (KKM, bobot Tajwid/Itqan, batas isian janggal, ambang rekap), target per program
 // dan tingkat, rentang predikat, bulan dan pekan efektif, serta penguji. Semua pegawai berhak-lihat dapat membaca;
 // hanya pemegang izin atur_tahfizh (atau hak fitur Tahfizh tingkat 3) yang dapat mengubah. Cetak ketentuan F4.
 import { ref, computed, onMounted, watch } from 'vue'
 import {
-  PhGearSix, PhTarget, PhMedal, PhCalendarCheck, PhUserCircleCheck, PhFloppyDisk, PhPlus, PhX, PhArrowCounterClockwise, PhEye, PhLockSimple, PhTrash,
+  PhGearSix, PhTarget, PhMedal, PhCalendarCheck, PhUserCircleCheck, PhFloppyDisk, PhPlus, PhX, PhArrowCounterClockwise, PhEye, PhLockSimple, PhTrash, PhPencilSimple,
 } from '@phosphor-icons/vue'
 import { useTahfizh } from '@/stores/tahfizh'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
@@ -86,7 +86,15 @@ async function hapusPenguji(p) {
   try { await tz.hapusPenguji(p.id); ui.toast('Penguji dihapus.') } catch (e) { ui.toast(e.message, 'galat') }
 }
 async function aktifkanPenguji(jenis, p) {
-  try { await tz.simpanPenguji(jenis, p.employee_id, !p.aktif, p.jabatan === 'Penguji yang ditunjuk' ? '' : p.jabatan); ui.toast(p.aktif ? 'Penguji dinonaktifkan.' : 'Penguji diaktifkan.') } catch (e) { ui.toast(e.message, 'galat') }
+  try { await tz.simpanPenguji(jenis, p.employee_id, !p.aktif, p.catatan || ''); ui.toast(p.aktif ? 'Penguji dinonaktifkan.' : 'Penguji diaktifkan.') } catch (e) { ui.toast(e.message, 'galat') }
+}
+// Ubah keterangan penguji (mis. jabatan atau wilayah halaqah yang diuji)
+const lembarUbah = ref(false); const ubahP = ref(null); const ubahKet = ref('')
+function bukaUbah(jenis, p) { ubahP.value = { ...p, jenis }; ubahKet.value = p.catatan || ''; lembarUbah.value = true }
+async function simpanUbah() {
+  proses.value = 'penguji'
+  try { await tz.simpanPenguji(ubahP.value.jenis, ubahP.value.employee_id, ubahP.value.aktif, ubahKet.value.trim()); lembarUbah.value = false; ui.toast('Keterangan penguji disimpan.') }
+  catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = '' }
 }
 
 // ---------- Cetak ----------
@@ -111,7 +119,7 @@ const juzHal = (h) => `${h} hal${h >= HAL_PER_JUZ ? ` (${formatPosisi(h)})` : ''
           <p class="mb-3 flex items-center gap-2 font-bold"><PhGearSix :size="20" weight="duotone" style="color: var(--c)" /> Ketentuan umum</p>
           <div class="grid grid-cols-2 gap-3">
             <div><label class="label-isian" for="kt-kkm">KKM</label><input id="kt-kkm" v-model.number="umum.kkm" type="number" min="0" max="100" step="0.5" class="isian tabular-nums" :disabled="!bisaUbah" />
-              <p class="mt-1 text-xs text-teks3">Nilai di atas KKM = Tuntas.</p></div>
+              <p class="mt-1 text-xs text-teks3">Nilai akhir ≥ KKM = Tuntas.</p></div>
             <div><label class="label-isian" for="kt-lonjak">Batas penambahan per sesi</label>
               <div class="relative"><input id="kt-lonjak" v-model.number="umum.batas_lonjakan_hal" type="number" min="1" max="200" class="isian pr-12 tabular-nums" :disabled="!bisaUbah" /><span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-teks3">hal</span></div>
               <p class="mt-1 text-xs text-teks3">Lebih dari ini ditandai janggal.</p></div>
@@ -193,19 +201,20 @@ const juzHal = (h) => `${h} hal${h >= HAL_PER_JUZ ? ` (${formatPosisi(h)})` : ''
         <!-- Penguji -->
         <section class="kartu w-pegawai p-4">
           <p class="mb-1 flex items-center gap-2 font-bold"><PhUserCircleCheck :size="20" weight="duotone" style="color: var(--c)" /> Penguji</p>
-          <p class="mb-3 text-xs text-teks3">Penguji bawaan mengikuti jabatan di Data Pegawai: kenaikan juz = Kepala/Wakil Kepala Bidang Tahfizh; sertifikasi = Direktur dan Wakil Direktur (termasuk Plt). Muhaffizh tidak menguji santri halaqahnya sendiri.</p>
+          <p class="mb-3 text-xs text-teks3">Daftar penguji diatur sepenuhnya di sini: tambah, ubah keterangan, nonaktifkan sementara, atau hapus. Hanya penguji aktif yang menerima daftar tunggu ujian. Muhaffizh tidak menguji santri halaqahnya sendiri.</p>
           <div v-for="j in ['kenaikan', 'sertifikasi']" :key="j" class="mb-3">
             <div class="mb-1 flex items-center gap-2"><p class="flex-1 text-sm font-bold">{{ JENIS_PENGUJI[j] }}</p>
               <button v-if="boleh" class="tombol-garis min-h-[34px] px-3 text-xs" @click="bukaPenguji(j)"><PhPlus :size="14" weight="bold" /> Penguji</button></div>
             <ul class="divide-y divide-garis rounded-xl border border-garis">
               <li v-for="p in tz.penguji[j]" :key="p.employee_id" :class="['flex items-center gap-2 px-3 py-2 text-sm', !p.aktif && 'opacity-60']">
-                <span class="min-w-0 flex-1"><b class="block truncate">{{ p.nama }}</b><span class="text-xs text-teks3">{{ p.jabatan }}{{ p.bawaan ? ' · bawaan' : '' }}{{ p.aktif ? '' : ' · nonaktif' }}</span></span>
-                <template v-if="boleh && !p.bawaan">
+                <span class="min-w-0 flex-1"><b class="block truncate">{{ p.nama }}</b><span class="text-xs text-teks3">{{ p.jabatan }}{{ p.aktif ? '' : ' · nonaktif' }}</span></span>
+                <template v-if="boleh">
+                  <button class="tombol-ikon h-9 w-9" :aria-label="`Ubah keterangan ${p.nama}`" @click="bukaUbah(j, p)"><PhPencilSimple :size="16" /></button>
                   <button class="tombol-garis min-h-[34px] px-2 text-xs" @click="aktifkanPenguji(j, p)">{{ p.aktif ? 'Nonaktifkan' : 'Aktifkan' }}</button>
                   <button class="tombol-ikon h-9 w-9" :aria-label="`Hapus ${p.nama}`" @click="jenisPenguji = j; hapusPenguji(p)"><PhTrash :size="16" /></button>
                 </template>
               </li>
-              <li v-if="!tz.penguji[j].length" class="px-3 py-3 text-sm text-teks3">Belum ada. Isi jabatan struktural di Data Pegawai atau tambahkan penguji.</li>
+              <li v-if="!tz.penguji[j].length" class="px-3 py-3 text-sm text-teks3">Belum ada penguji. Tekan + Penguji untuk menambahkan.</li>
             </ul>
           </div>
         </section>
@@ -227,6 +236,14 @@ const juzHal = (h) => `${h} hal${h >= HAL_PER_JUZ ? ` (${formatPosisi(h)})` : ''
       </div>
     </LembarBawah>
 
+    <!-- Ubah keterangan penguji -->
+    <LembarBawah v-model="lembarUbah" :judul="ubahP ? `Penguji · ${ubahP.nama}` : ''">
+      <div v-if="ubahP" class="space-y-3 pb-2">
+        <div><label class="label-isian" for="pg-ubah">Keterangan</label><input id="pg-ubah" v-model="ubahKet" class="isian" placeholder="Contoh: Direktur (Mudir), penguji halaqah putri" /></div>
+        <button class="tombol-utama w-full" :disabled="!!proses" @click="simpanUbah">Simpan</button>
+      </div>
+    </LembarBawah>
+
     <!-- Cetak ketentuan -->
     <DokumenCetak kop="pondok" judul="Ketentuan Penilaian dan Target Tahfizh" :subjudul="`Tahun Ajaran ${taObj?.nama || ''} · keadaan ${formatPanjang(hariIniISO())}`"
       v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
@@ -234,7 +251,7 @@ const juzHal = (h) => `${h} hal${h >= HAL_PER_JUZ ? ` (${formatPosisi(h)})` : ''
         <p style="margin: 0 0 4pt; font-weight: 700">A. Ketentuan umum</p>
         <table class="tabel"><colgroup><col style="width:55%"><col style="width:45%"></colgroup>
           <tbody>
-            <tr><td>Kriteria Ketuntasan Minimal (KKM)</td><td>{{ tz.pengaturan.kkm }} (di atas KKM dinyatakan Tuntas)</td></tr>
+            <tr><td>Kriteria Ketuntasan Minimal (KKM)</td><td>{{ tz.pengaturan.kkm }} (nilai akhir ≥ KKM dinyatakan Tuntas)</td></tr>
             <tr><td>Bobot nilai ujian</td><td>Tajwid {{ tz.pengaturan.bobot_tajwid }}%, Itqan {{ tz.pengaturan.bobot_itqan }}%</td></tr>
             <tr><td>Konversi</td><td>20 halaman = 1 juz</td></tr>
             <tr><td>Batas penambahan sabaq per sesi (penanda isian janggal)</td><td>{{ tz.pengaturan.batas_lonjakan_hal }} halaman</td></tr>

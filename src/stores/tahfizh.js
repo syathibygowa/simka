@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/tahfizh.js | v1.2 | Fase 5 – Tahap 3 Validasi capaian juz dan status bulanan | 05/10/2026
+// SIMKA PRO | src/stores/tahfizh.js | v1.4 | Fase 5 – Tahap 5 Laporan dan grafik tahfizh | 05/10/2026
 // Tahfizh: hak pengguna, pengaturan per tahun ajaran (KKM, bobot, target, predikat, pekan efektif), penguji,
 // daftar santri beserta program, posisi hafalan, dan capaian juz resmi. Penulisan hanya lewat fungsi SQL.
 import { defineStore } from 'pinia'
@@ -10,7 +10,8 @@ import { useSesi } from './sesi'
 import { useSantri } from './santri'
 import { useKelompokSantri } from './kelompokSantri'
 import { useAbsensiSantri } from './absensiSantri'
-import { setoranDemo, capaianDemo } from '@/lib/demoTahfizh'
+import { setoranDemo, capaianDemo, ujianDemo } from '@/lib/demoTahfizh'
+import { hitungNilai } from '@/lib/tahfizh'
 
 const rpc = async (nama, arg) => { const { data, error } = await supabase.rpc(nama, arg); if (error) throw new Error(pesanGalat(error)); return data }
 const HAK_KOSONG = { atur: false, validasi: false, pimpinan: false, muhaffizh: false, penguji_kenaikan: false, penguji_sertifikasi: false, lihat: false }
@@ -19,7 +20,7 @@ export const useTahfizh = defineStore('tahfizh', {
   state: () => ({
     hak: { ...HAK_KOSONG }, hakDimuat: false,
     taId: '', pengaturan: null, predikat: [], target: [], bulan: [], penguji: { kenaikan: [], sertifikasi: [] },
-    santri: [], memuat: false, galat: '', sesiSetoran: [], memuatSetoran: false, saluran: null,
+    santri: [], memuat: false, galat: '', sesiSetoran: [], memuatSetoran: false, saluran: null, saluranUjian: null,
   }),
   getters: {
     targetUntuk: (s) => (program, tingkat) => s.target.find((t) => t.program === program && t.tingkat === Number(tingkat)) || null,
@@ -48,12 +49,10 @@ export const useTahfizh = defineStore('tahfizh', {
         const d = dataTahfizhDemo()
         Object.assign(this, { pengaturan: { ...d.pengaturan }, predikat: d.predikat.map((x) => ({ ...x })), target: d.target.map((x) => ({ ...x })), bulan: d.bulan.map((x) => ({ ...x })) })
         const nama = (id) => PEGAWAI_DEMO.find((p) => p.id === id)
-        this.penguji = {
-          kenaikan: [{ employee_id: 'p7', nama: nama('p7').nama_lengkap, niy: nama('p7').niy, jabatan: 'Wakil Kepala Bidang', bawaan: true, aktif: true, id: null },
-            ...d.penguji.filter((x) => x.jenis === 'kenaikan').map((x) => ({ ...x, nama: nama(x.employee_id)?.nama_lengkap, niy: nama(x.employee_id)?.niy, jabatan: x.catatan || 'Penguji yang ditunjuk', bawaan: false }))],
-          sertifikasi: [{ employee_id: 'pd', nama: 'Siswandi Safari, S.Pd.I., Lc., S.H., M.Ag.', niy: '1983020910201401', jabatan: 'Direktur (Mudir)', bawaan: true, aktif: true, id: null },
-            ...d.penguji.filter((x) => x.jenis === 'sertifikasi').map((x) => ({ ...x, nama: nama(x.employee_id)?.nama_lengkap, niy: nama(x.employee_id)?.niy, jabatan: x.catatan || 'Penguji yang ditunjuk', bawaan: false }))],
-        }
+        const susun = (jenis) => d.penguji.filter((x) => x.jenis === jenis).map((x) => {
+          const p = nama(x.employee_id); return { ...x, nama: p?.nama_lengkap, niy: p?.niy, no_hp: p?.no_hp, jabatan: x.catatan || 'Penguji', bawaan: false }
+        })
+        this.penguji = { kenaikan: susun('kenaikan'), sertifikasi: susun('sertifikasi') }
         return
       }
       if (!this.taId) return
@@ -260,6 +259,79 @@ export const useTahfizh = defineStore('tahfizh', {
         await this.muatSantri(); return ids.length
       }
       const n = await rpc('putuskan_usulan_juz', { p_ids: ids, p_setuju: setuju, p_catatan: catatan || null }); await this.muatSantri(); return n
+    },
+
+    // ---------- Ujian kenaikan juz dan sertifikasi ----------
+    async daftarUjian(jenis = null, status = null) {
+      if (MODE_DEMO) return ujianDemo().filter((u) => (!jenis || u.jenis === jenis) && (!status || u.status === status || (status === 'aktif' && ['menunggu', 'dijadwalkan'].includes(u.status))))
+      return (await rpc('daftar_ujian', { p_jenis: jenis, p_status: status })) || []
+    },
+    dengarkanUjian(fn) {
+      if (MODE_DEMO || this.saluranUjian) return
+      this.saluranUjian = supabase.channel('ujian-tahfizh').on('postgres_changes', { event: '*', schema: 'public', table: 'tahfizh_exams' }, () => fn()).subscribe()
+    },
+    berhentiUjian() { if (this.saluranUjian) { supabase.removeChannel(this.saluranUjian); this.saluranUjian = null } },
+    async rekomendasikanUjian(id, jenis, juz, jenjang, catatan) {
+      if (MODE_DEMO) {
+        const s = this.cariSantri(id); const nama = useSesi().pengguna?.nama_lengkap
+        if (ujianDemo().some((u) => u.student_id === id && u.jenis === jenis && ['menunggu', 'dijadwalkan'].includes(u.status))) throw new Error(`${s.nama} masih memiliki ujian yang belum selesai.`)
+        ujianDemo().unshift({ id: 'uj' + Date.now(), jenis, student_id: id, nis: s.nis, nama: s.nama, jenis_kelamin: s.jenis_kelamin, kelas: s.kelas, halaqah: s.halaqah, juz, jenjang,
+          status: 'menunggu', ujian_ke: 1, direkomendasikan_oleh: nama, direkomendasikan_pada: new Date().toISOString(), catatan_rekomendasi: catatan, penguji_id: null, penguji: null,
+          jadwal: null, total_resmi: s.total_resmi, penguji_saya: false, boleh_nilai: useSesi().peran !== 'pegawai', muhaffizh_saya: useSesi().peran === 'pegawai' })
+        return
+      }
+      return rpc('rekomendasikan_ujian', { p_santri: id, p_jenis: jenis, p_juz: juz, p_jenjang: jenjang, p_catatan: catatan || null })
+    },
+    async ambilUjian(id, jadwal) {
+      if (MODE_DEMO) { const u = ujianDemo().find((x) => x.id === id); Object.assign(u, { status: 'dijadwalkan', penguji: useSesi().pengguna?.nama_lengkap, penguji_saya: true, jadwal: jadwal || null }); return }
+      return rpc('ambil_ujian', { p_id: id, p_jadwal: jadwal || null })
+    },
+    async tetapkanPenguji(id, employeeId, jadwal) {
+      if (MODE_DEMO) { const u = ujianDemo().find((x) => x.id === id); const p = [...this.penguji.kenaikan, ...this.penguji.sertifikasi].find((x) => x.employee_id === employeeId); Object.assign(u, { status: 'dijadwalkan', penguji: p?.nama, penguji_id: employeeId, jadwal: jadwal || null }); return }
+      return rpc('tetapkan_penguji_ujian', { p_id: id, p_employee: employeeId, p_jadwal: jadwal || null })
+    },
+    async nilaiUjian(id, tajwid, itqan, catatan) {
+      if (MODE_DEMO) {
+        if (!this.pengaturan) await this.muatPengaturan()
+        const u = ujianDemo().find((x) => x.id === id); const h = hitungNilai(tajwid, itqan, this.pengaturan, this.predikat)
+        Object.assign(u, { status: 'selesai', nilai_tajwid: tajwid, nilai_itqan: itqan, nilai_akhir: h.akhir, huruf: h.huruf, predikat: h.predikat, hasil: h.hasil, kkm: this.pengaturan.kkm,
+          catatan_penguji: catatan, diuji_pada: new Date().toISOString(), penguji: u.penguji || useSesi().pengguna?.nama_lengkap, boleh_nilai: false })
+        if (u.jenis === 'kenaikan' && h.hasil === 'tuntas') u.juz.forEach((j) => capaianDemo().usulan.unshift({ id: 'u' + Date.now() + j, student_id: u.student_id, nis: u.nis, nama: u.nama, halaqah: u.halaqah, juz: j, sumber: 'ujian', status: 'menunggu', catatan: `Ujian kenaikan juz: nilai ${h.akhir} (${h.huruf})`, diusulkan_oleh: u.penguji, diusulkan_pada: new Date().toISOString(), total_resmi: u.total_resmi }))
+        return { nilai_akhir: h.akhir, huruf: h.huruf, predikat: h.predikat, hasil: h.hasil }
+      }
+      return rpc('nilai_ujian', { p_id: id, p_tajwid: tajwid, p_itqan: itqan, p_catatan: catatan || null })
+    },
+    async batalkanUjian(id, alasan) {
+      if (MODE_DEMO) { Object.assign(ujianDemo().find((x) => x.id === id), { status: 'dibatalkan', alasan_batal: alasan, boleh_nilai: false }); return }
+      return rpc('batalkan_ujian', { p_id: id, p_alasan: alasan })
+    },
+
+    // ---------- Data laporan ----------
+    async dataLaporan(bulan) {
+      if (MODE_DEMO) {
+        const kel = useKelompokSantri(); const san = useSantri(); await kel.muat(); await san.muat()
+        const c = await this.capaianBulanan(bulan, null)
+        return c.map((r) => {
+          const t = this.cariSantri(r.student_id) || {}; const g = kel.cari(r.halaqah_id); const sn = san.cari(r.student_id)
+          const step = Math.round(r.tambah_hal / 4)
+          return { ...r, jenjang: t.jenjang, muhaffizh: (g?.pengasuh || []).find((p) => p.peran === 'utama')?.nama || null, naqib: g?.naqib_id === r.student_id,
+            kamar: (sn?.kelompok || []).find((k) => k.jenis === 'kamar')?.nama || null, juz_resmi: t.juz_resmi || [],
+            pekan: [1, 2, 3, 4, 5].map((k) => (k === 5 ? null : Math.min(r.posisi_akhir_hal, r.posisi_awal_hal + step * k))) }
+        })
+      }
+      return (await rpc('data_laporan_tahfizh', { p_bulan: bulan })) || []
+    },
+    async kepatuhanSetoran(bulan) {
+      if (MODE_DEMO) {
+        const kel = useKelompokSantri(); await kel.muat()
+        return kel.daftar.filter((g) => g.jenis === 'halaqah').map((g, i) => ({ halaqah_id: g.id, halaqah: g.nama, muhaffizh: (g.pengasuh || []).find((p) => p.peran === 'utama')?.nama,
+          jumlah_santri: g.jumlah_anggota || 0, seharusnya: [18, 18, 18, 18, 9], terisi: i % 2 ? [18, 18, 12, 18, 9] : [18, 18, 18, 18, 9] }))
+      }
+      return (await rpc('kepatuhan_setoran', { p_bulan: bulan })) || []
+    },
+    async kehadiranHalaqah(bulan) {
+      if (MODE_DEMO) { const kel = useKelompokSantri(); await kel.muat(); return kel.daftar.filter((g) => g.jenis === 'halaqah').map((g, i) => ({ halaqah_id: g.id, persen: 92.5 - i * 3.1 })) }
+      return (await rpc('kehadiran_halaqah', { p_bulan: bulan })) || []
     },
 
     async imporHafalanAwal(baris) {

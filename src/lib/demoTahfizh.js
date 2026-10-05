@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoTahfizh.js | v1.2 | Fase 5 – Tahap 3 Validasi capaian juz dan status bulanan | 05/10/2026
+// SIMKA PRO | src/lib/demoTahfizh.js | v1.3 | Fase 5 – Tahap 4 Ujian kenaikan juz dan sertifikasi | 05/10/2026
 // Pengaturan dan data hafalan contoh untuk MODE DEMO (mengikuti isi awal migrasi 3800). Semua data fiktif.
 const TA = 'ta1'
 const BULAN = ['2026-07-01', '2026-08-01', '2026-09-01', '2026-10-01', '2026-11-01', '2026-12-01',
@@ -22,7 +22,9 @@ export function dataTahfizhDemo() {
     }
   }
   const bulan = BULAN.map((b, i) => ({ academic_year_id: TA, bulan: b, semester: i < 6 ? 1 : 2, pekan_efektif: i === 0 ? 2 : 4, manual: false, hari_aktif: i === 0 ? 16 : 26 }))
-  const penguji = [{ id: 'x1', jenis: 'kenaikan', employee_id: 'p12', aktif: true, catatan: 'Koordinator halaqah putra' }]
+  const penguji = [{ id: 'x0', jenis: 'kenaikan', employee_id: 'p7', aktif: true, catatan: 'Wakil Kepala Bidang Tahfizh' },
+    { id: 'x1', jenis: 'kenaikan', employee_id: 'p12', aktif: true, catatan: 'Koordinator halaqah putra' },
+    { id: 'x2', jenis: 'sertifikasi', employee_id: 'p3', aktif: true, catatan: 'Direktur (Mudir) – contoh' }]
   data = { pengaturan, predikat, target, bulan, penguji, santri: {}, juz: {} }
   return data
 }
@@ -57,3 +59,7 @@ export function capaianDemo() {
   if (!capaian) capaian = { bulan: {}, usulan: [] }
   return capaian
 }
+
+/** Ujian contoh (daftar tunggu dan hasil). */
+let ujian = null
+export function ujianDemo() { if (!ujian) ujian = []; return ujian }

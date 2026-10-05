@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/tahfizh.js | v1.2 | Fase 5 – Tahap 3 Validasi capaian juz dan status bulanan | 05/10/2026
+// SIMKA PRO | src/lib/tahfizh.js | v1.3 | Fase 5 – Tahap 4 Ujian kenaikan juz dan sertifikasi | 05/10/2026
 // Konversi posisi hafalan (Juz + Halaman ↔ total halaman), rentang juz, label program, dan penanda tangan tahfizh.
 // Posisi disimpan di server sebagai TOTAL HALAMAN: 20 halaman = 1 juz (10 juz 2 halaman = 202).
 import { supabase, MODE_DEMO } from './supabase'
@@ -110,3 +110,19 @@ export const STATUS_BULANAN = {
 }
 export const STATUS_USULAN = { menunggu: { n: 'Menunggu validasi', w: 'pengajuan' }, disetujui: { n: 'Disetujui', w: 'presensi' }, dikembalikan: { n: 'Dikembalikan', w: 'klinik' } }
 export const SUMBER_USULAN = { ceklist: 'Ceklist muhaffizh', ujian: 'Ujian kenaikan juz', sertifikasi: 'Sertifikasi' }
+
+/** Ujian kenaikan juz dan sertifikasi. */
+export const STATUS_UJIAN = {
+  menunggu: { n: 'Menunggu penguji', w: 'pengajuan' }, dijadwalkan: { n: 'Dijadwalkan', w: 'agenda' },
+  selesai: { n: 'Selesai', w: 'presensi' }, dibatalkan: { n: 'Dibatalkan', w: 'hakakses' },
+}
+export const HASIL_UJIAN = { tuntas: { n: 'Tuntas', w: 'presensi' }, remidi: { n: 'Remidi', w: 'klinik' } }
+export const JENJANG_SERTIFIKASI = [5, 10, 15, 20, 25, 30]
+/** Pratinjau nilai akhir sesuai bobot pengaturan (perhitungan resmi tetap di server). */
+export function hitungNilai(tajwid, itqan, pengaturan, rentang = []) {
+  if (tajwid === '' || itqan === '' || tajwid == null || itqan == null) return null
+  const bt = Number(pengaturan?.bobot_tajwid ?? 50); const bi = Number(pengaturan?.bobot_itqan ?? 50)
+  const akhir = Math.round((Number(tajwid) * bt + Number(itqan) * bi)) / 100
+  const p = predikatDari(akhir, rentang)
+  return { akhir, huruf: p?.huruf || '–', predikat: p?.deskripsi_rapor || '–', hasil: akhir >= Number(pengaturan?.kkm ?? 80) ? 'tuntas' : 'remidi' }
+}
