@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v2.9 | Fase 4 – Tahap 6 Tahun ajaran, statistik, laporan | 05/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.0 | Fase 5 – Tahap 1 Pengaturan tahfizh dan data hafalan awal | 05/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -45,7 +45,8 @@ export const MENU = [
     syarat: (c) => c.kelompok || Number(c.fitur?.jadwal_mengajar ?? 0) >= 1 },
   { kode: 'ekskul', nama: 'Ekskul', ikon: PhMedal, warna: 'ekskul', ke: '/ekskul', grup: 'Santri',
     syarat: (c) => (c.jenisKelompok || []).includes('ekskul') || Number(c.fitur?.absensi_ekskul ?? 0) >= 1 },
-  { kode: 'tahfizh',    nama: 'Tahfizh',         ikon: PhBookOpenText,   warna: 'tahfizh',    ke: '/segera/tahfizh',    grup: 'Santri', fase: 5 },
+  { kode: 'tahfizh',    nama: 'Tahfizh',         ikon: PhBookOpenText,   warna: 'tahfizh',    ke: '/tahfizh',           grup: 'Santri',
+    syarat: (c) => (c.jenisKelompok || []).includes('halaqah') || Number(c.fitur?.tahfizh ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 },
   { kode: 'klinik',     nama: 'Klinik',          ikon: PhFirstAidKit,    warna: 'klinik',     ke: '/segera/klinik',     grup: 'Layanan', fase: 6 },
   { kode: 'security',   nama: 'Security',        ikon: PhShieldCheck,    warna: 'security',   ke: '/segera/security',   grup: 'Layanan', fase: 7 },
   { kode: 'laporan',    nama: 'Laporan',         ikon: PhChartBar,       warna: 'laporan',    ke: '/segera/laporan',    grup: 'Administrasi', fase: 8 },

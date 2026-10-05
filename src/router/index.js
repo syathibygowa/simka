@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.3 | Fase 4 – Tahap 6 Tahun ajaran, statistik, laporan | 05/10/2026
+// SIMKA PRO | src/router/index.js | v3.4 | Fase 5 – Tahap 1 Pengaturan tahfizh dan data hafalan awal | 05/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -36,6 +36,8 @@ const routes = [
       { path: 'statistik-santri', component: () => import('@/pages/santri/StatistikSantri.vue'), meta: { judul: 'Statistik Santri', cetak: true, kembali: '/tugas' } },
       { path: 'tahun-ajaran-baru', component: () => import('@/pages/santri/PergantianTA.vue'), meta: { judul: 'Pergantian Tahun Ajaran', peran: ADMIN, kembali: '/tugas' } },
       { path: 'jadwal-pelajaran/:tab?', component: () => import('@/pages/jadwal/JadwalPelajaran.vue'), props: true, meta: { judul: 'Jadwal Pelajaran', kembali: '/tugas' } },
+      { path: 'tahfizh/impor', component: () => import('@/pages/tahfizh/ImporHafalan.vue'), meta: { judul: 'Impor Hafalan Awal', kembali: '/tahfizh' } },
+      { path: 'tahfizh/:tab?', component: () => import('@/pages/tahfizh/Tahfizh.vue'), props: true, meta: { judul: 'Tahfizh', kembali: '/tugas' } },
       { path: 'ekskul/:tab?', component: () => import('@/pages/ekskul/Ekskul.vue'), props: true, meta: { judul: 'Ekskul', kembali: '/tugas' } },
       { path: 'kelompok-santri/impor', component: () => import('@/pages/kelompoksantri/ImporKelompok.vue'), meta: { judul: 'Impor Pembagian Kelompok', kembali: '/kelompok-santri' } },
       { path: 'kelompok-santri/k/:id', component: () => import('@/pages/kelompoksantri/DetailKelompok.vue'), meta: { judul: 'Kelompok Santri', cetak: true, kembali: '/kelompok-santri' } },
