@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/wa.js | v1.7 | Fase 5 – Tahap 6 Penutup fase tahfizh | 05/10/2026
+// SIMKA PRO | src/lib/wa.js | v1.9 | Fase 6 – Tahap 2 Status otomatis dan perizinan santri | 06/10/2026
 // Tautan WhatsApp wa.me dari WA pribadi pegawai (Bagian 25). Isi pesan diambil dari template WA yang
 // dikelola superadmin (Pengaturan → Template WA); bila belum dimuat, dipakai isi bawaan di bawah.
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -32,6 +32,9 @@ export const BAWAAN_WA = {
   rekap_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nRekap kehadiran ananda *{nama_santri}* ({kelas}) periode {periode}:\n{rekap}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   rekap_hafalan: '{salam}, Bapak/Ibu {nama_wali}.\n\nPerkembangan hafalan ananda *{nama_santri}* ({kelas}, {halaqah}):\n• Posisi hafalan: {posisi}\n• Hafalan resmi: {total_juz} juz\n• Capaian {periode}: {capaian}\n{keterangan}\n\nMohon doa dan dukungan Bapak/Ibu agar ananda istiqamah menjaga hafalannya.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   penguji_ujian: '{salam}, {nama}.\n\nDaftar tunggu {jenis_ujian} ({jumlah} santri):\n{daftar}\n\nMohon berkenan mengambil dan menjadwalkan ujiannya di SIMKA PRO: {tautan}\n\n{penutup}\n{pengirim}',
+  rekap_asrama: '{salam}, Bapak/Ibu {nama_wali}.\n\nRekap kehadiran asrama ananda *{nama_santri}* ({kamar}) periode {periode}:\n{rekap}\n\n{ketidakhadiran}\n\nMohon perhatian dan doanya.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  rekap_kamar: '{salam}.\n\nRekap kehadiran asrama *{kamar}* periode {periode}:\n• Rata-rata kehadiran: {persen}\n• Sesi terlaksana: {jumlah_sesi}\n• Hadir penuh: {hadir_penuh}\n{rincian}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  izin_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan izin {jenis_izin} ananda *{nama_santri}* ({kelas}) *{status}*.\n• Alasan: {alasan}\n• Keluar: {waktu_keluar}\n• Batas kembali: {batas_kembali}\n• Penjemput: {penjemput}\n\nMohon ananda diantar kembali ke pondok sebelum batas waktu.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   verval_presensi: '{salam}, {nama}.\n\nPresensi Anda pada sesi {sesi}, {tanggal} telah diverval dengan status *{status_presensi}*.\nCatatan: {catatan_verval}\n\n{penutup}\n{pengirim}',
 }
 
@@ -70,6 +73,10 @@ export const ISIAN_WA = [
     ['kegiatan', 'Kegiatan absensi (mis. halaqah subuh)'], ['periode', 'Periode rekap'], ['rekap', 'Ringkasan kehadiran per kegiatan']] },
   { grup: 'Tahfizh', isian: [['halaqah', 'Nama halaqah santri'], ['posisi', 'Posisi hafalan (juz dan halaman)'], ['total_juz', 'Jumlah juz hafalan resmi'],
     ['capaian', 'Capaian periode (penambahan dan status)'], ['jenis_ujian', 'Jenis ujian (kenaikan juz/sertifikasi)'], ['jumlah', 'Jumlah santri'], ['daftar', 'Daftar santri menunggu ujian']] },
+  { grup: 'Asrama (Musyrif)', isian: [['kamar', 'Nama kamar'], ['ketidakhadiran', 'Rincian tanggal ketidakhadiran santri'], ['persen', 'Rata-rata kehadiran kamar'],
+    ['jumlah_sesi', 'Jumlah sesi terlaksana'], ['hadir_penuh', 'Jumlah santri hadir penuh'], ['rincian', 'Rincian per santri (salin grup)']] },
+  { grup: 'Perizinan santri', isian: [['jenis_izin', 'Jenis izin (pulang/keluar)'], ['waktu_keluar', 'Waktu keluar'],
+    ['batas_kembali', 'Batas kembali'], ['penjemput', 'Nama dan hubungan penjemput']] },
   { grup: 'Bebas', isian: [['pesan', 'Isi pesan bebas']] },
 ]
 

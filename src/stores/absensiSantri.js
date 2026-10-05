@@ -1,12 +1,15 @@
-// SIMKA PRO | src/stores/absensiSantri.js | v1.1 | Fase 4 – Tahap 4 Ekskul | 04/10/2026
+// SIMKA PRO | src/stores/absensiSantri.js | v1.2 | Fase 6 – Tahap 2 Status otomatis dan perizinan santri | 06/10/2026
 // Absensi santri HISBAT: sesi hari ini (pengasuh) atau semua kelompok (pantauan), detail sesi, simpan
 // (hanya pengecualian), rekap per santri, dan riwayat ketidakhadiran. Penulisan lewat fungsi SQL.
+// v1.2: detail() menyertakan "otomatis" — santri yang sedang sakit (Klinik → S) atau izin (Perizinan → I).
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { dataAbsensiDemo, sesiAbsensiDemo, hitung, sesiDemoUntuk } from '@/lib/demoAbsensi'
 import { pesanGalat } from './lembaga'
 import { useSesi } from './sesi'
 import { useSantri } from './santri'
+import { useKlinik } from './klinik'
+import { useIzin } from './izin'
 
 export const useAbsensiSantri = defineStore('absensiSantri', {
   state: () => ({ sesiHari: [], memuat: false, galat: '', saluran: null }),
@@ -43,11 +46,28 @@ export const useAbsensiSantri = defineStore('absensiSantri', {
           sekarang: new Date().toISOString(), pengasuh_saya: peg && info.asuhan_saya, perlu_presensi: false, boleh_atas_nama: useSesi().bolehAdmin('absensi_atas_nama'),
           pengasuh: g.pengasuh.map((p) => ({ employee_id: p.employee_id, nama: p.nama, peran: p.peran })), anggota,
           sesi_tercatat: sa ? { id: sa.id, atas_nama: sa.atas_nama, diisi_terlambat: sa.diisi_terlambat, diisi_pada: sa.diisi_pada, pengampu: sa.pengampu, diinput_oleh: sa.diinput_oleh, catatan: sa.catatan } : null,
-          pengecualian: sa?.pengecualian || [], log: sa?.log || [], tempat: def.tempat || null, jurnal: sa?.jurnal || null }
+          pengecualian: sa?.pengecualian || [], log: sa?.log || [], tempat: def.tempat || null, jurnal: sa?.jurnal || null,
+          otomatis: await this.otomatisDemo(anggota) }
       }
-      const { data, error } = await supabase.rpc('detail_absensi', { p_group: group, p_tanggal: tanggal, p_sesi: sesi })
+      const [{ data, error }, oto] = await Promise.all([
+        supabase.rpc('detail_absensi', { p_group: group, p_tanggal: tanggal, p_sesi: sesi }),
+        supabase.rpc('status_otomatis_sesi', { p_group: group, p_tanggal: tanggal, p_sesi: sesi }),
+      ])
       if (error) throw new Error(pesanGalat(error))
-      return data
+      return { ...data, otomatis: oto.error ? [] : oto.data || [] }
+    },
+    /** Mode demo: santri sakit (kasus klinik ditangani) dan santri izin (disetujui/keluar) di antara anggota. */
+    async otomatisDemo(anggota) {
+      const ids = new Set(anggota.map((a) => a.id)); const hasil = []
+      try {
+        const kd = await useKlinik().demo()
+        kd.kasus.filter((k) => k.status === 'ditangani' && ids.has(k.student_id)).forEach((k) => hasil.push({ student_id: k.student_id, kode: 'S', sumber: 'klinik',
+          keterangan: 'Klinik: ' + ({ istirahat: 'istirahat di kamar', rawat: 'dirawat di klinik', rujuk: 'dirujuk ke RS/puskesmas', pulang: 'dipulangkan' }[k.tindak_lanjut] || 'sakit') }))
+        const iz = await useIzin().daftar('aktif')
+        iz.filter((x) => ids.has(x.student_id) && !hasil.some((h) => h.student_id === x.student_id) && new Date(x.keluar_pada) <= new Date())
+          .forEach((x) => hasil.push({ student_id: x.student_id, kode: 'I', sumber: 'izin', keterangan: `Izin ${x.jenis} s.d. ${x.kembali_batas.slice(8, 10)}/${x.kembali_batas.slice(5, 7)}: ${x.alasan}` }))
+      } catch { /* abaikan di demo */ }
+      return hasil
     },
 
     async simpan(isi) {

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoKelompok.js | v1.1 | Fase 4 – Tahap 6 Tahun ajaran, statistik, laporan | 05/10/2026
+// SIMKA PRO | src/lib/demoKelompok.js | v1.2 | Fase 6 – Tahap M1 Menu Musyrif | 06/10/2026
 // Kelompok santri contoh untuk MODE DEMO (dibangun dari data santri contoh). Pengasuh memakai id pegawai contoh (p1 = Ust. Hasan Basri).
 const TA = { id: 'ta1', nama: '2026/2027', mulai: '2026-07-13', selesai: '2027-06-30', aktif: true, terkunci: false }
 const hariIni = () => new Date().toISOString().slice(0, 10)
@@ -27,7 +27,7 @@ export function dataKelompokDemo(santri) {
   ]
   const pengasuh = {
     'g-7a': [['p1', 'utama']], 'g-7b': [['p2', 'utama']], 'g-8a': [['p12', 'utama']], 'g-10a': [['p6', 'utama']],
-    'g-kab': [['p3', 'utama'], ['p12', 'pendamping']], 'g-kum': [['p12', 'utama']], 'g-hhb': [['p1', 'utama']], 'g-hkh': [['p7', 'utama']], 'g-epn': [['p6', 'utama']],
+    'g-kab': [['p3', 'utama'], ['p12', 'pendamping']], 'g-kum': [['p12', 'utama'], ['p1', 'pendamping']], 'g-hhb': [['p1', 'utama']], 'g-hkh': [['p7', 'utama']], 'g-epn': [['p6', 'utama']],
   }
   const NAMA_P = { p1: 'Ust. Hasan Basri, Lc.', p2: 'Ustzh. Nurul Aini, S.Pd.', p3: 'Ust. Muhammad Ikhsan, S.Pd.I.', p6: 'Ust. Yusuf Maulana, S.Pd.', p7: 'Ustzh. Khadijah Ramadhani, S.Ag.', p12: 'Ust. Syamsul Arifin, S.Pd.' }
   kelompok.forEach((k) => { k.pengasuh = (pengasuh[k.id] || []).map(([e, peran]) => ({ employee_id: e, nama: NAMA_P[e], niy: null, peran, mulai: null, sampai: null, berlaku: true, no_hp: '081234500000' })) })

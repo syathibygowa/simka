@@ -1,12 +1,14 @@
-<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.3 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.4 | Fase 6 – Tahap 2 Status otomatis dan perizinan santri | 06/10/2026 -->
 <script setup>
 // Pengisian absensi satu sesi: semua santri bawaan Hadir, ketuk kode HISBAT bagi yang tidak.
 // Pengampu halaqah/asrama diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi.
 // Admin ber-izin absensi_atas_nama dapat mengisi atas nama pengampu (tercatat di riwayat).
 // Halaqah: tab Absensi | Setoran (setoran terbuka setelah absensi tersimpan; ?tab=setoran membuka tab Setoran).
+// v1.4: santri yang sedang sakit (Klinik) atau izin (Perizinan) otomatis S/I dan terkunci dengan labelnya.
+//       Santri yang ditandai Sakit wajib diberi keluhan singkat; saat disimpan otomatis dirujuk ke klinik.
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { PhFingerprint, PhCheckCircle, PhFloppyDisk, PhClockCounterClockwise, PhWarningCircle, PhCrown, PhUserSwitch, PhWhatsappLogo, PhArrowCounterClockwise, PhMagnifyingGlass, PhNotebook, PhCamera, PhMapPin, PhListChecks, PhBookOpenText } from '@phosphor-icons/vue'
+import { PhFingerprint, PhCheckCircle, PhFloppyDisk, PhClockCounterClockwise, PhWarningCircle, PhCrown, PhUserSwitch, PhWhatsappLogo, PhArrowCounterClockwise, PhMagnifyingGlass, PhNotebook, PhCamera, PhMapPin, PhListChecks, PhBookOpenText, PhFirstAidKit, PhSignOut, PhLockSimple } from '@phosphor-icons/vue'
 import { useAbsensiSantri } from '@/stores/absensiSantri'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
@@ -27,6 +29,7 @@ const route = useRoute(); const router = useRouter()
 const abs = useAbsensiSantri(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
 const d = ref(null); const galat = ref(''); const isian = ref({}); const ket = ref({}); const catatan = ref(''); const proses = ref(false)
 const atasNama = ref(''); const cari = ref(''); const lembarWA = ref(false); const awal = ref('')
+const periksa = ref({}) // santri Sakit → waktu periksa klinik (hari_ini/besok)
 // Ekskul: jurnal materi per pertemuan (topik wajib, uraian, foto opsional)
 const jurnal = ref({ topik: '', uraian: '', foto_id: null }); const fotoBaru = ref(null); const pratinjauFoto = ref('')
 const ekskul = computed(() => d.value?.jenis === 'ekskul')
@@ -42,6 +45,8 @@ async function muat() {
     d.value = x
     isian.value = Object.fromEntries(x.anggota.map((a) => [a.id, 'H'])); ket.value = {}
     for (const p of x.pengecualian) { isian.value[p.student_id] = p.kode; if (p.keterangan) ket.value[p.student_id] = p.keterangan }
+    periksa.value = {}
+    for (const o of x.otomatis || []) { if (o.student_id in isian.value) { isian.value[o.student_id] = o.kode; ket.value[o.student_id] = o.keterangan } }
     catatan.value = x.sesi_tercatat?.catatan || ''
     jurnal.value = { topik: x.jurnal?.topik || '', uraian: x.jurnal?.uraian || '', foto_id: x.jurnal?.foto_id || null }; fotoBaru.value = null; pratinjauFoto.value = ''
     atasNama.value = x.pengasuh.find((p) => p.peran === 'utama')?.employee_id || x.pengasuh[0]?.employee_id || ''
@@ -51,6 +56,9 @@ async function muat() {
 onMounted(muat)
 
 const jenis = computed(() => JENIS_ABSENSI[d.value?.jenis] || JENIS_ABSENSI.kelas)
+/** Status otomatis per santri: { kode, sumber: klinik|izin, keterangan } — terkunci, tidak dapat diubah pengasuh. */
+const oto = computed(() => Object.fromEntries((d.value?.otomatis || []).map((o) => [o.student_id, o])))
+const perluKeluhan = (id) => isian.value[id] === 'S' && !oto.value[id]
 const modeAtasNama = computed(() => d.value && !d.value.pengasuh_saya && d.value.boleh_atas_nama)
 const bolehIsi = computed(() => d.value && (d.value.pengasuh_saya || d.value.boleh_atas_nama))
 const kini = computed(() => new Date(d.value?.sekarang || Date.now()))
@@ -63,13 +71,15 @@ const hitung = computed(() => Object.fromEntries(URUT_KODE.map((k) => [k, Object
 const hadirDihitung = computed(() => (d.value?.anggota.length || 0) - hitung.value.I - hitung.value.S - hitung.value.A)
 const berubah = computed(() => JSON.stringify([isian.value, ket.value, catatan.value, jurnal.value]) !== awal.value || !!fotoBaru.value)
 
-function setel(id, k) { isian.value[id] = k; if (k === 'H') delete ket.value[id] }
-function semuaHadir() { for (const k of Object.keys(isian.value)) isian.value[k] = 'H'; ket.value = {} }
+function setel(id, k) { if (oto.value[id]) return; isian.value[id] = k; if (k === 'H') delete ket.value[id]; if (k === 'S' && !periksa.value[id]) periksa.value[id] = 'hari_ini' }
+function semuaHadir() { for (const k of Object.keys(isian.value)) if (!oto.value[k]) { isian.value[k] = 'H'; delete ket.value[k] } }
 function presensiDulu() { router.push({ path: '/presensi', query: { lanjut: route.fullPath } }) }
 
 async function simpan() {
   if (!bolehIsi.value) return
   if (ekskul.value && jurnal.value.topik.trim().length < 3) return ui.toast('Isi topik/materi pertemuan ekskul (minimal 3 huruf).', 'galat')
+  const tanpaKeluhan = (d.value?.anggota || []).find((a) => perluKeluhan(a.id) && (ket.value[a.id] || '').trim().length < 3)
+  if (tanpaKeluhan) return ui.toast(`Tuliskan keluhan singkat untuk ${tanpaKeluhan.nama} (Sakit) agar dirujuk ke klinik.`, 'galat')
   proses.value = true
   try {
     let fotoId = jurnal.value.foto_id
@@ -77,11 +87,13 @@ async function simpan() {
       const blob = await kompresGambar(fotoBaru.value, { maks: 1280, kualitas: 0.65 }); const t = route.params.tanggal
       fotoId = await unggahKeDrive(blob, { nama: namaRapi('Ekskul', d.value.kelompok.nama, t, Date.now()) + '.jpg', kategori: 'jurnal_ekskul', folder: `SIMKA PRO/Ekskul/${t.slice(0, 4)}/${t.slice(5, 7)}`, retensiHari: 365 })
     }
-    const pengecualian = Object.entries(isian.value).filter(([, k]) => k !== 'H').map(([student_id, kode]) => ({ student_id, kode, keterangan: ket.value[student_id] || null }))
+    const pengecualian = Object.entries(isian.value).filter(([, k]) => k !== 'H')
+      .map(([student_id, kode]) => ({ student_id, kode, keterangan: ket.value[student_id] || null, periksa: kode === 'S' ? periksa.value[student_id] || 'hari_ini' : undefined }))
+    const dirujuk = (d.value?.anggota || []).filter((a) => perluKeluhan(a.id)).length
     await abs.simpan({ group_id: route.params.group, tanggal: route.params.tanggal, sesi: route.params.sesi, pengecualian, catatan: catatan.value.trim() || null,
       atas_nama_id: modeAtasNama.value ? atasNama.value || null : null,
       jurnal: ekskul.value ? { topik: jurnal.value.topik.trim(), uraian: jurnal.value.uraian.trim() || null, foto_id: fotoId || null } : undefined })
-    ui.toast(`Absensi ${d.value.nama_sesi.toLowerCase()} ${judulKelompok(d.value.kelompok)} tersimpan: ${hadirDihitung.value}/${d.value.anggota.length} hadir.`)
+    ui.toast(`Absensi ${d.value.nama_sesi.toLowerCase()} ${judulKelompok(d.value.kelompok)} tersimpan: ${hadirDihitung.value}/${d.value.anggota.length} hadir.${dirujuk ? ` ${dirujuk} santri sakit dirujuk ke klinik.` : ''}`)
     await muat()
     if (penerimaWA.value.length) lembarWA.value = true
     else if (halaqah.value) gantiTab('setoran')   // halaqah: langsung lanjut ke setoran
@@ -176,21 +188,30 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
               <span :class="['chip-ikon h-9 w-9 shrink-0 text-xs font-extrabold', (isian[a.id] || 'H') === 'H' ? '' : 'ring-2']" :style="(isian[a.id] || 'H') !== 'H' ? 'box-shadow: 0 0 0 2px var(--c)' : ''">{{ inisial(a.nama) }}</span>
               <span class="min-w-0 flex-1"><span class="block truncate font-semibold">{{ a.nama }}<PhCrown v-if="d.kelompok.naqib_id === a.id" :size="14" weight="fill" class="ml-1 inline text-[#8C6200] dark:text-[#F2C24B]" /></span>
                 <span class="block text-xs text-teks3">{{ a.nis }} · <b style="color: var(--c)">{{ KODE[isian[a.id] || 'H'].n }}</b></span></span>
+              <span v-if="oto[a.id]" class="lencana shrink-0" :class="oto[a.id].sumber === 'klinik' ? 'w-klinik' : 'w-pengajuan'">
+                <component :is="oto[a.id].sumber === 'klinik' ? PhFirstAidKit : PhSignOut" :size="13" weight="fill" /> {{ oto[a.id].sumber === 'klinik' ? 'Klinik' : 'Izin' }}</span>
             </div>
-            <div class="mt-2 grid grid-cols-6 gap-1 pl-9" role="radiogroup" :aria-label="`Kehadiran ${a.nama}`">
+            <p v-if="oto[a.id]" class="mt-1.5 flex items-center gap-1.5 pl-9 text-xs text-teks2"><PhLockSimple :size="14" class="shrink-0" /> {{ oto[a.id].keterangan }} · otomatis, tidak perlu diisi</p>
+            <div v-if="!oto[a.id]" class="mt-2 grid grid-cols-6 gap-1 pl-9" role="radiogroup" :aria-label="`Kehadiran ${a.nama}`">
               <button v-for="k in URUT_KODE" :key="k" type="button" role="radio" :aria-checked="(isian[a.id] || 'H') === k" :disabled="!bolehIsi || lewatBatas || belumBuka"
                 :title="KODE[k].n" :aria-label="KODE[k].n" @click="setel(a.id, k)"
                 :class="['min-h-[40px] rounded-xl border-2 text-sm font-extrabold transition disabled:opacity-60', 'w-' + KODE[k].w, (isian[a.id] || 'H') === k ? 'text-teks' : 'border-garis text-teks3']"
                 :style="(isian[a.id] || 'H') === k ? 'border-color: var(--c); background: color-mix(in srgb, var(--c) 18%, transparent); color: var(--c)' : ''">{{ k }}</button>
             </div>
-            <input v-if="(isian[a.id] || 'H') !== 'H'" v-model="ket[a.id]" :disabled="!bolehIsi || lewatBatas" class="isian mt-2 min-h-[40px] pl-3 text-sm" style="margin-left: 2.25rem; width: calc(100% - 2.25rem)"
-              :placeholder="`Keterangan ${KODE[isian[a.id]].n.toLowerCase()} (opsional)`" :aria-label="`Keterangan ${a.nama}`" />
+            <input v-if="(isian[a.id] || 'H') !== 'H' && !oto[a.id]" v-model="ket[a.id]" :disabled="!bolehIsi || lewatBatas" class="isian mt-2 min-h-[40px] pl-3 text-sm" style="margin-left: 2.25rem; width: calc(100% - 2.25rem)"
+              :placeholder="perluKeluhan(a.id) ? 'Keluhan singkat (wajib), mis. demam dan pusing' : `Keterangan ${KODE[isian[a.id]].n.toLowerCase()} (opsional)`" :aria-label="`Keterangan ${a.nama}`" />
+            <div v-if="perluKeluhan(a.id) && bolehIsi && !lewatBatas" class="mt-1.5 flex flex-wrap items-center gap-2 pl-9 text-xs">
+              <span class="flex items-center gap-1 text-teks2"><PhFirstAidKit :size="14" /> Dirujuk ke klinik, periksa:</span>
+              <button v-for="w in [{ k: 'hari_ini', n: 'Hari ini' }, { k: 'besok', n: 'Besok' }]" :key="w.k" type="button" :aria-pressed="(periksa[a.id] || 'hari_ini') === w.k" @click="periksa[a.id] = w.k"
+                :class="['min-h-[32px] rounded-full border px-3 font-semibold', (periksa[a.id] || 'hari_ini') === w.k ? 'border-transparent bg-[#B42A5E] text-white' : 'border-garis text-teks2']">{{ w.n }}</button>
+            </div>
           </li>
         </ul>
         <p v-if="!d.anggota.length" class="py-8 text-center text-sm text-teks3">Kelompok ini belum memiliki anggota.</p>
         <div class="mt-3"><label class="label-isian" for="ab-cat">Catatan sesi (opsional)</label>
           <input id="ab-cat" v-model="catatan" :disabled="!bolehIsi || lewatBatas" class="isian" placeholder="Contoh: kegiatan dipindah ke masjid" /></div>
-        <p class="mt-3 text-xs text-teks3">H Hadir · I Izin · S Sakit · B Bolos (ada di pondok tetapi tidak ikut) · A Absen (tanpa keterangan) · T Terlambat. Terlambat dan Bolos dihitung hadir.</p>
+        <p class="mt-3 text-xs text-teks3">H Hadir · I Izin · S Sakit · B Bolos (ada di pondok tetapi tidak ikut) · A Absen (tanpa keterangan) · T Terlambat. Terlambat dan Bolos dihitung hadir.
+          Santri berlabel Klinik/Izin terisi otomatis. Santri yang ditandai Sakit otomatis dirujuk ke klinik saat disimpan.</p>
       </section>
 
       <!-- Riwayat pengisian -->
