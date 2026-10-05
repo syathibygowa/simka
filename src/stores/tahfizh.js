@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/tahfizh.js | v1.4 | Fase 5 – Tahap 5 Laporan dan grafik tahfizh | 05/10/2026
+// SIMKA PRO | src/stores/tahfizh.js | v1.5 | Fase 5 – Tahap 6 Penutup fase tahfizh | 05/10/2026
 // Tahfizh: hak pengguna, pengaturan per tahun ajaran (KKM, bobot, target, predikat, pekan efektif), penguji,
 // daftar santri beserta program, posisi hafalan, dan capaian juz resmi. Penulisan hanya lewat fungsi SQL.
 import { defineStore } from 'pinia'
@@ -12,6 +12,7 @@ import { useKelompokSantri } from './kelompokSantri'
 import { useAbsensiSantri } from './absensiSantri'
 import { setoranDemo, capaianDemo, ujianDemo } from '@/lib/demoTahfizh'
 import { hitungNilai } from '@/lib/tahfizh'
+const hariIniBulan = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01` }
 
 const rpc = async (nama, arg) => { const { data, error } = await supabase.rpc(nama, arg); if (error) throw new Error(pesanGalat(error)); return data }
 const HAK_KOSONG = { atur: false, validasi: false, pimpinan: false, muhaffizh: false, penguji_kenaikan: false, penguji_sertifikasi: false, lihat: false }
@@ -20,7 +21,7 @@ export const useTahfizh = defineStore('tahfizh', {
   state: () => ({
     hak: { ...HAK_KOSONG }, hakDimuat: false,
     taId: '', pengaturan: null, predikat: [], target: [], bulan: [], penguji: { kenaikan: [], sertifikasi: [] },
-    santri: [], memuat: false, galat: '', sesiSetoran: [], memuatSetoran: false, saluran: null, saluranUjian: null,
+    santri: [], memuat: false, galat: '', sesiSetoran: [], memuatSetoran: false, saluran: null, saluranUjian: null, beranda: null, saluranBeranda: null,
   }),
   getters: {
     targetUntuk: (s) => (program, tingkat) => s.target.find((t) => t.program === program && t.tingkat === Number(tingkat)) || null,
@@ -332,6 +333,38 @@ export const useTahfizh = defineStore('tahfizh', {
     async kehadiranHalaqah(bulan) {
       if (MODE_DEMO) { const kel = useKelompokSantri(); await kel.muat(); return kel.daftar.filter((g) => g.jenis === 'halaqah').map((g, i) => ({ halaqah_id: g.id, persen: 92.5 - i * 3.1 })) }
       return (await rpc('kehadiran_halaqah', { p_bulan: bulan })) || []
+    },
+
+    // ---------- Beranda dan profil santri ----------
+    async muatBeranda() {
+      if (MODE_DEMO) {
+        await this.muatSantri(); const s = this.santri
+        this.beranda = { santri: s.length, rata_juz: Math.round((s.reduce((t, x) => t + x.total_resmi, 0) / (s.length || 1)) * 10) / 10, khatam: s.filter((x) => x.total_resmi >= 30).length,
+          setoran_terisi: 1, setoran_dibuka: 2, setoran_total: 6, ujian_menunggu: ujianDemo().filter((u) => u.status !== 'selesai').length, ujian_untuk_saya: 0,
+          usulan_menunggu: capaianDemo().usulan.filter((u) => u.status === 'menunggu').length, tercapai: 5, tidak_tercapai: 13, terdata: 20, cakupan_semua: useSesi().peran !== 'pegawai' }
+        return this.beranda
+      }
+      try { this.beranda = await rpc('ringkasan_tahfizh_beranda') } catch { this.beranda = null }
+      return this.beranda
+    },
+    dengarkanBeranda() {
+      if (MODE_DEMO || this.saluranBeranda) return
+      let tunda = null; const segar = () => { clearTimeout(tunda); tunda = setTimeout(() => this.muatBeranda(), 1500) }
+      this.saluranBeranda = supabase.channel('beranda-tahfizh')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'memorization_sessions' }, segar)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tahfizh_exams' }, segar).subscribe()
+    },
+    async hafalanSantri(id) {
+      if (MODE_DEMO) {
+        await this.muatSantri(); const t = this.cariSantri(id)
+        if (!t) return null
+        const c = (await this.capaianBulanan(hariIniBulan(), null)).find((r) => r.student_id === id) || null
+        return { program: t.program, sabaq_hal: t.sabaq_hal, sabqi_hal: t.sabqi_hal, manzil_hal: t.manzil_hal, juz_sedang: t.juz_sedang, posisi_pada: t.posisi_pada, posisi_sumber: t.posisi_sumber,
+          halaqah: t.halaqah, muhaffizh: 'Ust. Hasan Basri, Lc.', juz: t.juz_resmi.map((j) => ({ juz: j, sumber: t.juz_awal.includes(j) ? 'awal' : 'validasi' })),
+          usulan: capaianDemo().usulan.filter((u) => u.student_id === id && u.status === 'menunggu').map((u) => u.juz), jenjang_sertifikasi: t.total_resmi >= 30 ? 30 : Math.floor(t.total_resmi / 5) * 5,
+          ujian: ujianDemo().filter((u) => u.student_id === id), bulan_ini: c }
+      }
+      return rpc('hafalan_santri', { p_santri: id })
     },
 
     async imporHafalanAwal(baris) {

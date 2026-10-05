@@ -1,7 +1,7 @@
-<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.2 | Fase 4 – Perbaikan P1 dan Tahap 3 | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.3 | Fase 5 – Tahap 6 Penutup fase tahfizh | 05/10/2026 -->
 <script setup>
 // Biodata santri: identitas, kontak orang tua/wali (tombol WA), riwayat status dan mutasi;
-// ubah status, mutasi keluar beserta surat keterangan pindah; cetak biodata F4.
+// ubah status, mutasi keluar beserta surat keterangan pindah; cetak biodata F4. Fase 5: bagian Hafalan.
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -23,6 +23,7 @@ import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import TombolWA from '@/components/TombolWA.vue'
+import SeksiHafalan from './SeksiHafalan.vue'
 
 const route = useRoute(); const router = useRouter(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
 const s = computed(() => san.cari(route.params.id))
@@ -174,6 +175,9 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
         </ul>
         <p v-else-if="hadir" class="mt-3 text-sm text-teks2">Selalu hadir pada sesi yang tercatat.</p>
       </section>
+
+      <!-- Hafalan (Fase 5) -->
+      <SeksiHafalan :santri="s" />
 
       <!-- Kelompok tahun ajaran berjalan -->
       <section class="kartu w-kelompoksantri mt-4 p-5">

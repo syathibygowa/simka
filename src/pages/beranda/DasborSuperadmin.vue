@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.3 | Fase 4 – Tahap 6 Tahun ajaran, statistik, laporan | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.4 | Fase 5 – Tahap 6 Penutup fase tahfizh | 05/10/2026 -->
 <script setup>
 import { ref, computed } from 'vue'
 import {
@@ -19,6 +19,7 @@ import SebaranBidang from './SebaranBidang.vue'
 import AksiCepat from './AksiCepat.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
+import KartuTahfizhBeranda from '@/components/KartuTahfizhBeranda.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
@@ -68,6 +69,8 @@ const AKSI = [
     </template>
 
     <KartuSantriBeranda />
+
+    <KartuTahfizhBeranda />
 
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="judul-bagian">Ringkasan pondok</h2>

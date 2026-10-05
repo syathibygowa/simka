@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/wa.js | v1.6 | Fase 4 – Tahap 3 Absensi HISBAT | 04/10/2026
+// SIMKA PRO | src/lib/wa.js | v1.7 | Fase 5 – Tahap 6 Penutup fase tahfizh | 05/10/2026
 // Tautan WhatsApp wa.me dari WA pribadi pegawai (Bagian 25). Isi pesan diambil dari template WA yang
 // dikelola superadmin (Pengaturan → Template WA); bila belum dimuat, dipakai isi bawaan di bawah.
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -30,6 +30,8 @@ export const BAWAAN_WA = {
   wali_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami dari {nama_singkat} menyampaikan informasi terkait ananda *{nama_santri}* (NIS {nis}, {kelas}).\n\n{pesan}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   absen_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan bahwa ananda *{nama_santri}* ({kelas}) tercatat *{status}* pada {kegiatan}, {tanggal}.\n{keterangan}\n\nMohon perhatian dan kerja samanya.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   rekap_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nRekap kehadiran ananda *{nama_santri}* ({kelas}) periode {periode}:\n{rekap}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  rekap_hafalan: '{salam}, Bapak/Ibu {nama_wali}.\n\nPerkembangan hafalan ananda *{nama_santri}* ({kelas}, {halaqah}):\n• Posisi hafalan: {posisi}\n• Hafalan resmi: {total_juz} juz\n• Capaian {periode}: {capaian}\n{keterangan}\n\nMohon doa dan dukungan Bapak/Ibu agar ananda istiqamah menjaga hafalannya.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  penguji_ujian: '{salam}, {nama}.\n\nDaftar tunggu {jenis_ujian} ({jumlah} santri):\n{daftar}\n\nMohon berkenan mengambil dan menjadwalkan ujiannya di SIMKA PRO: {tautan}\n\n{penutup}\n{pengirim}',
   verval_presensi: '{salam}, {nama}.\n\nPresensi Anda pada sesi {sesi}, {tanggal} telah diverval dengan status *{status_presensi}*.\nCatatan: {catatan_verval}\n\n{penutup}\n{pengirim}',
 }
 
@@ -66,6 +68,8 @@ export const ISIAN_WA = [
   { grup: 'Presensi', isian: [['sesi', 'Nama sesi presensi'], ['status_presensi', 'Status presensi'], ['catatan_verval', 'Catatan verval admin']] },
   { grup: 'Santri dan wali', isian: [['nama_wali', 'Nama orang tua/wali penerima'], ['hubungan', 'Hubungan (Ayah/Ibu/Wali)'], ['nama_santri', 'Nama santri'], ['nis', 'NIS santri'], ['kelas', 'Kelas santri'],
     ['kegiatan', 'Kegiatan absensi (mis. halaqah subuh)'], ['periode', 'Periode rekap'], ['rekap', 'Ringkasan kehadiran per kegiatan']] },
+  { grup: 'Tahfizh', isian: [['halaqah', 'Nama halaqah santri'], ['posisi', 'Posisi hafalan (juz dan halaman)'], ['total_juz', 'Jumlah juz hafalan resmi'],
+    ['capaian', 'Capaian periode (penambahan dan status)'], ['jenis_ujian', 'Jenis ujian (kenaikan juz/sertifikasi)'], ['jumlah', 'Jumlah santri'], ['daftar', 'Daftar santri menunggu ujian']] },
   { grup: 'Bebas', isian: [['pesan', 'Isi pesan bebas']] },
 ]
 

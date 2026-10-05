@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.0 | Fase 5 – Tahap 4 Ujian kenaikan juz dan sertifikasi | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.1 | Fase 5 – Tahap 6 Penutup fase tahfizh | 05/10/2026 -->
 <script setup>
 // Ujian tahfizh: kenaikan juz dan sertifikasi berjenjang (5, 10, 15 … juz).
 // Muhaffizh merekomendasikan → penguji aktif menerima notifikasi (dan dapat dikabari WA) → penguji mengambil/menjadwalkan
@@ -14,7 +14,7 @@ import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 import { STATUS_UJIAN, HASIL_UJIAN, JENIS_PENGUJI, ringkasJuz, hitungNilai } from '@/lib/tahfizh'
 import { formatWaktu, hariIniISO } from '@/lib/tanggal'
-import { tautanWA, halamanAplikasi } from '@/lib/wa'
+import { tautanWA, halamanAplikasi, pesanWA } from '@/lib/wa'
 import BilahTab from '@/components/BilahTab.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
@@ -77,9 +77,8 @@ const pengujiAktif = computed(() => tz.penguji[jenis.value].filter((p) => p.akti
 function bukaWA() { lembarWA.value = true }
 const pesanPenguji = (p) => {
   const tunggu = daftar.value.filter((u) => u.status === 'menunggu')
-  return `Assalamu'alaikum ${p.nama}.\n\nDaftar tunggu ${JENIS_PENGUJI[jenis.value].toLowerCase()} (${tunggu.length} santri):\n`
-    + tunggu.map((u, i) => `${i + 1}. ${u.nama} (${u.halaqah || '-'}) · ${ketUjian(u)}`).join('\n')
-    + `\n\nMohon berkenan mengambil dan menjadwalkan ujiannya di SIMKA PRO: ${halamanAplikasi('/tahfizh/ujian')}\n\nJazakumullahu khairan.`
+  return pesanWA('penguji_ujian', { nama: p.nama, jenis_ujian: JENIS_PENGUJI[jenis.value].toLowerCase(), jumlah: tunggu.length,
+    daftar: tunggu.map((u, i) => `${i + 1}. ${u.nama} (${u.halaqah || '-'}) · ${ketUjian(u)}`).join('\n'), tautan: halamanAplikasi('/tahfizh/ujian') })
 }
 
 // ---------- Ambil / tetapkan penguji ----------
