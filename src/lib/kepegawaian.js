@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/kepegawaian.js | v1.1 | Fase 5 – Perbaikan: pegawai memperbarui data kepegawaiannya | 05/10/2026
+// SIMKA PRO | src/lib/kepegawaian.js | v1.2 | Perbaikan impor: judul kolom bertanda * dikenali | 06/10/2026
 // Label baku, normalisasi isian, dan kolom templat Excel data pegawai.
 
 export const STATUS_PEGAWAI = { tetap: 'Tetap', kontrak: 'Kontrak', honorer: 'Honorer' }
@@ -72,7 +72,8 @@ export const KOLOM_IMPOR = [
 
 /** Kenali judul kolom Excel (templat SIMKA atau daftar lama pondok). */
 export function kenaliJudul(judul) {
-  const t = bersih(judul).replace(/\s*\(.*\)\s*$/, '').replace(/[*:]/g, '').trim()
+  // v1.2: tanda * dibuang lebih dulu, baru keterangan dalam kurung (sama dengan perbaikan impor santri).
+  const t = bersih(judul).replace(/[*:]/g, '').trim().replace(/\s*\(.*\)\s*$/, '').trim()
   for (const c of KOLOM_IMPOR) if (bersih(c.j).replace(/\s*\(.*\)\s*$/, '') === t || c.alias.includes(t)) return c.k
   return null
 }

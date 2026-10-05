@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/santri.js | v1.3 | Fase 4 – Perbaikan P2 (pengasuh sesuai tupoksi) | 04/10/2026
+// SIMKA PRO | src/lib/santri.js | v1.4 | Perbaikan impor: judul kolom bertanda * dikenali | 06/10/2026
 // Label baku, pembacaan NIS pondok, normalisasi isian, dan kolom templat Excel data santri.
 import { normalJK, normalHP } from './kepegawaian'
 import { supabase, MODE_DEMO } from './supabase'
@@ -119,8 +119,10 @@ export const KOLOM_IMPOR = [
   { k: 'pekerjaan_wali', j: 'Pekerjaan wali', alias: ['pekerjaan wali'] },
   { k: 'catatan', j: 'Catatan', alias: ['catatan', 'keterangan'] },
 ]
+// v1.4: tanda * (kolom wajib) dibuang LEBIH DULU, baru keterangan dalam kurung. Sebelumnya "NIS (7 digit) *"
+// tidak dikenali karena kurung tidak berada di akhir judul, sehingga templat/ekspor sendiri ditolak saat diimpor.
 export function kenaliJudul(judul) {
-  const t = bersih(judul).replace(/\s*\(.*\)\s*$/, '').replace(/[*:]/g, '').trim()
+  const t = bersih(judul).replace(/[*:]/g, '').trim().replace(/\s*\(.*\)\s*$/, '').trim()
   for (const c of KOLOM_IMPOR) if (bersih(c.j).replace(/\s*\(.*\)\s*$/, '') === t || c.alias.includes(t)) return c.k
   return null
 }
