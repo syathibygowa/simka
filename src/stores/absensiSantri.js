@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/absensiSantri.js | v1.2 | Fase 6 – Tahap 2 Status otomatis dan perizinan santri | 06/10/2026
+// SIMKA PRO | src/stores/absensiSantri.js | v1.3 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026
 // Absensi santri HISBAT: sesi hari ini (pengasuh) atau semua kelompok (pantauan), detail sesi, simpan
 // (hanya pengecualian), rekap per santri, dan riwayat ketidakhadiran. Penulisan lewat fungsi SQL.
 // v1.2: detail() menyertakan "otomatis" — santri yang sedang sakit (Klinik → S) atau izin (Perizinan → I).
@@ -55,6 +55,20 @@ export const useAbsensiSantri = defineStore('absensiSantri', {
       ])
       if (error) throw new Error(pesanGalat(error))
       return { ...data, otomatis: oto.error ? [] : oto.data || [] }
+    },
+    /** Dasbor ekskul: ringkasan setiap ekskul (pertemuan terjadwal/terlaksana, kehadiran, jurnal materi). */
+    async ringkasanEkskul(mulai, selesai) {
+      if (!MODE_DEMO) { const { data, error } = await supabase.rpc('ringkasan_ekskul', { p_mulai: mulai, p_selesai: selesai }); if (error) throw new Error(pesanGalat(error)); return data || [] }
+      await useSantri().muat(); const d = dataAbsensiDemo(); const peg = useSesi().peran === 'pegawai'
+      return d.kelompok.kelompok.filter((g) => g.jenis === 'ekskul' && g.aktif && (!peg || g.pengasuh.some((p) => p.employee_id === 'p1'))).map((g) => {
+        const ses = Object.values(d.sesi).filter((s) => s.group_id === g.id && s.tanggal >= mulai && s.tanggal <= selesai)
+        const t = ses.reduce((a, s) => { const h = hitung(s); return { n: a.n + s.jumlah_anggota, h: a.h + h.jumlah_hadir, i: a.i + h.jumlah_izin, s: a.s + h.jumlah_sakit, a: a.a + h.jumlah_absen } }, { n: 0, h: 0, i: 0, s: 0, a: 0 })
+        const akhir = Object.values(d.sesi).filter((s) => s.group_id === g.id).sort((a, b) => b.tanggal.localeCompare(a.tanggal))[0]
+        return { id: g.id, nama: g.nama, keterangan: g.keterangan, pembina: g.pengasuh.map((p) => p.nama).join(', '),
+          anggota_aktif: d.kelompok.anggota.filter((a) => a.group_id === g.id && !a.selesai).length, pertemuan_rencana: ses.length + (g.id === 'g-epn' ? 1 : 0), pertemuan_terlaksana: ses.length,
+          anggota: t.n, hadir: t.h, izin: t.i, sakit: t.s, absen: t.a, persen: t.n ? Math.round((t.h / t.n) * 1000) / 10 : null, jurnal_terisi: ses.filter((s) => s.jurnal).length,
+          terakhir: akhir ? { tanggal: akhir.tanggal, topik: akhir.jurnal?.topik || null } : null }
+      })
     },
     /** Mode demo: santri sakit (kasus klinik ditangani) dan santri izin (disetujui/keluar) di antara anggota. */
     async otomatisDemo(anggota) {

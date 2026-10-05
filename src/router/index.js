@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.8 | Fase 6 – Tahap 2 Status otomatis dan perizinan santri | 06/10/2026
+// SIMKA PRO | src/router/index.js | v3.9 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -41,6 +41,7 @@ const routes = [
       { path: 'tahfizh/:tab?', component: () => import('@/pages/tahfizh/Tahfizh.vue'), props: true, meta: { judul: 'Tahfizh', kembali: '/tugas' } },
       { path: 'musyrif/:tab?', component: () => import('@/pages/musyrif/Musyrif.vue'), props: true, meta: { judul: 'Musyrif', kembali: '/tugas' } },
       { path: 'izin-santri/:tab?', component: () => import('@/pages/izin/IzinSantri.vue'), props: true, meta: { judul: 'Perizinan Santri', kembali: '/tugas' } },
+      { path: 'lapor/:tab?', component: () => import('@/pages/lapor/Lapor.vue'), props: true, meta: { judul: 'Lapor ke Bidang', kembali: '/tugas' } },
       { path: 'klinik/:tab?', component: () => import('@/pages/klinik/Klinik.vue'), props: true, meta: { judul: 'Klinik', kembali: '/tugas' } },
       { path: 'ekskul/:tab?', component: () => import('@/pages/ekskul/Ekskul.vue'), props: true, meta: { judul: 'Ekskul', kembali: '/tugas' } },
       { path: 'kelompok-santri/impor', component: () => import('@/pages/kelompoksantri/ImporKelompok.vue'), meta: { judul: 'Impor Pembagian Kelompok', kembali: '/kelompok-santri' } },

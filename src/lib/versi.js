@@ -1,6 +1,6 @@
-// SIMKA PRO | src/lib/versi.js | v6.3.0 | Fase 6 – Tahap 3 Jurnal musyrif dan klinik lanjutan | 06/10/2026
+// SIMKA PRO | src/lib/versi.js | v6.4.0 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026
 // Nomor versi aplikasi yang tampil di halaman Profil. Naikkan setiap kali kode diunggah ke GitHub.
-export const VERSI_APLIKASI = '6.3.0'
+export const VERSI_APLIKASI = '6.4.0'
 export const KETERANGAN_VERSI = 'Fase 6 – Klinik dan lapor'
 
 // Waktu kode dibangun oleh GitHub Actions; dipakai untuk memastikan versi yang tayang adalah yang terbaru.

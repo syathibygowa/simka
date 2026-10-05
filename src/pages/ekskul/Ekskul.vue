@@ -1,12 +1,13 @@
-<!-- SIMKA PRO | src/pages/ekskul/Ekskul.vue | v1.1 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/ekskul/Ekskul.vue | v1.2 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026 -->
 <script setup>
 // Ekskul: Pertemuan (absensi HISBAT + jurnal materi per pertemuan), Jadwal pertemuan (otomatis menjadi sesi
 // presensi pembina/pelatih), dan Rekap (kehadiran santri, jurnal materi; Excel dan cetak F4).
 // Ekskul adalah kegiatan eksternal: tidak memengaruhi persentase kehadiran program pokok santri.
+// v1.2: tab Dasbor — perkembangan semua ekskul (pertemuan, kehadiran, jurnal materi) untuk admin/pimpinan/pembina.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BilahTab from '@/components/BilahTab.vue'
-import { PhMedal, PhCalendarDots, PhChartBar, PhCaretRight, PhPencilSimple, PhPlus, PhX, PhFloppyDisk, PhMapPin, PhUserCircle, PhInfo } from '@phosphor-icons/vue'
+import { PhMedal, PhCalendarDots, PhChartBar, PhCaretRight, PhPencilSimple, PhPlus, PhX, PhFloppyDisk, PhMapPin, PhUserCircle, PhInfo, PhGauge } from '@phosphor-icons/vue'
 import { useAbsensiSantri } from '@/stores/absensiSantri'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import { useSesi } from '@/stores/sesi'
@@ -16,11 +17,12 @@ import { HARI, hariIniISO, formatHari } from '@/lib/tanggal'
 import InputTanggal from '@/components/InputTanggal.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import TabRekapEkskul from './TabRekapEkskul.vue'
+import TabDasborEkskul from './TabDasborEkskul.vue'
 
-const props = defineProps({ tab: { type: String, default: 'pertemuan' } })
+const props = defineProps({ tab: { type: String, default: '' } })
 const router = useRouter(); const abs = useAbsensiSantri(); const kel = useKelompokSantri(); const sesi = useSesi(); const ui = useUI()
-const TAB = [{ k: 'pertemuan', n: 'Pertemuan', ikon: PhMedal, w: 'ekskul' }, { k: 'jadwal', n: 'Jadwal', ikon: PhCalendarDots, w: 'agenda' }, { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' }]
-const aktif = computed(() => (TAB.some((t) => t.k === props.tab) ? props.tab : 'pertemuan'))
+const TAB = [{ k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'ekskul' }, { k: 'pertemuan', n: 'Pertemuan', ikon: PhMedal, w: 'ekskul' }, { k: 'jadwal', n: 'Jadwal', ikon: PhCalendarDots, w: 'agenda' }, { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' }]
+const aktif = computed(() => (TAB.some((t) => t.k === props.tab) ? props.tab : lihatSemua.value ? 'dasbor' : 'pertemuan'))
 const lihatSemua = computed(() => sesi.isAdmin || sesi.tingkat('absensi_ekskul') >= 1 && sesi.tingkat('data_santri') >= 1)
 const bolehAtur = computed(() => sesi.bolehAdmin('kelompok_santri') || sesi.tingkat('kelompok_santri') >= 2)
 const tanggal = ref(hariIniISO())
@@ -54,7 +56,8 @@ const pembina = (g) => (g.pengasuh || []).filter((p) => p.berlaku !== false).map
     <BilahTab class="mb-4" :tab="TAB" :model-value="aktif" label="Bagian ekskul" @update:model-value="pilihTab" />
 
     <!-- Pertemuan -->
-    <template v-if="aktif === 'pertemuan'">
+    <TabDasborEkskul v-if="aktif === 'dasbor'" @rekap="pilihTab('rekap')" />
+    <template v-else-if="aktif === 'pertemuan'">
       <div class="mb-4 flex flex-wrap items-end gap-3">
         <div class="w-48"><InputTanggal v-model="tanggal" label="Tanggal" wajib /></div>
         <p class="flex-1 pb-3 text-sm text-teks3">{{ formatHari(tanggal) }} · {{ lihatSemua ? 'semua ekskul' : 'ekskul yang Anda bina' }}. Isi absensi dan jurnal materi setiap pertemuan.</p>

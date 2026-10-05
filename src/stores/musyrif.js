@@ -1,7 +1,8 @@
-// SIMKA PRO | src/stores/musyrif.js | v1.1 | Fase 6 – Tahap 3 Jurnal musyrif dan klinik lanjutan | 06/10/2026
+// SIMKA PRO | src/stores/musyrif.js | v1.2 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026
 // Menu Musyrif: daftar kamar yang terlihat, sesi asrama hari ini, dan rincian absensi asrama per kamar
 // (dasar dasbor dan rekap individu/kamar/pekan/bulan/rentang). Data hanya dibaca; pengisian tetap lewat Absensi Santri.
 // v1.1: jurnal musyrif per kamar (tulis, ubah, hapus, tanggapan pimpinan).
+// v1.2: ringkasan semua kamar (dasbor pemantauan admin/pimpinan).
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { pesanGalat } from './lembaga'
@@ -98,6 +99,23 @@ export const useMusyrif = defineStore('musyrif', {
       }
       return { kamar: { id: g.id, nama: g.nama, jenis_kelamin: g.jenis_kelamin }, mulai, selesai, sesi, isi, rencana,
         santri: anggota.map((s) => ({ id: s.id, nis: s.nis, nama: s.nama_lengkap, jenis_kelamin: s.jenis_kelamin, status: s.status, aktif_di_kamar: true })) }
+    },
+
+    /** Ringkasan semua kamar yang terlihat pada rentang (dasbor pemantauan). */
+    async ringkasan(mulai, selesai) {
+      if (!MODE_DEMO) return (await rpc('ringkasan_asrama', { p_mulai: mulai, p_selesai: selesai })) || []
+      await this.muatKamar(); const hasil = []
+      for (const k of this.kamar) {
+        const d = await this.rinci(k.id, mulai, selesai); const t = { I: 0, S: 0, A: 0, T: 0, n: 0 }
+        for (const [, , kode] of d.isi) { t.n++; if (t[kode] != null) t[kode]++ }
+        const j = jurnalDemo(k.id).filter((x) => x.tanggal >= mulai && x.tanggal <= selesai)
+        hasil.push({ id: k.id, nama: k.nama, jenis_kelamin: k.jenis_kelamin, keterangan: k.keterangan, musyrif: k.musyrif.map((m) => m.nama).join(', '), santri: k.jumlah,
+          sesi_rencana: d.rencana.length, sesi_terisi: d.sesi.length, anggota: t.n, hadir: t.n - t.I - t.S - t.A, izin: t.I, sakit: t.S, absen: t.A, terlambat: t.T,
+          persen: t.n ? Math.round(((t.n - t.I - t.S - t.A) / t.n) * 1000) / 10 : null, hari_ini_terisi: d.sesi.filter((s) => s.tanggal === hariIniISO()).length,
+          sakit_aktif: k.id === 'g-kum' ? 1 : 0, izin_aktif: k.id === 'g-kab' ? 1 : k.id === 'g-kum' ? 1 : 0, izin_terlambat: k.id === 'g-kum' ? 1 : 0,
+          jurnal: j.length, jurnal_penting: j.filter((x) => x.penting).length, jurnal_terakhir: jurnalDemo(k.id)[0]?.tanggal || null })
+      }
+      return hasil
     },
 
     // ---------- Jurnal musyrif ----------

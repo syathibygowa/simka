@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.3 | Fase 6 – Tahap 2 Status otomatis dan perizinan santri | 06/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.4 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -53,6 +53,7 @@ export const MENU = [
     syarat: (c) => c.kelompok || Number(c.fitur?.klinik ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 },
   { kode: 'izinsantri', nama: 'Perizinan Santri', ikon: PhSignOut, warna: 'pengajuan', ke: '/izin-santri', grup: 'Layanan',
     syarat: (c) => c.kelompok || Number(c.fitur?.perizinan_santri ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 || (c.izin || []).includes('kelola_izin_santri') },
+  { kode: 'lapor', nama: 'Lapor ke Bidang', ikon: PhMegaphone, warna: 'laporan', ke: '/lapor', grup: 'Layanan' },
   { kode: 'security',   nama: 'Security',        ikon: PhShieldCheck,    warna: 'security',   ke: '/segera/security',   grup: 'Layanan', fase: 7 },
   { kode: 'laporan',    nama: 'Laporan',         ikon: PhChartBar,       warna: 'laporan',    ke: '/segera/laporan',    grup: 'Administrasi', fase: 8 },
   { kode: 'tatausaha',  nama: 'Tata Usaha',      ikon: PhEnvelopeSimple, warna: 'tatausaha',  ke: '/segera/tatausaha',  grup: 'Administrasi', fase: 10 },

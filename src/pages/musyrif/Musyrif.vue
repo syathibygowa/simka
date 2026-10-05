@@ -1,13 +1,14 @@
-<!-- SIMKA PRO | src/pages/musyrif/Musyrif.vue | v1.2 | Fase 6 – Tahap 3 Jurnal musyrif dan klinik lanjutan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/Musyrif.vue | v1.3 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026 -->
 <script setup>
 // Menu Musyrif (kepengasuhan asrama). Musyrif/musyrifah melihat kamar asuhannya; admin, pimpinan, dan pemegang
 // hak fitur Absensi Asrama melihat semua kamar. Tab: Dasbor (statistik langsung, sesi hari ini, perlu perhatian)
 // dan Rekap (per santri, per pekan, per bulan, individu; cetak, Excel, WA wali, salin grup WA).
 // Perizinan (v1.1): izin santri kamar terpilih — ajukan, pantau, catat keluar/kembali, WA wali.
+// Ringkasan (v1.3): dasbor pemantauan semua kamar bagi admin/pimpinan (tampil bila dapat melihat lebih dari satu kamar).
 // Jurnal (v1.2): catatan kegiatan kepengasuhan harian, tanggapan pimpinan, cetak, salin ke grup WA.
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhGauge, PhChartBar, PhHouseLine, PhLockSimple, PhWhatsappLogo, PhUsersThree, PhSignOut, PhNotePencil } from '@phosphor-icons/vue'
+import { PhGauge, PhChartBar, PhHouseLine, PhLockSimple, PhWhatsappLogo, PhUsersThree, PhSignOut, PhNotePencil, PhSquaresFour } from '@phosphor-icons/vue'
 import { useMusyrif } from '@/stores/musyrif'
 import { useUI } from '@/stores/ui'
 import { useSantri } from '@/stores/santri'
@@ -16,12 +17,14 @@ import TabDasborMusyrif from './TabDasborMusyrif.vue'
 import TabRekapMusyrif from './TabRekapMusyrif.vue'
 import TabIzin from '@/pages/izin/TabIzin.vue'
 import TabJurnalMusyrif from './TabJurnalMusyrif.vue'
+import TabRingkasanMusyrif from './TabRingkasanMusyrif.vue'
 
 const props = defineProps({ tab: { type: String, default: '' } })
 const router = useRouter(); const mu = useMusyrif(); const ui = useUI(); const san = useSantri()
 onMounted(async () => { try { await mu.muatKamar() } catch (e) { ui.toast(e.message, 'galat') } })
-const TAB = [{ k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'musyrif' }, { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' }, { k: 'jurnal', n: 'Jurnal', ikon: PhNotePencil, w: 'musyrif' }, { k: 'izin', n: 'Perizinan', ikon: PhSignOut, w: 'pengajuan' }]
-const aktif = computed(() => (TAB.some((t) => t.k === props.tab) ? props.tab : 'dasbor'))
+const pemantau = computed(() => mu.kamar.length > 1 || mu.kamar.some((k) => !k.asuhan_saya))
+const TAB = computed(() => [...(pemantau.value ? [{ k: 'ringkasan', n: 'Semua kamar', ikon: PhSquaresFour, w: 'musyrif' }] : []), { k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'musyrif' }, { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' }, { k: 'jurnal', n: 'Jurnal', ikon: PhNotePencil, w: 'musyrif' }, { k: 'izin', n: 'Perizinan', ikon: PhSignOut, w: 'pengajuan' }])
+const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : pemantau.value ? 'ringkasan' : 'dasbor'))
 const k = computed(() => mu.kamarPilih)
 /** Santri kamar terpilih (calon pengajuan izin). */
 const santriKamar = computed(() => san.daftar.filter((s) => s.status === 'aktif' && (s.kelompok || []).some((g) => g.id === mu.pilih)).map((s) => ({ id: s.id, nama: s.nama_lengkap, nis: s.nis })))
@@ -34,7 +37,7 @@ const daftarMusyrif = computed(() => (k.value?.musyrif || []).map((m) => m.nama)
       <p class="text-sm text-teks2">Belum ada kamar yang dapat Anda lihat. Menu Musyrif terbuka bagi musyrif/musyrifah yang ditetapkan pada kamar (Kelompok Santri), pimpinan, dan admin.</p>
     </div>
     <template v-else-if="k">
-      <section class="kartu w-musyrif kepala-kamar mb-4 p-4 sm:p-5">
+      <section v-if="aktif !== 'ringkasan'" class="kartu w-musyrif kepala-kamar mb-4 p-4 sm:p-5">
         <div class="flex flex-wrap items-center gap-3">
           <span class="chip-ikon h-12 w-12 shrink-0"><PhHouseLine :size="26" weight="duotone" /></span>
           <div class="min-w-0 flex-1">
@@ -51,7 +54,8 @@ const daftarMusyrif = computed(() => (k.value?.musyrif || []).map((m) => m.nama)
         </div>
       </section>
       <BilahTab class="mb-4" :tab="TAB" :model-value="aktif" label="Bagian musyrif" @update:model-value="(x) => router.replace(`/musyrif/${x}`)" />
-      <TabDasborMusyrif v-if="aktif === 'dasbor'" :key="'d' + mu.pilih" @rekap="router.replace('/musyrif/rekap')" />
+      <TabRingkasanMusyrif v-if="aktif === 'ringkasan'" @buka="router.replace('/musyrif/dasbor')" />
+      <TabDasborMusyrif v-else-if="aktif === 'dasbor'" :key="'d' + mu.pilih" @rekap="router.replace('/musyrif/rekap')" />
       <TabRekapMusyrif v-else-if="aktif === 'rekap'" :key="'r' + mu.pilih" />
       <TabJurnalMusyrif v-else-if="aktif === 'jurnal'" :key="'j' + mu.pilih" :calon="santriKamar" />
       <TabIzin v-else :key="'i' + mu.pilih" :group="mu.pilih" :calon="santriKamar" peran-utama="musyrif" />
