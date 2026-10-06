@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabRingkasanMusyrif.vue | v1.0 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabRingkasanMusyrif.vue | v1.1 | Fase 6 – Perbaikan: dasbor Semua kamar selalu tampil bagi admin/pimpinan | 06/10/2026 -->
 <script setup>
 // Dasbor pemantauan seluruh kamar untuk admin, superadmin, dan pimpinan: kehadiran asrama, keterisian sesi,
 // santri sakit/izin, dan keaktifan jurnal musyrif per kamar. Ketuk kartu kamar untuk membuka dasbor kamar itu.
@@ -15,9 +15,9 @@ const emit = defineEmits(['buka'])
 const mu = useMusyrif(); const ui = useUI(); const hari = hariIniISO()
 const PERIODE = [{ k: 'hari', n: 'Hari ini', m: hari, s: hari }, { k: 'pekan', n: 'Pekan ini', m: awalPekan(hari), s: hari },
   { k: 'bulan', n: 'Bulan ini', m: awalBulanDari(hari), s: hari }, { k: 'lalu', n: 'Bulan lalu', m: awalBulanDari(tambahHari(awalBulanDari(hari), -1)), s: akhirBulanDari(tambahHari(awalBulanDari(hari), -1)) }]
-const periode = ref('pekan'); const data = ref([]); const memuat = ref(false)
+const periode = ref('pekan'); const data = ref([]); const memuat = ref(false); const galat = ref('')
 const p = computed(() => PERIODE.find((x) => x.k === periode.value))
-async function muat() { memuat.value = true; try { data.value = await mu.ringkasan(p.value.m, p.value.s) } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false } }
+async function muat() { memuat.value = true; galat.value = ''; try { data.value = await mu.ringkasan(p.value.m, p.value.s) } catch (e) { galat.value = e.message } finally { memuat.value = false } }
 onMounted(() => { muat(); mu.dengarkan(muat) })
 onBeforeUnmount(() => mu.berhenti())
 watch(periode, muat)
@@ -66,7 +66,12 @@ function buka(x) { mu.pilih = x.id; emit('buka') }
         </button>
       </li>
     </ul>
-    <p v-if="!data.length && !memuat" class="kartu mt-4 p-8 text-center text-sm text-teks3">Belum ada kamar aktif.</p>
+    <p v-if="galat" class="kartu w-klinik mt-4 p-5 text-sm font-semibold" style="color: var(--c)">Ringkasan gagal dimuat: {{ galat }}</p>
+    <div v-else-if="!data.length && !memuat" class="kartu mt-4 p-6 text-center text-sm text-teks2">
+      <p class="font-semibold">Belum ada kamar aktif pada tahun ajaran aktif.</p>
+      <p class="mt-1 text-teks3">Dasbor terisi setelah kamar dibuat dan diisi santri serta musyrifnya di Kelompok Santri → Kamar.</p>
+      <router-link to="/kelompok-santri" class="tombol-utama mt-3 inline-flex">Buka Kelompok Santri</router-link>
+    </div>
     <p class="mt-3 text-xs text-teks3">Kamar diurutkan dari kehadiran terendah. Ketuk kartu untuk membuka dasbor kamar.</p>
   </div>
 </template>

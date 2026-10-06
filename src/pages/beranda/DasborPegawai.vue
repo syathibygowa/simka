@@ -1,7 +1,8 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.9 | Fase 5 – Tahap 6 Penutup fase tahfizh | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.10 | Fase 6 – Tahap 5 Penutup fase klinik dan lapor | 06/10/2026 -->
 <script setup>
 import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
 import KartuTahfizhBeranda from '@/components/KartuTahfizhBeranda.vue'
+import KartuLayananBeranda from '@/components/KartuLayananBeranda.vue'
 import { computed, onMounted } from 'vue'
 import { PhFingerprint, PhCaretRight, PhSquaresFour } from '@phosphor-icons/vue'
 import { useRouter } from 'vue-router'
@@ -51,6 +52,7 @@ const menu = computed(() => menuUntuk(sesi.peran, sesi.ciriMenu).filter((m) => !
     <!-- Pimpinan pemegang hak data santri: kartu statistik santri langsung -->
     <KartuSantriBeranda v-if="sesi.tingkat('data_santri') >= 1" />
     <KartuTahfizhBeranda v-if="sesi.kelompokSaya.some((k) => k.jenis === 'halaqah') || sesi.tingkat('tahfizh') >= 1 || sesi.tingkat('data_santri') >= 1" />
+    <KartuLayananBeranda />
 
     <div class="grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:gap-6">
       <section class="kartu p-3 sm:p-4">

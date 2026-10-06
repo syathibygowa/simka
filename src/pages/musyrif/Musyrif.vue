@@ -1,17 +1,20 @@
-<!-- SIMKA PRO | src/pages/musyrif/Musyrif.vue | v1.3 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/Musyrif.vue | v1.4 | Fase 6 – Perbaikan: dasbor Semua kamar selalu tampil bagi admin/pimpinan | 06/10/2026 -->
 <script setup>
 // Menu Musyrif (kepengasuhan asrama). Musyrif/musyrifah melihat kamar asuhannya; admin, pimpinan, dan pemegang
 // hak fitur Absensi Asrama melihat semua kamar. Tab: Dasbor (statistik langsung, sesi hari ini, perlu perhatian)
 // dan Rekap (per santri, per pekan, per bulan, individu; cetak, Excel, WA wali, salin grup WA).
 // Perizinan (v1.1): izin santri kamar terpilih — ajukan, pantau, catat keluar/kembali, WA wali.
+// v1.4: tab "Semua kamar" selalu tampil bagi superadmin/admin/pimpinan (juga saat belum ada kamar: tampil panduan);
+//       galat pemuatan ditampilkan di halaman dengan tombol Coba lagi (sebelumnya tertahan di "Memuat kamar…").
 // Ringkasan (v1.3): dasbor pemantauan semua kamar bagi admin/pimpinan (tampil bila dapat melihat lebih dari satu kamar).
 // Jurnal (v1.2): catatan kegiatan kepengasuhan harian, tanggapan pimpinan, cetak, salin ke grup WA.
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { PhGauge, PhChartBar, PhHouseLine, PhLockSimple, PhWhatsappLogo, PhUsersThree, PhSignOut, PhNotePencil, PhSquaresFour } from '@phosphor-icons/vue'
 import { useMusyrif } from '@/stores/musyrif'
 import { useUI } from '@/stores/ui'
 import { useSantri } from '@/stores/santri'
+import { useSesi } from '@/stores/sesi'
 import BilahTab from '@/components/BilahTab.vue'
 import TabDasborMusyrif from './TabDasborMusyrif.vue'
 import TabRekapMusyrif from './TabRekapMusyrif.vue'
@@ -21,8 +24,11 @@ import TabRingkasanMusyrif from './TabRingkasanMusyrif.vue'
 
 const props = defineProps({ tab: { type: String, default: '' } })
 const router = useRouter(); const mu = useMusyrif(); const ui = useUI(); const san = useSantri()
-onMounted(async () => { try { await mu.muatKamar() } catch (e) { ui.toast(e.message, 'galat') } })
-const pemantau = computed(() => mu.kamar.length > 1 || mu.kamar.some((k) => !k.asuhan_saya))
+const sesi = useSesi(); const galat = ref('')
+async function muat(paksa = false) { galat.value = ''; try { await mu.muatKamar(paksa) } catch (e) { galat.value = e.message } }
+onMounted(() => muat(true))
+/** Pemantau = superadmin/admin, pemegang hak fitur Absensi Asrama (pimpinan), atau yang melihat lebih dari satu kamar. */
+const pemantau = computed(() => sesi.isAdmin || Number(sesi.fitur?.absensi_asrama ?? 0) >= 1 || mu.kamar.length > 1 || mu.kamar.some((k) => !k.asuhan_saya))
 const TAB = computed(() => [...(pemantau.value ? [{ k: 'ringkasan', n: 'Semua kamar', ikon: PhSquaresFour, w: 'musyrif' }] : []), { k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'musyrif' }, { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' }, { k: 'jurnal', n: 'Jurnal', ikon: PhNotePencil, w: 'musyrif' }, { k: 'izin', n: 'Perizinan', ikon: PhSignOut, w: 'pengajuan' }])
 const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : pemantau.value ? 'ringkasan' : 'dasbor'))
 const k = computed(() => mu.kamarPilih)
@@ -32,7 +38,15 @@ const daftarMusyrif = computed(() => (k.value?.musyrif || []).map((m) => m.nama)
 </script>
 <template>
   <div>
-    <div v-if="mu.dimuat && !mu.kamar.length" class="kartu w-musyrif flex items-center gap-3 p-5">
+    <div v-if="galat" class="kartu w-klinik flex flex-wrap items-center gap-3 p-5">
+      <p class="min-w-[200px] flex-1 text-sm font-semibold" style="color: var(--c)">Data kamar gagal dimuat: {{ galat }}</p>
+      <button class="tombol-utama" @click="muat(true)">Coba lagi</button>
+    </div>
+    <template v-else-if="mu.dimuat && !mu.kamar.length && pemantau">
+      <BilahTab class="mb-4" :tab="TAB.slice(0, 1)" model-value="ringkasan" label="Bagian musyrif" />
+      <TabRingkasanMusyrif />
+    </template>
+    <div v-else-if="mu.dimuat && !mu.kamar.length" class="kartu w-musyrif flex items-center gap-3 p-5">
       <span class="chip-ikon h-11 w-11"><PhLockSimple :size="24" weight="duotone" /></span>
       <p class="text-sm text-teks2">Belum ada kamar yang dapat Anda lihat. Menu Musyrif terbuka bagi musyrif/musyrifah yang ditetapkan pada kamar (Kelompok Santri), pimpinan, dan admin.</p>
     </div>
