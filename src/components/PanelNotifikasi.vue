@@ -1,6 +1,8 @@
+<!-- SIMKA PRO | src/components/PanelNotifikasi.vue | v1.1 | Fase 7 – Perbaikan uji coba: lonceng hanya belum dibaca | 06/10/2026 -->
 <script setup>
-// Lonceng notifikasi. Desktop: panel tarik-turun. Mobile: membuka halaman Notifikasi.
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+// Lonceng notifikasi. Desktop: panel tarik-turun berisi HANYA notifikasi yang belum dibaca (riwayat lengkap di halaman
+// Notifikasi). Mobile: membuka halaman Notifikasi.
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { PhBell, PhChecks } from '@phosphor-icons/vue'
 import { useNotifikasi } from '@/stores/notifikasi'
@@ -9,6 +11,7 @@ import ItemNotifikasi from './ItemNotifikasi.vue'
 const notif = useNotifikasi()
 const router = useRouter()
 const buka = ref(false)
+const belum = computed(() => notif.daftar.filter((n) => !n.dibaca_pada).slice(0, 30))
 const akar = ref(null)
 const lebar = () => window.matchMedia('(min-width: 1024px)').matches
 function klik() { lebar() ? (buka.value = !buka.value) : router.push('/notifikasi') }
@@ -37,11 +40,11 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', luar))
           </button>
         </div>
         <ul class="max-h-[60vh] space-y-1 overflow-y-auto p-2">
-          <ItemNotifikasi v-for="n in notif.terbaru" :key="n.id" :n="n" ringkas @dibuka="buka = false" />
-          <li v-if="!notif.daftar.length" class="px-4 py-10 text-center text-sm text-teks3">Belum ada notifikasi.</li>
+          <ItemNotifikasi v-for="n in belum" :key="n.id" :n="n" ringkas @dibuka="buka = false" />
+          <li v-if="!belum.length" class="px-4 py-10 text-center text-sm text-teks3">Tidak ada notifikasi baru. Riwayat lengkap ada di halaman Notifikasi.</li>
         </ul>
         <router-link to="/notifikasi" class="block border-t border-garis py-3 text-center text-sm font-semibold text-merah hover:bg-permukaan2" @click="buka = false">
-          Lihat semua notifikasi
+          Lihat semua notifikasi (riwayat)
         </router-link>
       </div>
     </Transition>

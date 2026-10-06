@@ -1,7 +1,7 @@
-<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.2 | Fase 1 – Perbaikan | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.3 | Fase 7 – Perbaikan uji coba: tab Cetak kartu (pindahan menu Kartu Pegawai) | 06/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { PhMagnifyingGlass, PhPrinter, PhEye, PhCaretRight, PhUsersThree, PhSlidersHorizontal, PhUserPlus, PhFileXls, PhChartBar, PhDownloadSimple } from '@phosphor-icons/vue'
+import { PhCards, PhMagnifyingGlass, PhPrinter, PhEye, PhCaretRight, PhUsersThree, PhSlidersHorizontal, PhUserPlus, PhFileXls, PhChartBar, PhDownloadSimple } from '@phosphor-icons/vue'
 import { useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
 import { KEAKTIFAN, STATUS_KELUARGA, PENDIDIKAN, LEVEL_MUHAFFIZH } from '@/lib/kepegawaian'
@@ -10,10 +10,16 @@ import { useSesi } from '@/stores/sesi'
 import { formatPanjang, formatPendek, hariIniISO } from '@/lib/tanggal'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
+import BilahTab from '@/components/BilahTab.vue'
+import Kartu from '@/pages/kartu/Kartu.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+// Tab Cetak kartu (pindahan dari menu Kartu Pegawai) untuk admin ber-izin cetak_kartu
+const sesiK = useSesi(); const bolehKartu = computed(() => sesiK.bolehAdmin('cetak_kartu'))
+const TAB_PEG = [{ k: 'data', n: 'Data pegawai', ikon: PhUsersThree, w: 'pegawai' }, { k: 'kartu', n: 'Cetak kartu', ikon: PhCards, w: 'profil' }]
+const tabPeg = ref('data')
 
 const peg = usePegawai(); const sesi = useSesi(); const router = useRouter()
 const keaktifan = ref('aktif')
@@ -54,6 +60,9 @@ const judulCetak = computed(() => saring.value === 'semua' ? 'Daftar Pegawai' : 
 </script>
 <template>
   <div>
+    <BilahTab v-if="bolehKartu" class="layar-saja mb-4" :tab="TAB_PEG" v-model="tabPeg" label="Bagian data pegawai" />
+    <Kartu v-if="tabPeg === 'kartu'" bagian="massal" />
+    <template v-else>
     <div class="layar-saja">
       <!-- Kepala halaman desktop -->
       <div class="mb-5 hidden items-center gap-3 lg:flex">
@@ -171,6 +180,7 @@ const judulCetak = computed(() => saring.value === 'semua' ? 'Daftar Pegawai' : 
         </div>
       </div>
     </LembarBawah>
+    </template>
   </div>
 </template>
 <style scoped>

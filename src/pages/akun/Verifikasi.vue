@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/akun/Verifikasi.vue | v1.1 | Fase 5 – Perbaikan: pegawai memperbarui data kepegawaiannya | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/akun/Verifikasi.vue | v1.2 | Fase 7 – Perbaikan uji coba: izin admin tanpa teks fase, kotak centang seragam | 06/10/2026 -->
 <script setup>
 // Verifikasi pendaftaran dan pengelolaan akun pegawai (admin dengan izin, superadmin).
 import { ref, computed, onMounted } from 'vue'
@@ -18,6 +18,7 @@ import { tautanWA, TEMPLAT_WA } from '@/lib/wa'
 import LembarBawah from '@/components/LembarBawah.vue'
 import TabPerubahanData from './TabPerubahanData.vue'
 import { usePerubahanData } from '@/stores/perubahanData'
+const tanpaFase = (t) => (t || '').replace(/\s*\((?:Fase|fase)[^)]*\)/g, '')
 
 const props = defineProps({ tab: { type: String, default: 'menunggu' } })
 const router = useRouter()
@@ -274,8 +275,8 @@ const tutupSemua = () => { v.value = null; k.value = null; hasil.value = null }
           </div>
           <div v-if="fPeran.peran === 'admin'">
             <p class="label-isian">Izin admin</p>
-            <label v-for="z in akun.izinTersedia" :key="z.kode" class="flex min-h-[44px] items-center gap-3 rounded-xl px-2 hover:bg-permukaan2">
-              <input v-model="fPeran.izin" type="checkbox" :value="z.kode" class="h-5 w-5 accent-[#C7332F]" /><span>{{ z.nama }}</span></label>
+            <label v-for="z in akun.izinTersedia" :key="z.kode" class="flex min-h-[44px] items-start gap-3 rounded-xl px-2 py-2.5 hover:bg-permukaan2">
+              <input v-model="fPeran.izin" type="checkbox" :value="z.kode" class="mt-0.5 h-5 w-5 shrink-0 accent-[#C7332F]" /><span class="leading-snug">{{ tanpaFase(z.nama) }}</span></label>
           </div>
           <button class="tombol-utama w-full" :disabled="proses" @click="simpanPeran"><PhShieldCheck :size="20" weight="duotone" /> {{ proses ? 'Menyimpan…' : 'Simpan peran' }}</button>
         </div>

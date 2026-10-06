@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.11 | Fase 7 – Tahap 1 Security: gerbang | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.12 | Fase 7 – Perbaikan uji coba: tombol Layar Pantauan | 06/10/2026 -->
 <script setup>
 import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
 import KartuTahfizhBeranda from '@/components/KartuTahfizhBeranda.vue'
@@ -14,6 +14,7 @@ import { useDataPresensi } from '@/stores/presensi'
 import { formatJam } from '@/lib/tanggal'
 import { lencanaSesi } from '@/lib/presensi'
 import Sapaan from './Sapaan.vue'
+import TombolPantauan from '@/components/TombolPantauan.vue'
 import RingkasanPribadi from './RingkasanPribadi.vue'
 import RingkasanPimpinan from './RingkasanPimpinan.vue'
 import IndikatorLangsung from './IndikatorLangsung.vue'
@@ -44,6 +45,7 @@ const menu = computed(() => menuUntuk(sesi.peran, sesi.ciriMenu).filter((m) => !
         <PhCaretRight :size="22" class="text-[#705E61]" />
       </router-link>
     </Sapaan>
+    <TombolPantauan />
 
     <section v-if="br.data?.pimpinan" class="space-y-3">
       <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="judul-bagian">Unit yang Anda pimpin</h2><IndikatorLangsung :waktu="br.diperbarui" /></div>

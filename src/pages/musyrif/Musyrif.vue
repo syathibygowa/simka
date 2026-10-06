@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/Musyrif.vue | v1.4 | Fase 6 – Perbaikan: dasbor Semua kamar selalu tampil bagi admin/pimpinan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/Musyrif.vue | v1.5 | Fase 7 – Perbaikan uji coba: tab Jurnal musyrif dihapus | 06/10/2026 -->
 <script setup>
 // Menu Musyrif (kepengasuhan asrama). Musyrif/musyrifah melihat kamar asuhannya; admin, pimpinan, dan pemegang
 // hak fitur Absensi Asrama melihat semua kamar. Tab: Dasbor (statistik langsung, sesi hari ini, perlu perhatian)
@@ -7,10 +7,10 @@
 // v1.4: tab "Semua kamar" selalu tampil bagi superadmin/admin/pimpinan (juga saat belum ada kamar: tampil panduan);
 //       galat pemuatan ditampilkan di halaman dengan tombol Coba lagi (sebelumnya tertahan di "Memuat kamar…").
 // Ringkasan (v1.3): dasbor pemantauan semua kamar bagi admin/pimpinan (tampil bila dapat melihat lebih dari satu kamar).
-// Jurnal (v1.2): catatan kegiatan kepengasuhan harian, tanggapan pimpinan, cetak, salin ke grup WA.
+// Tab Jurnal dihapus (v1.5): kegiatan tercatat di Jurnal Harian (ceklist/aktivitas tambahan); laporan lewat Lapor ke Bidang.
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhGauge, PhChartBar, PhHouseLine, PhLockSimple, PhWhatsappLogo, PhUsersThree, PhSignOut, PhNotePencil, PhSquaresFour } from '@phosphor-icons/vue'
+import { PhGauge, PhChartBar, PhHouseLine, PhLockSimple, PhWhatsappLogo, PhUsersThree, PhSignOut, PhSquaresFour } from '@phosphor-icons/vue'
 import { useMusyrif } from '@/stores/musyrif'
 import { useUI } from '@/stores/ui'
 import { useSantri } from '@/stores/santri'
@@ -19,7 +19,6 @@ import BilahTab from '@/components/BilahTab.vue'
 import TabDasborMusyrif from './TabDasborMusyrif.vue'
 import TabRekapMusyrif from './TabRekapMusyrif.vue'
 import TabIzin from '@/pages/izin/TabIzin.vue'
-import TabJurnalMusyrif from './TabJurnalMusyrif.vue'
 import TabRingkasanMusyrif from './TabRingkasanMusyrif.vue'
 
 const props = defineProps({ tab: { type: String, default: '' } })
@@ -29,7 +28,7 @@ async function muat(paksa = false) { galat.value = ''; try { await mu.muatKamar(
 onMounted(() => muat(true))
 /** Pemantau = superadmin/admin, pemegang hak fitur Absensi Asrama (pimpinan), atau yang melihat lebih dari satu kamar. */
 const pemantau = computed(() => sesi.isAdmin || Number(sesi.fitur?.absensi_asrama ?? 0) >= 1 || mu.kamar.length > 1 || mu.kamar.some((k) => !k.asuhan_saya))
-const TAB = computed(() => [...(pemantau.value ? [{ k: 'ringkasan', n: 'Semua kamar', ikon: PhSquaresFour, w: 'musyrif' }] : []), { k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'musyrif' }, { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' }, { k: 'jurnal', n: 'Jurnal', ikon: PhNotePencil, w: 'musyrif' }, { k: 'izin', n: 'Perizinan', ikon: PhSignOut, w: 'pengajuan' }])
+const TAB = computed(() => [...(pemantau.value ? [{ k: 'ringkasan', n: 'Semua kamar', ikon: PhSquaresFour, w: 'musyrif' }] : []), { k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'musyrif' }, { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' }, { k: 'izin', n: 'Perizinan', ikon: PhSignOut, w: 'pengajuan' }])
 const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : pemantau.value ? 'ringkasan' : 'dasbor'))
 const k = computed(() => mu.kamarPilih)
 /** Santri kamar terpilih (calon pengajuan izin). */
@@ -71,7 +70,6 @@ const daftarMusyrif = computed(() => (k.value?.musyrif || []).map((m) => m.nama)
       <TabRingkasanMusyrif v-if="aktif === 'ringkasan'" @buka="router.replace('/musyrif/dasbor')" />
       <TabDasborMusyrif v-else-if="aktif === 'dasbor'" :key="'d' + mu.pilih" @rekap="router.replace('/musyrif/rekap')" />
       <TabRekapMusyrif v-else-if="aktif === 'rekap'" :key="'r' + mu.pilih" />
-      <TabJurnalMusyrif v-else-if="aktif === 'jurnal'" :key="'j' + mu.pilih" :calon="santriKamar" />
       <TabIzin v-else :key="'i' + mu.pilih" :group="mu.pilih" :calon="santriKamar" peran-utama="musyrif" />
     </template>
     <p v-else class="kartu p-8 text-center text-sm text-teks3">Memuat kamar…</p>

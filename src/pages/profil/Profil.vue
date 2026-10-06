@@ -1,8 +1,8 @@
-<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.7 | Fase 5 – Perbaikan: pegawai memperbarui data kepegawaiannya | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.8 | Fase 7 – Perbaikan uji coba: kartu pegawai di Profil | 06/10/2026 -->
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhSignOut, PhPalette, PhBell, PhInfo, PhLockKey, PhCamera, PhIdentificationCard } from '@phosphor-icons/vue'
+import { PhSignOut, PhPalette, PhBell, PhInfo, PhLockKey, PhCamera, PhIdentificationCard, PhIdentificationBadge } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import { useNotifikasi } from '@/stores/notifikasi'
 import { MODE_DEMO } from '@/lib/supabase'
@@ -42,7 +42,7 @@ function ganti(p) { sesi.masukDemo(p); notif.berhenti(); pengumuman.berhenti(); 
           <span class="absolute -bottom-1 -right-1 grid h-8 w-8 place-items-center rounded-full bg-white text-[#8E1C19] shadow"><PhCamera :size="18" weight="fill" /></span>
           <input type="file" accept="image/*" class="sr-only" :disabled="unggahFoto" aria-label="Ganti foto profil" @change="gantiFoto" />
         </label>
-        <p class="mt-1 text-xs text-white/85">{{ unggahFoto ? 'Mengunggah foto…' : 'Ketuk foto untuk mengganti (dipakai juga di kartu pegawai)' }}</p>
+        <p v-if="unggahFoto" class="mt-1 text-xs text-white/85">Mengunggah foto…</p>
         <h2 class="mt-3 text-xl font-extrabold text-white">{{ sesi.pengguna?.nama_lengkap }}</h2>
         <p class="text-sm text-white/90">{{ sesi.pengguna?.jabatan }}</p>
         <span class="mt-2 rounded-full bg-white px-3 py-1 text-xs font-bold text-[#8E1C19]">{{ PERAN[sesi.peran] }}</span>
@@ -54,6 +54,11 @@ function ganti(p) { sesi.masukDemo(p); notif.berhenti(); pengumuman.berhenti(); 
         <div><h3 class="judul-bagian">Tema tampilan</h3><p class="text-sm text-teks3">Bawaan mengikuti pengaturan perangkat</p></div></div>
       <PilihTema />
     </section>
+
+    <router-link to="/kartu" class="kartu w-profil flex items-center gap-3 p-5 hover:bg-permukaan2">
+      <span class="chip-ikon h-10 w-10"><PhIdentificationBadge :size="22" weight="duotone" /></span>
+      <span class="flex-1"><span class="block font-bold">Kartu pegawai</span><span class="block text-sm text-teks3">Lihat, cetak, atau unduh kartu pegawai Anda</span></span>
+    </router-link>
 
     <router-link to="/notifikasi" class="kartu w-notifikasi flex items-center gap-3 p-5 hover:bg-permukaan2">
       <span class="chip-ikon h-10 w-10"><PhBell :size="22" weight="duotone" /></span>

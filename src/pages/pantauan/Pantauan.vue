@@ -1,191 +1,184 @@
-<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v1.0 | Fase 7 – Tahap 4 Pantauan langsung pimpinan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.0 | Fase 7 – Perbaikan uji coba: Layar Pantauan berbentuk slide | 06/10/2026 -->
 <script setup>
-// Pantauan Langsung untuk Pimpinan (Blueprint Bagian 28): kondisi santri dan pegawai HARI INI, diperbarui langsung.
-//   Santri   : aktif, hadir di kelas, halaqah per sesi, asrama per sesi, sakit (termasuk klinik), di luar pondok, terlambat kembali
-//   Pegawai  : hadir, terlambat, dinas luar, izin/sakit/cuti, belum presensi, tidak terjadwal
-//   Kegiatan : sesi kelas, halaqah, asrama, ekskul yang sudah/belum terlaksana beserta pengampunya
-//   Security : keluar, kembali, ditolak di gerbang, titipan (di pos, diterima, diambil + pengambil), tamu, kunjungan
-// Saringan: jenis kelamin, jenjang (santri dan kegiatan), bidang (pegawai). Setiap angka diketuk → daftar nama → cetak F4/Excel.
-// Dapat dibuka: semua jabatan struktural (P2), Direktur/Wadir, yayasan, admin, superadmin.
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+// Layar Pantauan (Blueprint Bagian 28) berbentuk SLIDE layar penuh untuk presentasi dan SmartTV.
+//   Dibuka dari tombol "Layar Pantauan" di Beranda (bukan menu). Slide: Santri, Pegawai, Sekolah SMP, Sekolah SMA, Tahfizh,
+//   Hafalan Santri, Asrama dan Musyrif, Kegiatan dan Pengampu, Medis dan Klinik, Security, Ekskul.
+//   Isi: kartu statistik berwarna + grafik. Diperbarui langsung (Realtime + tiap 60 detik); jam berjalan dan jam pembaruan.
+//   Pindah slide: geser samping atau atas-bawah, roda tetikus, tombol panah/penunjuk, papan ketik (← → ↑ ↓ Spasi), putar otomatis.
+//   Saringan: putra/putri, SMP/SMA, bidang (pegawai). Admin/superadmin: ketuk kartu → daftar nama → cetak F4/Excel.
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import * as XLSX from 'xlsx'
-import { PhStudent, PhChalkboardTeacher, PhBookOpenText, PhBed, PhFirstAidKit, PhSignOut, PhSiren, PhUserCheck, PhClock, PhAirplaneTilt, PhUserMinus,
-  PhHourglass, PhMoon, PhCalendarCheck, PhSignIn, PhProhibit, PhPackage, PhHandArrowDown, PhIdentificationBadge, PhUsersThree, PhBroadcast,
-  PhEye, PhDownloadSimple, PhArrowClockwise, PhLock } from '@phosphor-icons/vue'
+import { PhFunnel, PhArrowLeft, PhCaretLeft, PhCaretRight, PhPlay, PhPause, PhArrowsOut, PhArrowsIn, PhArrowClockwise, PhEye, PhDownloadSimple, PhLock } from '@phosphor-icons/vue'
 import { usePantauan } from '@/stores/pantauan'
 import { useSesi } from '@/stores/sesi'
+import { susunSlide } from '@/lib/slidePantauan'
 import { JENJANG_PENDEK, penandaKelompok } from '@/lib/santri'
-import { PENGAMBIL, JENIS_TITIPAN } from '@/lib/security'
-import { formatJam, formatWaktu, formatPanjang } from '@/lib/tanggal'
-import KartuStatistik from '@/components/KartuStatistik.vue'
+import { formatJam, formatPanjang } from '@/lib/tanggal'
+import LogoSimka from '@/components/LogoSimka.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
+import GrafikBatang from '@/components/grafik/GrafikBatang.vue'
+import GrafikLingkaran from '@/components/grafik/GrafikLingkaran.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
-const pt = usePantauan(); const sesi = useSesi()
-onMounted(() => pt.mulai())
-onBeforeUnmount(() => pt.berhenti())
-const jk = ref(''); const jenjang = ref(''); const bidang = ref('')
-const d = computed(() => pt.data || { santri: [], pegawai: [], sesi: [], security: { gerbang: [], titipan: [], tamu: [], kunjungan: [] }, bidang: [] })
-const cocokS = (x) => (!jk.value || x.jk === jk.value) && (!jenjang.value || x.jenjang === jenjang.value)
-const santri = computed(() => d.value.santri.filter(cocokS))
-const pegawai = computed(() => d.value.pegawai.filter((p) => (!jk.value || p.jk === jk.value) && (!bidang.value || p.bidang_id === bidang.value)))
-const kegiatan = computed(() => d.value.sesi.filter((s) => (!jk.value || !s.jk || s.jk === jk.value) && (!jenjang.value || !s.jenjang || s.jenjang === jenjang.value)))
-const sec = computed(() => {
-  const s = d.value.security; const c = (x) => (!jk.value || !x.jenis_kelamin || x.jenis_kelamin === jk.value)
-  return { gerbang: s.gerbang.filter((x) => (!jk.value || x.jk === jk.value) && (!jenjang.value || x.jenjang === jenjang.value)), titipan: s.titipan.filter(c), tamu: s.tamu, kunjungan: s.kunjungan.filter(c) }
-})
-const hari = computed(() => d.value.tanggal)
-const hariIni = (iso) => iso && new Date(new Date(iso).getTime() + 8 * 3600000).toISOString().slice(0, 10) === hari.value
+const pt = usePantauan(); const sesi = useSesi(); const router = useRouter(); const route = useRoute()
+const admin = computed(() => ['admin', 'superadmin'].includes(sesi.peran))
 
-// ---------- Kolom daftar ----------
-const K_SANTRI = [['nama', 'Nama santri', 26], ['nis', 'NIS', 10], ['kelas', 'Kelas', 8], ['kamar', 'Kamar', 16]]
-const kelasKamar = (s) => ({ ...s, kelas: s.kelas || '–', kamar: s.kamar || '–' })
-const K_PEG = [['nama', 'Nama pegawai', 28], ['jabatan', 'Jabatan', 24], ['bidang', 'Bidang', 18], ['ket', 'Keterangan', 22]]
-const pegBaris = (f) => pegawai.value.filter(f).map((p) => ({ ...p, bidang: p.bidang || '–', jabatan: p.jabatan || '–', ket: p.ket || '–' }))
-const KODE = { H: 'Hadir', T: 'Terlambat', I: 'Izin', S: 'Sakit', A: 'Absen', B: 'Bolos' }
+// ---------- Saringan (tersimpan di perangkat) ----------
+const simpanan = (() => { try { return JSON.parse(localStorage.getItem('simka.layar.saring') || '{}') } catch { return {} } })()
+const f = ref({ jk: simpanan.jk || '', jenjang: simpanan.jenjang || '', bidang: simpanan.bidang || '' })
+watch(f, (v) => { try { localStorage.setItem('simka.layar.saring', JSON.stringify(v)) } catch { /* abaikan */ } }, { deep: true })
+const slide = computed(() => (pt.data ? susunSlide(pt.data, f.value) : []))
+const saringanTeks = computed(() => [f.value.jk === 'L' ? 'putra' : f.value.jk === 'P' ? 'putri' : '', f.value.jenjang ? JENJANG_PENDEK[f.value.jenjang] : '',
+  f.value.bidang ? pt.data?.bidang.find((b) => b.id === f.value.bidang)?.nama : ''].filter(Boolean).join(', '))
 
-// ---------- Kartu santri ----------
-const sesiSantri = (awalan) => {
-  const kunci = [...new Set(santri.value.flatMap((s) => Object.keys(s.sesi || {}).filter((k) => k.startsWith(awalan))))]
-  return kunci.map((k) => {
-    const ada = santri.value.filter((s) => s.sesi?.[k]); const hadir = ada.filter((s) => ['H', 'T'].includes(s.sesi[k].k))
-    return { k, n: ada[0]?.sesi[k].n || k.split(':')[1], ada, hadir }
-  })
+// ---------- Slide aktif ----------
+const idx = ref(0); let sudahAwal = false
+const aktif = computed(() => slide.value[idx.value])
+watch(slide, (s) => { if (!sudahAwal && s.length) { sudahAwal = true; const i = s.findIndex((x) => x.k === route.query.slide); if (i >= 0) idx.value = i } }, { immediate: true })
+function ke(i, manual = true) {
+  const n = slide.value.length; if (!n) return
+  idx.value = (i + n) % n
+  router.replace({ query: { ...route.query, slide: slide.value[idx.value].k } })
+  if (manual) jedaOtomatis()
 }
-const kartuSantri = computed(() => {
-  const s = santri.value; const kelas = s.filter((x) => x.kelas_sesi > 0); const tidakKelas = kelas.filter((x) => x.kelas_tidak > 0)
-  const sakit = s.filter((x) => x.sakit); const luar = s.filter((x) => x.luar); const telat = luar.filter((x) => x.luar.terlambat)
-  const k = [
-    { j: 'Santri aktif', v: s.length, i: PhStudent, w: 'santri', ket: `${s.filter((x) => x.jk === 'L').length} putra · ${s.filter((x) => x.jk === 'P').length} putri`,
-      daftar: { judul: 'Santri aktif', kolom: [...K_SANTRI, ['halaqah', 'Halaqah', 18]], baris: s.map((x) => ({ ...kelasKamar(x), halaqah: x.halaqah || '–' })) } },
-    { j: 'Hadir di kelas', v: `${kelas.length - kelas.filter((x) => x.kelas_tidak >= x.kelas_sesi).length}/${kelas.length}`, i: PhChalkboardTeacher, w: 'jadwal', ket: `${tidakKelas.length} tidak hadir (sebagian/seluruh)`,
-      daftar: { judul: 'Santri tidak hadir di kelas hari ini', kolom: [...K_SANTRI, ['ket', 'Keterangan', 20]], baris: tidakKelas.map((x) => ({ ...kelasKamar(x), ket: `Tidak hadir ${x.kelas_tidak} dari ${x.kelas_sesi} sesi` })) } },
-    ...sesiSantri('halaqah:').map((h) => ({ j: h.n, v: `${h.hadir.length}/${h.ada.length}`, i: PhBookOpenText, w: 'tahfizh', ket: `${h.ada.length - h.hadir.length} tidak hadir`,
-      daftar: { judul: `${h.n}: santri tidak hadir`, kolom: [...K_SANTRI, ['halaqah', 'Halaqah', 16], ['ket', 'Status', 10]],
-        baris: h.ada.filter((x) => !['H', 'T'].includes(x.sesi[h.k].k)).map((x) => ({ ...kelasKamar(x), halaqah: x.halaqah || '–', ket: KODE[x.sesi[h.k].k] })) } })),
-    ...sesiSantri('asrama:').map((h) => ({ j: h.n, v: `${h.hadir.length}/${h.ada.length}`, i: PhMoon, w: 'musyrif', ket: `${h.ada.length - h.hadir.length} tidak di asrama`,
-      daftar: { judul: `${h.n}: santri tidak hadir`, kolom: [...K_SANTRI, ['ket', 'Status', 10]],
-        baris: h.ada.filter((x) => !['H', 'T'].includes(x.sesi[h.k].k)).map((x) => ({ ...kelasKamar(x), ket: KODE[x.sesi[h.k].k] })) } })),
-    { j: 'Sakit', v: sakit.length, i: PhFirstAidKit, w: 'klinik', ket: `${sakit.filter((x) => /Dirawat/.test(x.sakit)).length} dirawat di klinik`,
-      daftar: { judul: 'Santri sakit hari ini', kolom: [...K_SANTRI, ['ket', 'Keterangan', 20]], baris: sakit.map((x) => ({ ...kelasKamar(x), ket: x.sakit })) } },
-    { j: 'Di luar pondok', v: luar.length, i: PhSignOut, w: 'security', ket: 'Izin atau libur, belum kembali',
-      daftar: { judul: 'Santri di luar pondok', kolom: [...K_SANTRI, ['ket', 'Izin', 20], ['batas', 'Batas kembali', 14]],
-        baris: luar.map((x) => ({ ...kelasKamar(x), ket: x.luar.alasan, batas: formatWaktu(x.luar.batas) })) } },
-    { j: 'Terlambat kembali', v: telat.length, i: PhSiren, w: 'klinik', ket: telat.length ? 'Lewat batas kembali' : 'Tidak ada',
-      daftar: { judul: 'Santri terlambat kembali', kolom: [...K_SANTRI, ['ket', 'Izin', 20], ['batas', 'Batas kembali', 14]],
-        baris: telat.map((x) => ({ ...kelasKamar(x), ket: x.luar.alasan, batas: formatWaktu(x.luar.batas) })) } },
-  ]
-  return k
+const lanjut = (m = true) => ke(idx.value + 1, m)
+const mundur = () => ke(idx.value - 1)
+
+// ---------- Putar otomatis ----------
+const putar = ref(false); const detik = ref(20); let pewaktu = null; let jeda = null
+function aturPutar() { clearInterval(pewaktu); if (putar.value) pewaktu = setInterval(() => lanjut(false), detik.value * 1000) }
+function jedaOtomatis() { if (!putar.value) return; clearInterval(pewaktu); clearTimeout(jeda); jeda = setTimeout(aturPutar, 30000) }
+watch([putar, detik], aturPutar)
+
+// ---------- Jam berjalan ----------
+const kini = ref(new Date()); let detak = null
+const jam = computed(() => kini.value.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Makassar' }).replace(/:/g, '.'))
+
+// ---------- Layar penuh ----------
+const penuh = ref(false)
+async function alihPenuh() {
+  try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen() } catch { /* tidak didukung */ }
+}
+const cekPenuh = () => { penuh.value = !!document.fullscreenElement }
+
+// ---------- Geser, roda, papan ketik ----------
+const isi = ref([]); let awal = null; let kunciRoda = false
+const tepi = (arah) => { const el = isi.value[idx.value]; if (!el) return true; return arah > 0 ? el.scrollTop + el.clientHeight >= el.scrollHeight - 4 : el.scrollTop <= 4 }
+function sentuhMulai(e) { if (lembar.value || pratinjau.value) return; const t = e.touches?.[0]; if (t) awal = { x: t.clientX, y: t.clientY } }
+function sentuhAkhir(e) {
+  if (!awal) return; const t = e.changedTouches?.[0]; const dx = t.clientX - awal.x; const dy = t.clientY - awal.y; awal = null
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.2) return dx < 0 ? lanjut() : mundur()
+  if (Math.abs(dy) > 80 && Math.abs(dy) > Math.abs(dx) * 1.2) { if (dy < 0 && tepi(1)) lanjut(); else if (dy > 0 && tepi(-1)) mundur() }
+}
+function roda(e) {
+  if (lembar.value || pratinjau.value || kunciRoda || Math.abs(e.deltaY) < 30) return
+  const arah = e.deltaY > 0 ? 1 : -1; if (!tepi(arah)) return
+  kunciRoda = true; setTimeout(() => (kunciRoda = false), 800); arah > 0 ? lanjut() : mundur()
+}
+function tombol(e) {
+  if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName) || lembar.value || pratinjau.value) return
+  if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); lanjut() }
+  else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); mundur() }
+  else if (e.key === 'f' || e.key === 'F') alihPenuh()
+  else if (e.key === 'p' || e.key === 'P') putar.value = !putar.value
+}
+
+onMounted(() => {
+  pt.mulai(); detak = setInterval(() => (kini.value = new Date()), 1000)
+  window.addEventListener('keydown', tombol); document.addEventListener('fullscreenchange', cekPenuh)
+})
+onBeforeUnmount(() => {
+  pt.berhenti(); clearInterval(detak); clearInterval(pewaktu); clearTimeout(jeda)
+  window.removeEventListener('keydown', tombol); document.removeEventListener('fullscreenchange', cekPenuh)
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
 })
 
-// ---------- Kartu pegawai ----------
-const kartuPegawai = computed(() => {
-  const n = (f) => pegawai.value.filter(f).length; const terjadwal = pegawai.value.filter((p) => p.status !== 'libur')
-  const isc = (p) => ['izin', 'sakit', 'cuti'].includes(p.status); const belum = (p) => ['belum', 'menunggu_verval', 'tanpa_keterangan'].includes(p.status)
-  return [
-    { j: 'Hadir', v: `${n((p) => ['hadir', 'terlambat'].includes(p.status))}/${terjadwal.length}`, i: PhUserCheck, w: 'presensi', ket: 'Dari pegawai terjadwal hari ini',
-      daftar: { judul: 'Pegawai hadir hari ini', kolom: K_PEG, baris: pegBaris((p) => ['hadir', 'terlambat'].includes(p.status)) } },
-    { j: 'Terlambat', v: n((p) => p.status === 'terlambat'), i: PhClock, w: 'pengajuan', ket: 'Datang lewat batas tepat waktu',
-      daftar: { judul: 'Pegawai terlambat hari ini', kolom: K_PEG, baris: pegBaris((p) => p.status === 'terlambat') } },
-    { j: 'Dinas luar', v: n((p) => p.status === 'dinas_luar'), i: PhAirplaneTilt, w: 'jadwal', ket: 'Bertugas di luar pondok',
-      daftar: { judul: 'Pegawai dinas luar', kolom: K_PEG, baris: pegBaris((p) => p.status === 'dinas_luar') } },
-    { j: 'Izin, sakit, cuti', v: n(isc), i: PhUserMinus, w: 'klinik', ket: `${n((p) => p.status === 'izin')} izin · ${n((p) => p.status === 'sakit')} sakit · ${n((p) => p.status === 'cuti')} cuti`,
-      daftar: { judul: 'Pegawai izin, sakit, atau cuti', kolom: K_PEG, baris: pegBaris(isc).map((p) => ({ ...p, ket: p.ket !== '–' ? p.ket : { izin: 'Izin', sakit: 'Sakit', cuti: 'Cuti' }[p.status] })) } },
-    { j: 'Belum presensi', v: n(belum), i: PhHourglass, w: 'agenda', ket: `${n((p) => p.status === 'akan_datang')} sesinya belum dibuka`,
-      daftar: { judul: 'Pegawai belum presensi', kolom: K_PEG, baris: pegBaris(belum).map((p) => ({ ...p, ket: { belum: 'Belum presensi', menunggu_verval: 'Menunggu verval', tanpa_keterangan: 'Tanpa keterangan' }[p.status] })) } },
-    { j: 'Tidak terjadwal', v: n((p) => p.status === 'libur'), i: PhCalendarCheck, w: 'hakakses', ket: 'Libur/tidak ada sesi hari ini',
-      daftar: { judul: 'Pegawai tidak terjadwal hari ini', kolom: K_PEG, baris: pegBaris((p) => p.status === 'libur') } },
-  ]
-})
-
-// ---------- Kartu kegiatan ----------
-const STATUS_SESI = { terisi: 'Terlaksana', terbuka: 'Sedang berlangsung', belum_buka: 'Belum dimulai', tidak_terisi: 'Tidak terisi', lewat: 'Lewat batas' }
-const kartuKegiatan = computed(() => [['kelas', 'Sesi kelas', PhChalkboardTeacher, 'jadwal'], ['halaqah', 'Sesi halaqah', PhBookOpenText, 'tahfizh'], ['asrama', 'Sesi asrama', PhBed, 'musyrif'], ['ekskul', 'Sesi ekskul', PhUsersThree, 'ekskul']]
-  .map(([k, j, i, w]) => {
-    const s = kegiatan.value.filter((x) => x.jenis === k); const ok = s.filter((x) => x.status === 'terisi'); const telat = s.filter((x) => x.status === 'tidak_terisi')
-    return { j, v: `${ok.length}/${s.length}`, i, w, ket: telat.length ? `${telat.length} lewat waktu, belum diisi` : `${s.length - ok.length} belum terlaksana`,
-      daftar: { judul: `${j} hari ini`, kolom: [['jam', 'Jam', 7], ['kelompok', 'Kelompok', 16], ['sesi', 'Sesi', 16], ['pengampu', 'Pengampu', 24], ['status', 'Status', 14], ['hadir', 'Hadir', 9]],
-        baris: [...s].sort((a, b) => (a.jam_mulai || '').localeCompare(b.jam_mulai || '')).map((x) => ({ ...x, jam: (x.jam_mulai || '').slice(0, 5), pengampu: x.pengampu || '–',
-          status: STATUS_SESI[x.status] || x.status, hadir: x.status === 'terisi' ? `${x.hadir ?? 0}/${x.anggota ?? 0}` : '–' })) } }
-  }))
-
-// ---------- Kartu Security ----------
-const K_GERBANG = [['jam', 'Jam', 7], ['nama', 'Nama santri', 24], ['kelas', 'Kelas', 7], ['kamar', 'Kamar', 14], ['ket', 'Keterangan', 26], ['petugas', 'Petugas', 16]]
-const kartuSecurity = computed(() => {
-  const g = sec.value.gerbang; const t = sec.value.titipan; const tm = sec.value.tamu; const kj = sec.value.kunjungan
-  const gb = (j) => g.filter((x) => x.jenis === j).map((x) => ({ ...x, jam: formatJam(x.waktu), kelas: x.kelas || '–', kamar: x.kamar || '–', petugas: x.petugas || '–',
-    ket: [x.penjemput && 'Penjemput ' + x.penjemput, x.terlambat_menit && 'Terlambat ' + x.terlambat_menit + ' menit', x.catatan].filter(Boolean).join('; ') || '–' }))
-  const tBaris = (f) => t.filter(f).map((x) => ({ ...x, kelas: x.kelas || '–', barang: `${JENIS_TITIPAN[x.jenis]?.n}: ${x.uraian}`, diterima: formatWaktu(x.diterima_pada),
-    ambil: x.status === 'di_pos' ? 'Masih di pos' : x.status === 'diambil' ? `${x.pengambil_nama} (${PENGAMBIL[x.pengambil_jenis] || ''}) ${formatJam(x.diambil_pada)}` : x.status }))
-  const K_T = [['nama', 'Santri', 22], ['kelas', 'Kelas', 7], ['barang', 'Barang', 26], ['pengirim', 'Pengirim', 16], ['diterima', 'Diterima', 14], ['ambil', 'Pengambilan', 24]]
-  return [
-    { j: 'Keluar hari ini', v: g.filter((x) => x.jenis === 'keluar').length, i: PhSignOut, w: 'shift', ket: 'Tercatat di gerbang', daftar: { judul: 'Santri keluar hari ini', kolom: K_GERBANG, baris: gb('keluar') } },
-    { j: 'Kembali hari ini', v: g.filter((x) => x.jenis === 'kembali').length, i: PhSignIn, w: 'presensi', ket: `${g.filter((x) => x.jenis === 'kembali' && x.terlambat_menit).length} terlambat`, daftar: { judul: 'Santri kembali hari ini', kolom: K_GERBANG, baris: gb('kembali') } },
-    { j: 'Ditolak di gerbang', v: g.filter((x) => x.jenis === 'ditolak').length, i: PhProhibit, w: 'klinik', ket: 'Tanpa izin berlaku', daftar: { judul: 'Santri ditolak di gerbang', kolom: K_GERBANG, baris: gb('ditolak') } },
-    { j: 'Titipan di pos', v: t.filter((x) => x.status === 'di_pos').length, i: PhPackage, w: 'pengajuan', ket: `${t.filter((x) => hariIni(x.diterima_pada)).length} diterima hari ini`,
-      daftar: { judul: 'Titipan di pos dan diterima hari ini', kolom: K_T, baris: tBaris((x) => x.status === 'di_pos' || hariIni(x.diterima_pada)) } },
-    { j: 'Titipan diambil', v: t.filter((x) => x.status === 'diambil' && hariIni(x.diambil_pada)).length, i: PhHandArrowDown, w: 'gaji', ket: 'Hari ini, tercatat pengambilnya',
-      daftar: { judul: 'Titipan diambil hari ini', kolom: K_T, baris: tBaris((x) => x.status === 'diambil' && hariIni(x.diambil_pada)) } },
-    { j: 'Tamu', v: tm.filter((x) => !x.keluar_pada).length, i: PhIdentificationBadge, w: 'pegawai', ket: `di dalam · ${tm.filter((x) => hariIni(x.masuk_pada)).length} tamu hari ini`,
-      daftar: { judul: 'Tamu hari ini', kolom: [['jam', 'Masuk', 7], ['nama', 'Nama tamu', 20], ['instansi', 'Instansi', 18], ['keperluan', 'Keperluan', 24], ['ditemui', 'Menemui', 18], ['keluar', 'Keluar', 9]],
-        baris: tm.map((x) => ({ ...x, jam: formatJam(x.masuk_pada), instansi: x.instansi || 'Pribadi', ditemui: x.ditemui || '–', keluar: x.keluar_pada ? formatJam(x.keluar_pada) : 'Di dalam' })) } },
-    { j: 'Kunjungan wali', v: kj.filter((x) => !x.pulang_pada).length, i: PhUsersThree, w: 'tahfizh', ket: `berlangsung · ${kj.filter((x) => hariIni(x.datang_pada)).length} hari ini`,
-      daftar: { judul: 'Kunjungan orang tua hari ini', kolom: [['jam', 'Datang', 7], ['nama', 'Santri', 22], ['kelas', 'Kelas', 7], ['pengunjung', 'Pengunjung', 24], ['pulang', 'Pulang', 10]],
-        baris: kj.map((x) => ({ ...x, jam: formatJam(x.datang_pada), kelas: x.kelas || '–', pengunjung: x.pengunjung + (x.hubungan ? ` (${x.hubungan})` : ''), pulang: x.pulang_pada ? formatJam(x.pulang_pada) : 'Berlangsung' })) } },
-  ]
-})
-
-// ---------- Daftar, cetak, Excel ----------
+// ---------- Detail (admin/superadmin): daftar, cetak, Excel ----------
 const lembar = ref(false); const daftar = ref(null); const pratinjau = ref(false); const penanda = ref({ jabatan: 'Direktur', nama: '', niy: '' })
-function buka(k) { daftar.value = k.daftar; lembar.value = true }
-const saringanTeks = computed(() => [jk.value === 'L' ? 'putra' : jk.value === 'P' ? 'putri' : '', jenjang.value ? JENJANG_PENDEK[jenjang.value] : '',
-  bidang.value ? d.value.bidang.find((b) => b.id === bidang.value)?.nama : ''].filter(Boolean).join(', '))
+function buka(k) { if (!admin.value || !k.daftar) return; daftar.value = k.daftar; lembar.value = true; jedaOtomatis() }
 async function cetak() { penanda.value = await penandaKelompok({ jenis: 'umum' }).catch(() => penanda.value); pratinjau.value = true }
 function ekspor() {
   const x = daftar.value
-  const ws = XLSX.utils.aoa_to_sheet([[x.judul], [`${formatPanjang(hari.value)}, pukul ${formatJam(d.value.waktu)} WITA${saringanTeks.value ? ' · ' + saringanTeks.value : ''}`], [],
+  const ws = XLSX.utils.aoa_to_sheet([[x.judul], [`${formatPanjang(pt.data.tanggal)}, pukul ${formatJam(pt.data.waktu)} WITA${saringanTeks.value ? ' · ' + saringanTeks.value : ''}`], [],
     ['No.', ...x.kolom.map((c) => c[1])], ...x.baris.map((b, i) => [i + 1, ...x.kolom.map((c) => b[c[0]] ?? '')])])
   ws['!cols'] = [{ wch: 5 }, ...x.kolom.map((c) => ({ wch: c[2] + 6 }))]
-  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Pantauan'); XLSX.writeFile(wb, `Pantauan-${x.judul.replace(/[^\w]+/g, '-')}-${hari.value}.xlsx`)
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Pantauan'); XLSX.writeFile(wb, `Pantauan-${x.judul.replace(/[^\w]+/g, '-')}-${pt.data.tanggal}.xlsx`)
 }
-const bagian = computed(() => [
-  { judul: 'Santri', ikon: PhStudent, kartu: kartuSantri.value },
-  { judul: 'Pegawai', ikon: PhUserCheck, kartu: kartuPegawai.value },
-  { judul: 'Kegiatan santri dan pengampu', ikon: PhChalkboardTeacher, kartu: kartuKegiatan.value },
-  { judul: 'Security', ikon: PhSignOut, kartu: kartuSecurity.value },
-])
+const keluar = () => router.push('/')
+const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide lapang
 </script>
 <template>
-  <div v-if="pt.galat && !pt.data" class="kartu flex flex-col items-center gap-2 p-8 text-center text-sm text-teks2">
-    <PhLock :size="36" weight="duotone" class="text-teks3" /> {{ pt.galat }}
-  </div>
-  <div v-else>
-    <div class="kartu w-shift flex flex-wrap items-center gap-2 p-3">
-      <span class="flex items-center gap-2 text-sm font-semibold"><span class="relative flex h-2.5 w-2.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1E7D4F] opacity-60" /><span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#1E7D4F]" /></span>
-        Langsung · {{ pt.data ? formatJam(pt.data.waktu) + ' WITA' : 'memuat…' }}</span>
-      <button class="tombol-teks min-h-[36px] px-2" :disabled="pt.memuat" aria-label="Muat ulang" @click="pt.muat()"><PhArrowClockwise :size="18" :class="pt.memuat && 'animate-spin'" /></button>
-      <div class="ml-auto flex flex-wrap gap-2">
-        <select v-model="jk" class="isian min-h-[40px] w-auto py-1.5 text-sm" aria-label="Saring jenis kelamin"><option value="">Putra dan putri</option><option value="L">Putra</option><option value="P">Putri</option></select>
-        <select v-model="jenjang" class="isian min-h-[40px] w-auto py-1.5 text-sm" aria-label="Saring jenjang"><option value="">Semua jenjang</option><option v-for="(n, k) in JENJANG_PENDEK" :key="k" :value="k">{{ n }}</option></select>
-        <select v-model="bidang" class="isian min-h-[40px] w-auto py-1.5 text-sm" aria-label="Saring bidang pegawai"><option value="">Semua bidang</option><option v-for="b in d.bidang" :key="b.id" :value="b.id">{{ b.nama }}</option></select>
+  <div class="flex h-[100dvh] flex-col overflow-hidden bg-latar text-teks" @touchstart.passive="sentuhMulai" @touchend.passive="sentuhAkhir" @wheel.passive="roda">
+    <!-- Bilah atas -->
+    <header class="flex flex-wrap items-center gap-2 border-b border-garis bg-permukaan px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] lg:px-5">
+      <button class="tombol-ikon" aria-label="Kembali ke Beranda" @click="keluar"><PhArrowLeft :size="22" /></button>
+      <LogoSimka :size="34" class="hidden text-[#C7332F] sm:block dark:text-[#FF8070]" />
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-base font-extrabold leading-tight lg:text-xl">Layar Pantauan<span v-if="aktif" class="font-semibold text-teks2"> · {{ aktif.judul }}</span></p>
+        <p class="flex items-center gap-1.5 text-xs text-teks2 lg:text-sm">
+          <span class="relative flex h-2.5 w-2.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1E7D4F] opacity-60" /><span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#1E7D4F]" /></span>
+          <b>Langsung</b><b class="tabular-nums sm:hidden"> {{ jam }}</b> · diperbarui {{ pt.data ? formatJam(pt.data.waktu) : '…' }} WITA<span v-if="pt.data" class="hidden sm:inline"> · {{ formatPanjang(pt.data.tanggal) }}</span></p>
       </div>
-    </div>
-    <p class="mt-2 text-xs text-teks3">Ketuk setiap angka untuk melihat daftar nama, lalu cetak atau unduh Excel. Saringan bidang berlaku untuk pegawai; jenjang untuk santri dan kegiatan.</p>
+      <button class="tombol-ikon lg:hidden" :aria-expanded="kendali" aria-label="Saringan dan kendali" @click="kendali = !kendali"><PhFunnel :size="22" :weight="kendali ? 'fill' : 'regular'" /></button>
+      <p class="hidden text-2xl font-extrabold tabular-nums sm:block lg:text-3xl" aria-label="Jam sekarang">{{ jam }} <span class="text-sm font-bold text-teks2">WITA</span></p>
+      <div :class="['w-full flex-wrap items-center gap-1.5 lg:flex lg:w-auto', kendali ? 'flex' : 'hidden']">
+        <select v-model="f.jk" class="isian min-h-[38px] w-auto py-1 text-sm" aria-label="Saring putra/putri"><option value="">Putra dan putri</option><option value="L">Putra</option><option value="P">Putri</option></select>
+        <select v-model="f.jenjang" class="isian min-h-[38px] w-auto py-1 text-sm" aria-label="Saring jenjang"><option value="">SMP dan SMA</option><option value="wustha">SMP (Wustha)</option><option value="sma">SMA</option></select>
+        <select v-model="f.bidang" class="isian min-h-[38px] w-auto py-1 text-sm" aria-label="Saring bidang pegawai"><option value="">Semua bidang</option><option v-for="b in pt.data?.bidang || []" :key="b.id" :value="b.id">{{ b.nama }}</option></select>
+        <button class="tombol-ikon" :aria-label="putar ? 'Hentikan putar otomatis' : 'Putar otomatis'" :title="putar ? 'Hentikan putar otomatis (P)' : 'Putar otomatis (P)'" @click="putar = !putar">
+          <component :is="putar ? PhPause : PhPlay" :size="22" weight="fill" :class="putar && 'text-[#1E7D4F]'" /></button>
+        <select v-if="putar" v-model.number="detik" class="isian min-h-[38px] w-auto py-1 text-sm" aria-label="Lama tiap slide"><option :value="10">10 dtk</option><option :value="20">20 dtk</option><option :value="30">30 dtk</option><option :value="60">60 dtk</option></select>
+        <button class="tombol-ikon" aria-label="Muat ulang" :disabled="pt.memuat" @click="pt.muat()"><PhArrowClockwise :size="22" :class="pt.memuat && 'animate-spin'" /></button>
+        <button class="tombol-ikon" :aria-label="penuh ? 'Keluar layar penuh' : 'Layar penuh'" title="Layar penuh (F)" @click="alihPenuh"><component :is="penuh ? PhArrowsIn : PhArrowsOut" :size="22" /></button>
+      </div>
+    </header>
 
-    <section v-for="b in bagian" :key="b.judul" class="mt-5">
-      <h2 class="judul-bagian mb-3 flex items-center gap-2"><component :is="b.ikon" :size="22" weight="duotone" /> {{ b.judul }}</h2>
-      <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <button v-for="k in b.kartu" :key="k.j" type="button" class="text-left" :aria-label="`${k.j}: ${k.v}. Lihat daftar`" @click="buka(k)">
-          <KartuStatistik :judul="k.j" :nilai="pt.data ? k.v : '…'" :ikon="k.i" :warna="k.w" :keterangan="k.ket" />
-        </button>
+    <div v-if="pt.galat && !pt.data" class="grid flex-1 place-items-center p-6 text-center text-teks2"><div><PhLock :size="44" weight="duotone" class="mx-auto text-teks3" /><p class="mt-2">{{ pt.galat }}</p></div></div>
+    <p v-else-if="!pt.data" class="grid flex-1 place-items-center text-teks3">Memuat Layar Pantauan…</p>
+
+    <!-- Slide -->
+    <main v-else class="relative flex-1 overflow-hidden">
+      <div class="flex h-full transition-transform duration-500 ease-out" :style="{ transform: `translateX(-${idx * 100}%)` }">
+        <section v-for="(s, i) in slide" :key="s.k" :ref="(el) => (isi[i] = el)" class="h-full w-full shrink-0 overflow-y-auto px-4 pb-6 pt-4 lg:px-12 lg:pt-6" :class="'w-' + s.w" :aria-hidden="i !== idx" :inert="i !== idx || undefined">
+          <div class="mb-4 flex items-center gap-3 lg:mb-6">
+            <span class="ikon-judul"><component :is="s.ikon" :size="34" weight="duotone" /></span>
+            <div class="min-w-0"><h1 class="text-2xl font-extrabold leading-tight lg:text-4xl">{{ s.judul }}</h1><p class="text-sm text-teks2 lg:text-lg">{{ s.sub }}<template v-if="saringanTeks"> · {{ saringanTeks }}</template></p></div>
+            <span class="ml-auto hidden text-sm font-bold text-teks3 sm:block lg:text-lg">{{ i + 1 }}/{{ slide.length }}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:gap-5 xl:grid-cols-4">
+            <component :is="admin ? 'button' : 'div'" v-for="k in s.kartu" :key="k.j" :type="admin ? 'button' : undefined" :class="['kartu-slide', 'w-' + k.w, admin && 'bisa']" :aria-label="admin ? `${k.j}: ${k.v}. Lihat daftar` : undefined" @click="buka(k)">
+              <span class="ikon-slide"><component :is="k.i" :size="26" weight="duotone" /></span>
+              <span class="angka">{{ k.v }}</span>
+              <span class="judul">{{ k.j }}</span>
+              <span class="ket">{{ k.ket }}</span>
+            </component>
+          </div>
+          <div v-if="s.grafik?.length" class="mt-4 grid gap-4 lg:mt-6 lg:grid-cols-2 lg:gap-5">
+            <div v-for="g in s.grafik" :key="g.judul" class="kartu grafik-slide flex items-center justify-center p-4 lg:p-5">
+              <GrafikBatang v-if="g.tipe === 'batang' && g.label.length" class="w-full" :judul="g.judul" :label="g.label" :seri="g.seri" :sumbu-y="g.sumbuY" />
+              <GrafikLingkaran v-else-if="g.tipe === 'lingkaran' && g.data.some((x) => x.nilai)" :judul="g.judul" :data="g.data" :satuan="g.satuan || 'santri'" />
+              <p v-else class="py-10 text-center text-sm text-teks3">{{ g.judul }}: belum ada data hari ini.</p>
+            </div>
+          </div>
+        </section>
       </div>
-    </section>
+      <button class="panah left-2" aria-label="Slide sebelumnya" @click="mundur"><PhCaretLeft :size="28" weight="bold" /></button>
+      <button class="panah right-2" aria-label="Slide berikutnya" @click="lanjut()"><PhCaretRight :size="28" weight="bold" /></button>
+    </main>
+
+    <!-- Penunjuk slide -->
+    <nav v-if="slide.length" class="flex gap-1.5 overflow-x-auto border-t border-garis bg-permukaan px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2" aria-label="Daftar slide">
+      <button v-for="(s, i) in slide" :key="s.k" type="button" :aria-current="i === idx ? 'true' : undefined" @click="ke(i)"
+        :class="['flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold lg:text-sm', 'w-' + s.w, i === idx ? 'titik-aktif text-teks' : 'border-garis text-teks2']">
+        <component :is="s.ikon" :size="16" weight="duotone" style="color: var(--c)" /> {{ s.judul }}</button>
+    </nav>
 
     <LembarBawah v-model="lembar" lebar :judul="daftar?.judul || 'Daftar'">
       <div v-if="daftar" class="pb-2">
         <div class="mb-3 flex flex-wrap items-center gap-2">
-          <p class="flex-1 text-sm text-teks2">{{ daftar.baris.length }} data · {{ formatPanjang(hari) }}{{ saringanTeks ? ' · ' + saringanTeks : '' }}</p>
+          <p class="flex-1 text-sm text-teks2">{{ daftar.baris.length }} data · {{ formatPanjang(pt.data.tanggal) }}{{ saringanTeks ? ' · ' + saringanTeks : '' }}</p>
           <button class="tombol-garis w-pengajuan min-h-[40px] px-3 text-sm" @click="cetak"><PhEye :size="18" style="color: var(--c)" /> Cetak</button>
           <button class="tombol-garis w-santri min-h-[40px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Excel</button>
         </div>
@@ -201,7 +194,7 @@ const bagian = computed(() => [
       </div>
     </LembarBawah>
 
-    <DokumenCetak v-if="daftar" kop="pondok" :judul="daftar.judul" :subjudul="`${formatPanjang(hari)}, pukul ${formatJam(d.waktu)} WITA${saringanTeks ? ' · ' + saringanTeks : ''}`"
+    <DokumenCetak v-if="daftar" kop="pondok" :judul="daftar.judul" :subjudul="`${formatPanjang(pt.data.tanggal)}, pukul ${formatJam(pt.data.waktu)} WITA${saringanTeks ? ' · ' + saringanTeks : ''}`"
       v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" :mendatar="daftar.kolom.length > 5">
       <p style="margin: 0 0 6pt">Jumlah: {{ daftar.baris.length }}</p>
       <table class="tabel kecil">
@@ -218,3 +211,26 @@ const bagian = computed(() => [
     </DokumenCetak>
   </div>
 </template>
+<style scoped>
+.ikon-judul { display: grid; place-items: center; height: 3.25rem; width: 3.25rem; flex-shrink: 0; border-radius: 1rem; color: #fff;
+  background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 65%, #000)); }
+@media (min-width: 1024px) { .ikon-judul { height: 4rem; width: 4rem; } }
+.kartu-slide {
+  position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; overflow: hidden; border-radius: 1.25rem; padding: 1rem 1rem 1.1rem;
+  text-align: left; border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
+  background: linear-gradient(140deg, color-mix(in srgb, var(--c) 18%, rgb(var(--permukaan))), color-mix(in srgb, var(--c2, var(--c)) 6%, rgb(var(--permukaan))));
+  box-shadow: inset 4px 0 0 var(--c);
+}
+.kartu-slide.bisa { cursor: pointer; transition: transform .15s, box-shadow .15s; }
+.kartu-slide.bisa:hover { transform: translateY(-2px); box-shadow: inset 4px 0 0 var(--c), 0 10px 24px -14px var(--c); }
+.ikon-slide { display: grid; place-items: center; height: 2.75rem; width: 2.75rem; border-radius: .9rem; color: #fff; margin-bottom: .5rem;
+  background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 65%, #000)); }
+.angka { font-size: clamp(1.8rem, 3.6vw, 3.6rem); font-weight: 800; line-height: 1.05; color: var(--c); font-variant-numeric: tabular-nums; }
+.judul { font-size: clamp(.9rem, 1.25vw, 1.35rem); font-weight: 700; line-height: 1.25; }
+.ket { font-size: clamp(.72rem, .95vw, 1rem); color: rgb(var(--teks-2)); line-height: 1.3; }
+.panah { position: absolute; top: 50%; transform: translateY(-50%); display: none; height: 3rem; width: 3rem; place-items: center; border-radius: 999px;
+  background: rgb(var(--permukaan) / .85); border: 1px solid rgb(var(--garis)); box-shadow: 0 6px 18px -10px rgba(0,0,0,.4); }
+@media (min-width: 1024px) { .panah { display: grid; } }
+.grafik-slide :deep(svg) { max-height: 32vh; }
+.titik-aktif { border-color: var(--c); background: color-mix(in srgb, var(--c) 14%, rgb(var(--permukaan))); }
+</style>

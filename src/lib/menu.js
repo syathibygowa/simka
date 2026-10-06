@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.7 | Fase 7 – Tahap 4 Pantauan langsung pimpinan | 06/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.8 | Fase 7 – Perbaikan uji coba: Pantauan pindah ke tombol Beranda, Kartu Pegawai pindah ke Profil | 06/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -6,7 +6,7 @@
 import {
   PhHouse, PhFingerprint, PhUsersThree, PhStudent, PhBookOpenText, PhFileText, PhFirstAidKit,
   PhShieldCheck, PhChartBar, PhEnvelopeSimple, PhWallet, PhMegaphone, PhKey, PhGearSix, PhBell,
-  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut, PhBroadcast,
+  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut,
 } from '@phosphor-icons/vue'
 
 const ADMIN = ['admin', 'superadmin']
@@ -16,8 +16,6 @@ export const MENU = [
   { kode: 'notifikasi', nama: 'Notifikasi',      ikon: PhBell,           warna: 'notifikasi', ke: '/notifikasi',        grup: 'Utama' },
   { kode: 'pengumuman', nama: 'Pengumuman',      ikon: PhMegaphone,      warna: 'pengumuman', ke: '/pengumuman',        grup: 'Utama' },
   { kode: 'agenda',     nama: 'Agenda',          ikon: PhCalendarCheck,  warna: 'agenda',     ke: '/agenda',            grup: 'Utama' },
-  { kode: 'pantauan',   nama: 'Pantauan Langsung', ikon: PhBroadcast,    warna: 'shift',      ke: '/pantauan',          grup: 'Utama',
-    syarat: (c) => c.struktural || Number(c.fitur?.pantauan ?? 0) >= 1 },
   // Presensi
   { kode: 'presensi',   nama: 'Presensi',        ikon: PhFingerprint,    warna: 'presensi',   ke: '/presensi',          grup: 'Presensi' },
   { kode: 'jadwalshift', nama: 'Jadwal Shift',   ikon: PhCalendarStar,   warna: 'shift',      ke: '/jadwal-shift',      grup: 'Presensi', syarat: 'shift' },
@@ -29,7 +27,6 @@ export const MENU = [
   { kode: 'jurnal',     nama: 'Jurnal Harian',   ikon: PhNotebook,       warna: 'tatausaha',  ke: '/jurnal',            grup: 'Layanan Pegawai' },
   { kode: 'berkas',     nama: 'Berkas Saya',     ikon: PhFolderOpen,     warna: 'berkas',     ke: '/berkas',            grup: 'Layanan Pegawai' },
   { kode: 'bebankerja', nama: 'Beban Kerja',     ikon: PhClockCountdown, warna: 'gaji',       ke: '/beban-kerja',       grup: 'Layanan Pegawai' },
-  { kode: 'kartu',      nama: 'Kartu Pegawai',   ikon: PhIdentificationCard, warna: 'profil', ke: '/kartu',             grup: 'Layanan Pegawai' },
   // Kepegawaian (pengelolaan data pegawai)
   { kode: 'pegawai',    nama: 'Data Pegawai',    ikon: PhUsersThree,     warna: 'pegawai',    ke: '/pegawai',           grup: 'Kepegawaian', peran: ADMIN },
   { kode: 'kelompok',   nama: 'Kelompok Pegawai', ikon: PhUsersFour,     warna: 'pegawai',    ke: '/kelompok-pegawai',  grup: 'Kepegawaian', peran: ADMIN, izin: 'kelola_kelompok' },

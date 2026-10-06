@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.7 | Fase 7 – Tahap 1 Security: gerbang | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.8 | Fase 7 – Perbaikan uji coba: tombol Layar Pantauan | 06/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import {
@@ -10,6 +10,7 @@ import { useStatistik } from '@/stores/statistik'
 import { usePegawai } from '@/stores/pegawai'
 import { formatPendek } from '@/lib/tanggal'
 import Sapaan from './Sapaan.vue'
+import TombolPantauan from '@/components/TombolPantauan.vue'
 import RingkasanPribadi from './RingkasanPribadi.vue'
 import RingkasanPimpinan from './RingkasanPimpinan.vue'
 import RingkasanKelola from './RingkasanKelola.vue'
@@ -46,6 +47,7 @@ const AKSI = [
 <template>
   <div class="space-y-5 lg:space-y-6">
     <Sapaan :keterangan="d.menunggu_verifikasi ? `Ada ${d.menunggu_verifikasi} pendaftaran pegawai yang menunggu verifikasi Anda.` : 'Tidak ada pendaftaran yang menunggu verifikasi.'" />
+    <TombolPantauan />
 
     <StatistikPresensi />
 

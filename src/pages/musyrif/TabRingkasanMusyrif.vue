@@ -1,14 +1,14 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabRingkasanMusyrif.vue | v1.1 | Fase 6 – Perbaikan: dasbor Semua kamar selalu tampil bagi admin/pimpinan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabRingkasanMusyrif.vue | v1.2 | Fase 7 – Perbaikan uji coba: tanpa jurnal musyrif | 06/10/2026 -->
 <script setup>
 // Dasbor pemantauan seluruh kamar untuk admin, superadmin, dan pimpinan: kehadiran asrama, keterisian sesi,
-// santri sakit/izin, dan keaktifan jurnal musyrif per kamar. Ketuk kartu kamar untuk membuka dasbor kamar itu.
+// santri sakit/izin per kamar (keaktifan jurnal musyrif tidak lagi ditampilkan; tab Jurnal dihapus). Ketuk kartu kamar untuk membuka dasbor kamar itu.
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
-import { PhChartLineUp, PhCheckSquareOffset, PhFirstAidKit, PhSignOut, PhNotePencil, PhStar, PhArrowRight, PhWarningCircle } from '@phosphor-icons/vue'
+import { PhChartLineUp, PhCheckSquareOffset, PhFirstAidKit, PhSignOut, PhArrowRight, PhWarningCircle } from '@phosphor-icons/vue'
 import { useMusyrif } from '@/stores/musyrif'
 import { useUI } from '@/stores/ui'
 import { teksPersen } from '@/lib/absensi'
 import { awalPekan, awalBulanDari, akhirBulanDari, tambahHari, teksRentang } from '@/lib/musyrif'
-import { hariIniISO, formatPendek } from '@/lib/tanggal'
+import { hariIniISO } from '@/lib/tanggal'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 
 const emit = defineEmits(['buka'])
@@ -61,8 +61,7 @@ function buka(x) { mu.pilih = x.id; emit('buka') }
             <span v-if="x.izin_aktif" class="lencana w-pengajuan"><PhSignOut :size="12" /> {{ x.izin_aktif }} izin</span>
             <span v-if="x.izin_terlambat" class="lencana w-klinik"><PhWarningCircle :size="12" /> {{ x.izin_terlambat }} terlambat</span>
           </div>
-          <p class="mt-2 flex items-center gap-1.5 text-xs text-teks2"><PhNotePencil :size="14" /> {{ x.jurnal }} jurnal<template v-if="x.jurnal_penting"> · <PhStar :size="12" weight="fill" class="text-[#B5501A]" /> {{ x.jurnal_penting }} penting</template>
-            · terakhir {{ x.jurnal_terakhir ? formatPendek(x.jurnal_terakhir) : '–' }}<PhArrowRight :size="14" class="ml-auto" /></p>
+          <p class="mt-2 flex items-center justify-end gap-1.5 text-xs font-semibold text-teks2">Buka dasbor kamar <PhArrowRight :size="14" /></p>
         </button>
       </li>
     </ul>

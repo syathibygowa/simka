@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.6 | Fase 7 – Tahap 1 Security: gerbang | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.7 | Fase 7 – Perbaikan uji coba: tombol Layar Pantauan | 06/10/2026 -->
 <script setup>
 import { ref, computed } from 'vue'
 import {
@@ -9,6 +9,7 @@ import {
 import { useStatistik } from '@/stores/statistik'
 import { formatRelatif, formatWaktu } from '@/lib/tanggal'
 import Sapaan from './Sapaan.vue'
+import TombolPantauan from '@/components/TombolPantauan.vue'
 import RingkasanPribadi from './RingkasanPribadi.vue'
 import RingkasanPimpinan from './RingkasanPimpinan.vue'
 import RingkasanKelola from './RingkasanKelola.vue'
@@ -54,6 +55,7 @@ const AKSI = [
 <template>
   <div class="space-y-5 lg:space-y-6">
     <Sapaan keterangan="Anda memegang kendali penuh atas data dan pengaturan sistem SIMKA PRO." />
+    <TombolPantauan />
 
     <StatistikPresensi />
 

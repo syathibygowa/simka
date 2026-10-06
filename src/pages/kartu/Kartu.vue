@@ -1,9 +1,10 @@
-<!-- SIMKA PRO | src/pages/kartu/Kartu.vue | v1.2 | Fase 4 – Perbaikan P2 (unduh kartu PNG/JPEG) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/kartu/Kartu.vue | v1.3 | Fase 7 – Perbaikan uji coba: kartu di Profil, cetak massal di Data Pegawai | 06/10/2026 -->
 <script setup>
 // Kartu pegawai. Kartu saya: lihat depan/belakang, ganti pas foto, cetak, dan ganti kode bila kartu hilang.
 // Cetak massal (admin ber-izin cetak_kartu): pilih pegawai, cetak 9 kartu tegak per F4 (bolak-balik) atau berdampingan.
 // Kartu otomatis tidak berlaku (verifikasi QR) bila pegawai berstatus nonaktif.
 // v1.1: kartu tegak (portrait); foto kartu = foto profil akun (diganti di sini atau di Profil); 9 kartu per F4.
+// v1.3: dibuka dari Profil (Kartu saya); Cetak massal pindah ke Data Pegawai → tab Cetak kartu (prop bagian="massal").
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { PhIdentificationCard, PhCards, PhCamera, PhPrinter, PhArrowsClockwise, PhMagnifyingGlass, PhCheckSquare, PhSquare, PhInfo, PhQrCode, PhLink, PhImage, PhDownloadSimple } from '@phosphor-icons/vue'
 import { useKartu } from '@/stores/kartu'
@@ -21,13 +22,13 @@ import { namaRapi } from '@/lib/penyimpanan'
 import KartuPegawai from '@/components/KartuPegawai.vue'
 import LembarKartu from '@/components/cetak/LembarKartu.vue'
 
+const props = defineProps({ bagian: { type: String, default: 'saya' } })
 const kt = useKartu(); const lembaga = useLembaga(); const peg = usePegawai(); const org = useOrganisasi(); const sesi = useSesi(); const ui = useUI()
-const bolehMassal = computed(() => sesi.bolehAdmin('cetak_kartu'))
-const tab = ref('saya'); const saya = ref(null); const foto = ref({}); const proses = ref(false)
+const tab = ref(props.bagian); const saya = ref(null); const foto = ref({}); const proses = ref(false)
 const pratinjau = ref(false); const cetakData = ref([]); const mode = ref('berdampingan')
 const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan === 'DIREKTUR' || /^direktur/i.test(s.jabatan_tertulis)) || {})
 
-onMounted(async () => { await lembaga.muat(); muatSaya() })
+onMounted(async () => { await lembaga.muat(); if (props.bagian === 'massal') await Promise.all([org.muat(), peg.daftar.length ? null : peg.muat()]); else muatSaya() })
 async function muatSaya() {
   try { const [d] = await kt.data(); saya.value = d; if (d?.foto_id) foto.value[d.employee_id] = sesi.fotoUrl || await alamatBerkas(d.foto_id); else if (sesi.fotoUrl) foto.value[d.employee_id] = sesi.fotoUrl } catch (e) { ui.toast(e.message, 'galat') }
 }
@@ -78,7 +79,6 @@ async function salinTautan() { try { await navigator.clipboard.writeText(alamatV
 
 // ---------- Cetak massal ----------
 const pilih = ref(new Set()); const unit = ref(''); const cari = ref('')
-watch(tab, async (t) => { if (t === 'massal') { await Promise.all([org.muat(), peg.daftar.length ? null : peg.muat()]) } })
 const calon = computed(() => peg.daftar.filter((p) => p.status_keaktifan === 'aktif'
   && (!unit.value || org.turunan(unit.value).has(p.org_unit_id))
   && (!cari.value.trim() || [p.nama_lengkap, p.niy].join(' ').toLowerCase().includes(cari.value.toLowerCase().trim()))))
@@ -98,13 +98,7 @@ async function siapkanMassal() {
 }
 </script>
 <template>
-  <div class="w-profil mx-auto max-w-4xl">
-    <nav v-if="bolehMassal" class="mb-4 flex gap-2" role="tablist" aria-label="Bagian kartu pegawai">
-      <button v-for="t in [{ k: 'saya', n: 'Kartu saya', i: PhIdentificationCard }, { k: 'massal', n: 'Cetak massal', i: PhCards }]" :key="t.k" role="tab" :aria-selected="tab === t.k" @click="tab = t.k"
-        :class="['tab flex min-h-[44px] items-center gap-2.5 rounded-xl border px-3 text-sm font-semibold', tab === t.k ? 'aktif text-teks' : 'border-garis bg-permukaan text-teks2']">
-        <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="t.i" :size="20" weight="duotone" /></span>{{ t.n }}</button>
-    </nav>
-
+  <div :class="['w-profil', bagian === 'saya' && 'mx-auto max-w-4xl']">
     <template v-if="tab === 'saya'">
       <p v-if="!saya" class="py-10 text-center text-teks3">Menyiapkan kartu…</p>
       <div v-else class="grid gap-5 lg:grid-cols-[auto_1fr]">
