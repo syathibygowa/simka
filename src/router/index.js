@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.10 | Fase 7 – Tahap 1 Security: gerbang | 06/10/2026
+// SIMKA PRO | src/router/index.js | v3.11 | Fase 7 – Tahap 4 Pantauan langsung pimpinan | 06/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -42,6 +42,7 @@ const routes = [
       { path: 'musyrif/:tab?', component: () => import('@/pages/musyrif/Musyrif.vue'), props: true, meta: { judul: 'Musyrif', kembali: '/tugas' } },
       { path: 'izin-santri/:tab?', component: () => import('@/pages/izin/IzinSantri.vue'), props: true, meta: { judul: 'Perizinan Santri', kembali: '/tugas' } },
       { path: 'lapor/:tab?', component: () => import('@/pages/lapor/Lapor.vue'), props: true, meta: { judul: 'Lapor ke Bidang', kembali: '/tugas' } },
+      { path: 'pantauan', component: () => import('@/pages/pantauan/Pantauan.vue'), meta: { judul: 'Pantauan Langsung', kembali: '/' } },
       { path: 'security/:tab?', component: () => import('@/pages/security/Security.vue'), props: true, meta: { judul: 'Security', kembali: '/tugas' } },
       { path: 'klinik/:tab?', component: () => import('@/pages/klinik/Klinik.vue'), props: true, meta: { judul: 'Klinik', kembali: '/tugas' } },
       { path: 'ekskul/:tab?', component: () => import('@/pages/ekskul/Ekskul.vue'), props: true, meta: { judul: 'Ekskul', kembali: '/tugas' } },

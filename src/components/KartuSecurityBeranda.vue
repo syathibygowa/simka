@@ -1,9 +1,10 @@
-<!-- SIMKA PRO | src/components/KartuSecurityBeranda.vue | v1.0 | Fase 7 – Tahap 1 Security: gerbang | 06/10/2026 -->
+<!-- SIMKA PRO | src/components/KartuSecurityBeranda.vue | v1.1 | Fase 7 – Tahap 2 Titipan, buku tamu, kunjungan | 06/10/2026 -->
 <script setup>
 // Kartu statistik langsung Security di Beranda (petugas Security, pimpinan, yayasan, admin, superadmin):
-// siap keluar, di luar pondok, terlambat kembali, catatan gerbang hari ini. Diperbarui otomatis (Realtime).
+// gerbang (siap keluar, di luar, terlambat, catatan hari ini) dan layanan pos (titipan, tamu, kunjungan).
+// Diperbarui otomatis (Realtime).
 import { computed, onMounted } from 'vue'
-import { PhCheckCircle, PhSignOut, PhSiren, PhSignIn } from '@phosphor-icons/vue'
+import { PhCheckCircle, PhSignOut, PhSiren, PhSignIn, PhPackage, PhIdentificationBadge, PhUsersThree, PhHandArrowDown } from '@phosphor-icons/vue'
 import { useSecurity } from '@/stores/security'
 import KartuStatistik from './KartuStatistik.vue'
 const sc = useSecurity()
@@ -14,6 +15,10 @@ const kartu = computed(() => !d.value ? [] : [
   { j: 'Santri di luar', v: d.value.di_luar, i: PhSignOut, w: 'security', ke: '/security/diluar', ket: 'Belum kembali' },
   { j: 'Terlambat kembali', v: d.value.terlambat, i: PhSiren, w: 'klinik', ke: '/security/diluar', ket: d.value.terlambat ? 'Segera tindak lanjuti' : 'Semua tepat waktu' },
   { j: 'Gerbang hari ini', v: d.value.kembali_hari_ini, i: PhSignIn, w: 'rekap', ke: '/security/riwayat', ket: `kembali · ${d.value.keluar_hari_ini} keluar · ${d.value.ditolak_hari_ini} ditolak` },
+  { j: 'Titipan di pos', v: d.value.titipan_di_pos ?? 0, i: PhPackage, w: 'pengajuan', ke: '/security/titipan', ket: d.value.titipan_lama ? `${d.value.titipan_lama} lewat batas ambil` : `${d.value.titipan_hari_ini ?? 0} masuk hari ini` },
+  { j: 'Titipan diambil', v: d.value.diambil_hari_ini ?? 0, i: PhHandArrowDown, w: 'gaji', ke: '/security/titipan', ket: 'Hari ini, tercatat pengambilnya' },
+  { j: 'Tamu di dalam', v: d.value.tamu_di_dalam ?? 0, i: PhIdentificationBadge, w: 'pegawai', ke: '/security/tamu', ket: `${d.value.tamu_hari_ini ?? 0} tamu hari ini` },
+  { j: 'Kunjungan wali', v: d.value.kunjungan_berlangsung ?? 0, i: PhUsersThree, w: 'tahfizh', ke: '/security/kunjungan', ket: `berlangsung · ${d.value.kunjungan_hari_ini ?? 0} hari ini` },
 ])
 </script>
 <template>

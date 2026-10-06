@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/wa.js | v1.9 | Fase 6 – Tahap 2 Status otomatis dan perizinan santri | 06/10/2026
+// SIMKA PRO | src/lib/wa.js | v1.11 | Fase 7 – Tahap 3 Libur santri | 06/10/2026
 // Tautan WhatsApp wa.me dari WA pribadi pegawai (Bagian 25). Isi pesan diambil dari template WA yang
 // dikelola superadmin (Pengaturan → Template WA); bila belum dimuat, dipakai isi bawaan di bawah.
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -35,6 +35,8 @@ export const BAWAAN_WA = {
   rekap_asrama: '{salam}, Bapak/Ibu {nama_wali}.\n\nRekap kehadiran asrama ananda *{nama_santri}* ({kamar}) periode {periode}:\n{rekap}\n\n{ketidakhadiran}\n\nMohon perhatian dan doanya.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   rekap_kamar: '{salam}.\n\nRekap kehadiran asrama *{kamar}* periode {periode}:\n• Rata-rata kehadiran: {persen}\n• Sesi terlaksana: {jumlah_sesi}\n• Hadir penuh: {hadir_penuh}\n{rincian}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   izin_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan izin {jenis_izin} ananda *{nama_santri}* ({kelas}) *{status}*.\n• Alasan: {alasan}\n• Keluar: {waktu_keluar}\n• Batas kembali: {batas_kembali}\n• Penjemput: {penjemput}\n\nMohon ananda diantar kembali ke pondok sebelum batas waktu.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  titipan_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan titipan untuk ananda *{nama_santri}* ({kelas}) {status_titipan}.\n• Barang: {barang}\n• Pengirim: {pengirim_titipan}\n• Diterima di pos: {waktu_terima}\n{pengambilan}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  libur_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan bahwa pada *{periode_libur}* ananda *{nama_santri}* ({kelas}) *{status_libur}*.\n• Pulang: {waktu_pulang}\n• Batas kembali: {batas_kembali}\n{keterangan}\n\nMohon ananda dijemput dan diantar kembali tepat waktu.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   verval_presensi: '{salam}, {nama}.\n\nPresensi Anda pada sesi {sesi}, {tanggal} telah diverval dengan status *{status_presensi}*.\nCatatan: {catatan_verval}\n\n{penutup}\n{pengirim}',
 }
 
@@ -77,6 +79,9 @@ export const ISIAN_WA = [
     ['jumlah_sesi', 'Jumlah sesi terlaksana'], ['hadir_penuh', 'Jumlah santri hadir penuh'], ['rincian', 'Rincian per santri (salin grup)']] },
   { grup: 'Perizinan santri', isian: [['jenis_izin', 'Jenis izin (pulang/keluar)'], ['waktu_keluar', 'Waktu keluar'],
     ['batas_kembali', 'Batas kembali'], ['penjemput', 'Nama dan hubungan penjemput']] },
+  { grup: 'Security (titipan)', isian: [['status_titipan', 'Status titipan (diterima/diserahkan)'], ['barang', 'Jenis dan uraian barang'], ['pengirim_titipan', 'Pengirim titipan'],
+    ['waktu_terima', 'Waktu titipan diterima di pos'], ['pengambilan', 'Keterangan pengambilan (nama dan waktu)']] },
+  { grup: 'Libur santri', isian: [['periode_libur', 'Nama periode libur'], ['status_libur', 'Keputusan libur ananda'], ['waktu_pulang', 'Waktu pulang']] },
   { grup: 'Bebas', isian: [['pesan', 'Isi pesan bebas']] },
 ]
 

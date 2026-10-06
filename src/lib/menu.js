@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.5 | Fase 7 – Tahap 1 Security: gerbang | 06/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.7 | Fase 7 – Tahap 4 Pantauan langsung pimpinan | 06/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -6,7 +6,7 @@
 import {
   PhHouse, PhFingerprint, PhUsersThree, PhStudent, PhBookOpenText, PhFileText, PhFirstAidKit,
   PhShieldCheck, PhChartBar, PhEnvelopeSimple, PhWallet, PhMegaphone, PhKey, PhGearSix, PhBell,
-  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut,
+  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut, PhBroadcast,
 } from '@phosphor-icons/vue'
 
 const ADMIN = ['admin', 'superadmin']
@@ -16,6 +16,8 @@ export const MENU = [
   { kode: 'notifikasi', nama: 'Notifikasi',      ikon: PhBell,           warna: 'notifikasi', ke: '/notifikasi',        grup: 'Utama' },
   { kode: 'pengumuman', nama: 'Pengumuman',      ikon: PhMegaphone,      warna: 'pengumuman', ke: '/pengumuman',        grup: 'Utama' },
   { kode: 'agenda',     nama: 'Agenda',          ikon: PhCalendarCheck,  warna: 'agenda',     ke: '/agenda',            grup: 'Utama' },
+  { kode: 'pantauan',   nama: 'Pantauan Langsung', ikon: PhBroadcast,    warna: 'shift',      ke: '/pantauan',          grup: 'Utama',
+    syarat: (c) => c.struktural || Number(c.fitur?.pantauan ?? 0) >= 1 },
   // Presensi
   { kode: 'presensi',   nama: 'Presensi',        ikon: PhFingerprint,    warna: 'presensi',   ke: '/presensi',          grup: 'Presensi' },
   { kode: 'jadwalshift', nama: 'Jadwal Shift',   ikon: PhCalendarStar,   warna: 'shift',      ke: '/jadwal-shift',      grup: 'Presensi', syarat: 'shift' },
@@ -55,7 +57,8 @@ export const MENU = [
     syarat: (c) => c.kelompok || Number(c.fitur?.perizinan_santri ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 || (c.izin || []).includes('kelola_izin_santri') },
   { kode: 'lapor', nama: 'Lapor ke Bidang', ikon: PhMegaphone, warna: 'laporan', ke: '/lapor', grup: 'Layanan' },
   { kode: 'security',   nama: 'Security',        ikon: PhShieldCheck,    warna: 'security',   ke: '/security',          grup: 'Layanan',
-    syarat: (c) => Number(c.fitur?.gerbang ?? 0) >= 1 || Number(c.fitur?.pantauan ?? 0) >= 1 || (c.izin || []).includes('kelola_security') },
+    syarat: (c) => Number(c.fitur?.gerbang ?? 0) >= 1 || Number(c.fitur?.pantauan ?? 0) >= 1 || (c.izin || []).includes('kelola_security')
+      || (c.jenisKelompok || []).some((j) => ['kamar', 'kelas', 'halaqah'].includes(j)) },
   { kode: 'laporan',    nama: 'Laporan',         ikon: PhChartBar,       warna: 'laporan',    ke: '/segera/laporan',    grup: 'Administrasi', fase: 8 },
   { kode: 'tatausaha',  nama: 'Tata Usaha',      ikon: PhEnvelopeSimple, warna: 'tatausaha',  ke: '/segera/tatausaha',  grup: 'Administrasi', fase: 10 },
   { kode: 'gaji',       nama: 'Gaji',            ikon: PhWallet,         warna: 'gaji',       ke: '/segera/gaji',       grup: 'Administrasi', fase: 11 },

@@ -1,9 +1,10 @@
+<!-- SIMKA PRO | src/components/LembarBawah.vue | v1.1 | Fase 7 – Tahap 4 Lembar lebar untuk daftar | 06/10/2026 -->
 <script setup>
 // Bottom sheet ala Android (mobile); di desktop tampil sebagai dialog di tengah.
 import { watch, onBeforeUnmount } from 'vue'
 import { PhX } from '@phosphor-icons/vue'
 const buka = defineModel({ type: Boolean, default: false })
-defineProps({ judul: String })
+defineProps({ judul: String, lebar: { type: Boolean, default: false } })
 const tutup = () => (buka.value = false)
 const esc = (e) => e.key === 'Escape' && tutup()
 watch(buka, (v) => { document.body.style.overflow = v ? 'hidden' : ''; v ? addEventListener('keydown', esc) : removeEventListener('keydown', esc) })
@@ -14,7 +15,7 @@ onBeforeUnmount(() => { document.body.style.overflow = ''; removeEventListener('
     <Transition name="lembar">
       <div v-if="buka" class="layar-saja fixed inset-0 z-50 flex items-end justify-center lg:items-center" role="dialog" aria-modal="true" :aria-label="judul">
         <div class="latar-redup absolute inset-0 bg-black/45" @click="tutup" />
-        <div class="panel relative max-h-[88dvh] w-full overflow-y-auto rounded-t-[1.75rem] bg-permukaan pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-apung lg:max-w-lg lg:rounded-[1.5rem]">
+        <div class="panel relative max-h-[88dvh] w-full overflow-y-auto rounded-t-[1.75rem] bg-permukaan pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-apung lg:rounded-[1.5rem]" :class="lebar ? 'lg:max-w-4xl' : 'lg:max-w-lg'">
           <div class="sticky top-0 z-10 bg-permukaan px-5 pt-2.5 pb-2">
             <div class="mx-auto mb-2 h-1.5 w-10 rounded-full bg-garis lg:hidden" aria-hidden="true" />
             <div class="flex items-center justify-between">

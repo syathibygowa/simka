@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/security/TabGerbang.vue | v1.0 | Fase 7 – Tahap 1 Security: gerbang | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/security/TabGerbang.vue | v1.1 | Fase 7 – Tahap 2 Titipan, buku tamu, kunjungan | 06/10/2026 -->
 <script setup>
 // Gerbang santri (mode "gerbang") dan santri di luar pondok (mode "diluar").
 //   Gerbang : cari nama → daftar "Nama – Kelas" atau "Nama – Kamar" (pilihan akhiran); kata kedua boleh nama kelas/kamar
@@ -95,7 +95,7 @@ const telat = (s) => Math.floor((Date.now() - new Date(s.izin.kembali_batas)) / 
           <li v-for="s in data.siap" :key="s.student_id">
             <button type="button" class="kartu flex w-full items-center gap-3 p-3 text-left" :class="'w-' + (s.status.kode === 'boleh' ? 'presensi' : 'agenda')" @click="buka(s)">
               <span class="chip-ikon h-10 w-10 shrink-0"><PhCheckCircle :size="22" weight="fill" /></span>
-              <span class="min-w-0 flex-1"><b class="block leading-snug">{{ s.nama }} – {{ akhiranSantri(s, akhiran) || '–' }}</b>
+              <span class="min-w-0 flex-1"><b class="block leading-snug">{{ s.nama }}{{ akhiranSantri(s, akhiran) ? ' – ' + akhiranSantri(s, akhiran) : '' }}</b>
                 <span class="block text-xs text-teks2">{{ s.izin?.alasan }} · penjemput {{ s.izin?.penjemput || '–' }}</span>
                 <span class="block text-xs text-teks3">{{ formatWaktu(s.izin?.keluar_pada) }} s.d. {{ formatWaktu(s.izin?.kembali_batas) }} WITA</span></span>
               <span :class="['status-pil shrink-0', 'sp-' + s.status.warna]">{{ s.status.kode === 'boleh' ? 'Boleh keluar' : 'Nanti' }}</span>
@@ -111,7 +111,7 @@ const telat = (s) => Math.floor((Date.now() - new Date(s.izin.kembali_batas)) / 
           <li v-for="l in data.log_hari_ini" :key="l.id" class="flex items-center gap-3 p-3" :class="'w-' + JENIS_LOG[l.jenis].w">
             <span class="chip-ikon h-9 w-9 shrink-0"><component :is="JENIS_LOG[l.jenis].ikon" :size="20" weight="duotone" /></span>
             <div class="min-w-0 flex-1">
-              <p class="text-sm leading-snug"><b>{{ formatJam(l.waktu) }}</b> · {{ JENIS_LOG[l.jenis].n }} · <b>{{ l.nama }}</b> – {{ akhiranSantri(l, akhiran) || '–' }}</p>
+              <p class="text-sm leading-snug"><b>{{ formatJam(l.waktu) }}</b> · {{ JENIS_LOG[l.jenis].n }} · <b>{{ l.nama }}</b>{{ akhiranSantri(l, akhiran) ? ' – ' + akhiranSantri(l, akhiran) : '' }}</p>
               <p class="truncate text-xs text-teks3">{{ l.penjemput ? 'Penjemput ' + l.penjemput + ' · ' : '' }}{{ l.terlambat_menit ? 'Terlambat ' + durasi(l.terlambat_menit) + ' · ' : '' }}{{ l.catatan ? l.catatan + ' · ' : '' }}Petugas {{ l.petugas || '–' }}</p>
             </div>
             <FotoBerkas v-if="l.foto_id" :id="l.foto_id" alt="Foto gerbang" ukuran="h-12 w-12" />
@@ -127,7 +127,7 @@ const telat = (s) => Math.floor((Date.now() - new Date(s.izin.kembali_batas)) / 
           <button type="button" class="kartu flex w-full items-start gap-3 p-4 text-left" :class="['w-' + (s.status.kode === 'terlambat' ? 'klinik' : 'security'), s.status.kode === 'terlambat' && 'lewat']" @click="buka(s)">
             <span class="chip-ikon h-11 w-11 shrink-0"><component :is="s.status.kode === 'terlambat' ? PhSiren : PhSignOut" :size="24" weight="duotone" /></span>
             <span class="min-w-0 flex-1">
-              <span class="flex flex-wrap items-center gap-1.5"><b class="leading-snug">{{ s.nama }} – {{ akhiranSantri(s, akhiran) || '–' }}</b>
+              <span class="flex flex-wrap items-center gap-1.5"><b class="leading-snug">{{ s.nama }}{{ akhiranSantri(s, akhiran) ? ' – ' + akhiranSantri(s, akhiran) : '' }}</b>
                 <span :class="['status-pil', 'sp-' + s.status.warna]">{{ s.status.kode === 'terlambat' ? 'Terlambat ' + durasi(telat(s)) : 'Di luar' }}</span></span>
               <span class="block text-xs text-teks3">{{ s.nis }} · {{ akhiran === 'kamar' ? 'Kelas ' + (s.kelas || '–') : s.kamar || 'Kamar –' }}</span>
               <span class="mt-1 block text-sm font-semibold">{{ s.izin?.alasan }}</span>
