@@ -1,8 +1,8 @@
-<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.0 | Fase 6 – Tahap 2 Status otomatis dan perizinan santri | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.1 | Fase 7 – Tahap 1 Security: gerbang | 06/10/2026 -->
 <script setup>
 // Daftar izin santri. Dipakai di menu Perizinan Santri (cakupan tetap) dan menu Musyrif (disaring per kamar,
 // dengan pilihan Menunggu/Aktif/Semua). Aksi sesuai hak dari server: setujui/tolak, ubah, batalkan,
-// catat keluar/kembali (sementara oleh pengasuh/admin; Fase 7 oleh Security), WA ke wali.
+// catat keluar/kembali (hanya petugas Security, Fase 7), WA ke wali.
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import {
   PhPaperPlaneTilt, PhCheck, PhX, PhPencilSimple, PhSignOut, PhSignIn, PhWhatsappLogo, PhHourglass, PhWarningCircle, PhCheckCircle, PhUser, PhMagnifyingGlass, PhProhibit,
@@ -139,7 +139,7 @@ const kosong = computed(() => ({ persetujuan: 'Tidak ada izin yang menunggu kepu
       </li>
     </ul>
     <p v-if="!tampil.length && !memuat" class="kartu mt-4 p-8 text-center text-sm text-teks3">{{ kosong }}</p>
-    <p class="mt-4 text-xs text-teks3">Pencatatan keluar dan kembali sementara dilakukan pengasuh atau admin. Pada Fase 7 dilakukan Security di gerbang.</p>
+    <p class="mt-4 text-xs text-teks3">Pencatatan keluar dan kembali santri dilakukan petugas Security di gerbang (menu Security).</p>
 
     <TombolAksi v-if="iz.hak.ajukan" label="Ajukan izin" :ikon="PhPaperPlaneTilt" warna="pengajuan" @klik="ajukan" />
     <LembarAjukanIzin v-model="lembarAjukan" :izin="izinUbah" :calon="calon" :peran-utama="peranUtama" @selesai="muat" />

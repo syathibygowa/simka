@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/izin.js | v1.0 | Fase 6 – Tahap 2 Status otomatis dan perizinan santri | 06/10/2026
+// SIMKA PRO | src/stores/izin.js | v1.1 | Fase 7 – Tahap 1 Security: gerbang | 06/10/2026
 // Perizinan santri berjenjang: hak, ketentuan, peran pengusul, ajukan, ubah, putuskan, batalkan, catat keluar/kembali,
 // dan daftar (persetujuan, menunggu, aktif, semua; dapat disaring per kelompok/kamar).
 import { defineStore } from 'pinia'
@@ -76,7 +76,7 @@ export const useIzin = defineStore('izin', {
         return { ...x, nama: s.nama_lengkap, nis: s.nis, jenis_kelamin: s.jenis_kelamin, kelas: kelDari(x.student_id, 'kelas'), kamar: kelDari(x.student_id, 'kamar'),
           pemutus: 'Kepala Bidang Kesantrian', terlambat: !!x.terlambat,
           boleh_putus: atas && ['diajukan', 'disetujui_bidang'].includes(x.status), boleh_ubah: x.status === 'diajukan',
-          boleh_batal: ['diajukan', 'disetujui_bidang', 'disetujui'].includes(x.status), boleh_catat: ['disetujui', 'keluar'].includes(x.status),
+          boleh_batal: ['diajukan', 'disetujui_bidang', 'disetujui'].includes(x.status), boleh_catat: ['disetujui', 'keluar'].includes(x.status) && sesi.peran !== 'pegawai',
           urut: ['diajukan', 'disetujui_bidang'].includes(x.status) ? '0' : x.terlambat ? '1' : ['disetujui', 'keluar'].includes(x.status) ? '2' : '3' }
       }).sort((a, b) => a.urut.localeCompare(b.urut) || b.keluar_pada.localeCompare(a.keluar_pada))
     },

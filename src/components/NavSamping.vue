@@ -1,11 +1,13 @@
-<!-- SIMKA PRO | src/components/NavSamping.vue | v1.6 | Fase 4 – Tahap 4 Ekskul | 04/10/2026 -->
+<!-- SIMKA PRO | src/components/NavSamping.vue | v1.7 | Fase 7 – Tahap 1 Sidebar berkelompok buka-tutup | 06/10/2026 -->
 <script setup>
 // Sidebar desktop: menu berkelompok, setiap menu dengan ikon dan warna sendiri.
-// Dapat diciutkan (hanya ikon, 76 px); saat diciutkan, sidebar terbuka sementara
+// Setiap kelompok dapat dibuka-tutup dengan mengeklik judulnya (pilihan tersimpan di perangkat); bawaan pertama kali:
+// semua tertutup kecuali Utama. Kelompok yang memuat halaman aktif selalu terbuka. Tombol "Buka semua/Tutup semua".
+// Dapat diciutkan (hanya ikon, 76 px); saat diciutkan semua menu tampil sebagai ikon dan sidebar terbuka sementara
 // ketika kursor diarahkan ke atasnya, lalu menutup lagi tanpa menggeser isi halaman.
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { PhCaretDoubleLeft, PhCaretDoubleRight } from '@phosphor-icons/vue'
+import { PhCaretDoubleLeft, PhCaretDoubleRight, PhCaretDown, PhArrowsInLineVertical, PhArrowsOutLineVertical } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import { useNotifikasi } from '@/stores/notifikasi'
 import { useUI } from '@/stores/ui'
@@ -19,11 +21,17 @@ let tunda
 const masuk = () => { if (ui.sidebarCiut) { clearTimeout(tunda); tunda = setTimeout(() => (melayang.value = true), 120) } }
 const keluar = () => { clearTimeout(tunda); melayang.value = false }
 const lebar = computed(() => !ui.sidebarCiut || melayang.value)
+const aktif = (m) => (m.ke === '/' ? route.path === '/' : route.path.startsWith(m.ke))
 const kelompok = computed(() => {
   const m = menuUntuk(sesi.peran, sesi.ciriMenu).filter((x) => x.kode !== 'profil')
   return GRUP.map((g) => ({ g, item: m.filter((x) => x.grup === g) })).filter((k) => k.item.length)
+    .map((k) => ({ ...k, adaAktif: k.item.some(aktif), lencana: k.item.some((x) => x.kode === 'notifikasi') && notif.belumDibaca }))
 })
-const aktif = (m) => (m.ke === '/' ? route.path === '/' : route.path.startsWith(m.ke))
+const namaGrup = computed(() => kelompok.value.map((k) => k.g))
+const tertutup = (k) => !k.adaAktif && (ui.grupTutup === null ? k.g !== 'Utama' : ui.grupTutup.includes(k.g))
+const tampilItem = (k) => !lebar.value || !tertutup(k)
+const semuaTerbuka = computed(() => kelompok.value.every((k) => !tertutup(k)))
+const alihSemua = () => ui.aturSemuaGrup(semuaTerbuka.value ? namaGrup.value : [])
 </script>
 <template>
   <aside :class="['layar-saja fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-garis bg-permukaan transition-[width,box-shadow] duration-200 lg:flex', lebar ? 'w-[272px]' : 'w-[76px]', ui.sidebarCiut && melayang && 'shadow-apung']"
@@ -38,21 +46,33 @@ const aktif = (m) => (m.ke === '/' ? route.path === '/' : route.path.startsWith(
         </span>
       </router-link>
     </div>
+    <div v-show="lebar" class="flex justify-end px-4 pb-1">
+      <button type="button" class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-teks3 hover:bg-permukaan2 hover:text-teks" @click="alihSemua">
+        <component :is="semuaTerbuka ? PhArrowsInLineVertical : PhArrowsOutLineVertical" :size="14" /> {{ semuaTerbuka ? 'Tutup semua kelompok' : 'Buka semua kelompok' }}</button>
+    </div>
     <nav class="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-3" aria-label="Menu utama">
-      <div v-for="k in kelompok" :key="k.g" class="mt-3">
-        <p v-show="lebar" class="whitespace-nowrap px-3 pb-1 text-xs font-semibold text-teks3">{{ k.g }}</p>
-        <hr v-show="!lebar" class="mx-2 mb-2 border-garis" />
-        <router-link v-for="m in k.item" :key="m.kode" :to="m.ke" :title="lebar ? undefined : m.nama"
-          :class="['menu group relative flex min-h-[44px] items-center gap-3 rounded-xl px-[9px] text-[0.93rem] font-semibold', 'w-' + m.warna, aktif(m) ? 'aktif text-teks' : 'text-teks2 hover:bg-permukaan2 hover:text-teks']"
-          :aria-current="aktif(m) ? 'page' : undefined" :aria-label="m.nama">
-          <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="m.ikon" :size="20" weight="duotone" /></span>
-          <span v-show="lebar" class="flex-1 truncate whitespace-nowrap">{{ m.nama }}</span>
-          <template v-if="m.kode === 'notifikasi' && notif.belumDibaca">
-            <span v-if="lebar" class="rounded-full bg-[#C7332F] px-1.5 text-xs font-bold leading-5 text-white">{{ notif.belumDibaca }}</span>
-            <span v-else class="absolute left-[34px] top-1.5 h-2.5 w-2.5 rounded-full bg-[#C7332F] ring-2 ring-permukaan" aria-hidden="true" />
-          </template>
-          <span v-else-if="m.fase && lebar" class="whitespace-nowrap text-[11px] font-semibold text-teks3">Fase {{ m.fase }}</span>
-        </router-link>
+      <div v-for="k in kelompok" :key="k.g" class="mt-1.5">
+        <button v-show="lebar" type="button" class="judul-grup flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold text-teks3 hover:bg-permukaan2 hover:text-teks"
+          :aria-expanded="!tertutup(k)" :aria-label="(tertutup(k) ? 'Buka' : 'Tutup') + ' kelompok ' + k.g" @click="ui.alihGrup(k.g, namaGrup)">
+          <span class="flex-1 text-left">{{ k.g }}</span>
+          <span v-if="tertutup(k)" class="rounded-full bg-permukaan2 px-1.5 text-[11px] font-bold tabular-nums">{{ k.item.length }}</span>
+          <span v-if="tertutup(k) && k.lencana" class="h-2 w-2 rounded-full bg-[#C7332F]" aria-hidden="true" />
+          <PhCaretDown :size="14" weight="bold" :class="['transition-transform', tertutup(k) && '-rotate-90']" />
+        </button>
+        <hr v-show="!lebar" class="mx-2 my-2 border-garis" />
+        <div v-show="tampilItem(k)">
+          <router-link v-for="m in k.item" :key="m.kode" :to="m.ke" :title="lebar ? undefined : m.nama"
+            :class="['menu group relative flex min-h-[44px] items-center gap-3 rounded-xl px-[9px] text-[0.93rem] font-semibold', 'w-' + m.warna, aktif(m) ? 'aktif text-teks' : 'text-teks2 hover:bg-permukaan2 hover:text-teks']"
+            :aria-current="aktif(m) ? 'page' : undefined" :aria-label="m.nama">
+            <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="m.ikon" :size="20" weight="duotone" /></span>
+            <span v-show="lebar" class="flex-1 truncate whitespace-nowrap">{{ m.nama }}</span>
+            <template v-if="m.kode === 'notifikasi' && notif.belumDibaca">
+              <span v-if="lebar" class="rounded-full bg-[#C7332F] px-1.5 text-xs font-bold leading-5 text-white">{{ notif.belumDibaca }}</span>
+              <span v-else class="absolute left-[34px] top-1.5 h-2.5 w-2.5 rounded-full bg-[#C7332F] ring-2 ring-permukaan" aria-hidden="true" />
+            </template>
+            <span v-else-if="m.fase && lebar" class="whitespace-nowrap text-[11px] font-semibold text-teks3">Fase {{ m.fase }}</span>
+          </router-link>
+        </div>
       </div>
     </nav>
     <div class="border-t border-garis p-3">

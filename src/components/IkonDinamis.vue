@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/IkonDinamis.vue | v1.3 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026 -->
+<!-- SIMKA PRO | src/components/IkonDinamis.vue | v1.4 | Fase 7 – Tahap 1 Ikon notifikasi layanan santri | 06/10/2026 -->
 <script setup>
 // Ikon berdasarkan nama (dipakai notifikasi dari database, kolom "ikon").
 import {
@@ -6,6 +6,7 @@ import {
   PhListChecks, PhInfo, PhFileText, PhMegaphone, PhKey, PhCalendarCheck, PhShieldCheck, PhArrowsLeftRight, PhMapPin, PhClock,
   PhPushPin, PhCalendarStar, PhNotebook, PhFolderOpen, PhIdentificationCard, PhSealCheck, PhXCircle,
   PhClipboardText, PhEnvelopeSimple, PhStamp, PhFile, PhCertificate, PhFolder, PhBooks, PhReceipt, PhScroll, PhGraduationCap, PhImage, PhHandshake,
+  PhSignOut, PhSignIn, PhSiren, PhFirstAidKit, PhPackage, PhUsers, PhDoorOpen, PhProhibit, PhBuildings, PhChatCircleText, PhTray, PhNotePencil,
 } from '@phosphor-icons/vue'
 const PETA = {
   Bell: PhBell, UserPlus: PhUserPlus, CheckCircle: PhCheckCircle, WarningCircle: PhWarningCircle,
@@ -16,6 +17,8 @@ const PETA = {
   IdentificationCard: PhIdentificationCard, SealCheck: PhSealCheck, XCircle: PhXCircle,
   ClipboardText: PhClipboardText, EnvelopeSimple: PhEnvelopeSimple, Stamp: PhStamp, File: PhFile, Certificate: PhCertificate, Folder: PhFolder,
   Books: PhBooks, Receipt: PhReceipt, Scroll: PhScroll, GraduationCap: PhGraduationCap, Image: PhImage, Handshake: PhHandshake,
+  SignOut: PhSignOut, SignIn: PhSignIn, Siren: PhSiren, FirstAidKit: PhFirstAidKit, Package: PhPackage, Users: PhUsers, DoorOpen: PhDoorOpen,
+  NotePencil: PhNotePencil, Prohibit: PhProhibit, Buildings: PhBuildings, ChatCircleText: PhChatCircleText, Tray: PhTray,
 }
 defineProps({ nama: { type: String, default: 'Bell' }, size: { type: Number, default: 22 } })
 </script>

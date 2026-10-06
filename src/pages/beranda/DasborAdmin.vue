@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.6 | Fase 6 – Tahap 5 Penutup fase klinik dan lapor | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.7 | Fase 7 – Tahap 1 Security: gerbang | 06/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import {
@@ -22,6 +22,7 @@ import KartuStatistik from '@/components/KartuStatistik.vue'
 import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
 import KartuTahfizhBeranda from '@/components/KartuTahfizhBeranda.vue'
 import KartuLayananBeranda from '@/components/KartuLayananBeranda.vue'
+import KartuSecurityBeranda from '@/components/KartuSecurityBeranda.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
@@ -65,6 +66,7 @@ const AKSI = [
 
     <KartuTahfizhBeranda />
     <KartuLayananBeranda />
+    <KartuSecurityBeranda />
 
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="judul-bagian">Kendali data pegawai</h2>
