@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.8 | Fase 8 – Perbaikan: tautan menu Rekap | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.9 | Fase 8 – Perbaikan: statistik beranda bergeser per kelompok | 10/10/2026 -->
 <script setup>
 import { ref, computed } from 'vue'
 import {
@@ -10,6 +10,8 @@ import { useStatistik } from '@/stores/statistik'
 import { formatRelatif, formatWaktu } from '@/lib/tanggal'
 import Sapaan from './Sapaan.vue'
 import TombolPantauan from '@/components/TombolPantauan.vue'
+import SliderStatistik from '@/components/SliderStatistik.vue'
+import { panelBeranda } from '@/lib/panelBeranda'
 import RingkasanPribadi from './RingkasanPribadi.vue'
 import RingkasanPimpinan from './RingkasanPimpinan.vue'
 import RingkasanKelola from './RingkasanKelola.vue'
@@ -26,6 +28,7 @@ import KartuSecurityBeranda from '@/components/KartuSecurityBeranda.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
+const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'layanan', 'security', 'pondok', 'pribadi'])
 const stat = useStatistik(); const br = useBeranda()
 const d = computed(() => stat.data || {})
 const ch = computed(() => stat.berubah)
@@ -57,27 +60,22 @@ const AKSI = [
     <Sapaan keterangan="Anda memegang kendali penuh atas data dan pengaturan sistem SIMKA PRO." />
     <TombolPantauan />
 
-    <StatistikPresensi />
-
-    <template v-if="br.data?.kelola">
-      <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="judul-bagian">Administrasi pegawai</h2><IndikatorLangsung :waktu="br.diperbarui" /></div>
-      <RingkasanKelola :d="br.data.kelola" />
-    </template>
-    <template v-if="br.data?.pimpinan">
-      <h2 class="judul-bagian">Unit yang Anda pimpin</h2>
-      <RingkasanPimpinan :d="br.data.pimpinan" />
-    </template>
-    <template v-if="br.data?.pribadi">
-      <h2 class="judul-bagian">Untuk Anda</h2>
-      <RingkasanPribadi :d="br.data.pribadi" />
-    </template>
-
-    <KartuSantriBeranda />
-
-    <KartuTahfizhBeranda />
-    <KartuLayananBeranda />
-    <KartuSecurityBeranda />
-
+    <SliderStatistik :panel="PANEL" simpan="simka.beranda.superadmin">
+      <template #presensi><StatistikPresensi /></template>
+      <template #kelola>
+        <template v-if="br.data?.kelola">
+          <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="judul-bagian">Administrasi pegawai</h2><IndikatorLangsung :waktu="br.diperbarui" /></div>
+          <RingkasanKelola :d="br.data.kelola" />
+        </template>
+      </template>
+      <template #pimpinan>
+        <template v-if="br.data?.pimpinan"><h2 class="judul-bagian">Unit yang Anda pimpin</h2><RingkasanPimpinan :d="br.data.pimpinan" /></template>
+      </template>
+      <template #santri><KartuSantriBeranda /></template>
+      <template #tahfizh><KartuTahfizhBeranda /></template>
+      <template #layanan><KartuLayananBeranda /></template>
+      <template #security><KartuSecurityBeranda /></template>
+      <template #pondok>
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="judul-bagian">Ringkasan pondok</h2>
       <IndikatorLangsung :waktu="stat.diperbarui" />
@@ -133,6 +131,12 @@ const AKSI = [
         </section>
       </div>
     </div>
+
+      </template>
+      <template #pribadi>
+        <template v-if="br.data?.pribadi"><h2 class="judul-bagian">Untuk Anda</h2><RingkasanPribadi :d="br.data.pribadi" /></template>
+      </template>
+    </SliderStatistik>
 
     <section class="hidden lg:block">
       <h2 class="judul-bagian mb-3">Akses cepat superadmin</h2>

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.14 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026
+// SIMKA PRO | src/router/index.js | v3.15 | Fase 8 – Perbaikan: menu Rekap menjadi Dokumen | 10/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -69,7 +69,7 @@ const routes = [
       { path: 'kelompok-pegawai', component: () => import('@/pages/kelompok/KelompokPegawai.vue'), meta: { judul: 'Tim Kerja', peran: ADMIN, kembali: '/tugas' } },
       { path: 'beban-kerja/:tab?', component: () => import('@/pages/beban/BebanKerja.vue'), props: true, meta: { judul: 'Ekuivalensi Jam Beban Kerja', kembali: '/tugas' } },
       { path: 'audit-log', component: () => import('@/pages/audit/AuditLog.vue'), meta: { judul: 'Audit Log', kembali: '/tugas' } },
-      { path: 'rekap/:tab?', component: () => import('@/pages/laporan/Laporan.vue'), props: true, meta: { judul: 'Rekap', cetak: true, kembali: '/tugas' } },
+      { path: 'rekap/:tab?', component: () => import('@/pages/laporan/Laporan.vue'), props: true, meta: { judul: 'Dokumen', cetak: true, kembali: '/tugas' } },
       { path: 'laporan/:tab?', redirect: (to) => ({ path: `/rekap/${to.params.tab || ''}`, query: to.query }) },
       { path: 'segera/:kode', component: () => import('@/pages/umum/Segera.vue'), props: true, meta: { judul: 'Segera hadir', kembali: '/tugas' } },
       { path: ':salah(.*)*', component: () => import('@/pages/umum/TidakDitemukan.vue'), meta: { judul: 'Halaman tidak ditemukan', kembali: '/' } },

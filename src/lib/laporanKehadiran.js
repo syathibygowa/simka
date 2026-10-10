@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/laporanKehadiran.js | v1.0 | Fase 8 – Tahap 2 Laporan kehadiran pegawai | 10/10/2026
+// SIMKA PRO | src/lib/laporanKehadiran.js | v1.1 | Fase 8 – Tahap 3 laporan kehadiran santri | 10/10/2026
 // Olah data laporan kehadiran: pilihan periode cepat, kode status (kata lengkap untuk cetak, singkatan untuk matriks),
 // matriks nama × tanggal, keterangan per pegawai, dan daftar perhatian (persentase di bawah ambang).
 import { hariIniISO, HARI } from './tanggal'
@@ -60,3 +60,28 @@ export function susunMatriks(rinci) {
   return m
 }
 export const persenTeks = (v) => (v == null ? '–' : `${String(v).replace('.', ',')}%`)
+
+// ---------- Santri (HISBAT) ----------
+export const STATUS_SANTRI = {
+  H: { n: 'Hadir', w: 'presensi', b: 0 }, T: { n: 'Terlambat', w: 'tahfizh', b: 1 }, I: { n: 'Izin', w: 'pengajuan', b: 2 },
+  S: { n: 'Sakit', w: 'klinik', b: 3 }, B: { n: 'Bolos', w: 'shift', b: 4 }, A: { n: 'Absen', w: 'beranda', b: 5 },
+}
+export const KEGIATAN_SANTRI = { pokok: 'Gabungan program pokok', kelas: 'Kelas', halaqah: 'Halaqah', asrama: 'Asrama', ekskul: 'Ekskul' }
+export const NAMA_KEGIATAN = { kelas: 'Kelas', halaqah: 'Halaqah', asrama: 'Asrama', ekskul: 'Ekskul' }
+/** Matriks santri: status terberat per tanggal. */
+export function susunMatriksSantri(rinci) {
+  const m = {}
+  for (const r of rinci || []) {
+    const b = (m[r.student_id] ||= {}); const lama = b[r.tanggal]
+    if (!lama || STATUS_SANTRI[lama].b < STATUS_SANTRI[r.kode].b) b[r.tanggal] = r.kode
+  }
+  return m
+}
+export function keteranganSantri(s) {
+  const out = []
+  const iz = [['izin', 'izin'], ['sakit', 'sakit']].filter(([k]) => s[k]).map(([k, n]) => `${n} ${s[k]}`)
+  if (iz.length) out.push(iz.join(', '))
+  if (s.absen) out.push(`absen ${s.absen}`)
+  if (s.bolos) out.push(`bolos ${s.bolos}`)
+  return out.join('; ')
+}

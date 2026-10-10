@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.12 | Fase 7 – Perbaikan uji coba: tombol Layar Pantauan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.13 | Fase 8 – Perbaikan: statistik beranda pimpinan bergeser per kelompok | 10/10/2026 -->
 <script setup>
 import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
 import KartuTahfizhBeranda from '@/components/KartuTahfizhBeranda.vue'
@@ -15,12 +15,15 @@ import { formatJam } from '@/lib/tanggal'
 import { lencanaSesi } from '@/lib/presensi'
 import Sapaan from './Sapaan.vue'
 import TombolPantauan from '@/components/TombolPantauan.vue'
+import SliderStatistik from '@/components/SliderStatistik.vue'
+import { panelBeranda } from '@/lib/panelBeranda'
 import RingkasanPribadi from './RingkasanPribadi.vue'
 import RingkasanPimpinan from './RingkasanPimpinan.vue'
 import IndikatorLangsung from './IndikatorLangsung.vue'
 import { useBeranda } from '@/stores/beranda'
 import ItemNotifikasi from '@/components/ItemNotifikasi.vue'
 
+const PANEL = panelBeranda(['pimpinan', 'santri', 'tahfizh', 'layanan', 'security', 'pribadi'])
 const notif = useNotifikasi(); const sesi = useSesi(); const router = useRouter(); const dp = useDataPresensi(); const br = useBeranda()
 onMounted(() => dp.muatHarian())
 // Ringkasan presensi hari ini pada kartu sapaan
@@ -47,16 +50,22 @@ const menu = computed(() => menuUntuk(sesi.peran, sesi.ciriMenu).filter((m) => !
     </Sapaan>
     <TombolPantauan />
 
-    <section v-if="br.data?.pimpinan" class="space-y-3">
-      <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="judul-bagian">Unit yang Anda pimpin</h2><IndikatorLangsung :waktu="br.diperbarui" /></div>
-      <RingkasanPimpinan :d="br.data.pimpinan" />
-    </section>
-    <RingkasanPribadi v-if="br.data?.pribadi" :d="br.data.pribadi" />
-    <!-- Pimpinan pemegang hak data santri: kartu statistik santri langsung -->
-    <KartuSantriBeranda v-if="sesi.tingkat('data_santri') >= 1" />
-    <KartuTahfizhBeranda v-if="sesi.kelompokSaya.some((k) => k.jenis === 'halaqah') || sesi.tingkat('tahfizh') >= 1 || sesi.tingkat('data_santri') >= 1" />
-    <KartuLayananBeranda />
-    <KartuSecurityBeranda />
+    <SliderStatistik :panel="PANEL" simpan="simka.beranda.pimpinan">
+      <template #pimpinan>
+        <template v-if="br.data?.pimpinan">
+          <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="judul-bagian">Unit yang Anda pimpin</h2><IndikatorLangsung :waktu="br.diperbarui" /></div>
+          <RingkasanPimpinan :d="br.data.pimpinan" />
+        </template>
+      </template>
+      <!-- Pimpinan pemegang hak data santri: kartu statistik santri langsung -->
+      <template #santri><KartuSantriBeranda v-if="sesi.tingkat('data_santri') >= 1" /></template>
+      <template #tahfizh><KartuTahfizhBeranda v-if="sesi.kelompokSaya.some((k) => k.jenis === 'halaqah') || sesi.tingkat('tahfizh') >= 1 || sesi.tingkat('data_santri') >= 1" /></template>
+      <template #layanan><KartuLayananBeranda /></template>
+      <template #security><KartuSecurityBeranda /></template>
+      <template #pribadi>
+        <template v-if="br.data?.pribadi"><h2 class="judul-bagian">Untuk Anda</h2><RingkasanPribadi :d="br.data.pribadi" /></template>
+      </template>
+    </SliderStatistik>
 
     <div class="grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:gap-6">
       <section class="kartu p-3 sm:p-4">

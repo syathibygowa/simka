@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.11 | Fase 8 – Tahap 2 menu Rekap untuk semua pegawai (kehadiran saya) | 10/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.12 | Fase 8 – Perbaikan: menu Rekap menjadi Dokumen | 10/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -6,7 +6,7 @@
 import {
   PhHouse, PhFingerprint, PhUsersThree, PhStudent, PhBookOpenText, PhFileText, PhFirstAidKit,
   PhShieldCheck, PhChartBar, PhEnvelopeSimple, PhWallet, PhMegaphone, PhKey, PhGearSix, PhBell,
-  PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut,
+  PhFiles, PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut,
 } from '@phosphor-icons/vue'
 
 const ADMIN = ['admin', 'superadmin']
@@ -55,8 +55,8 @@ export const MENU = [
   { kode: 'security',   nama: 'Security',        ikon: PhShieldCheck,    warna: 'security',   ke: '/security',          grup: 'Layanan',
     syarat: (c) => Number(c.fitur?.gerbang ?? 0) >= 1 || Number(c.fitur?.pantauan ?? 0) >= 1 || (c.izin || []).includes('kelola_security')
       || (c.jenisKelompok || []).some((j) => ['kamar', 'kelas', 'halaqah'].includes(j)) },
-  // Rekap: rekap presensi, laporan kehadiran, dan dokumen resmi dalam satu menu bertab (hemat menu)
-  { kode: 'rekap',      nama: 'Rekap',           ikon: PhChartLineUp,    warna: 'rekap',      ke: '/rekap',             grup: 'Administrasi' },
+  // Dokumen: rekap presensi, laporan kehadiran, dan dokumen resmi dalam satu menu bertab (hemat menu)
+  { kode: 'rekap',      nama: 'Dokumen',         ikon: PhFiles,    warna: 'rekap',      ke: '/rekap',             grup: 'Administrasi' },
   { kode: 'tatausaha',  nama: 'Tata Usaha',      ikon: PhEnvelopeSimple, warna: 'tatausaha',  ke: '/segera/tatausaha',  grup: 'Administrasi', fase: 10 },
   { kode: 'gaji',       nama: 'Gaji',            ikon: PhWallet,         warna: 'gaji',       ke: '/segera/gaji',       grup: 'Administrasi', fase: 11 },
   // Sistem
