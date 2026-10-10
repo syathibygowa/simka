@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/cetak.css | v1.5 | Fase 8 – Tahap 1 QR tanda tangan elektronik | 10/10/2026 */
+/* SIMKA PRO | src/styles/cetak.css | v1.6 | Fase 8 – Tahap 2 cetak rekap matriks | 10/10/2026 */
 /* =====================================================================
    SIMKA PRO · Standar cetak dokumen
    Kertas F4 215 × 330 mm, margin 2 cm, garis tabel ½ pt,
@@ -93,3 +93,10 @@
 .dok .ttd .ttd-qr .qr svg { width: 100%; height: 100%; display: block; }
 .dok .ttd .ttd-qr .ket { font-size: 7.5pt; line-height: 1.3; font-style: italic; color: #333; }
 .dok .catatan-validasi { margin-top: 8pt; padding-top: 4pt; border-top: 0.5pt solid #777; font-size: 8.5pt; line-height: 1.35; text-align: justify; }
+/* Fase 8: rekap matriks kehadiran (nama × tanggal) pada F4 mendatar */
+.dok table.tabel.matriks-cetak { font-size: 6.5pt; }
+.dok table.tabel.matriks-cetak th, .dok table.tabel.matriks-cetak td { padding: 1pt 1pt; }
+.dok table.tabel.matriks-cetak th { font-size: 6.5pt; }
+/* Tabel rekap banyak kolom pada F4 tegak: judul kolom lebih kecil agar tidak bertumpuk */
+.dok table.tabel.rapat th { font-size: 6.8pt; padding: 2pt 1.5pt; line-height: 1.15; hyphens: none; }
+.dok table.tabel.rapat td { padding: 2pt 2pt; }
