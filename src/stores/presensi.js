@@ -1,4 +1,5 @@
-// SIMKA PRO | src/stores/presensi.js | v1.2 | Fase 2 – Tahap 7 Statistik, rekap, pengingat | 03/10/2026
+// SIMKA PRO | src/stores/presensi.js | v1.3 | Fase 8 – Sesi hari ini hanya tanggal hari ini | 10/10/2026
+// v1.3: getter sesiHariIni; hitungan dan sesi berikutnya hanya untuk tanggal hari ini (sesi kemarin tampil di Riwayat 14 hari).
 // Presensi pegawai: sesi hari ini, periksa lokasi (waktu dan jarak dari server), kirim selfie
 // ke Edge Function "presensi", dan riwayat. Server adalah penentu; tampilan hanya pratinjau.
 import { defineStore } from 'pinia'
@@ -42,9 +43,11 @@ export const useDataPresensi = defineStore('dataPresensi', {
     sesi: (s) => s.harian?.sesi || [],
     /** Sesi wajib yang sedang terbuka dan belum dipresensi (dipakai juga oleh absensi santri di Fase 4) */
     terbuka: (s) => (s.harian?.sesi || []).filter((x) => x.keadaan === 'terbuka' && !x.opsional),
-    selesaiWajib: (s) => (s.harian?.sesi || []).filter((x) => !x.opsional && x.status).length,
-    jumlahWajib: (s) => (s.harian?.sesi || []).filter((x) => !x.opsional).length,
-    berikut: (s) => (s.harian?.sesi || []).find((x) => x.keadaan === 'akan_datang') || null,
+    /** Hanya sesi bertanggal hari ini (sesi lintas tengah malam dari kemarin tidak ditampilkan di daftar hari ini) */
+    sesiHariIni: (s) => (s.harian?.sesi || []).filter((x) => !x.tanggal || x.tanggal === hariIniISO()),
+    selesaiWajib() { return this.sesiHariIni.filter((x) => !x.opsional && x.status).length },
+    jumlahWajib() { return this.sesiHariIni.filter((x) => !x.opsional).length },
+    berikut() { return this.sesiHariIni.find((x) => x.keadaan === 'akan_datang') || null },
   },
   actions: {
     async muatHarian() {

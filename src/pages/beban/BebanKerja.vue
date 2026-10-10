@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beban/BebanKerja.vue | v1.1 | Fase 8 – Tahap 0 tanpa teks fase | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/beban/BebanKerja.vue | v1.2 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
 <script setup>
 // Ekuivalensi jam beban kerja per pekan.
 //   Beban saya   : rincian jam pegawai yang masuk, total, jam wajib, kelebihan/kekurangan.
@@ -55,8 +55,8 @@ const ringkas = computed(() => {
 })
 
 function ekspor() {
-  const kolom = ['No.', 'Status', 'Nama Lengkap Pegawai', 'NIY', 'Bidang/Unit', 'Jabatan, Tugas Utama, & Tambahan', 'Jumlah Beban Kerja', ...KOLOM_BEBAN, 'Jam Wajib', 'Kelebihan/Kekurangan']
-  const isi = tampil.value.map((r, i) => [i + 1, STATUS[r.status] || '', r.nama, r.niy || '', r.unit || '', r.rincian.map((x) => x.nama).join(', '), Number(r.total),
+  const kolom = ['No.', 'NIY', 'Nama Lengkap Pegawai', 'Status', 'Bidang/Unit', 'Jabatan, Tugas Utama, & Tambahan', 'Jumlah Beban Kerja', ...KOLOM_BEBAN, 'Jam Wajib', 'Kelebihan/Kekurangan']
+  const isi = tampil.value.map((r, i) => [i + 1, r.niy || '', r.nama, STATUS[r.status] || '', r.unit || '', r.rincian.map((x) => x.nama).join(', '), Number(r.total),
     ...KOLOM_BEBAN.map((k) => perKolom(r, k) || ''), r.jam_wajib ?? '', r.selisih ?? ''])
   const ws = XLSX.utils.aoa_to_sheet([kolom, ...isi]); ws['!cols'] = kolom.map((k, i) => ({ wch: i === 2 || i === 5 ? 36 : Math.max(8, Math.min(18, k.length)) }))
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Ekuivalensi Jam')

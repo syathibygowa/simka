@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kelompok/KelompokPegawai.vue | v1.0 | Fase 3 – Perbaikan P1 (kartu, kelompok, pengumuman) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompok/KelompokPegawai.vue | v1.1 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
 <script setup>
 // Kelompok pegawai di luar jabatan fungsional/struktural: Pengurus Harian (PH), Pengurus Inti (PI), panitia, tim, dll.
 // Superadmin dan admin ber-izin kelola_kelompok membuat kelompok, memilih anggota (dengan peran opsional),
@@ -124,10 +124,10 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
 
     <DokumenCetak v-if="k" v-model:pratinjau="pratinjau" judul="Daftar Anggota Kelompok" :subjudul="k.nama + (k.singkatan ? ` (${k.singkatan})` : '')" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
-        <colgroup><col style="width:7%"><col style="width:40%"><col style="width:20%"><col style="width:33%"></colgroup>
-        <thead><tr><th>No.</th><th>Nama</th><th>NIY</th><th>Peran / Bidang</th></tr></thead>
-        <tbody><tr v-for="(a, i) in k.anggota" :key="a.employee_id"><td class="tengah">{{ i + 1 }}</td><td>{{ namaPeg(a.employee_id) }}</td>
-          <td>{{ peg.cari(a.employee_id)?.niy || '–' }}</td><td>{{ [a.peran, unitPeg(a.employee_id)].filter(Boolean).join(' · ') }}</td></tr></tbody>
+        <colgroup><col style="width:7%"><col style="width:20%"><col style="width:40%"><col style="width:33%"></colgroup>
+        <thead><tr><th>No.</th><th>NIY</th><th>Nama</th><th>Peran / Bidang</th></tr></thead>
+        <tbody><tr v-for="(a, i) in k.anggota" :key="a.employee_id"><td class="tengah">{{ i + 1 }}</td><td>{{ peg.cari(a.employee_id)?.niy || '–' }}</td>
+          <td>{{ namaPeg(a.employee_id) }}</td><td>{{ [a.peran, unitPeg(a.employee_id)].filter(Boolean).join(' · ') }}</td></tr></tbody>
       </table>
       <template #ttd><TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: direktur.jabatan_tertulis || 'Direktur', nama: direktur.nama || '', niy: direktur.niy }" :kanan="{ jabatan: 'Pembuat', nama: sesi.pengguna?.nama_lengkap || '' }" /></template>
     </DokumenCetak>

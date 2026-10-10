@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/dokumen.js | v1.0 | Fase 8 – Tahap 1 Registri dokumen dan Cek Keabsahan | 10/10/2026
+// SIMKA PRO | src/stores/dokumen.js | v1.1 | Fase 8 – Tahap 5 tautan versi resmi laporan | 10/10/2026
 // Registri dokumen resmi (surat pengajuan, surat keterangan sakit, laporan resmi) dan pemeriksaan keabsahan publik.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -26,7 +26,7 @@ export const useDokumen = defineStore('dokumen', {
       try {
         if (MODE_DEMO) { this.daftar = DOKUMEN_DEMO.map((d) => ({ ...d })); return }
         let q = supabase.from('document_registry')
-          .select('id, kode, jenis, jenis_nama, nomor, perihal, subjek, periode, status, diterbitkan_pada, dicabut_pada, alasan_cabut, ref_tabel, jumlah_cek, terakhir_dicek, document_signatures(nama, jabatan, status, waktu, posisi, urutan)')
+          .select('id, kode, jenis, jenis_nama, nomor, perihal, subjek, periode, status, diterbitkan_pada, dicabut_pada, alasan_cabut, ref_tabel, tautan, mode_ttd, catatan, jumlah_cek, terakhir_dicek, document_signatures(nama, jabatan, status, waktu, posisi, urutan)')
           .order('diterbitkan_pada', { ascending: false }).limit(1000)
         if (mulai) q = q.gte('diterbitkan_pada', mulai + 'T00:00:00+08:00')
         if (selesai) q = q.lte('diterbitkan_pada', selesai + 'T23:59:59+08:00')

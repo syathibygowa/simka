@@ -1,11 +1,13 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.1 | Fase 8 – Perbaikan: urutan kolom NIS, Nama, JK | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.2 | Fase 8 – Tahap 5 Terbitkan resmi (salinan beku, tanda tangan elektronik) | 10/10/2026 -->
 <script setup>
 // Laporan kehadiran santri (menu Dokumen → Kehadiran santri), absensi HISBAT.
 // Jenis: rekap ringkas, rekap matriks (F4 mendatar), laporan individu, daftar perhatian, kepatuhan pengisian (pemantau).
 // Kegiatan: gabungan program pokok (kelas + halaqah + asrama) atau per kegiatan; ekskul dilaporkan terpisah.
 // Cakupan: kelompok (kelas, halaqah, kamar, ekskul), jenjang, seluruh santri, atau satu santri. Pengasuh hanya
 // melihat kelompok asuhannya (diperiksa server). Keluaran: layar, Excel, cetak F4.
+// v1.2: Terbitkan resmi (PanelResmi): salinan beku + permintaan tanda tangan pimpinan; versi resmi dibuka lewat ?resmi=id.
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { PhStudent, PhChartPieSlice, PhWarningCircle, PhUserMinus, PhMagnifyingGlass, PhFileXls, PhPrinter, PhInfo, PhListBullets, PhGridNine, PhUser, PhFlag, PhClipboardText } from '@phosphor-icons/vue'
 import { useLaporanSantri } from '@/stores/laporanSantri'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
@@ -19,9 +21,13 @@ import { ambilPenandaTangan } from '@/lib/penandatangan'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
-import TandaTangan from '@/components/cetak/TandaTangan.vue'
+import TtdResmi from '@/components/cetak/TtdResmi.vue'
+import PanelResmi from '@/components/PanelResmi.vue'
+import { useDokumenResmi } from '@/stores/dokumenResmi'
 
 const ls = useLaporanSantri(); const kel = useKelompokSantri(); const st = useSantri(); const sesi = useSesi(); const ui = useUI()
+const route = useRoute(); const router = useRouter(); const dr = useDokumenResmi()
+const resmi = ref(null) // versi resmi (salinan beku) yang sedang ditampilkan
 const pemantau = computed(() => sesi.isAdmin || sesi.luas('data_santri') || sesi.pimpinanTinggi)
 const JENIS_LAP = { ringkas: { n: 'Rekap ringkas', ikon: PhListBullets, ket: 'Jumlah setiap status HISBAT per santri dan persentase' },
   matriks: { n: 'Rekap matriks', ikon: PhGridNine, ket: 'Nama × tanggal, kertas mendatar' },
@@ -40,15 +46,17 @@ const kelompokPilihan = computed(() => kel.dariTA.filter((g) => g.aktif && ['kel
 const santriPilihan = computed(() => st.daftar.filter((s) => s.status === 'aktif'))
 onMounted(async () => {
   await Promise.all([kel.daftar.length ? null : kel.muat(), st.daftar.length ? null : st.muat()])
+  if (route.query.resmi) { try { terapkanResmi(await dr.ambil(String(route.query.resmi))); return } catch (e) { ui.toast(e.message, 'galat') } }
   if (!pemantau.value) kelompok.value = kelompokPilihan.value[0]?.id || ''
   muat()
 })
 function pilihCepat(k) { cepat.value = k; const p = periodeCepat(k); mulai.value = p.mulai; selesai.value = p.selesai }
 watch([mulai, selesai], () => { const p = periodeCepat(cepat.value); if (p.mulai !== mulai.value || p.selesai !== selesai.value) cepat.value = '' })
-watch(kegiatan, () => { if (kelompok.value && !kelompokPilihan.value.some((g) => g.id === kelompok.value)) kelompok.value = pemantau.value ? '' : (kelompokPilihan.value[0]?.id || '') })
+watch(kegiatan, () => { if (resmi.value) return; if (kelompok.value && !kelompokPilihan.value.some((g) => g.id === kelompok.value)) kelompok.value = pemantau.value ? '' : (kelompokPilihan.value[0]?.id || '') })
 
 const cakupanEfektif = computed(() => (jenis.value === 'individu' ? 'santri' : cakupan.value))
 const namaCakupan = computed(() => {
+  if (resmi.value) return resmi.value.isi?.param?.namaCakupan || '–'
   if (cakupanEfektif.value === 'santri') return st.daftar.find((s) => s.id === santriId.value)?.nama_lengkap || '–'
   if (cakupanEfektif.value === 'semua') return 'Seluruh santri'
   if (cakupanEfektif.value === 'jenjang') return jenjang.value === 'sma' ? 'Jenjang SMA' : 'Jenjang Kesetaraan Wustha'
@@ -57,6 +65,7 @@ const namaCakupan = computed(() => {
 })
 
 async function muat() {
+  if (resmi.value) return
   if (selesai.value < mulai.value) { ui.toast('Tanggal akhir tidak boleh sebelum tanggal mulai.', 'galat'); return }
   if ((cakupanEfektif.value === 'kelompok' && !kelompok.value) || (cakupanEfektif.value === 'santri' && !santriId.value)) { ls.data = null; return }
   try {
@@ -125,11 +134,36 @@ const pratinjau = ref(false); const penanda = ref({ jabatan: 'Direktur', nama: '
 const judulCetak = computed(() => ({ ringkas: 'Rekap Kehadiran Santri', matriks: 'Rekap Matriks Kehadiran Santri', individu: 'Laporan Kehadiran Santri',
   perhatian: 'Daftar Perhatian Kehadiran Santri', pengisian: 'Kepatuhan Pengisian Absensi Santri' })[jenis.value])
 const kelompokAktif = computed(() => kel.dariTA.find((g) => g.id === kelompok.value))
-async function cetak() {
+const ambilPenanda = () => {
   const g = cakupanEfektif.value === 'kelompok' ? kelompokAktif.value : null
-  penanda.value = await (g ? penandaKelompok(g) : cakupanEfektif.value === 'jenjang' ? penandaJenjang(jenjang.value) : ambilPenandaTangan('Direktur')).catch(() => penanda.value)
+  return (g ? penandaKelompok(g) : cakupanEfektif.value === 'jenjang' ? penandaJenjang(jenjang.value) : ambilPenandaTangan('Direktur')).catch(() => penanda.value)
+}
+async function cetak() {
+  if (!resmi.value) penanda.value = await ambilPenanda()
   pratinjau.value = true
 }
+const kopCetak = computed(() => (resmi.value ? resmi.value.kop_kode || 'pondok'
+  : cakupanEfektif.value === 'jenjang' ? (jenjang.value === 'sma' ? 'sma' : 'wustha') : kelompokAktif.value?.jenis === 'kelas' ? (kelompokAktif.value.jenjang === 'sma' ? 'sma' : 'wustha') : 'pondok'))
+
+// ---------- Terbitkan resmi ----------
+const kunci = computed(() => (ls.data && !resmi.value
+  ? ['kehadiran_santri', jenis.value, ls.data.kegiatan, cakupanEfektif.value, cakupanEfektif.value === 'santri' ? santriId.value : cakupanEfektif.value === 'kelompok' ? kelompok.value : cakupanEfektif.value === 'jenjang' ? jenjang.value : '-',
+    ls.data.mulai, ls.data.selesai, jenis.value === 'perhatian' ? ambang.value : ''].join('|')
+  : ''))
+const jabPenanda = ref('Direktur')
+watch(kunci, async (k) => { if (k) jabPenanda.value = (await ambilPenanda())?.jabatan || 'Direktur' })
+const isiBeku = () => ({ versi: 1, param: { jenis: jenis.value, kegiatan: kegiatan.value, cakupan: cakupan.value, kelompok: kelompok.value, jenjang: jenjang.value, santriId: santriId.value,
+  mulai: ls.data.mulai, selesai: ls.data.selesai, ambang: ambang.value, namaCakupan: namaCakupan.value }, data: ls.data })
+function terapkanResmi(d) {
+  const p = d.isi?.param; if (!p) return ui.toast('Salinan beku dokumen tidak dapat dibaca.', 'galat')
+  resmi.value = d; cari.value = ''
+  jenis.value = p.jenis; kegiatan.value = p.kegiatan; cakupan.value = p.cakupan; kelompok.value = p.kelompok; jenjang.value = p.jenjang; santriId.value = p.santriId
+  mulai.value = p.mulai; selesai.value = p.selesai; ambang.value = p.ambang ?? ambang.value
+  ls.data = d.isi.data
+  if (route.query.resmi !== d.id) router.replace({ query: { ...route.query, resmi: d.id } })
+}
+function tutupResmi() { resmi.value = null; const q = { ...route.query }; delete q.resmi; router.replace({ query: q }); muat() }
+const periodeTeks = computed(() => (ls.data ? `${formatPendek(ls.data.mulai)} s.d. ${formatPendek(ls.data.selesai)} · ${KEGIATAN_SANTRI[ls.data.kegiatan]}` : ''))
 const kanan = computed(() => {
   const g = kelompokAktif.value
   if (cakupanEfektif.value === 'kelompok' && g?.asuhan_saya) return { jabatan: `${JENIS_KELOMPOK[g.jenis]?.pengasuh || 'Pengasuh'} ${g.nama}`, nama: sesi.pengguna?.nama_lengkap, niy: sesi.pengguna?.niy }
@@ -140,7 +174,7 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
 </script>
 <template>
   <div class="space-y-4">
-    <section class="kartu space-y-4 p-4">
+    <fieldset :disabled="!!resmi" :class="['kartu min-w-0 space-y-4 p-4', resmi && 'opacity-60']">
       <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Jenis laporan">
         <button v-for="k in JENIS" :key="k" type="button" role="radio" :aria-checked="jenis === k" @click="jenis = k"
           :class="['flex min-h-[44px] items-center gap-2 rounded-xl border px-3 text-sm font-semibold', jenis === k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">
@@ -175,7 +209,11 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
         <InputTanggal v-model="selesai" label="Sampai tanggal" />
         <button type="button" class="tombol-utama" :disabled="ls.memuat" @click="muat"><PhMagnifyingGlass :size="20" weight="bold" /> Tampilkan</button>
       </div>
-    </section>
+    </fieldset>
+
+    <PanelResmi v-if="ls.data || resmi" :kunci="kunci" :beku="resmi" jenis="laporan_kehadiran_santri" jenis-nama="Laporan kehadiran santri" :perihal="judulCetak"
+      :periode="periodeTeks" :subjek="namaCakupan" :kop="kopCetak" tautan="/rekap/santri" :isi="isiBeku" :penanda-jabatan="jabPenanda" :kanan-jabatan="kanan.jabatan === 'Pencetak' ? 'Pembuat laporan' : kanan.jabatan"
+      @buka="terapkanResmi" @tutup="tutupResmi" />
 
     <p v-if="ls.memuat" class="py-10 text-center text-teks3">Menghitung kehadiran santri…</p>
     <p v-else-if="!ls.data" class="kartu p-8 text-center text-teks3">{{ jenis === 'individu' ? 'Pilih santri' : !kelompokPilihan.length && !pemantau ? 'Anda belum ditetapkan sebagai pengasuh kelompok mana pun' : 'Pilih kelompok' }}, lalu tekan Tampilkan.</p>
@@ -287,7 +325,7 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
     </template>
 
     <!-- Cetak F4 -->
-    <DokumenCetak v-if="ls.data" v-model:pratinjau="pratinjau" :kop="cakupanEfektif === 'jenjang' ? (jenjang === 'sma' ? 'sma' : 'wustha') : kelompokAktif?.jenis === 'kelas' ? (kelompokAktif.jenjang === 'sma' ? 'sma' : 'wustha') : 'pondok'"
+    <DokumenCetak v-if="ls.data" v-model:pratinjau="pratinjau" :kop="kopCetak"
       :judul="judulCetak" :subjudul="subjudul" :mendatar="jenis === 'matriks'" :pencetak="sesi.pengguna?.nama_lengkap">
       <template v-if="jenis === 'ringkas' || jenis === 'perhatian'">
         <p v-if="jenis === 'perhatian'" style="margin-bottom: 6pt">Santri dengan persentase kehadiran di bawah {{ ambang }}%, diurutkan dari yang terendah.</p>
@@ -354,7 +392,7 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
         </table>
       </template>
       <template #ttd>
-        <TandaTangan :kiri="{ jabatan: penanda.jabatan || 'Direktur', nama: penanda.nama, niy: penanda.niy }" :kanan="kanan" />
+        <TtdResmi :dok="resmi" :kiri="{ jabatan: penanda.jabatan || 'Direktur', nama: penanda.nama, niy: penanda.niy }" :kanan="kanan" />
       </template>
     </DokumenCetak>
   </div>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/presensi/Presensi.vue | v1.4 | Fase 8 – Tahap 0 tanpa teks fase | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/Presensi.vue | v1.5 | Fase 8 – Sesi hari ini hanya tanggal hari ini (kemarin di Riwayat 14 hari) | 10/10/2026 -->
 <script setup>
 // Halaman presensi pegawai (Bagian 9 blueprint): kartu lokasi besar, satu tombol bulat,
 // selfie wajib dari kamera langsung dengan watermark, dan deretan sesi hari ini.
@@ -188,13 +188,13 @@ const PILIHAN = [{ k: 'hadir', n: 'Hadir (tugas/dinas di luar)' }, { k: 'izin', 
           </div>
           <p v-if="dp.galat" class="rounded-xl bg-[#C7332F]/10 p-3 text-sm font-semibold text-merah">{{ dp.galat }}</p>
           <p v-else-if="dp.memuat && !dp.harian" class="py-6 text-center text-teks3">Memuat sesi…</p>
-          <div v-else-if="!dp.sesi.length" class="flex flex-col items-center py-6 text-center">
+          <div v-else-if="!dp.sesiHariIni.length" class="flex flex-col items-center py-6 text-center">
             <span class="chip-ikon h-12 w-12 rounded-2xl"><PhCalendarStar :size="26" weight="duotone" /></span>
             <p class="mt-2 font-semibold">Tidak ada sesi hari ini</p>
             <p class="text-sm text-teks3">Hari libur atau jadwal Anda belum diatur. Hubungi admin bila seharusnya ada sesi.</p>
           </div>
           <ol v-else class="relative space-y-2">
-            <li v-for="s in dp.sesi" :key="s.session_id + s.tanggal" :class="['flex gap-3 rounded-2xl border p-3', 'w-' + lencanaSesi(s).w, s.keadaan === 'terbuka' ? 'border-[color:var(--c)] bg-[color-mix(in_srgb,var(--c)_8%,transparent)]' : 'border-garis']">
+            <li v-for="s in dp.sesiHariIni" :key="s.session_id + s.tanggal" :class="['flex gap-3 rounded-2xl border p-3', 'w-' + lencanaSesi(s).w, s.keadaan === 'terbuka' ? 'border-[color:var(--c)] bg-[color-mix(in_srgb,var(--c)_8%,transparent)]' : 'border-garis']">
               <div class="w-14 shrink-0 text-center">
                 <p class="font-extrabold tabular-nums">{{ formatJam(s.mulai) }}</p>
                 <p class="text-xs text-teks3 tabular-nums">{{ formatJam(s.selesai) }}</p>

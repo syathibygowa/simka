@@ -1,13 +1,16 @@
-<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.3 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.4 | Fase 8 – Isi pengumuman dapat ditulis tebal dan miring | 10/10/2026 -->
 <script setup>
 // Pengumuman: semua pegawai membaca pengumuman yang ditujukan kepadanya (tanda dibaca/belum).
 // Admin, superadmin, dan pegawai yang diberi hak fitur "pengumuman" (tingkat 2+) dapat membuat,
 // mengubah, menghapus, melihat siapa yang sudah/belum membaca, dan mencetak pengumuman (F4 berkop).
+// v1.4: isi dapat ditulis tebal/miring (IsianTeksKaya; penanda gaya WhatsApp *tebal* _miring_), tampil rapi di layar dan cetakan.
 // v1.1: lampiran berkas (PDF/foto ke Drive) dan tautan (Drive, Google Form, Zoom, dll.); ekspor Excel pembaca dihapus.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { PhMegaphone, PhPlus, PhMagnifyingGlass, PhPushPin, PhPencilSimple, PhTrash, PhPrinter, PhUsers, PhEnvelopeSimpleOpen, PhTray, PhListChecks, PhPaperclip, PhLink, PhX, PhDownloadSimple } from '@phosphor-icons/vue'
 import { usePengumuman } from '@/stores/pengumuman'
+import IsianTeksKaya from '@/components/IsianTeksKaya.vue'
+import { teksKaya, teksPolos } from '@/lib/teksKaya'
 import { useLembaga } from '@/stores/lembaga'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
@@ -127,7 +130,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
                   <span v-if="p.saya_penerima && !p.dibaca_pada" class="lencana w-notifikasi">Belum dibaca</span>
                 </div>
                 <h3 :class="['mt-1 leading-snug', p.saya_penerima && !p.dibaca_pada ? 'font-extrabold' : 'font-bold']">{{ p.judul }}</h3>
-                <p class="mt-0.5 line-clamp-2 text-sm text-teks2">{{ p.isi }}</p>
+                <p class="mt-0.5 line-clamp-2 text-sm text-teks2">{{ teksPolos(p.isi) }}</p>
                 <p class="mt-1.5 text-xs text-teks3">{{ formatRelatif(p.created_at) }} · {{ p.pembuat || 'Pengelola' }}</p>
                 <div v-if="tab === 'kelola'" class="mt-2">
                   <p class="text-xs text-teks3">Sasaran: {{ p.ringkasan_sasaran }}</p>
@@ -155,7 +158,8 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
       <article v-if="terpilih" class="pb-2">
         <h3 class="text-xl font-extrabold leading-snug">{{ terpilih.judul }}</h3>
         <p class="mt-1 text-sm text-teks3">{{ formatPanjang(terpilih.created_at) }} · {{ terpilih.pembuat || 'Pengelola' }}<template v-if="terpilih.tampil_sampai"> · tampil sampai {{ formatPanjang(terpilih.tampil_sampai) }}</template></p>
-        <p class="mt-4 whitespace-pre-line leading-relaxed text-teks">{{ terpilih.isi }}</p>
+        <!-- eslint-disable-next-line vue/no-v-html -- teks sudah di-escape oleh teksKaya() -->
+        <p class="mt-4 whitespace-pre-line leading-relaxed text-teks" v-html="teksKaya(terpilih.isi)" />
         <div v-if="terpilih.lampiran_id || terpilih.tautan" class="mt-4 space-y-2">
           <button v-if="terpilih.lampiran_id" class="flex w-full items-center gap-3 rounded-xl border border-garis p-3 text-left hover:bg-permukaan2" :disabled="membuka" @click="bukaLampiran(terpilih)">
             <span class="chip-ikon h-10 w-10 shrink-0"><PhPaperclip :size="20" weight="duotone" /></span>
@@ -183,8 +187,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
       <form v-if="form" class="space-y-3 pb-2" @submit.prevent="simpan">
         <div><label class="label-isian" for="pg-judul">Judul</label>
           <input id="pg-judul" v-model="form.judul" class="isian" maxlength="150" required placeholder="Contoh: Rapat pekanan seluruh pegawai" /></div>
-        <div><label class="label-isian" for="pg-isi">Isi pengumuman</label>
-          <textarea id="pg-isi" v-model="form.isi" class="isian min-h-[9rem] py-2" required placeholder="Tuliskan isi pengumuman dengan jelas: waktu, tempat, dan hal yang perlu disiapkan." /></div>
+        <IsianTeksKaya id="pg-isi" v-model="form.isi" label="Isi pengumuman" wajib placeholder="Tuliskan isi pengumuman dengan jelas: waktu, tempat, dan hal yang perlu disiapkan." />
         <div class="grid gap-3 sm:grid-cols-2">
           <InputTanggal v-model="form.tampil_sampai" label="Tampil sampai (opsional)" bawaan-kosong />
           <label class="flex min-h-[48px] items-center gap-3 self-end rounded-xl border border-garis px-3 text-sm font-semibold">
@@ -220,7 +223,8 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
 
     <!-- Cetak -->
     <DokumenCetak v-if="terpilih" v-model:pratinjau="pratinjau" judul="Pengumuman" :subjudul="terpilih.judul" :pencetak="sesi.pengguna?.nama_lengkap">
-      <p style="white-space: pre-line; text-align: justify; line-height: 1.6">{{ terpilih.isi }}</p>
+      <!-- eslint-disable-next-line vue/no-v-html -- teks sudah di-escape oleh teksKaya() -->
+      <p style="white-space: pre-line; text-align: justify; line-height: 1.6" v-html="teksKaya(terpilih.isi)" />
       <p style="margin-top: 8pt">Ditujukan kepada: {{ terpilih.ringkasan_sasaran || 'Seluruh pegawai' }}.</p>
       <p v-if="terpilih.lampiran_id || terpilih.tautan" style="margin-top: 4pt">Lampiran: {{ [terpilih.nama_lampiran, terpilih.tautan && `${terpilih.nama_tautan || 'tautan'} (${terpilih.tautan})`].filter(Boolean).join('; ') }}.</p>
       <template #ttd>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.2 | Fase 4 – Perbaikan P1 (data santri lengkap) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.3 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
 <script setup>
 // Daftar santri sesuai cakupan pengguna (RLS): kartu statistik langsung, cari dan saring,
 // ekspor Excel, cetak daftar F4 berkop jenjang.
@@ -188,12 +188,12 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
     <DokumenCetak :kop="kop" :judul="judulCetak" :subjudul="`Keadaan per ${formatPanjang(tglDok)}${status !== 'semua' ? ' · Status ' + STATUS_SANTRI[status].n.toLowerCase() : ''}`"
       v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
       <table class="tabel">
-        <colgroup><col style="width:4%"><col style="width:8%"><col style="width:10%"><col style="width:20%"><col style="width:4%"><col style="width:17%">
+        <colgroup><col style="width:4%"><col style="width:9%"><col style="width:26%"><col style="width:4%"><col style="width:20%">
           <col style="width:9%"><col style="width:16%"><col style="width:12%"></colgroup>
-        <thead><tr><th>No.</th><th>NIS</th><th>NISN</th><th>Nama</th><th>L/P</th><th>Tempat, tanggal lahir</th><th>Kelas</th><th>Orang tua/wali</th><th>Nomor HP</th></tr></thead>
+        <thead><tr><th>No.</th><th>NIS</th><th>Nama</th><th>L/P</th><th>Tempat, tanggal lahir</th><th>Kelas</th><th>Orang tua/wali</th><th>Nomor HP</th></tr></thead>
         <tbody>
           <tr v-for="(s, i) in tampil" :key="s.id">
-            <td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ s.nis }}</td><td class="tengah">{{ s.nisn || '–' }}</td><td>{{ s.nama_lengkap }}</td>
+            <td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ s.nis || s.nisn || '–' }}</td><td>{{ s.nama_lengkap }}</td>
             <td class="tengah">{{ s.jenis_kelamin }}</td><td>{{ [s.tempat_lahir, s.tanggal_lahir && formatPendek(s.tanggal_lahir)].filter(Boolean).join(', ') || '–' }}</td>
             <td class="tengah">{{ labelRombel(s).replace('Kelas ', '') }}</td><td>{{ kontakUtama(s)?.nama || '–' }}</td><td class="tengah">{{ kontakUtama(s)?.no_hp || '–' }}</td>
           </tr>

@@ -1,10 +1,11 @@
-<!-- SIMKA PRO | src/pages/laporan/TabDokumenResmi.vue | v1.0 | Fase 8 – Tahap 1 Registri dokumen dan Cek Keabsahan | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabDokumenResmi.vue | v1.1 | Fase 8 – Tahap 5 buka versi resmi laporan, status ditolak | 10/10/2026 -->
 <script setup>
 // Registri dokumen resmi bertanda tangan elektronik: kode validasi, jenis, nomor, perihal, atas nama, penanda tangan,
 // status, dan berapa kali diperiksa. Admin/superadmin melihat semua; pegawai melihat dokumen yang diterbitkan atau
 // ditandatanganinya. Superadmin dapat mencabut dokumen (alasan wajib). Ekspor Excel dan cetak F4 mendatar.
 import { ref, computed, onMounted } from 'vue'
-import { PhSealCheck, PhSealWarning, PhFileText, PhMagnifyingGlass, PhArrowSquareOut, PhFileXls, PhPrinter, PhProhibit, PhQrCode } from '@phosphor-icons/vue'
+import { useRouter } from 'vue-router'
+import { PhSealCheck, PhSealWarning, PhFileText, PhMagnifyingGlass, PhArrowSquareOut, PhFileXls, PhPrinter, PhProhibit, PhQrCode, PhEye } from '@phosphor-icons/vue'
 import { useDokumen } from '@/stores/dokumen'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
@@ -17,7 +18,7 @@ import LembarBawah from '@/components/LembarBawah.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
-const dok = useDokumen(); const sesi = useSesi(); const ui = useUI()
+const dok = useDokumen(); const sesi = useSesi(); const ui = useUI(); const router = useRouter()
 const awalBulan = () => hariIniISO().slice(0, 8) + '01'
 const mulai = ref(awalBulan()); const selesai = ref(hariIniISO()); const jenis = ref(''); const status = ref(''); const cari = ref('')
 const muat = () => dok.muat({ mulai: mulai.value, selesai: selesai.value, jenis: jenis.value, status: status.value }).catch((e) => ui.toast(e.message, 'galat'))
@@ -148,6 +149,7 @@ async function cetak() { penanda.value = await ambilPenandaTangan('Direktur').ca
               <span class="block font-semibold">{{ p.nama }}</span><span class="block text-xs text-teks3">{{ p.jabatan }} · {{ p.waktu ? formatWaktu(p.waktu) + ' WITA' : 'menunggu' }}</span></li>
           </ul>
         </div>
+        <button v-if="pilih.tautan" type="button" class="tombol-utama w-full justify-center" @click="router.push(`${pilih.tautan}?resmi=${pilih.id}`)"><PhEye :size="18" weight="duotone" /> Buka dokumen</button>
         <router-link :to="`/cek/${pilih.kode.replace('-', '')}`" target="_blank" class="tombol-garis w-full justify-center"><PhQrCode :size="18" /> Buka di halaman Cek Keabsahan</router-link>
         <div v-if="bolehCabut" class="space-y-2 rounded-2xl border border-garis p-3">
           <label class="block"><span class="label-isian">Alasan pencabutan</span>

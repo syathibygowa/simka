@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demo.js | v1.9 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026
+// SIMKA PRO | src/lib/demo.js | v1.10 | Fase 8 – Tahap 5 penanda tangan demo terhubung akun | 11/10/2026
 // Data contoh untuk MODE DEMO. Nama pegawai di bawah fiktif.
 const menitLalu = (m) => new Date(Date.now() - m * 60000).toISOString()
 
@@ -104,8 +104,8 @@ export const LEMBAGA_DEMO = () => ({
       pita_teks: 'Nomor Induk Berusaha. 0205230018097', pita_warna: '#F8E02F', aktif: true, urutan: 4 },
   ],
   signatories: [
-    { id: 's1', jabatan_tertulis: 'Direktur', nama: 'Siswandi Safari, S.Pd.I., Lc., S.H., M.Ag.', niy: '1983020910201401', aktif: true, urutan: 1, sumber_jabatan: 'DIREKTUR' },
-    { id: 's2', jabatan_tertulis: 'Kepala Kesetaraan Wustha (SMP)', nama: 'Chamdar Nur, S.Pd.I., SH., Lc., M.Pd.', niy: '1983042805201401', aktif: true, urutan: 2 },
+    { id: 's1', jabatan_tertulis: 'Direktur', nama: 'Siswandi Safari, S.Pd.I., Lc., S.H., M.Ag.', niy: '1983020910201401', aktif: true, urutan: 1, sumber_jabatan: 'DIREKTUR', employee_id: 'demo-direktur' },
+    { id: 's2', jabatan_tertulis: 'Kepala Kesetaraan Wustha (SMP)', nama: 'Chamdar Nur, S.Pd.I., SH., Lc., M.Pd.', niy: '1983042805201401', aktif: true, urutan: 2, employee_id: 'demo-wustha' },
     { id: 's3', jabatan_tertulis: 'Kepala SMA', nama: 'H. Afrianto, Lc, M.H.', niy: '1994042801202001', aktif: true, urutan: 3 },
   ],
   signer_rules: [

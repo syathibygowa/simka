@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborFungsional.vue | v1.0 | Fase 8 – Tahap 0 Beranda pegawai fungsional | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborFungsional.vue | v1.1 | Fase 8 – Ringkasan presensi hanya sesi hari ini | 10/10/2026 -->
 <script setup>
 // Beranda pegawai fungsional (wali kelas, guru mapel, musyrif, muhaffizh, pembina, medis, security, staf, dll.),
 // yaitu semua pegawai di luar pimpinan tinggi, admin, dan superadmin. Tanpa kartu statistik (hasil evaluasi pondok):
@@ -18,7 +18,7 @@ const sesi = useSesi(); const br = useBeranda(); const dp = useDataPresensi()
 onMounted(() => dp.muatHarian())
 const ringkas = computed(() => {
   if (!dp.harian) return 'Memuat sesi hari ini…'
-  if (!dp.sesi.length) return 'Tidak ada sesi presensi hari ini'
+  if (!dp.sesiHariIni.length) return 'Tidak ada sesi presensi hari ini'
   if (dp.terbuka.length) return `Sesi terbuka: ${dp.terbuka.map((s) => s.nama_sesi).join(', ')} – presensi sekarang`
   const b = dp.berikut
   return `${dp.selesaiWajib} dari ${dp.jumlahWajib} sesi tercatat${b ? ` · berikutnya ${b.nama_sesi} ${formatJam(b.mulai)}` : ''}`

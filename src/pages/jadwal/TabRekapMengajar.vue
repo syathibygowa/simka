@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jadwal/TabRekapMengajar.vue | v1.0 | Fase 4 – Tahap 5 Jadwal pelajaran dan jurnal mengajar | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/jadwal/TabRekapMengajar.vue | v1.1 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
 <script setup>
 // Rekap mengajar per guru dan penugasan: JP terjadwal (hari sekolah, di luar libur), terlaksana, tidak terlaksana,
 // belum diisi. Jurnal mengajar menjadi bukti kehadiran mengajar dan dasar tunjangan guru (Fase 11).
@@ -32,9 +32,9 @@ const perGuru = computed(() => {
 })
 const teksPeriode = computed(() => `${formatPanjang(mulai.value)} s.d. ${formatPanjang(selesai.value)}`)
 function ekspor() {
-  const k = ['Guru', 'NIY', 'Kelas', 'Mapel', 'JP/pekan', 'JP terjadwal', 'Terlaksana', 'Tidak terlaksana', 'Belum diisi', 'Keterlaksanaan (%)']
-  const isi = baris.value.map((r) => [r.guru, r.niy || '', r.kelas, r.mapel, r.jp_pekan, r.jp_terjadwal, r.jp_terlaksana, r.jp_tidak, r.jp_kosong, persen(r.jp_terlaksana, r.jp_terjadwal) ?? ''])
-  const ws = XLSX.utils.aoa_to_sheet([[`Rekap mengajar ${teksPeriode.value}`], [], k, ...isi]); ws['!cols'] = k.map((x, i) => ({ wch: i === 0 ? 30 : Math.max(10, x.length + 2) }))
+  const k = ['NIY', 'Guru', 'Kelas', 'Mapel', 'JP/pekan', 'JP terjadwal', 'Terlaksana', 'Tidak terlaksana', 'Belum diisi', 'Keterlaksanaan (%)']
+  const isi = baris.value.map((r) => [r.niy || '', r.guru, r.kelas, r.mapel, r.jp_pekan, r.jp_terjadwal, r.jp_terlaksana, r.jp_tidak, r.jp_kosong, persen(r.jp_terlaksana, r.jp_terjadwal) ?? ''])
+  const ws = XLSX.utils.aoa_to_sheet([[`Rekap mengajar ${teksPeriode.value}`], [], k, ...isi]); ws['!cols'] = k.map((x, i) => ({ wch: i === 1 ? 30 : Math.max(10, x.length + 2) }))
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Rekap mengajar')
   XLSX.writeFile(wb, `Rekap-Mengajar-${formatPendek(mulai.value).replace(/\//g, '')}-${formatPendek(selesai.value).replace(/\//g, '')}.xlsx`)
 }
@@ -66,9 +66,9 @@ function ekspor() {
 
     <DokumenCetak kop="pondok" judul="Rekap Keterlaksanaan Mengajar" :subjudul="teksPeriode" mendatar v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">
-        <thead><tr><th style="width:4%">No.</th><th>Guru</th><th style="width:10%">NIY</th><th style="width:8%">Kelas</th><th style="width:18%">Mapel</th><th style="width:7%">JP/pekan</th>
+        <thead><tr><th style="width:4%">No.</th><th style="width:10%">NIY</th><th>Guru</th><th style="width:8%">Kelas</th><th style="width:18%">Mapel</th><th style="width:7%">JP/pekan</th>
           <th style="width:8%">JP terjadwal</th><th style="width:8%">Terlaksana</th><th style="width:8%">Tidak terlaksana</th><th style="width:7%">Belum diisi</th><th style="width:7%">%</th></tr></thead>
-        <tbody><tr v-for="(r, i) in baris" :key="r.assignment_id"><td class="tengah">{{ i + 1 }}</td><td>{{ r.guru }}</td><td class="tengah">{{ r.niy || '–' }}</td><td class="tengah">{{ r.kelas }}</td><td>{{ r.mapel }}</td>
+        <tbody><tr v-for="(r, i) in baris" :key="r.assignment_id"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ r.niy || '–' }}</td><td>{{ r.guru }}</td><td class="tengah">{{ r.kelas }}</td><td>{{ r.mapel }}</td>
           <td class="tengah">{{ r.jp_pekan }}</td><td class="tengah">{{ r.jp_terjadwal }}</td><td class="tengah">{{ r.jp_terlaksana }}</td><td class="tengah">{{ r.jp_tidak }}</td><td class="tengah">{{ r.jp_kosong }}</td>
           <td class="tengah">{{ teksPersen(persen(r.jp_terlaksana, r.jp_terjadwal)) }}</td></tr></tbody>
       </table>

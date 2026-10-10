@@ -1,11 +1,13 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.1 | Fase 8 – Perbaikan: urutan kolom NIY lalu Nama | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.2 | Fase 8 – Tahap 5 Terbitkan resmi (salinan beku, tanda tangan elektronik) | 10/10/2026 -->
 <script setup>
 // Laporan kehadiran pegawai (menu Rekap → Kehadiran pegawai).
 // Jenis: rekap ringkas, rekap matriks (nama × tanggal, F4 mendatar), laporan individu, daftar perhatian.
 // Cakupan (admin dan pimpinan): semua pegawai, bidang/unit beserta cabangnya, jabatan fungsional, atau individu.
 // Pegawai lain hanya melihat laporan dirinya. Hak cakupan diperiksa server. Periode: hari ini, pekan, bulan,
 // bulan lalu, semester, atau rentang bebas (paling lama 186 hari). Keluaran: layar, Excel, dan cetak F4.
+// v1.2: Terbitkan resmi (PanelResmi): salinan beku + permintaan tanda tangan pimpinan; versi resmi dibuka lewat ?resmi=id.
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { PhUsersThree, PhChartPieSlice, PhWarningCircle, PhUserMinus, PhMagnifyingGlass, PhFileXls, PhPrinter, PhInfo, PhListBullets, PhGridNine, PhUser, PhFlag } from '@phosphor-icons/vue'
 import { useLaporanKehadiran } from '@/stores/laporanKehadiran'
 import { usePegawai } from '@/stores/pegawai'
@@ -19,9 +21,13 @@ import { STATUS_PEGAWAI } from '@/lib/kepegawaian'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
-import TandaTangan from '@/components/cetak/TandaTangan.vue'
+import TtdResmi from '@/components/cetak/TtdResmi.vue'
+import PanelResmi from '@/components/PanelResmi.vue'
+import { useDokumenResmi } from '@/stores/dokumenResmi'
 
 const lk = useLaporanKehadiran(); const peg = usePegawai(); const org = useOrganisasi(); const sesi = useSesi(); const ui = useUI()
+const route = useRoute(); const router = useRouter(); const dr = useDokumenResmi()
+const resmi = ref(null) // versi resmi (salinan beku) yang sedang ditampilkan
 const pemantau = computed(() => sesi.isAdmin || sesi.pimpinanTinggi)
 const JENIS = computed(() => (pemantau.value ? ['ringkas', 'matriks', 'individu', 'perhatian'] : ['individu']))
 const IKON_JENIS = { ringkas: PhListBullets, matriks: PhGridNine, individu: PhUser, perhatian: PhFlag }
@@ -33,17 +39,19 @@ const ambang = ref(80); const cari = ref('')
 
 onMounted(async () => {
   if (pemantau.value) { await Promise.all([org.muat(), peg.daftar.length ? null : peg.muat()]) }
+  if (route.query.resmi) { try { terapkanResmi(await dr.ambil(String(route.query.resmi))); return } catch (e) { ui.toast(e.message, 'galat') } }
   muat()
 })
 function pilihCepat(k) { cepat.value = k; const p = periodeCepat(k); mulai.value = p.mulai; selesai.value = p.selesai }
 watch([mulai, selesai], () => { const p = periodeCepat(cepat.value); if (p.mulai !== mulai.value || p.selesai !== selesai.value) cepat.value = '' })
-watch(jenis, (j) => { if (j === 'individu' && pemantau.value && cakupan.value !== 'individu') { cakupan.value = 'individu'; nilai.value = '' } })
-watch(cakupan, () => { nilai.value = '' })
+watch(jenis, (j) => { if (resmi.value) return; if (j === 'individu' && pemantau.value && cakupan.value !== 'individu') { cakupan.value = 'individu'; nilai.value = '' } })
+watch(cakupan, () => { if (!resmi.value) nilai.value = '' })
 
 const pegawaiPilihan = computed(() => peg.daftar.filter((p) => p.status_akun === 'aktif' && p.peran !== 'superadmin'))
 const unitPilihan = computed(() => org.datar)
 const cakupanEfektif = computed(() => (!pemantau.value ? 'saya' : jenis.value === 'individu' ? 'individu' : cakupan.value))
 const namaCakupan = computed(() => {
+  if (resmi.value) return resmi.value.isi?.param?.namaCakupan || '–'
   const c = cakupanEfektif.value
   if (c === 'saya') return sesi.pengguna?.nama_lengkap
   if (c === 'semua') return 'Seluruh pegawai'
@@ -53,6 +61,7 @@ const namaCakupan = computed(() => {
 })
 
 async function muat() {
+  if (resmi.value) return
   if (selesai.value < mulai.value) { ui.toast('Tanggal akhir tidak boleh sebelum tanggal mulai.', 'galat'); return }
   if (['bidang', 'fungsional', 'individu'].includes(cakupanEfektif.value) && !nilai.value) { lk.data = null; return }
   try {
@@ -118,13 +127,29 @@ async function excel() {
 // ---------- Cetak ----------
 const pratinjau = ref(false); const penanda = ref({ jabatan: 'Direktur', nama: '', niy: '' })
 const judulCetak = computed(() => ({ ringkas: 'Rekap Kehadiran Pegawai', matriks: 'Rekap Matriks Kehadiran Pegawai', individu: 'Laporan Kehadiran Pegawai', perhatian: 'Daftar Perhatian Kehadiran Pegawai' })[jenis.value])
-async function cetak() {
-  let jab = 'Direktur'
+const jabPenanda = computed(() => {
   const unitNama = cakupanEfektif.value === 'bidang' ? org.cariUnit(nilai.value)?.nama : null
-  if (unitNama && /^bidang\s/i.test(unitNama)) jab = 'Kepala ' + unitNama
-  penanda.value = await ambilPenandaTangan(jab).catch(() => penanda.value)
+  return unitNama && /^bidang\s/i.test(unitNama) ? 'Kepala ' + unitNama : 'Direktur'
+})
+async function cetak() {
+  if (!resmi.value) penanda.value = await ambilPenandaTangan(jabPenanda.value).catch(() => penanda.value)
   pratinjau.value = true
 }
+
+// ---------- Terbitkan resmi ----------
+const kunci = computed(() => (lk.data && !resmi.value
+  ? ['kehadiran_pegawai', jenis.value, cakupanEfektif.value, cakupanEfektif.value === 'saya' ? sesi.pengguna?.id : nilai.value || '-', lk.data.mulai, lk.data.selesai, jenis.value === 'perhatian' ? ambang.value : ''].join('|')
+  : ''))
+const isiBeku = () => ({ versi: 1, param: { jenis: jenis.value, cakupan: cakupan.value, nilai: nilai.value, mulai: lk.data.mulai, selesai: lk.data.selesai, ambang: ambang.value, namaCakupan: namaCakupan.value }, data: lk.data })
+function terapkanResmi(d) {
+  const p = d.isi?.param; if (!p) return ui.toast('Salinan beku dokumen tidak dapat dibaca.', 'galat')
+  resmi.value = d; cari.value = ''
+  jenis.value = p.jenis; cakupan.value = p.cakupan; nilai.value = p.nilai; mulai.value = p.mulai; selesai.value = p.selesai; ambang.value = p.ambang ?? ambang.value
+  lk.data = d.isi.data
+  if (route.query.resmi !== d.id) router.replace({ query: { ...route.query, resmi: d.id } })
+}
+function tutupResmi() { resmi.value = null; const q = { ...route.query }; delete q.resmi; router.replace({ query: q }); muat() }
+const periodeTeks = computed(() => (lk.data ? `${formatPendek(lk.data.mulai)} s.d. ${formatPendek(lk.data.selesai)}` : ''))
 const kanan = computed(() => (jenis.value === 'individu' && individu.value
   ? { jabatan: 'Pegawai yang bersangkutan', nama: individu.value.nama, niy: individu.value.niy }
   : { jabatan: 'Pencetak', nama: sesi.pengguna?.nama_lengkap, niy: sesi.pengguna?.niy }))
@@ -133,7 +158,7 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
 <template>
   <div class="space-y-4">
     <!-- Saringan -->
-    <section class="kartu space-y-4 p-4">
+    <fieldset :disabled="!!resmi" :class="['kartu min-w-0 space-y-4 p-4', resmi && 'opacity-60']">
       <div v-if="JENIS.length > 1" class="flex flex-wrap gap-2" role="radiogroup" aria-label="Jenis laporan">
         <button v-for="k in JENIS" :key="k" type="button" role="radio" :aria-checked="jenis === k" @click="jenis = k"
           :class="['flex min-h-[44px] items-center gap-2 rounded-xl border px-3 text-sm font-semibold', jenis === k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">
@@ -168,7 +193,11 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
         <InputTanggal v-model="selesai" label="Sampai tanggal" />
         <button type="button" class="tombol-utama" :disabled="lk.memuat" @click="muat"><PhMagnifyingGlass :size="20" weight="bold" /> Tampilkan</button>
       </div>
-    </section>
+    </fieldset>
+
+    <PanelResmi v-if="lk.data || resmi" :kunci="kunci" :beku="resmi" jenis="laporan_kehadiran_pegawai" jenis-nama="Laporan kehadiran pegawai" :perihal="judulCetak"
+      :periode="periodeTeks" :subjek="namaCakupan" kop="pondok" tautan="/rekap/pegawai" :isi="isiBeku" :penanda-jabatan="jabPenanda"
+      :kanan-jabatan="cakupanEfektif === 'saya' ? 'Pegawai yang bersangkutan' : 'Pembuat laporan'" @buka="terapkanResmi" @tutup="tutupResmi" />
 
     <p v-if="lk.memuat" class="py-10 text-center text-teks3">Menghitung kehadiran…</p>
     <p v-else-if="!lk.data" class="kartu p-8 text-center text-teks3">Pilih {{ jenis === 'individu' ? 'pegawai' : cakupan === 'bidang' ? 'bidang/unit' : 'jabatan fungsional' }} lalu tekan Tampilkan.</p>
@@ -328,7 +357,7 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
           izin {{ individu.izin }}; sakit {{ individu.sakit }}; cuti {{ individu.cuti }}; tanpa keterangan {{ individu.tanpa_keterangan }}. Persentase kehadiran {{ persenTeks(individu.persen) }}.</p>
       </template>
       <template #ttd>
-        <TandaTangan :kiri="{ jabatan: penanda.jabatan || 'Direktur', nama: penanda.nama, niy: penanda.niy }" :kanan="kanan" />
+        <TtdResmi :dok="resmi" :kiri="{ jabatan: penanda.jabatan || 'Direktur', nama: penanda.nama, niy: penanda.niy }" :kanan="kanan" />
       </template>
     </DokumenCetak>
   </div>

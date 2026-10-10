@@ -1,23 +1,30 @@
-<!-- SIMKA PRO | src/pages/laporan/TabRekapLayanan.vue | v1.0 | Fase 8 – Tahap 4 Laporan modul lain | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabRekapLayanan.vue | v1.1 | Fase 8 – Tahap 5 Terbitkan resmi (salinan beku, tanda tangan elektronik) | 10/10/2026 -->
 <script setup>
 // Laporan periode modul layanan (menu Dokumen → Rekap layanan): Security, libur santri, pengajuan pegawai, klinik.
 // Pilihan laporan tampil sesuai hak (diperiksa server). Daftar santri berurutan NIS, Nama, JK. Data klinik tanpa diagnosis.
 // Keluaran: layar, Excel, cetak F4 berkop dengan tanda tangan pimpinan (kiri) dan pencetak (kanan).
+// v1.1: Terbitkan resmi (PanelResmi): salinan beku + permintaan tanda tangan pimpinan; versi resmi dibuka lewat ?resmi=id.
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { PhShieldCheck, PhAirplaneTilt, PhFileText, PhFirstAidKit, PhMagnifyingGlass, PhFileXls, PhPrinter, PhSignOut, PhSignIn, PhClockCountdown, PhProhibit,
   PhPackage, PhUsers, PhHouseLine, PhWarningCircle, PhStethoscope, PhHeartbeat, PhBed, PhUserList, PhHourglass } from '@phosphor-icons/vue'
 import { useLaporanLayanan } from '@/stores/laporanLayanan'
 import { useOrganisasi } from '@/stores/organisasi'
 import { useSesi } from '@/stores/sesi'
+import { useUI } from '@/stores/ui'
+import { useDokumenResmi } from '@/stores/dokumenResmi'
 import { PERIODE_CEPAT, periodeCepat, hariSingkat } from '@/lib/laporanKehadiran'
 import { formatPanjang, formatPendek, formatWaktu, formatJam } from '@/lib/tanggal'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
-import TandaTangan from '@/components/cetak/TandaTangan.vue'
+import TtdResmi from '@/components/cetak/TtdResmi.vue'
+import PanelResmi from '@/components/PanelResmi.vue'
 
-const ll = useLaporanLayanan(); const org = useOrganisasi(); const sesi = useSesi()
+const ll = useLaporanLayanan(); const org = useOrganisasi(); const sesi = useSesi(); const ui = useUI()
+const route = useRoute(); const router = useRouter(); const dr = useDokumenResmi()
+const resmi = ref(null) // versi resmi (salinan beku) yang sedang ditampilkan
 const pantauSantri = computed(() => sesi.isAdmin || sesi.pimpinanTinggi || sesi.tingkat('gerbang') >= 1 || sesi.tingkat('pantauan') >= 1)
 const JENIS = computed(() => [
   pantauSantri.value && { k: 'security', n: 'Security', ikon: PhShieldCheck, ket: 'Gerbang keluar/kembali, titipan, tamu, kunjungan' },
@@ -26,13 +33,17 @@ const JENIS = computed(() => [
   (sesi.isAdmin || sesi.pimpinanTinggi || (sesi.tugas?.klinik || []).length) && { k: 'klinik', n: 'Klinik', ikon: PhFirstAidKit, ket: 'Kasus, pemeriksaan, tindak lanjut (tanpa diagnosis)' },
 ].filter(Boolean))
 const jenis = ref(JENIS.value[0].k)
-const info = computed(() => JENIS.value.find((j) => j.k === jenis.value))
+const info = computed(() => JENIS.value.find((j) => j.k === jenis.value) || { n: JUDUL[jenis.value] || '', ket: 'Versi resmi' })
 const awal = periodeCepat('bulan'); const mulai = ref(awal.mulai); const selesai = ref(awal.selesai); const cepat = ref('bulan')
 const unit = ref(''); const cari = ref('')
-onMounted(async () => { if (sesi.isAdmin || sesi.pimpinanTinggi) await org.muat(); muat() })
+onMounted(async () => {
+  if (sesi.isAdmin || sesi.pimpinanTinggi) await org.muat()
+  if (route.query.resmi) { try { terapkanResmi(await dr.ambil(String(route.query.resmi))); return } catch (e) { ui.toast(e.message, 'galat') } }
+  muat()
+})
 function pilihCepat(k) { cepat.value = k; const p = periodeCepat(k); mulai.value = p.mulai; selesai.value = p.selesai }
 watch([mulai, selesai], () => { const p = periodeCepat(cepat.value); if (p.mulai !== mulai.value || p.selesai !== selesai.value) cepat.value = '' })
-const muat = () => ll.muat(jenis.value, mulai.value, selesai.value, unit.value || null)
+const muat = () => (resmi.value ? null : ll.muat(jenis.value, mulai.value, selesai.value, unit.value || null))
 watch([jenis, unit], muat)
 const d = computed(() => (ll.jenis === jenis.value ? ll.data : null))
 const per = computed(() => d.value ? `Periode ${formatPanjang(mulai.value)} s.d. ${formatPanjang(selesai.value)}` : '')
@@ -102,15 +113,30 @@ async function excel() {
 // ---------- Cetak ----------
 const pratinjau = ref(false); const penanda = ref({ jabatan: 'Direktur', nama: '', niy: '' })
 const JUDUL = { security: 'Laporan Security', libur: 'Laporan Libur Santri', pengajuan: 'Rekap Pengajuan Pegawai', klinik: 'Laporan Klinik' }
+const jabPenanda = computed(() => (['security', 'libur', 'klinik'].includes(jenis.value) ? 'Kepala Bidang Kesantrian' : 'Direktur'))
 async function cetak() {
-  penanda.value = await ambilPenandaTangan(['security', 'libur', 'klinik'].includes(jenis.value) ? 'Kepala Bidang Kesantrian' : 'Direktur').catch(() => penanda.value)
+  if (!resmi.value) penanda.value = await ambilPenandaTangan(jabPenanda.value).catch(() => penanda.value)
   pratinjau.value = true
 }
+
+// ---------- Terbitkan resmi ----------
+const namaUnit = computed(() => (resmi.value ? resmi.value.isi?.param?.namaUnit : unit.value ? org.cariUnit(unit.value)?.nama : ''))
+const kunci = computed(() => (d.value && !resmi.value
+  ? ['layanan', jenis.value, jenis.value === 'pengajuan' && !(sesi.isAdmin || sesi.pimpinanTinggi) ? sesi.pengguna?.id : unit.value || '-', mulai.value, selesai.value].join('|') : ''))
+const isiBeku = () => ({ versi: 1, param: { jenis: jenis.value, unit: unit.value, mulai: mulai.value, selesai: selesai.value, namaUnit: namaUnit.value || '' }, data: d.value })
+function terapkanResmi(x) {
+  const p = x.isi?.param; if (!p) return ui.toast('Salinan beku dokumen tidak dapat dibaca.', 'galat')
+  resmi.value = x; cari.value = ''
+  jenis.value = p.jenis; unit.value = p.unit; mulai.value = p.mulai; selesai.value = p.selesai
+  ll.jenis = p.jenis; ll.data = x.isi.data
+  if (route.query.resmi !== x.id) router.replace({ query: { ...route.query, resmi: x.id } })
+}
+function tutupResmi() { resmi.value = null; const q = { ...route.query }; delete q.resmi; router.replace({ query: q }); muat() }
 const ada = computed(() => !!d.value)
 </script>
 <template>
   <div class="space-y-4">
-    <section class="kartu space-y-4 p-4">
+    <fieldset :disabled="!!resmi" :class="['kartu min-w-0 space-y-4 p-4', resmi && 'opacity-60']">
       <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Jenis laporan layanan">
         <button v-for="j in JENIS" :key="j.k" type="button" role="radio" :aria-checked="jenis === j.k" @click="jenis = j.k"
           :class="['flex min-h-[44px] items-center gap-2 rounded-xl border px-3 text-sm font-semibold', jenis === j.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">
@@ -129,7 +155,11 @@ const ada = computed(() => !!d.value)
         <InputTanggal v-model="selesai" label="Sampai tanggal" />
         <button type="button" class="tombol-utama" :disabled="ll.memuat" @click="muat"><PhMagnifyingGlass :size="20" weight="bold" /> Tampilkan</button>
       </div>
-    </section>
+    </fieldset>
+
+    <PanelResmi v-if="d || resmi" :kunci="kunci" :beku="resmi" jenis="laporan_layanan" :jenis-nama="JUDUL[jenis]" :perihal="JUDUL[jenis]"
+      :periode="`${formatPendek(mulai)} s.d. ${formatPendek(selesai)}`" :subjek="namaUnit || ''" kop="pondok" tautan="/rekap/layanan" :isi="isiBeku" :penanda-jabatan="jabPenanda"
+      @buka="terapkanResmi" @tutup="tutupResmi" />
 
     <p v-if="ll.memuat" class="py-10 text-center text-teks3">Menyusun laporan…</p>
     <p v-else-if="ll.galat" class="kartu w-beranda flex items-center gap-2 p-5 text-sm font-semibold"><PhWarningCircle :size="22" weight="duotone" style="color: var(--c)" /> {{ ll.galat }}</p>
@@ -288,7 +318,7 @@ const ada = computed(() => !!d.value)
             <tr v-if="!d.kasus.length"><td colspan="9" class="tengah">Tidak ada</td></tr></tbody></table>
       </template>
       <template #ttd>
-        <TandaTangan :kiri="{ jabatan: penanda.jabatan || 'Direktur', nama: penanda.nama, niy: penanda.niy }" :kanan="{ jabatan: 'Pencetak', nama: sesi.pengguna?.nama_lengkap, niy: sesi.pengguna?.niy }" />
+        <TtdResmi :dok="resmi" :kiri="{ jabatan: penanda.jabatan || 'Direktur', nama: penanda.nama, niy: penanda.niy }" :kanan="{ jabatan: 'Pencetak', nama: sesi.pengguna?.nama_lengkap, niy: sesi.pengguna?.niy }" />
       </template>
     </DokumenCetak>
   </div>

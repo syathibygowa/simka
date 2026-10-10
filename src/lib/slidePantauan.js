@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/slidePantauan.js | v1.0 | Fase 7 – Perbaikan uji coba: Layar Pantauan (slide) | 06/10/2026
+// SIMKA PRO | src/lib/slidePantauan.js | v1.1 | Fase 8 – Urutan kolom NIS > Nama | 10/10/2026
 // Penyusun slide Layar Pantauan dari muatan pantauan_langsung(): setiap slide berisi kartu statistik (dengan daftar
 // nama untuk detail admin/superadmin) dan grafik (batang/lingkaran). Saringan: jenis kelamin, jenjang, bidang.
 // Urutan: Santri, Pegawai, Sekolah SMP, Sekolah SMA, Tahfizh, Hafalan, Musyrif, Kegiatan, Klinik, Security, Ekskul.
@@ -14,7 +14,7 @@ const W = { hijau: '#1E7D4F', merah: '#C7332F', biru: '#2F5FA8', jingga: '#C26A1
 const KODE = { H: 'Hadir', T: 'Terlambat', I: 'Izin', S: 'Sakit', A: 'Absen', B: 'Bolos' }
 const hadirKode = (k) => ['H', 'T'].includes(k)
 const persen = (a, b) => (b ? Math.round((100 * a) / b) : 0)
-const K_SANTRI = [['nama', 'Nama santri', 26], ['nis', 'NIS', 10], ['kelas', 'Kelas', 8], ['kamar', 'Kamar', 16]]
+const K_SANTRI = [['nis', 'NIS', 10], ['nama', 'Nama santri', 26], ['kelas', 'Kelas', 8], ['kamar', 'Kamar', 16]]
 const K_PEG = [['nama', 'Nama pegawai', 28], ['jabatan', 'Jabatan', 24], ['bidang', 'Bidang', 18], ['ket', 'Keterangan', 22]]
 const rapiS = (s, tambah = {}) => ({ ...s, kelas: s.kelas || '–', kamar: s.kamar || '–', halaqah: s.halaqah || '–', ...tambah })
 const rapiP = (p, tambah = {}) => ({ ...p, jabatan: p.jabatan || '–', bidang: p.bidang || '–', ket: p.ket || STATUS_PEG[p.status] || '–', ...tambah })

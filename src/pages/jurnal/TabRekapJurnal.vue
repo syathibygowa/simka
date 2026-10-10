@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabRekapJurnal.vue | v1.0 | Fase 3 – Tahap 3 Jurnal harian | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabRekapJurnal.vue | v1.1 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
 <script setup>
 // Rekap jurnal per periode: persentase pengisian (hari terisi ÷ hari wajib), butir ceklist, dan kegiatan per status.
 // Pegawai melihat dirinya sendiri; pimpinan melihat anggota unitnya; admin ber-izin verval_jurnal melihat semua.
@@ -44,8 +44,8 @@ function bulan(n) {
 }
 
 function ekspor() {
-  const kolom = ['No.', 'Nama', 'NIY', 'Bidang/Unit', 'Hari wajib', 'Hari terisi', 'Tidak diisi (terkunci)', 'Pengisian (%)', 'Butir ceklist', 'Kegiatan disetujui', 'Menunggu verval', 'Dikembalikan']
-  const d = tampil.value.map((r, i) => [i + 1, r.nama, r.niy || '', r.unit || '', r.hari_wajib, r.hari_terisi, r.hari_kosong, r.persen ?? '', r.butir, r.kegiatan_disetujui, r.kegiatan_menunggu, r.kegiatan_dikembalikan])
+  const kolom = ['No.', 'NIY', 'Nama', 'Bidang/Unit', 'Hari wajib', 'Hari terisi', 'Tidak diisi (terkunci)', 'Pengisian (%)', 'Butir ceklist', 'Kegiatan disetujui', 'Menunggu verval', 'Dikembalikan']
+  const d = tampil.value.map((r, i) => [i + 1, r.niy || '', r.nama, r.unit || '', r.hari_wajib, r.hari_terisi, r.hari_kosong, r.persen ?? '', r.butir, r.kegiatan_disetujui, r.kegiatan_menunggu, r.kegiatan_dikembalikan])
   const ws = XLSX.utils.aoa_to_sheet([kolom, ...d]); ws['!cols'] = kolom.map((k, i) => ({ wch: Math.min(40, Math.max(k.length, ...d.map((r) => String(r[i]).length)) + 2) }))
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Rekap jurnal')
   XLSX.writeFile(wb, `Rekap-Jurnal-${formatPendek(mulai.value).replace(/\//g, '-')}_sd_${formatPendek(akhir.value).replace(/\//g, '-')}.xlsx`)

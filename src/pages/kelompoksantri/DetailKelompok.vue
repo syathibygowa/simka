@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/DetailKelompok.vue | v1.1 | Fase 4 – Perbaikan P2 (pengasuh sesuai tupoksi) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/DetailKelompok.vue | v1.2 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
 <script setup>
 // Satu kelompok santri: identitas, pengasuh (utama, pendamping, pengganti bertanggal), grup WA, anggota beserta
 // riwayat pindah, tambah/pindah/keluarkan anggota, naqib halaqah, ekspor Excel, dan cetak daftar F4.
@@ -147,11 +147,11 @@ const penanda = ref({ jabatan: '', nama: '', niy: '' }); const pratinjau = ref(f
 const pengasuhUtama = computed(() => (g.value?.pengasuh || []).find((p) => p.peran === 'utama') || (g.value?.pengasuh || [])[0] || null)
 const kopCetak = computed(() => (g.value?.jenis === 'kelas' ? g.value.jenjang : 'pondok'))
 function ekspor() {
-  const kolom = ['No.', 'NIS', 'NISN', 'Nama', 'L/P', 'Kelas', 'Orang tua/wali utama', 'Nomor HP', 'Anggota sejak']
-  const baris = anggota.value.map((a, i) => [i + 1, a.s.nis, a.s.nisn || '', a.s.nama_lengkap, a.s.jenis_kelamin, kelompokDari(a.s, 'kelas')?.nama || `${a.s.tingkat} ${JENJANG_PENDEK[a.s.jenjang]}`,
+  const kolom = ['No.', 'NIS', 'Nama', 'L/P', 'Kelas', 'Orang tua/wali utama', 'Nomor HP', 'Anggota sejak']
+  const baris = anggota.value.map((a, i) => [i + 1, a.s.nis || a.s.nisn || '', a.s.nama_lengkap, a.s.jenis_kelamin, kelompokDari(a.s, 'kelas')?.nama || `${a.s.tingkat} ${JENJANG_PENDEK[a.s.jenjang]}`,
     kontakUtama(a.s)?.nama || '', kontakUtama(a.s)?.no_hp || '', formatPendek(a.mulai)])
   const ws = XLSX.utils.aoa_to_sheet([[`${judulKelompok(g.value)} – Tahun ajaran ${g.value.tahun_ajaran}`], [], kolom, ...baris])
-  ws['!cols'] = [{ wch: 5 }, { wch: 10 }, { wch: 12 }, { wch: 30 }, { wch: 5 }, { wch: 10 }, { wch: 26 }, { wch: 15 }, { wch: 13 }]
+  ws['!cols'] = [{ wch: 5 }, { wch: 12 }, { wch: 30 }, { wch: 5 }, { wch: 10 }, { wch: 26 }, { wch: 15 }, { wch: 13 }]
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Anggota')
   XLSX.writeFile(wb, `Anggota-${judulKelompok(g.value).replace(/[^\w.-]+/g, '-')}.xlsx`)
 }
@@ -263,11 +263,11 @@ const IKON_PERAN = { utama: 'tahfizh', pendamping: 'pegawai', pengganti: 'pengaj
         </tbody>
       </table>
       <table class="tabel">
-        <colgroup><col style="width:6%"><col style="width:12%"><col style="width:14%"><col style="width:30%"><col style="width:6%"><col style="width:16%"><col style="width:16%"></colgroup>
-        <thead><tr><th>No.</th><th>NIS</th><th>NISN</th><th>Nama</th><th>L/P</th><th>Orang tua/wali</th><th>Nomor HP</th></tr></thead>
+        <colgroup><col style="width:6%"><col style="width:14%"><col style="width:36%"><col style="width:6%"><col style="width:22%"><col style="width:16%"></colgroup>
+        <thead><tr><th>No.</th><th>NIS</th><th>Nama</th><th>L/P</th><th>Orang tua/wali</th><th>Nomor HP</th></tr></thead>
         <tbody>
           <tr v-for="(a, i) in anggota" :key="a.id">
-            <td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ a.s.nis }}</td><td class="tengah">{{ a.s.nisn || '–' }}</td><td>{{ a.s.nama_lengkap }}</td>
+            <td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ a.s.nis || a.s.nisn || '–' }}</td><td>{{ a.s.nama_lengkap }}</td>
             <td class="tengah">{{ a.s.jenis_kelamin }}</td><td>{{ kontakUtama(a.s)?.nama || '–' }}</td><td class="tengah">{{ kontakUtama(a.s)?.no_hp || '–' }}</td>
           </tr>
         </tbody>

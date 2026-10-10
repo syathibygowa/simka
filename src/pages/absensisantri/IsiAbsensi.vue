@@ -1,7 +1,7 @@
-<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.4 | Fase 6 – Tahap 2 Status otomatis dan perizinan santri | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.5 | Fase 8 – Perbaikan: musyrif mengabsen tanpa presensi diri lebih dulu | 10/10/2026 -->
 <script setup>
 // Pengisian absensi satu sesi: semua santri bawaan Hadir, ketuk kode HISBAT bagi yang tidak.
-// Pengampu halaqah/asrama diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi.
+// Pengampu halaqah/ekskul diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi (asrama tidak).
 // Admin ber-izin absensi_atas_nama dapat mengisi atas nama pengampu (tercatat di riwayat).
 // Halaqah: tab Absensi | Setoran (setoran terbuka setelah absensi tersimpan; ?tab=setoran membuka tab Setoran).
 // v1.4: santri yang sedang sakit (Klinik) atau izin (Perizinan) otomatis S/I dan terkunci dengan labelnya.
@@ -65,7 +65,8 @@ const kini = computed(() => new Date(d.value?.sekarang || Date.now()))
 const belumBuka = computed(() => d.value && kini.value < new Date(d.value.buka))
 const lewatBatas = computed(() => d.value && d.value.pengasuh_saya && !modeAtasNama.value && kini.value > new Date(d.value.batas))
 const lewatJendela = computed(() => d.value && kini.value > new Date(d.value.tutup))
-const perluPresensi = computed(() => d.value?.perlu_presensi && d.value.pengasuh_saya)
+// v1.5: musyrif (absensi asrama) tidak lagi diminta presensi diri lebih dulu, agar fleksibel mengabsen santri.
+const perluPresensi = computed(() => d.value?.perlu_presensi && d.value.pengasuh_saya && d.value.jenis !== 'asrama')
 const tampil = computed(() => { const q = cari.value.toLowerCase().trim(); return (d.value?.anggota || []).filter((a) => !q || `${a.nama} ${a.nis}`.toLowerCase().includes(q)) })
 const hitung = computed(() => Object.fromEntries(URUT_KODE.map((k) => [k, Object.values(isian.value).filter((v) => v === k).length])))
 const hadirDihitung = computed(() => (d.value?.anggota.length || 0) - hitung.value.I - hitung.value.S - hitung.value.A)

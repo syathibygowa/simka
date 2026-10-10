@@ -1,26 +1,29 @@
-<!-- SIMKA PRO | src/pages/pengaturan/TabPenandaTangan.vue | v1.1 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/TabPenandaTangan.vue | v1.2 | Fase 8 – Akun pegawai penanda tangan (tanda tangan elektronik) | 10/10/2026 -->
 <script setup>
 import { ref, onMounted } from 'vue'
 import { PhPlus, PhPencilSimple, PhFloppyDisk, PhTrash, PhLink } from '@phosphor-icons/vue'
 import { useLembaga } from '@/stores/lembaga'
 import { useOrganisasi } from '@/stores/organisasi'
+import { usePegawai } from '@/stores/pegawai'
 import { useUI } from '@/stores/ui'
 import LembarBawah from '@/components/LembarBawah.vue'
 
-const lembaga = useLembaga(); const ui = useUI(); const org = useOrganisasi()
-onMounted(() => org.muat())
+// v1.2: pejabat yang diisi manual dapat ditautkan ke akun pegawai agar dapat menandatangani laporan resmi secara elektronik.
+const lembaga = useLembaga(); const ui = useUI(); const org = useOrganisasi(); const peg = usePegawai()
+onMounted(() => { org.muat(); if (!peg.daftar.length) peg.muat() })
+function pilihAkun(id) { const p = peg.cari(id); f.value.employee_id = id || null; if (p) { f.value.nama = p.nama_lengkap; f.value.niy = p.niy || '' } }
 const namaJabatan = (kode) => org.struktural.find((x) => x.kode === kode)?.nama || kode
 const galat = (e) => ui.toast(e.message, 'galat')
 
 // ---------- Daftar pejabat penanda tangan ----------
 const lembar = ref(false); const f = ref({})
-function buka(s = null) { f.value = s ? { ...s } : { _baru: true, jabatan_tertulis: '', nama: '', niy: '', aktif: true, urutan: lembaga.signatories.length + 1, sumber_jabatan: '', sumber_unit_id: '' }; lembar.value = true }
+function buka(s = null) { f.value = s ? { ...s } : { _baru: true, jabatan_tertulis: '', nama: '', niy: '', aktif: true, urutan: lembaga.signatories.length + 1, sumber_jabatan: '', sumber_unit_id: '', employee_id: null }; lembar.value = true }
 async function simpan() {
   const s = f.value
   if (!s.jabatan_tertulis?.trim() || (!s.sumber_jabatan && !s.nama?.trim())) return ui.toast('Jabatan dan nama lengkap wajib diisi.', 'galat')
   try {
     await lembaga.simpanBaris('signatories', { id: s.id, jabatan_tertulis: s.jabatan_tertulis.trim(), nama: s.nama?.trim() || '-', niy: s.niy?.trim() || null, aktif: s.aktif, urutan: s.urutan,
-      sumber_jabatan: s.sumber_jabatan || null, sumber_unit_id: s.sumber_unit_id || null }, { baru: !!s._baru })
+      sumber_jabatan: s.sumber_jabatan || null, sumber_unit_id: s.sumber_unit_id || null, employee_id: s.employee_id || null }, { baru: !!s._baru })
     lembar.value = false; ui.toast('Penanda tangan disimpan.')
   } catch (e) { galat(e) }
 }
@@ -55,6 +58,7 @@ async function ubahAturan(r, kolom, nilai) {
             <p class="text-sm text-teks3">{{ s.jabatan_tertulis }}</p>
             <p :class="['font-semibold', !s.aktif && 'text-teks3 line-through']">{{ s.nama }}</p>
             <p class="text-sm text-teks3">NIY {{ s.niy || '–' }}<template v-if="!s.aktif"> – nonaktif</template></p>
+            <p v-if="!s.employee_id" class="mt-0.5 text-xs font-semibold text-[rgb(var(--merah))]">Belum terhubung akun pegawai – hanya untuk tanda tangan basah</p>
             <p v-if="s.sumber_jabatan" class="w-pegawai mt-0.5 flex items-center gap-1 text-xs font-semibold" style="color: var(--c)"><PhLink :size="14" weight="bold" /> Mengikuti jabatan {{ namaJabatan(s.sumber_jabatan) }}{{ s.sumber_unit_id ? ' – ' + (org.cariUnit(s.sumber_unit_id)?.nama || '') : '' }}</p>
           </div>
           <button class="tombol-ikon" @click="buka(s)" :aria-label="`Ubah ${s.nama}`"><PhPencilSimple :size="20" /></button>
@@ -104,6 +108,10 @@ async function ubahAturan(r, kolom, nilai) {
           <select id="pt-unit" v-model="f.sumber_unit_id" class="isian"><option value="">Bidang/unit mana saja</option>
             <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
         <template v-if="!f.sumber_jabatan">
+          <div><label class="label-isian" for="pt-akun">Akun pegawai (untuk tanda tangan elektronik)</label>
+            <select id="pt-akun" class="isian" :value="f.employee_id || ''" @change="pilihAkun($event.target.value)"><option value="">Tidak ditautkan</option>
+              <option v-for="p in peg.daftar.filter((x) => x.status_akun === 'aktif')" :key="p.id" :value="p.id">{{ p.niy ? p.niy + ' – ' : '' }}{{ p.nama_lengkap }}</option></select>
+            <p class="mt-1 text-xs text-teks3">Pejabat yang tertaut dapat menyetujui laporan resmi dari akunnya sendiri.</p></div>
           <div><label class="label-isian" for="pt-nama">Nama lengkap bergelar</label><input id="pt-nama" v-model="f.nama" class="isian" /></div>
           <div><label class="label-isian" for="pt-niy">NIY/NIP</label><input id="pt-niy" v-model="f.niy" class="isian" inputmode="numeric" /></div>
         </template>

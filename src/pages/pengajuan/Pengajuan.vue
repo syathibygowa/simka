@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengajuan/Pengajuan.vue | v1.0 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengajuan/Pengajuan.vue | v1.1 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
 <script setup>
 // Pengajuan izin, sakit, dinas luar, dan cuti. Tab: Pengajuan saya (semua pegawai), Persetujuan (pejabat
 // penyetuju dan Plt), Semua (admin ber-izin lihat_pengajuan/superadmin: rekap, Excel, cetak F4), Ketentuan (dibaca semua).
@@ -66,8 +66,8 @@ function terkirim(id) { formBuka.value = false; tab.value = 'saya'; router.repla
 async function berubah() { await Promise.all([pg.muat('saya'), pg.muat('persetujuan')]); if (tab.value === 'semua') muatSemua() }
 
 function ekspor() {
-  const kolom = ['No.', 'Pemohon', 'NIY', 'Bidang/Unit', 'Jenis', 'Mulai', 'Selesai', 'Lama (hari)', 'Alasan', 'Status', 'Nomor surat', 'Diajukan']
-  const data = tampil.value.map((r, i) => [i + 1, r.pemohon, r.niy || '', r.unit || '', r.jenis, formatPendek(r.mulai), formatPendek(r.selesai), r.jumlah_hari, r.alasan,
+  const kolom = ['No.', 'NIY', 'Pemohon', 'Bidang/Unit', 'Jenis', 'Mulai', 'Selesai', 'Lama (hari)', 'Alasan', 'Status', 'Nomor surat', 'Diajukan']
+  const data = tampil.value.map((r, i) => [i + 1, r.niy || '', r.pemohon, r.unit || '', r.jenis, formatPendek(r.mulai), formatPendek(r.selesai), r.jumlah_hari, r.alasan,
     STATUS_PENGAJUAN[r.status].n + (r.status === 'menunggu' && r.jenjang_kini ? ` (${r.jenjang_kini})` : ''), r.nomor_surat || '', formatPendek(r.created_at)])
   const ws = XLSX.utils.aoa_to_sheet([kolom, ...data])
   ws['!cols'] = kolom.map((k, i) => ({ wch: Math.min(48, Math.max(k.length, ...data.map((r) => String(r[i]).length)) + 2) }))

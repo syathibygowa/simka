@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/laporanTahfizh.js | v1.0 | Fase 5 – Tahap 5 Laporan dan grafik tahfizh | 05/10/2026
+// SIMKA PRO | src/lib/laporanTahfizh.js | v1.1 | Fase 8 – Urutan identitas NIS > Nama | 10/10/2026
 // Katalog dan penyusun 15 laporan tahfizh (Blueprint Bagian 20). Setiap penyusun menghasilkan bentuk seragam:
 //   { judul, subjudul?, mendatar, bagian: [{ judul, kunci, kolom: [{ n, lebar, tengah }], baris: [{ sel: [], sorot }], catatan: [] }], grafik? }
 // sehingga satu penampil dipakai untuk layar, cetak F4, dan Excel.
@@ -227,7 +227,7 @@ export function susunLaporan(jenis, ctx) {
       const s = ctx.santri; if (!s) return { judul: 'Laporan Individu Santri', bagian: [] }
       const r = data.find((d) => d.student_id === s.student_id) || {}
       return { judul: 'Laporan Individu Perkembangan Hafalan', subjudul: `${s.nama} · NIS ${s.nis} · ${ctx.periodeLabel}`,
-        identitas: [['Nama', s.nama], ['NIS', s.nis], ['Kelas', s.kelas || s.tingkat], ['Halaqah', `${s.halaqah || '–'}${r.muhaffizh ? ' · ' + r.muhaffizh : ''}`],
+        identitas: [['NIS', s.nis], ['Nama', s.nama], ['Kelas', s.kelas || s.tingkat], ['Halaqah', `${s.halaqah || '–'}${r.muhaffizh ? ' · ' + r.muhaffizh : ''}`],
           ['Program', PROGRAM[s.program]], ['Posisi sabaq', formatPosisi(s.sabaq_hal, true)], ['Total hafalan resmi', `${s.total_resmi} juz${s.juz_resmi?.length ? ' (' + ringkasJuz(s.juz_resmi) + ')' : ''}`]],
         bagian: [
           { judul: 'Riwayat setoran', kolom: [{ n: 'Tanggal', lebar: 14, tengah: 1 }, { n: 'Sesi', lebar: 14 }, { n: 'Sabaq', lebar: 22, tengah: 1 }, { n: 'Tambah (hal)', lebar: 9, tengah: 1 },

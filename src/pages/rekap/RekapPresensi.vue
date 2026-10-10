@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/rekap/RekapPresensi.vue | v1.2 | Fase 8 – Perbaikan: tab di menu Rekap | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/rekap/RekapPresensi.vue | v1.3 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
 <script setup>
 // Rekap presensi pegawai (admin dan superadmin): harian (semua sesi semua pegawai) dan periode
 // (ringkasan per pegawai), saring per bidang, ekspor Excel, dan cetak F4 dengan kop + tanda tangan.
@@ -80,13 +80,13 @@ const jam = (v) => (v ? formatJam(v) : '–')
 function ekspor() {
   let kolom; let data; let nama
   if (aktif.value.k === 'harian') {
-    kolom = ['No.', 'Nama', 'NIY', 'Bidang/Unit', 'Pola', 'Sesi', 'Jadwal', 'Datang', 'Pulang', 'Status', 'Terlambat (menit)', 'Status pulang', 'Keterangan']
-    data = tampilH.value.map((r, i) => [i + 1, r.nama, r.niy || '', r.unit || '', r.nama_pola, r.nama_sesi, `${jam(r.mulai)}–${jam(r.selesai)}`, jam(r.datang_pada), jam(r.pulang_pada),
+    kolom = ['No.', 'NIY', 'Nama', 'Bidang/Unit', 'Pola', 'Sesi', 'Jadwal', 'Datang', 'Pulang', 'Status', 'Terlambat (menit)', 'Status pulang', 'Keterangan']
+    data = tampilH.value.map((r, i) => [i + 1, r.niy || '', r.nama, r.unit || '', r.nama_pola, r.nama_sesi, `${jam(r.mulai)}–${jam(r.selesai)}`, jam(r.datang_pada), jam(r.pulang_pada),
       statusBaris(r).n, r.terlambat_menit || 0, r.status_pulang ? STATUS_PULANG[r.status_pulang]?.n : '', r.keterangan || ''])
     nama = `Rekap-Presensi-Harian-${formatPendek(tgl.value).replace(/\//g, '-')}.xlsx`
   } else {
-    kolom = ['No.', 'Nama', 'NIY', 'Bidang/Unit', 'Jabatan', 'Sesi wajib', 'Hadir', 'Terlambat', 'Menit terlambat', 'Dinas luar', 'Izin', 'Sakit', 'Cuti', 'Tanpa keterangan', 'Menunggu verval', 'Pulang cepat', 'Tidak presensi pulang', 'Kehadiran (%)']
-    data = tampilP.value.map((r, i) => [i + 1, r.nama, r.niy || '', r.unit || '', r.jabatan || '', r.sesi, r.hadir, r.terlambat, r.menit_terlambat, r.dinas_luar, r.izin, r.sakit, r.cuti, r.tanpa_keterangan, r.menunggu, r.pulang_cepat, r.tidak_presensi_pulang, r.persen ?? ''])
+    kolom = ['No.', 'NIY', 'Nama', 'Bidang/Unit', 'Jabatan', 'Sesi wajib', 'Hadir', 'Terlambat', 'Menit terlambat', 'Dinas luar', 'Izin', 'Sakit', 'Cuti', 'Tanpa keterangan', 'Menunggu verval', 'Pulang cepat', 'Tidak presensi pulang', 'Kehadiran (%)']
+    data = tampilP.value.map((r, i) => [i + 1, r.niy || '', r.nama, r.unit || '', r.jabatan || '', r.sesi, r.hadir, r.terlambat, r.menit_terlambat, r.dinas_luar, r.izin, r.sakit, r.cuti, r.tanpa_keterangan, r.menunggu, r.pulang_cepat, r.tidak_presensi_pulang, r.persen ?? ''])
     nama = `Rekap-Presensi-${formatPendek(mulai.value).replace(/\//g, '-')}_sd_${formatPendek(akhir.value).replace(/\//g, '-')}.xlsx`
   }
   const ws = XLSX.utils.aoa_to_sheet([kolom, ...data])

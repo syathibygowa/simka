@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.14 | Fase 8 – Perbaikan: Untuk Anda tetap di atas, di luar slider | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.15 | Fase 8 – Ringkasan presensi hanya sesi hari ini | 10/10/2026 -->
 <script setup>
 import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
 import KartuTahfizhBeranda from '@/components/KartuTahfizhBeranda.vue'
@@ -30,7 +30,7 @@ onMounted(() => dp.muatHarian())
 // Ringkasan presensi hari ini pada kartu sapaan
 const ringkas = computed(() => {
   if (!dp.harian) return 'Memuat sesi hari ini…'
-  if (!dp.sesi.length) return 'Tidak ada sesi presensi hari ini'
+  if (!dp.sesiHariIni.length) return 'Tidak ada sesi presensi hari ini'
   if (dp.terbuka.length) return `Sesi terbuka: ${dp.terbuka.map((s) => s.nama_sesi).join(', ')} – presensi sekarang`
   const b = dp.berikut
   return `${dp.selesaiWajib} dari ${dp.jumlahWajib} sesi tercatat${b ? ` · berikutnya ${b.nama_sesi} ${formatJam(b.mulai)}` : ''}`
@@ -82,13 +82,13 @@ const menu = computed(() => menuUntuk(sesi.peran, sesi.ciriMenu).filter((m) => !
           <li v-if="!notif.daftar.length" class="py-8 text-center text-sm text-teks3">Belum ada notifikasi.</li>
         </ul>
       </section>
-      <section v-if="dp.sesi.length" class="kartu order-first p-4 lg:col-span-2">
+      <section v-if="dp.sesiHariIni.length" class="kartu order-first p-4 lg:col-span-2">
         <div class="mb-2 flex items-center justify-between">
           <h2 class="judul-bagian">Sesi hari ini</h2>
           <router-link to="/presensi" class="tombol-teks h-9 min-h-0 text-sm">Buka presensi</router-link>
         </div>
         <ul class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          <li v-for="s in dp.sesi" :key="s.session_id + s.tanggal" :class="['min-w-[9.5rem] shrink-0 rounded-2xl border border-garis p-3', 'w-' + lencanaSesi(s).w]">
+          <li v-for="s in dp.sesiHariIni" :key="s.session_id + s.tanggal" :class="['min-w-[9.5rem] shrink-0 rounded-2xl border border-garis p-3', 'w-' + lencanaSesi(s).w]">
             <p class="text-sm font-extrabold tabular-nums">{{ formatJam(s.mulai) }}–{{ formatJam(s.selesai) }}</p>
             <p class="truncate text-sm font-semibold">{{ s.nama_sesi }}</p>
             <span class="lencana mt-1">{{ lencanaSesi(s).n }}</span>
