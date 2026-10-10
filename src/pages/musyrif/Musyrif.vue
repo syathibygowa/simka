@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/Musyrif.vue | v1.5 | Fase 7 – Perbaikan uji coba: tab Jurnal musyrif dihapus | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/Musyrif.vue | v1.6 | Fase 8 – Tahap 0 musyrif hanya melihat kamar asuhannya | 10/10/2026 -->
 <script setup>
 // Menu Musyrif (kepengasuhan asrama). Musyrif/musyrifah melihat kamar asuhannya; admin, pimpinan, dan pemegang
 // hak fitur Absensi Asrama melihat semua kamar. Tab: Dasbor (statistik langsung, sesi hari ini, perlu perhatian)
@@ -27,7 +27,7 @@ const sesi = useSesi(); const galat = ref('')
 async function muat(paksa = false) { galat.value = ''; try { await mu.muatKamar(paksa) } catch (e) { galat.value = e.message } }
 onMounted(() => muat(true))
 /** Pemantau = superadmin/admin, pemegang hak fitur Absensi Asrama (pimpinan), atau yang melihat lebih dari satu kamar. */
-const pemantau = computed(() => sesi.isAdmin || Number(sesi.fitur?.absensi_asrama ?? 0) >= 1 || mu.kamar.length > 1 || mu.kamar.some((k) => !k.asuhan_saya))
+const pemantau = computed(() => sesi.isAdmin || sesi.luas('absensi_asrama') || mu.kamar.some((k) => !k.asuhan_saya))
 const TAB = computed(() => [...(pemantau.value ? [{ k: 'ringkasan', n: 'Semua kamar', ikon: PhSquaresFour, w: 'musyrif' }] : []), { k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'musyrif' }, { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' }, { k: 'izin', n: 'Perizinan', ikon: PhSignOut, w: 'pengajuan' }])
 const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : pemantau.value ? 'ringkasan' : 'dasbor'))
 const k = computed(() => mu.kamarPilih)

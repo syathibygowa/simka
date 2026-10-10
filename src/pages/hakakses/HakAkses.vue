@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/hakakses/HakAkses.vue | v1.0 | Fase 1 – Akun dan hak akses | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/hakakses/HakAkses.vue | v1.1 | Fase 8 – Tahap 0 tanpa teks fase | 10/10/2026 -->
 <script setup>
 // Hak akses fitur tiga lapis (superadmin): per jabatan (dasar) → per bidang → per individu (tertinggi).
 import { ref, computed, onMounted, watch } from 'vue'
@@ -113,7 +113,7 @@ const WARNA_TINGKAT = ['w-hakakses', 'w-pegawai', 'w-presensi', 'w-pengaturan']
               <h3 class="mb-2 text-sm font-bold text-teks3">{{ kel }}</h3>
               <ul class="divide-y divide-garis">
                 <li v-for="f in fitur" :key="f.kode" class="flex flex-wrap items-center gap-2 py-2.5">
-                  <div class="min-w-[160px] flex-1"><p class="font-semibold">{{ f.nama }}</p><p v-if="f.fase > 1" class="text-xs text-teks3">Berfungsi mulai Fase {{ f.fase }}</p></div>
+                  <div class="min-w-[160px] flex-1"><p class="font-semibold">{{ f.nama }}</p><p v-if="f.fase > 8" class="text-xs text-teks3">Segera tersedia</p></div>
                   <div v-if="aktif.k === 'jabatan'" class="flex rounded-full bg-permukaan2 p-1" role="radiogroup" :aria-label="`Tingkat akses ${f.nama}`">
                     <button v-for="t in [0, 1, 2, 3]" :key="t" role="radio" :aria-checked="nilai(f.kode) === t" :disabled="menyimpan === f.kode" @click="ubah(f.kode, t)"
                       :class="['min-h-[36px] rounded-full px-3 text-xs font-semibold', nilai(f.kode) === t ? (t ? 'bg-[#C7332F] text-white' : 'bg-permukaan text-teks shadow-kartu') : 'text-teks2']">{{ TINGKAT[t] }}</button>

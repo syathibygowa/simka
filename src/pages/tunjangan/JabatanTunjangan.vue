@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tunjangan/JabatanTunjangan.vue | v1.0 | Fase 1 – Jabatan dan tunjangan | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/tunjangan/JabatanTunjangan.vue | v1.1 | Fase 8 – Tahap 0 tanpa teks fase | 10/10/2026 -->
 <script setup>
 // Jabatan dan tunjangan (superadmin): peta jabatan per pegawai beserta perkiraan tunjangan,
 // ringkasan per jabatan, dan tarif komponen gaji. Kelak dipakai modul Gaji (Fase 11) dan bendahara.
@@ -47,7 +47,7 @@ const hasil = computed(() => peg.daftar.filter((p) => (p.status_keaktifan || 'ak
       </button>
     </nav>
     <p class="mb-4 flex gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" />
-      Angka di sini adalah perkiraan tunjangan tetap menurut tarif yang berlaku. Honor per jam dan potongan berbasis kehadiran dihitung pada slip gaji (Fase 11).</p>
+      Angka di sini adalah perkiraan tunjangan tetap menurut tarif yang berlaku. Honor per jam dan potongan berbasis kehadiran dihitung pada slip gaji.</p>
     <p v-if="galat" class="rounded-xl bg-[#C7332F]/10 p-3 text-sm font-semibold text-merah">{{ galat }} Jalankan dulu SQL tarif tunjangan v1.0 di Supabase.</p>
     <p v-else-if="!siap" class="py-10 text-center text-teks3">Memuat data…</p>
     <div v-else :class="'w-' + aktif.w">

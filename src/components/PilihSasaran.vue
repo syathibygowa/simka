@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/PilihSasaran.vue | v1.1 | Fase 3 – Perbaikan P1 (kartu, kelompok, pengumuman) | 04/10/2026 -->
+<!-- SIMKA PRO | src/components/PilihSasaran.vue | v1.2 | Fase 8 – Tahap 0 tanpa teks fase | 10/10/2026 -->
 <script setup>
 // Pemilih sasaran bersama (pengumuman, berkas pegawai, agenda): semua pegawai, atau gabungan
 // kelompok pegawai (PH, PI, panitia, dll.), bidang/unit (beserta cabangnya), jabatan fungsional, jabatan struktural, saringan jenis kelamin,
@@ -106,7 +106,7 @@ watch(ringkasan, (v) => emit('ringkasan', v), { immediate: true })
             <button type="button" class="-mr-1 rounded-full p-0.5" :aria-label="`Hapus ${namaPegawai(id)}`" @click="balik('pegawai', id)"><PhX :size="14" weight="bold" /></button></span>
         </div>
       </div>
-      <p class="text-xs text-teks3">Kelompok, bidang, jabatan fungsional, dan jabatan struktural digabung (salah satu cocok). Bila semuanya kosong, berlaku untuk semua pegawai sesuai saringan jenis kelamin. Sasaran wali santri tersedia mulai Fase 9.</p>
+      <p class="text-xs text-teks3">Kelompok, bidang, jabatan fungsional, dan jabatan struktural digabung (salah satu cocok). Bila semuanya kosong, berlaku untuk semua pegawai sesuai saringan jenis kelamin. Sasaran wali santri akan tersedia bersama portal wali.</p>
     </template>
 
     <p class="rounded-xl bg-permukaan2 p-3 text-sm text-teks2"><span class="font-bold text-teks">Sasaran:</span> {{ ringkasan }}

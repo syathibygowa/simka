@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/sesi.js | v1.20 | Fase 7 – Tahap 4 Pantauan langsung pimpinan | 06/10/2026
+// SIMKA PRO | src/stores/sesi.js | v1.21 | Fase 8 – Tahap 0 Profil tugas (beranda fungsional, cakupan luas) | 10/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
 import { muatTemplatWA } from '@/lib/wa'
 import { defineStore } from 'pinia'
@@ -6,11 +6,14 @@ import { supabase, MODE_DEMO, panggilFungsi } from '@/lib/supabase'
 import { aturSelisihServer } from '@/lib/tanggal'
 import { PENGGUNA_DEMO } from '@/lib/demo'
 
+const TUGAS_DEMO = {
+  pegawai: { pimpinan: false, struktural: [], fungsional: ['MUHAFFIZH', 'WALI_KELAS', 'GURU'], kelompok: ['kelas', 'halaqah', 'kamar'], mengajar: true, klinik: [], gerbang: false, penguji: true, pantauan: false, luas: {} },
+}
 const simpan = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch { /* penyimpanan peramban tidak tersedia */ } }
 const baca = (k) => { try { return localStorage.getItem(k) } catch { return null } }
 
 export const useSesi = defineStore('sesi', {
-  state: () => ({ pengguna: null, fitur: {}, izinAdmin: [], siap: false, wajibGantiSandi: false, punyaShift: false, fotoUrl: '', kelompokSaya: [] }),
+  state: () => ({ pengguna: null, fitur: {}, izinAdmin: [], siap: false, wajibGantiSandi: false, punyaShift: false, fotoUrl: '', kelompokSaya: [], tugas: {} }),
   getters: {
     masuk: (s) => !!s.pengguna,
     peran: (s) => s.pengguna?.peran ?? 'pegawai',
@@ -18,6 +21,8 @@ export const useSesi = defineStore('sesi', {
     isAdmin: (s) => ['admin', 'superadmin'].includes(s.pengguna?.peran),
     /** Ciri pengguna untuk menyaring menu (lib/menu.js). */
     ciriMenu: (s) => ({ struktural: !!s.pengguna?.jabatan_struktural, shift: s.punyaShift, izin: s.izinAdmin, fitur: s.fitur, kelompok: s.kelompokSaya.length > 0, jenisKelompok: [...new Set(s.kelompokSaya.map((k) => k.jenis))] }),
+    /** Pimpinan tinggi (Direktur, Wadir, Yayasan, Kepala Bidang/Unit, termasuk Plt): beranda berstatistik. */
+    pimpinanTinggi: (s) => !!s.tugas?.pimpinan,
     namaPendek: (s) => (s.pengguna?.nama_lengkap ?? '').replace(/^(Ust\.|Ustzh\.)\s*/, '').split(',')[0],
     inisial: (s) => (s.pengguna?.nama_lengkap ?? '?').replace(/^(Ust\.|Ustzh\.)\s*/, '').split(/\s+/).slice(0, 2).map((k) => k[0]).join('').toUpperCase(),
   },
@@ -64,6 +69,8 @@ export const useSesi = defineStore('sesi', {
           .eq('employee_id', data.id).eq('aktif', true).eq('task_patterns.jenis', 'shift').limit(1)
         this.punyaShift = !!sh?.length
       } catch { this.punyaShift = false }
+      // Tupoksi akun: pimpinan atau bukan, jabatan fungsional, kelompok asuhan, petugas klinik/gerbang, cakupan luas per fitur
+      try { const { data: tg } = await supabase.rpc('profil_tugas_saya'); this.tugas = tg || {} } catch { this.tugas = {} }
       // Kelompok santri yang sedang diasuh (wali kelas, musyrif, muhaffizh, pembina)
       try {
         const { data: kel } = await supabase.from('v_kelompok').select('id, jenis, nama').eq('asuhan_saya', true)
@@ -81,7 +88,7 @@ export const useSesi = defineStore('sesi', {
       return r
     },
 
-    masukDemo(peran) { this.pengguna = { ...PENGGUNA_DEMO[peran] }; this.izinAdmin = peran === 'admin' ? ['verval_akun', 'kelola_pegawai', 'audit_log', 'verval_presensi', 'atur_presensi', 'kalender', 'lihat_pengajuan', 'atur_pengajuan', 'verval_jurnal', 'atur_jurnal', 'kelola_berkas', 'cetak_kartu', 'kelola_agenda', 'kelola_kelompok', 'atur_beban_kerja', 'kelola_santri', 'kelompok_santri', 'absensi_atas_nama', 'atur_jadwal', 'atur_tahfizh', 'validasi_tahfizh', 'kelola_klinik'] : []; this.kelompokSaya = peran === 'pegawai' ? [{ id: 'g-7a', jenis: 'kelas', nama: '7A' }, { id: 'g-hhb', jenis: 'halaqah', nama: 'Halaqah Ust. Hasan' }, { id: 'g-kum', jenis: 'kamar', nama: 'Kamar Umar' }] : []; simpan('simka.demo.peran', peran) },
+    masukDemo(peran) { this.pengguna = { ...PENGGUNA_DEMO[peran] }; this.izinAdmin = peran === 'admin' ? ['verval_akun', 'kelola_pegawai', 'audit_log', 'verval_presensi', 'atur_presensi', 'kalender', 'lihat_pengajuan', 'atur_pengajuan', 'verval_jurnal', 'atur_jurnal', 'kelola_berkas', 'cetak_kartu', 'kelola_agenda', 'kelola_kelompok', 'atur_beban_kerja', 'kelola_santri', 'kelompok_santri', 'absensi_atas_nama', 'atur_jadwal', 'atur_tahfizh', 'validasi_tahfizh', 'kelola_klinik'] : []; this.kelompokSaya = peran === 'pegawai' ? [{ id: 'g-7a', jenis: 'kelas', nama: '7A' }, { id: 'g-hhb', jenis: 'halaqah', nama: 'Halaqah Ust. Hasan' }, { id: 'g-kum', jenis: 'kamar', nama: 'Kamar Umar' }] : []; this.tugas = TUGAS_DEMO[peran] || {}; simpan('simka.demo.peran', peran) },
 
     async keluar() {
       if (!MODE_DEMO) await supabase.auth.signOut()
@@ -100,6 +107,9 @@ export const useSesi = defineStore('sesi', {
 
     /** Admin memiliki izin tertentu (superadmin selalu). */
     bolehAdmin(kode) { return this.isSuperadmin || (this.peran === 'admin' && this.izinAdmin.includes(kode)) },
+
+    /** Cakupan luas sebuah fitur (melihat semua kelompok, bukan hanya asuhan). Hak dari jabatan fungsional tidak termasuk. */
+    luas(kode) { return this.isAdmin || !!this.tugas?.luas?.[kode] },
 
     tingkat(kode) {
       if (this.isSuperadmin) return 3

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beban/BebanKerja.vue | v1.0 | Fase 3 – Perbaikan P5 (ekuivalensi jam) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/beban/BebanKerja.vue | v1.1 | Fase 8 – Tahap 0 tanpa teks fase | 10/10/2026 -->
 <script setup>
 // Ekuivalensi jam beban kerja per pekan.
 //   Beban saya   : rincian jam pegawai yang masuk, total, jam wajib, kelebihan/kekurangan.
@@ -66,7 +66,7 @@ const pratinjau = ref(false)
 const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan === 'DIREKTUR' || /^direktur/i.test(s.jabatan_tertulis)) || {})
 async function kunci() {
   const bln = new Date(hariIniISO()).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
-  if (!(await ui.konfirmasi({ judul: `Kunci rekap ${bln}?`, pesan: 'Salinan jam semua pegawai bulan ini disimpan sebagai dasar perhitungan gaji (Fase 11). Mengunci ulang menimpa salinan bulan ini.', ya: 'Kunci rekap' }))) return
+  if (!(await ui.konfirmasi({ judul: `Kunci rekap ${bln}?`, pesan: 'Salinan jam semua pegawai bulan ini disimpan sebagai dasar perhitungan gaji. Mengunci ulang menimpa salinan bulan ini.', ya: 'Kunci rekap' }))) return
   try { const n = await bk.kunci(hariIniISO()); ui.toast(`Rekap ${bln} dikunci untuk ${n} pegawai.`, 'info') } catch (e) { ui.toast(e.message, 'galat') }
 }
 

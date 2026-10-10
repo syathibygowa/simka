@@ -1,3 +1,4 @@
+<!-- SIMKA PRO | src/pages/umum/Segera.vue | v1.1 | Fase 8 – Tahap 0 tanpa teks fase | 10/10/2026 -->
 <script setup>
 // Menu yang dibangun pada fase berikutnya.
 import { computed } from 'vue'
@@ -18,8 +19,8 @@ const ISI = {
   <div :class="['mx-auto flex max-w-md flex-col items-center py-12 text-center', 'w-' + m.warna]">
     <span class="chip-ikon h-20 w-20 rounded-3xl"><component :is="m.ikon" :size="44" weight="duotone" /></span>
     <h2 class="mt-4 text-xl font-extrabold">{{ m.nama }}</h2>
-    <span class="lencana mt-2">Dibangun pada Fase {{ m.fase }}</span>
-    <p class="mt-3 text-teks2">{{ ISI[kode] || 'Menu ini disiapkan pada fase berikutnya.' }}</p>
+    <span class="lencana mt-2">Segera tersedia</span>
+    <p class="mt-3 text-teks2">{{ ISI[kode] || 'Menu ini sedang disiapkan dan akan segera tersedia.' }}</p>
     <router-link to="/" class="tombol-garis mt-6">Kembali ke beranda</router-link>
   </div>
 </template>

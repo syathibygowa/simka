@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/NavSamping.vue | v1.7 | Fase 7 – Tahap 1 Sidebar berkelompok buka-tutup | 06/10/2026 -->
+<!-- SIMKA PRO | src/components/NavSamping.vue | v1.8 | Fase 8 – Tahap 0 tanpa teks fase | 10/10/2026 -->
 <script setup>
 // Sidebar desktop: menu berkelompok, setiap menu dengan ikon dan warna sendiri.
 // Setiap kelompok dapat dibuka-tutup dengan mengeklik judulnya (pilihan tersimpan di perangkat); bawaan pertama kali:
@@ -70,7 +70,7 @@ const alihSemua = () => ui.aturSemuaGrup(semuaTerbuka.value ? namaGrup.value : [
               <span v-if="lebar" class="rounded-full bg-[#C7332F] px-1.5 text-xs font-bold leading-5 text-white">{{ notif.belumDibaca }}</span>
               <span v-else class="absolute left-[34px] top-1.5 h-2.5 w-2.5 rounded-full bg-[#C7332F] ring-2 ring-permukaan" aria-hidden="true" />
             </template>
-            <span v-else-if="m.fase && lebar" class="whitespace-nowrap text-[11px] font-semibold text-teks3">Fase {{ m.fase }}</span>
+            <span v-else-if="m.fase && lebar" class="whitespace-nowrap text-[11px] font-semibold text-teks3">Segera</span>
           </router-link>
         </div>
       </div>

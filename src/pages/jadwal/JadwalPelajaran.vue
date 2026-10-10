@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jadwal/JadwalPelajaran.vue | v1.1 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/jadwal/JadwalPelajaran.vue | v1.2 | Fase 8 – Tahap 0 guru hanya melihat jadwalnya | 10/10/2026 -->
 <script setup>
 // Jadwal pelajaran. Tab: Jadwal kelas, Jadwal guru, Penugasan mengajar, Pengaturan (mapel dan jam pelajaran),
 // Rekap mengajar. Pengatur: admin ber-izin atur_jadwal (atau hak fitur jadwal_mengajar tingkat 3).
@@ -32,7 +32,8 @@ const TAB = computed(() => [
   ...(bolehAtur.value ? [{ k: 'pengaturan', n: 'Mapel dan jam', ikon: PhGearSix, w: 'pengaturan' }] : []),
   { k: 'rekap', n: 'Rekap mengajar', ikon: PhChartBar, w: 'rekap' },
 ])
-const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : 'kelas'))
+// Guru tanpa kelas perwalian membuka "Jadwal guru" (jadwalnya sendiri) lebih dulu
+const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : !sesi.luas('jadwal_mengajar') && !kelasList.value.length ? 'guru' : 'kelas'))
 const kelasList = computed(() => kel.dariTA.filter((g) => g.jenis === 'kelas' && g.aktif))
 const groupId = ref(''); const employeeId = ref('')
 onMounted(async () => {

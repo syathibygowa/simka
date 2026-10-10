@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/presensi/Presensi.vue | v1.3 | Fase 4 – Tahap 3 Absensi HISBAT | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/Presensi.vue | v1.4 | Fase 8 – Tahap 0 tanpa teks fase | 10/10/2026 -->
 <script setup>
 // Halaman presensi pegawai (Bagian 9 blueprint): kartu lokasi besar, satu tombol bulat,
 // selfie wajib dari kamera langsung dengan watermark, dan deretan sesi hari ini.
@@ -283,7 +283,7 @@ const PILIHAN = [{ k: 'hadir', n: 'Hadir (tugas/dinas di luar)' }, { k: 'izin', 
         </div>
         <div><label class="label-isian" for="iz-alasan">Alasan <span class="text-merah">*</span></label>
           <textarea id="iz-alasan" v-model="izin.alasan" rows="3" class="isian py-2.5" placeholder="Contoh: mengantar orang tua berobat" /></div>
-        <p class="text-xs text-teks3">Izin hanya untuk sesi ini dan diverval admin. Bila Anda tetap hadir dan presensi, izin otomatis gugur. Izin satu hari penuh atau lebih diajukan lewat menu Pengajuan (Fase 3).</p>
+        <p class="text-xs text-teks3">Izin hanya untuk sesi ini dan diverval admin. Bila Anda tetap hadir dan presensi, izin otomatis gugur. Izin satu hari penuh atau lebih diajukan lewat menu Pengajuan.</p>
         <button class="tombol-utama w-full" :disabled="izin.proses" @click="kirimIzin">{{ izin.proses ? 'Mengirim…' : 'Kirim pengajuan' }}</button>
       </div>
     </LembarBawah>

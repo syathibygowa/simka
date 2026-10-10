@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/umum/Tugas.vue | v1.6 | Fase 4 – Perbaikan P3 (menu 4 kolom ringkas) | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/umum/Tugas.vue | v1.7 | Fase 8 – Tahap 0 tanpa teks fase | 10/10/2026 -->
 <script setup>
 // Peluncur menu ala aplikasi Android: semua menu sesuai peran, berkelompok, berwarna.
 import { computed } from 'vue'
@@ -20,7 +20,6 @@ const kelompok = computed(() => {
           <router-link :to="m.ke" class="relative flex h-full flex-col items-center gap-1.5 rounded-xl px-0.5 py-1.5 text-center transition hover:bg-permukaan2 active:scale-95">
             <span class="chip-ikon h-11 w-11 rounded-2xl"><component :is="m.ikon" :size="24" weight="duotone" /></span>
             <span class="line-clamp-2 text-[11px] font-semibold leading-tight text-teks">{{ m.nama }}</span>
-            <span v-if="m.fase" class="text-[10px] font-semibold text-teks3">Fase {{ m.fase }}</span>
           </router-link>
         </li>
       </ul>
