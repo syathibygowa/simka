@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.9 | Fase 8 – Perbaikan: statistik beranda bergeser per kelompok | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.10 | Fase 8 – Perbaikan: Untuk Anda tetap di atas, di luar slider | 10/10/2026 -->
 <script setup>
 import { ref, computed } from 'vue'
 import {
@@ -10,6 +10,7 @@ import { useStatistik } from '@/stores/statistik'
 import { formatRelatif, formatWaktu } from '@/lib/tanggal'
 import Sapaan from './Sapaan.vue'
 import TombolPantauan from '@/components/TombolPantauan.vue'
+import { PhSparkle } from '@phosphor-icons/vue'
 import SliderStatistik from '@/components/SliderStatistik.vue'
 import { panelBeranda } from '@/lib/panelBeranda'
 import RingkasanPribadi from './RingkasanPribadi.vue'
@@ -28,7 +29,7 @@ import KartuSecurityBeranda from '@/components/KartuSecurityBeranda.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
-const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'layanan', 'security', 'pondok', 'pribadi'])
+const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'layanan', 'security', 'pondok'])
 const stat = useStatistik(); const br = useBeranda()
 const d = computed(() => stat.data || {})
 const ch = computed(() => stat.berubah)
@@ -59,6 +60,12 @@ const AKSI = [
   <div class="space-y-5 lg:space-y-6">
     <Sapaan keterangan="Anda memegang kendali penuh atas data dan pengaturan sistem SIMKA PRO." />
     <TombolPantauan />
+
+    <!-- Untuk Anda: tetap tersusun di atas (akses cepat), tidak masuk slider -->
+    <section v-if="br.data?.pribadi" class="space-y-3" aria-labelledby="judul-untuk-anda">
+      <h2 id="judul-untuk-anda" class="judul-bagian flex items-center gap-2 px-1"><PhSparkle :size="20" weight="duotone" class="text-[rgb(var(--merah))]" /> Untuk Anda</h2>
+      <RingkasanPribadi :d="br.data.pribadi" />
+    </section>
 
     <SliderStatistik :panel="PANEL" simpan="simka.beranda.superadmin">
       <template #presensi><StatistikPresensi /></template>
@@ -132,9 +139,6 @@ const AKSI = [
       </div>
     </div>
 
-      </template>
-      <template #pribadi>
-        <template v-if="br.data?.pribadi"><h2 class="judul-bagian">Untuk Anda</h2><RingkasanPribadi :d="br.data.pribadi" /></template>
       </template>
     </SliderStatistik>
 

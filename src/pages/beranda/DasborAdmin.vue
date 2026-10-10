@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.10 | Fase 8 – Perbaikan: statistik beranda bergeser per kelompok | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.11 | Fase 8 – Perbaikan: Untuk Anda tetap di atas, di luar slider | 10/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import {
@@ -11,6 +11,7 @@ import { usePegawai } from '@/stores/pegawai'
 import { formatPendek } from '@/lib/tanggal'
 import Sapaan from './Sapaan.vue'
 import TombolPantauan from '@/components/TombolPantauan.vue'
+import { PhSparkle } from '@phosphor-icons/vue'
 import SliderStatistik from '@/components/SliderStatistik.vue'
 import { panelBeranda } from '@/lib/panelBeranda'
 import RingkasanPribadi from './RingkasanPribadi.vue'
@@ -29,7 +30,7 @@ import KartuSecurityBeranda from '@/components/KartuSecurityBeranda.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
-const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'layanan', 'security', 'kendali', 'pribadi'])
+const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'layanan', 'security', 'kendali'])
 const stat = useStatistik(); const br = useBeranda(); const peg = usePegawai()
 const d = computed(() => stat.data || {}); const ch = computed(() => stat.berubah)
 const menunggu = computed(() => peg.daftar.filter((p) => p.status_akun === 'menunggu'))
@@ -51,6 +52,12 @@ const AKSI = [
   <div class="space-y-5 lg:space-y-6">
     <Sapaan :keterangan="d.menunggu_verifikasi ? `Ada ${d.menunggu_verifikasi} pendaftaran pegawai yang menunggu verifikasi Anda.` : 'Tidak ada pendaftaran yang menunggu verifikasi.'" />
     <TombolPantauan />
+
+    <!-- Untuk Anda: tetap tersusun di atas (akses cepat), tidak masuk slider -->
+    <section v-if="br.data?.pribadi" class="space-y-3" aria-labelledby="judul-untuk-anda">
+      <h2 id="judul-untuk-anda" class="judul-bagian flex items-center gap-2 px-1"><PhSparkle :size="20" weight="duotone" class="text-[rgb(var(--merah))]" /> Untuk Anda</h2>
+      <RingkasanPribadi :d="br.data.pribadi" />
+    </section>
 
     <SliderStatistik :panel="PANEL" simpan="simka.beranda.admin">
       <template #presensi><StatistikPresensi /></template>
@@ -108,9 +115,6 @@ const AKSI = [
       </section>
     </div>
 
-      </template>
-      <template #pribadi>
-        <template v-if="br.data?.pribadi"><h2 class="judul-bagian">Untuk Anda</h2><RingkasanPribadi :d="br.data.pribadi" /></template>
       </template>
     </SliderStatistik>
 

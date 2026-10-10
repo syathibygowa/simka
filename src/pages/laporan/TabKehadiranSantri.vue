@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.0 | Fase 8 – Tahap 3 Laporan kehadiran santri | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.1 | Fase 8 – Perbaikan: urutan kolom NIS, Nama, JK | 10/10/2026 -->
 <script setup>
 // Laporan kehadiran santri (menu Dokumen → Kehadiran santri), absensi HISBAT.
 // Jenis: rekap ringkas, rekap matriks (F4 mendatar), laporan individu, daftar perhatian, kepatuhan pengisian (pemantau).
@@ -95,9 +95,9 @@ async function excel() {
   let judul; let kepala; let isi; let lebar
   if (jenis.value === 'matriks') {
     judul = 'REKAP MATRIKS KEHADIRAN SANTRI'
-    kepala = ['No', 'Nama', 'NIS', ...tanggal.value.map((t) => t.slice(8, 10)), 'H', 'T', 'B', 'I', 'S', 'A', 'Kehadiran']
-    isi = santri.value.map((s, i) => [i + 1, s.nama, s.nis, ...tanggal.value.map((t) => matriks.value[s.student_id]?.[t] || ''), s.hadir, s.terlambat, s.bolos, s.izin, s.sakit, s.absen, persenTeks(s.persen)])
-    lebar = [5, 28, 10, ...tanggal.value.map(() => 4), 5, 5, 5, 5, 5, 5, 11]
+    kepala = ['No', 'NIS', 'Nama', 'JK', ...tanggal.value.map((t) => t.slice(8, 10)), 'H', 'T', 'B', 'I', 'S', 'A', 'Kehadiran']
+    isi = santri.value.map((s, i) => [i + 1, s.nis, s.nama, s.jenis_kelamin || '', ...tanggal.value.map((t) => matriks.value[s.student_id]?.[t] || ''), s.hadir, s.terlambat, s.bolos, s.izin, s.sakit, s.absen, persenTeks(s.persen)])
+    lebar = [5, 10, 28, 4, ...tanggal.value.map(() => 4), 5, 5, 5, 5, 5, 5, 11]
   } else if (jenis.value === 'individu') {
     judul = 'LAPORAN KEHADIRAN SANTRI'
     kepala = ['No', 'Tanggal', 'Kegiatan', 'Sesi', 'Kelompok', 'Status', 'Keterangan']
@@ -110,9 +110,9 @@ async function excel() {
     lebar = [5, 26, 10, 30, 14, 12, 12]
   } else {
     judul = jenis.value === 'perhatian' ? `DAFTAR PERHATIAN KEHADIRAN SANTRI (DI BAWAH ${ambang.value}%)` : 'REKAP KEHADIRAN SANTRI'
-    kepala = ['No', 'Nama', 'NIS', 'Kelas', 'Kamar', 'Halaqah', 'Sesi wajib', 'Hadir', 'Terlambat', 'Bolos', 'Izin', 'Sakit', 'Absen', 'Kehadiran', 'Keterangan']
-    isi = baris.value.map((s, i) => [i + 1, s.nama, s.nis, s.kelas || '', s.kamar || '', s.halaqah || '', s.sesi, s.hadir, s.terlambat, s.bolos, s.izin, s.sakit, s.absen, persenTeks(s.persen), keteranganSantri(s)])
-    lebar = [5, 28, 10, 10, 16, 20, 9, 7, 9, 7, 6, 6, 7, 10, 34]
+    kepala = ['No', 'NIS', 'Nama', 'JK', 'Kelas', 'Kamar', 'Halaqah', 'Sesi wajib', 'Hadir', 'Terlambat', 'Bolos', 'Izin', 'Sakit', 'Absen', 'Kehadiran', 'Keterangan']
+    isi = baris.value.map((s, i) => [i + 1, s.nis, s.nama, s.jenis_kelamin || '', s.kelas || '', s.kamar || '', s.halaqah || '', s.sesi, s.hadir, s.terlambat, s.bolos, s.izin, s.sakit, s.absen, persenTeks(s.persen), keteranganSantri(s)])
+    lebar = [5, 10, 28, 4, 10, 16, 20, 9, 7, 9, 7, 6, 6, 7, 10, 34]
   }
   const ws = XLSX.utils.aoa_to_sheet([[judul], [per], [`Cakupan: ${namaCakupan.value}`], [], kepala, ...isi])
   ws['!cols'] = lebar.map((w) => ({ wch: w }))
@@ -195,8 +195,8 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
         <p v-if="!baris.length" class="kartu p-8 text-center text-teks3">{{ jenis === 'perhatian' ? `Tidak ada santri dengan kehadiran di bawah ${ambang}%.` : 'Belum ada absensi tercatat pada periode ini.' }}</p>
         <ul v-else class="space-y-2 lg:hidden">
           <li v-for="s in baris" :key="s.student_id" class="kartu p-3.5">
-            <div class="flex items-center gap-3"><span class="min-w-0 flex-1"><span class="block font-bold">{{ s.nama }}</span>
-              <span class="block truncate text-xs text-teks3">{{ s.nis }} · {{ [s.kelas, s.kamar].filter(Boolean).join(' · ') || '–' }} · {{ s.sesi }} sesi</span></span>
+            <div class="flex items-center gap-3"><span class="min-w-0 flex-1"><span class="block text-xs font-semibold tabular-nums text-teks3">{{ s.nis }}</span><span class="block font-bold">{{ s.nama }}</span>
+              <span class="block truncate text-xs text-teks3">{{ [s.jenis_kelamin, s.kelas, s.kamar].filter(Boolean).join(' · ') || '–' }} · {{ s.sesi }} sesi</span></span>
               <span :class="['text-xl font-extrabold tabular-nums', (s.persen ?? 100) < ambang ? 'text-[rgb(var(--merah))]' : '']">{{ persenTeks(s.persen) }}</span></div>
             <div class="mt-2 h-2 overflow-hidden rounded-full bg-permukaan2"><div class="h-full rounded-full bg-[#1E7D4F]" :style="{ width: (s.persen || 0) + '%' }" /></div>
             <div class="mt-2 flex flex-wrap gap-1">
@@ -205,11 +205,11 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
         </ul>
         <div v-if="baris.length" class="kartu hidden overflow-x-auto lg:block">
           <table class="w-full text-sm">
-            <thead><tr class="border-b border-garis text-left [&>th]:p-2.5"><th>Nama</th><th>Kelas</th><th>Kamar</th><th class="text-right">Sesi</th><th class="text-right">Hadir</th><th class="text-right">Terlambat</th>
+            <thead><tr class="border-b border-garis text-left [&>th]:p-2.5"><th>NIS</th><th>Nama</th><th>JK</th><th>Kelas</th><th>Kamar</th><th class="text-right">Sesi</th><th class="text-right">Hadir</th><th class="text-right">Terlambat</th>
               <th class="text-right">Bolos</th><th class="text-right">Izin</th><th class="text-right">Sakit</th><th class="text-right">Absen</th><th class="text-right">Kehadiran</th><th v-if="kegiatan === 'pokok'">Per kegiatan</th></tr></thead>
             <tbody>
               <tr v-for="s in baris" :key="s.student_id" class="border-b border-garis last:border-0 [&>td]:p-2.5">
-                <td><span class="block font-semibold">{{ s.nama }}</span><span class="block text-xs text-teks3">NIS {{ s.nis }}</span></td>
+                <td class="tabular-nums">{{ s.nis }}</td><td class="font-semibold">{{ s.nama }}</td><td>{{ s.jenis_kelamin || '–' }}</td>
                 <td class="text-xs">{{ s.kelas || '–' }}</td><td class="text-xs">{{ s.kamar || '–' }}</td>
                 <td class="text-right tabular-nums">{{ s.sesi }}</td><td class="text-right tabular-nums">{{ s.hadir }}</td><td class="text-right tabular-nums">{{ s.terlambat }}</td>
                 <td class="text-right tabular-nums">{{ s.bolos }}</td><td class="text-right tabular-nums">{{ s.izin }}</td><td class="text-right tabular-nums">{{ s.sakit }}</td><td class="text-right tabular-nums">{{ s.absen }}</td>
@@ -226,10 +226,10 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
       <template v-else-if="jenis === 'matriks'">
         <div class="kartu overflow-x-auto">
           <table class="matriks text-xs">
-            <thead><tr><th class="lekat">Nama</th><th v-for="t in tanggal" :key="t" class="tgl"><span class="block font-bold">{{ t.slice(8, 10) }}</span><span class="block font-normal text-teks3">{{ hariSingkat(t) }}</span></th><th>Persen</th></tr></thead>
+            <thead><tr><th class="nis">NIS</th><th class="lekat">Nama</th><th v-for="t in tanggal" :key="t" class="tgl"><span class="block font-bold">{{ t.slice(8, 10) }}</span><span class="block font-normal text-teks3">{{ hariSingkat(t) }}</span></th><th>Persen</th></tr></thead>
             <tbody>
               <tr v-for="s in santri" :key="s.student_id">
-                <td class="lekat font-semibold">{{ s.nama }}</td>
+                <td class="nis tabular-nums text-teks3">{{ s.nis }}</td><td class="lekat font-semibold">{{ s.nama }}</td>
                 <td v-for="t in tanggal" :key="t" class="tgl"><span v-if="matriks[s.student_id]?.[t]" :class="['sel', 'w-' + STATUS_SANTRI[matriks[s.student_id][t]].w]">{{ matriks[s.student_id][t] }}</span></td>
                 <td class="text-right font-bold tabular-nums">{{ persenTeks(s.persen) }}</td>
               </tr>
@@ -242,8 +242,8 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
       <!-- Individu -->
       <template v-else-if="jenis === 'individu' && individu">
         <section class="kartu p-4">
-          <p class="text-lg font-bold">{{ individu.nama }}</p>
-          <p class="text-sm text-teks2">NIS {{ individu.nis }} · {{ [individu.kelas, individu.kamar, individu.halaqah].filter(Boolean).join(' · ') }}</p>
+          <p class="text-sm font-semibold tabular-nums text-teks3">{{ individu.nis }}</p><p class="text-lg font-bold">{{ individu.nama }}</p>
+          <p class="text-sm text-teks2">{{ individu.jenis_kelamin === 'P' ? 'Perempuan' : 'Laki-laki' }} · {{ [individu.kelas, individu.kamar, individu.halaqah].filter(Boolean).join(' · ') }}</p>
           <div class="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-7">
             <div class="rounded-xl bg-permukaan2 p-2 text-center"><p class="text-xl font-extrabold tabular-nums">{{ persenTeks(individu.persen) }}</p><p class="text-xs text-teks3">Kehadiran</p></div>
             <div v-for="(m, k) in { H: 'hadir', T: 'terlambat', B: 'bolos', I: 'izin', S: 'sakit', A: 'absen' }" :key="k" :class="['rounded-xl p-2 text-center', 'w-' + STATUS_SANTRI[k].w]" style="background: color-mix(in srgb, var(--c) 10%, transparent)">
@@ -292,11 +292,11 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
       <template v-if="jenis === 'ringkas' || jenis === 'perhatian'">
         <p v-if="jenis === 'perhatian'" style="margin-bottom: 6pt">Santri dengan persentase kehadiran di bawah {{ ambang }}%, diurutkan dari yang terendah.</p>
         <table class="tabel kecil rapat">
-          <colgroup><col style="width:4%"><col style="width:18%"><col style="width:8%"><col style="width:7%"><col style="width:5%"><col style="width:5%"><col style="width:6%"><col style="width:5%"><col style="width:4%"><col style="width:5%"><col style="width:5%"><col style="width:7%"><col style="width:21%"></colgroup>
-          <thead><tr><th>No.</th><th>Nama</th><th>NIS</th><th>Kelas</th><th>Sesi wajib</th><th>Hadir</th><th>Terlambat</th><th>Bolos</th><th>Izin</th><th>Sakit</th><th>Absen</th><th>Kehadiran</th><th>Keterangan</th></tr></thead>
+          <colgroup><col style="width:4%"><col style="width:8%"><col style="width:17%"><col style="width:4%"><col style="width:6%"><col style="width:5%"><col style="width:5%"><col style="width:6%"><col style="width:5%"><col style="width:4%"><col style="width:5%"><col style="width:5%"><col style="width:7%"><col style="width:19%"></colgroup>
+          <thead><tr><th>No.</th><th>NIS</th><th>Nama</th><th>JK</th><th>Kelas</th><th>Sesi wajib</th><th>Hadir</th><th>Terlambat</th><th>Bolos</th><th>Izin</th><th>Sakit</th><th>Absen</th><th>Kehadiran</th><th>Keterangan</th></tr></thead>
           <tbody>
             <tr v-for="(s, i) in baris" :key="s.student_id">
-              <td class="tengah">{{ i + 1 }}</td><td>{{ s.nama }}</td><td class="tengah">{{ s.nis }}</td><td class="tengah">{{ s.kelas || '–' }}</td>
+              <td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ s.nis }}</td><td>{{ s.nama }}</td><td class="tengah">{{ s.jenis_kelamin || '–' }}</td><td class="tengah">{{ s.kelas || '–' }}</td>
               <td class="tengah">{{ s.sesi }}</td><td class="tengah">{{ s.hadir }}</td><td class="tengah">{{ s.terlambat }}</td><td class="tengah">{{ s.bolos }}</td>
               <td class="tengah">{{ s.izin }}</td><td class="tengah">{{ s.sakit }}</td><td class="tengah">{{ s.absen }}</td><td class="tengah">{{ persenTeks(s.persen) }}</td><td>{{ keteranganSantri(s) }}</td>
             </tr>
@@ -306,10 +306,10 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
       </template>
       <template v-else-if="jenis === 'matriks'">
         <table class="tabel kecil matriks-cetak">
-          <thead><tr><th style="width:4%">No.</th><th style="width:16%">Nama</th><th v-for="t in tanggal" :key="t">{{ t.slice(8, 10) }}</th><th>H</th><th>T</th><th>B</th><th>I</th><th>S</th><th>A</th><th style="width:5%">%</th></tr></thead>
+          <thead><tr><th style="width:3%">No.</th><th style="width:6%">NIS</th><th style="width:14%">Nama</th><th style="width:2.5%">JK</th><th v-for="t in tanggal" :key="t">{{ t.slice(8, 10) }}</th><th>H</th><th>T</th><th>B</th><th>I</th><th>S</th><th>A</th><th style="width:5%">%</th></tr></thead>
           <tbody>
             <tr v-for="(s, i) in santri" :key="s.student_id">
-              <td class="tengah">{{ i + 1 }}</td><td>{{ s.nama }}</td>
+              <td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ s.nis }}</td><td>{{ s.nama }}</td><td class="tengah">{{ s.jenis_kelamin || '' }}</td>
               <td v-for="t in tanggal" :key="t" class="tengah">{{ matriks[s.student_id]?.[t] || '' }}</td>
               <td class="tengah">{{ s.hadir }}</td><td class="tengah">{{ s.terlambat }}</td><td class="tengah">{{ s.bolos }}</td><td class="tengah">{{ s.izin }}</td><td class="tengah">{{ s.sakit }}</td><td class="tengah">{{ s.absen }}</td>
               <td class="tengah">{{ persenTeks(s.persen) }}</td>
@@ -321,8 +321,9 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
       <template v-else-if="jenis === 'individu' && individu">
         <table class="data" style="margin-bottom: 8pt">
           <tbody>
-            <tr><td style="width: 40mm">Nama</td><td style="width: 4mm">:</td><td>{{ individu.nama }}</td></tr>
-            <tr><td>NIS</td><td>:</td><td>{{ individu.nis }}</td></tr>
+            <tr><td style="width: 40mm">NIS</td><td style="width: 4mm">:</td><td>{{ individu.nis }}</td></tr>
+            <tr><td>Nama</td><td>:</td><td>{{ individu.nama }}</td></tr>
+            <tr><td>Jenis kelamin</td><td>:</td><td>{{ individu.jenis_kelamin === 'P' ? 'Perempuan' : individu.jenis_kelamin === 'L' ? 'Laki-laki' : '–' }}</td></tr>
             <tr><td>Kelas / kamar</td><td>:</td><td>{{ individu.kelas || '–' }} / {{ individu.kamar || '–' }}</td></tr>
             <tr><td>Halaqah</td><td>:</td><td>{{ individu.halaqah || '–' }}</td></tr>
           </tbody>
@@ -362,6 +363,7 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
 .matriks { border-collapse: separate; border-spacing: 0; }
 .matriks th, .matriks td { padding: 6px 4px; border-bottom: 1px solid rgb(var(--garis)); white-space: nowrap; }
 .matriks th.tgl, .matriks td.tgl { min-width: 2.1rem; text-align: center; }
+.matriks .nis { padding-left: 12px; text-align: left; }
 .matriks .lekat { position: sticky; left: 0; z-index: 1; min-width: 11rem; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; padding-left: 12px; background: rgb(var(--permukaan)); text-align: left; }
 .matriks .sel { display: inline-grid; place-items: center; min-width: 1.6rem; height: 1.6rem; border-radius: 6px; font-weight: 800; color: var(--c);
   background: color-mix(in srgb, var(--c) 14%, transparent); }

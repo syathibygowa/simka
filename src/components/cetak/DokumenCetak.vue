@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/DokumenCetak.vue | v1.2 | Fase 1 – Perbaikan | 03/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/DokumenCetak.vue | v1.3 | Fase 8 – Perbaikan: kop mendatar proporsional | 10/10/2026 -->
 <script setup>
 // Kerangka dokumen cetak F4: kop surat, judul, isi (slot), tanda tangan, catatan cetak.
 // Pratinjau tampil sebagai jendela munculan (pop-up) dengan tombol Cetak dan Tutup.
@@ -47,7 +47,7 @@ const cetak = () => window.print()
       </div>
       <div :class="pratinjau && 'gulir-munculan'">
         <article :class="['dok lembar-f4', mendatar && 'mendatar']" :style="pratinjau ? { zoom: skala } : null">
-          <KopSurat :kop="kopData || lembaga.kop(kop)" :kode="kop" />
+          <KopSurat :kop="kopData || lembaga.kop(kop)" :kode="kop" :mendatar="mendatar" />
           <h1 class="judul-dok">{{ judul }}</h1>
           <p v-if="nomor" class="subjudul-dok">Nomor: {{ nomor }}</p>
           <p v-if="subjudul" class="subjudul-dok">{{ subjudul }}</p>

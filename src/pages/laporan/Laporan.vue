@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/Laporan.vue | v1.3 | Fase 8 – Tahap 3 tab Kehadiran santri; menu Dokumen | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/Laporan.vue | v1.4 | Fase 8 – Tahap 4 tab Rekap layanan | 10/10/2026 -->
 <script setup>
 // Menu Dokumen: satu menu bertab untuk semua rekap dan laporan resmi (hemat menu sidebar).
 // Tab: Presensi harian (admin/superadmin; dahulu menu Rekap Presensi), Kehadiran pegawai (semua pegawai: dirinya;
@@ -6,13 +6,14 @@
 // tangan elektronik), Kehadiran santri (pengasuh: kelompok asuhannya). Rekap bulanan/periode lama diganti tab Kehadiran pegawai. Laporan modul lain menyusul di sini.
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhSealCheck, PhCalendarCheck, PhUsersThree, PhStudent } from '@phosphor-icons/vue'
+import { PhSealCheck, PhCalendarCheck, PhUsersThree, PhStudent, PhSquaresFour } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import BilahTab from '@/components/BilahTab.vue'
 import RekapPresensi from '@/pages/rekap/RekapPresensi.vue'
 import TabKehadiranPegawai from './TabKehadiranPegawai.vue'
 import TabDokumenResmi from './TabDokumenResmi.vue'
 import TabKehadiranSantri from './TabKehadiranSantri.vue'
+import TabRekapLayanan from './TabRekapLayanan.vue'
 
 const props = defineProps({ tab: { type: String, default: '' } })
 const router = useRouter(); const sesi = useSesi()
@@ -21,6 +22,8 @@ const TAB = computed(() => [
   { k: 'pegawai', n: sesi.isAdmin || sesi.pimpinanTinggi ? 'Kehadiran pegawai' : 'Kehadiran saya', ikon: PhUsersThree, w: 'pegawai' },
   // Kehadiran santri: pemantau (admin, pimpinan, pemegang hak data santri) dan pengasuh kelompok
   ...(sesi.isAdmin || sesi.pimpinanTinggi || sesi.luas('data_santri') || sesi.kelompokSaya.length ? [{ k: 'santri', n: 'Kehadiran santri', ikon: PhStudent, w: 'santri' }] : []),
+  // Rekap layanan: Security, libur santri, pengajuan pegawai, klinik (pilihan sesuai hak)
+  { k: 'layanan', n: 'Rekap layanan', ikon: PhSquaresFour, w: 'security' },
   { k: 'dokumen', n: 'Dokumen resmi', ikon: PhSealCheck, w: 'verifikasi' },
 ])
 const ALIAS = { periode: 'pegawai' }
@@ -35,6 +38,7 @@ const aktif = computed({
     <RekapPresensi v-if="aktif === 'harian'" tab="harian" tertanam />
     <TabKehadiranPegawai v-else-if="aktif === 'pegawai'" />
     <TabKehadiranSantri v-else-if="aktif === 'santri'" />
+    <TabRekapLayanan v-else-if="aktif === 'layanan'" />
     <TabDokumenResmi v-else-if="aktif === 'dokumen'" />
   </div>
 </template>

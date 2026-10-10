@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.13 | Fase 8 – Perbaikan: statistik beranda pimpinan bergeser per kelompok | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.14 | Fase 8 – Perbaikan: Untuk Anda tetap di atas, di luar slider | 10/10/2026 -->
 <script setup>
 import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
 import KartuTahfizhBeranda from '@/components/KartuTahfizhBeranda.vue'
@@ -15,6 +15,7 @@ import { formatJam } from '@/lib/tanggal'
 import { lencanaSesi } from '@/lib/presensi'
 import Sapaan from './Sapaan.vue'
 import TombolPantauan from '@/components/TombolPantauan.vue'
+import { PhSparkle } from '@phosphor-icons/vue'
 import SliderStatistik from '@/components/SliderStatistik.vue'
 import { panelBeranda } from '@/lib/panelBeranda'
 import RingkasanPribadi from './RingkasanPribadi.vue'
@@ -23,7 +24,7 @@ import IndikatorLangsung from './IndikatorLangsung.vue'
 import { useBeranda } from '@/stores/beranda'
 import ItemNotifikasi from '@/components/ItemNotifikasi.vue'
 
-const PANEL = panelBeranda(['pimpinan', 'santri', 'tahfizh', 'layanan', 'security', 'pribadi'])
+const PANEL = panelBeranda(['pimpinan', 'santri', 'tahfizh', 'layanan', 'security'])
 const notif = useNotifikasi(); const sesi = useSesi(); const router = useRouter(); const dp = useDataPresensi(); const br = useBeranda()
 onMounted(() => dp.muatHarian())
 // Ringkasan presensi hari ini pada kartu sapaan
@@ -50,6 +51,12 @@ const menu = computed(() => menuUntuk(sesi.peran, sesi.ciriMenu).filter((m) => !
     </Sapaan>
     <TombolPantauan />
 
+    <!-- Untuk Anda: tetap tersusun di atas (akses cepat), tidak masuk slider -->
+    <section v-if="br.data?.pribadi" class="space-y-3" aria-labelledby="judul-untuk-anda">
+      <h2 id="judul-untuk-anda" class="judul-bagian flex items-center gap-2 px-1"><PhSparkle :size="20" weight="duotone" class="text-[rgb(var(--merah))]" /> Untuk Anda</h2>
+      <RingkasanPribadi :d="br.data.pribadi" />
+    </section>
+
     <SliderStatistik :panel="PANEL" simpan="simka.beranda.pimpinan">
       <template #pimpinan>
         <template v-if="br.data?.pimpinan">
@@ -62,9 +69,6 @@ const menu = computed(() => menuUntuk(sesi.peran, sesi.ciriMenu).filter((m) => !
       <template #tahfizh><KartuTahfizhBeranda v-if="sesi.kelompokSaya.some((k) => k.jenis === 'halaqah') || sesi.tingkat('tahfizh') >= 1 || sesi.tingkat('data_santri') >= 1" /></template>
       <template #layanan><KartuLayananBeranda /></template>
       <template #security><KartuSecurityBeranda /></template>
-      <template #pribadi>
-        <template v-if="br.data?.pribadi"><h2 class="judul-bagian">Untuk Anda</h2><RingkasanPribadi :d="br.data.pribadi" /></template>
-      </template>
     </SliderStatistik>
 
     <div class="grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:gap-6">

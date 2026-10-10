@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.0 | Fase 8 – Tahap 2 Laporan kehadiran pegawai | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.1 | Fase 8 – Perbaikan: urutan kolom NIY lalu Nama | 10/10/2026 -->
 <script setup>
 // Laporan kehadiran pegawai (menu Rekap → Kehadiran pegawai).
 // Jenis: rekap ringkas, rekap matriks (nama × tanggal, F4 mendatar), laporan individu, daftar perhatian.
@@ -92,10 +92,10 @@ async function excel() {
   let judul; let kepala; let isi; let lebar
   if (jenis.value === 'matriks') {
     judul = 'REKAP MATRIKS KEHADIRAN PEGAWAI'
-    kepala = ['No', 'Nama', ...tanggal.value.map((t) => t.slice(8, 10)), 'H', 'T', 'DL', 'I', 'S', 'C', 'A', 'Persentase']
-    isi = pegawai.value.map((p, i) => [i + 1, p.nama, ...tanggal.value.map((t) => STATUS_HADIR[matriks.value[p.employee_id]?.[t]]?.s || ''),
+    kepala = ['No', 'NIY', 'Nama', ...tanggal.value.map((t) => t.slice(8, 10)), 'H', 'T', 'DL', 'I', 'S', 'C', 'A', 'Persentase']
+    isi = pegawai.value.map((p, i) => [i + 1, p.niy || '', p.nama, ...tanggal.value.map((t) => STATUS_HADIR[matriks.value[p.employee_id]?.[t]]?.s || ''),
       p.hadir, p.terlambat, p.dinas_luar, p.izin, p.sakit, p.cuti, p.tanpa_keterangan, persenTeks(p.persen)])
-    lebar = [5, 30, ...tanggal.value.map(() => 4), 5, 5, 5, 5, 5, 5, 5, 11]
+    lebar = [5, 16, 30, ...tanggal.value.map(() => 4), 5, 5, 5, 5, 5, 5, 5, 11]
   } else if (jenis.value === 'individu') {
     judul = 'LAPORAN KEHADIRAN PEGAWAI'
     kepala = ['No', 'Tanggal', 'Hari', 'Sesi', 'Jadwal', 'Datang', 'Pulang', 'Titik', 'Status', 'Keterangan']
@@ -104,10 +104,10 @@ async function excel() {
     lebar = [5, 12, 9, 22, 13, 9, 9, 18, 20, 30]
   } else {
     judul = jenis.value === 'perhatian' ? `DAFTAR PERHATIAN KEHADIRAN PEGAWAI (DI BAWAH ${ambang.value}%)` : 'REKAP KEHADIRAN PEGAWAI'
-    kepala = ['No', 'Nama', 'NIY', 'Status kepegawaian', 'Bidang/unit', 'Sesi wajib', 'Hadir', 'Terlambat', 'Dinas luar', 'Izin', 'Sakit', 'Cuti', 'Tanpa keterangan', 'Cepat pulang', 'Total kehadiran', 'Persentase', 'Keterangan']
-    isi = tampilBaris.value.map((p, i) => [i + 1, p.nama, p.niy || '', statusPeg(p.status_kepegawaian), p.unit || '', p.sesi_wajib, p.hadir, p.terlambat, p.dinas_luar, p.izin, p.sakit, p.cuti,
+    kepala = ['No', 'NIY', 'Nama', 'Status kepegawaian', 'Bidang/unit', 'Sesi wajib', 'Hadir', 'Terlambat', 'Dinas luar', 'Izin', 'Sakit', 'Cuti', 'Tanpa keterangan', 'Cepat pulang', 'Total kehadiran', 'Persentase', 'Keterangan']
+    isi = tampilBaris.value.map((p, i) => [i + 1, p.niy || '', p.nama, statusPeg(p.status_kepegawaian), p.unit || '', p.sesi_wajib, p.hadir, p.terlambat, p.dinas_luar, p.izin, p.sakit, p.cuti,
       p.tanpa_keterangan, p.cepat_pulang, p.total_hadir, persenTeks(p.persen), keteranganPegawai(p)])
-    lebar = [5, 30, 14, 16, 22, 9, 7, 9, 9, 6, 6, 6, 9, 9, 10, 11, 40]
+    lebar = [5, 16, 30, 16, 22, 9, 7, 9, 9, 6, 6, 6, 9, 9, 10, 11, 40]
   }
   const ws = XLSX.utils.aoa_to_sheet([[judul], [per], [`Cakupan: ${namaCakupan.value}`], [], kepala, ...isi])
   ws['!cols'] = lebar.map((w) => ({ wch: w }))
@@ -190,7 +190,7 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
         <p v-if="!tampilBaris.length" class="kartu p-8 text-center text-teks3">{{ jenis === 'perhatian' ? `Tidak ada pegawai dengan kehadiran di bawah ${ambang}%.` : 'Tidak ada data.' }}</p>
         <ul v-else class="space-y-2 lg:hidden">
           <li v-for="p in tampilBaris" :key="p.employee_id" class="kartu p-3.5">
-            <div class="flex items-center gap-3"><span class="min-w-0 flex-1"><span class="block font-bold">{{ p.nama }}</span><span class="block truncate text-xs text-teks3">{{ p.unit || '–' }} · {{ p.sesi_wajib }} sesi wajib</span></span>
+            <div class="flex items-center gap-3"><span class="min-w-0 flex-1"><span v-if="p.niy" class="block text-xs font-semibold tabular-nums text-teks3">{{ p.niy }}</span><span class="block font-bold">{{ p.nama }}</span><span class="block truncate text-xs text-teks3">{{ p.unit || '–' }} · {{ p.sesi_wajib }} sesi wajib</span></span>
               <span :class="['text-xl font-extrabold tabular-nums', (p.persen ?? 100) < ambang ? 'text-[rgb(var(--merah))]' : '']">{{ persenTeks(p.persen) }}</span></div>
             <div class="mt-2 h-2 overflow-hidden rounded-full bg-permukaan2"><div class="h-full rounded-full bg-[#1E7D4F]" :style="{ width: (p.persen || 0) + '%' }" /></div>
             <div class="mt-2 flex flex-wrap gap-1">
@@ -200,11 +200,11 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
         </ul>
         <div v-if="tampilBaris.length" class="kartu hidden overflow-x-auto lg:block">
           <table class="w-full text-sm">
-            <thead><tr class="border-b border-garis text-left [&>th]:p-2.5"><th>Nama</th><th>Status</th><th class="text-right">Wajib</th><th class="text-right">Hadir</th><th class="text-right">Terlambat</th><th class="text-right">Dinas luar</th>
+            <thead><tr class="border-b border-garis text-left [&>th]:p-2.5"><th>NIY</th><th>Nama</th><th>Status</th><th class="text-right">Wajib</th><th class="text-right">Hadir</th><th class="text-right">Terlambat</th><th class="text-right">Dinas luar</th>
               <th class="text-right">Izin</th><th class="text-right">Sakit</th><th class="text-right">Cuti</th><th class="text-right">Tanpa ket.</th><th class="text-right">Cepat pulang</th><th class="text-right">Persentase</th><th>Keterangan</th></tr></thead>
             <tbody>
               <tr v-for="p in tampilBaris" :key="p.employee_id" class="border-b border-garis last:border-0 [&>td]:p-2.5">
-                <td><span class="block font-semibold">{{ p.nama }}</span><span class="block text-xs text-teks3">{{ p.unit || '–' }}</span></td>
+                <td class="whitespace-nowrap text-xs tabular-nums">{{ p.niy || '–' }}</td><td><span class="block font-semibold">{{ p.nama }}</span><span class="block text-xs text-teks3">{{ p.unit || '–' }}</span></td>
                 <td class="text-xs">{{ statusPeg(p.status_kepegawaian) }}</td>
                 <td class="text-right tabular-nums">{{ p.sesi_wajib }}</td><td class="text-right tabular-nums">{{ p.hadir }}</td>
                 <td class="text-right tabular-nums">{{ p.terlambat }}<span v-if="p.menit_terlambat" class="block text-[11px] text-teks3">{{ p.menit_terlambat }} mnt</span></td>
@@ -222,10 +222,10 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
       <template v-else-if="jenis === 'matriks'">
         <div class="kartu overflow-x-auto">
           <table class="matriks text-xs">
-            <thead><tr><th class="lekat">Nama</th><th v-for="t in tanggal" :key="t" class="tgl"><span class="block font-bold">{{ t.slice(8, 10) }}</span><span class="block font-normal text-teks3">{{ hariSingkat(t) }}</span></th><th>Persen</th></tr></thead>
+            <thead><tr><th class="nis">NIY</th><th class="lekat">Nama</th><th v-for="t in tanggal" :key="t" class="tgl"><span class="block font-bold">{{ t.slice(8, 10) }}</span><span class="block font-normal text-teks3">{{ hariSingkat(t) }}</span></th><th>Persen</th></tr></thead>
             <tbody>
               <tr v-for="p in pegawai" :key="p.employee_id">
-                <td class="lekat font-semibold">{{ p.nama }}</td>
+                <td class="nis tabular-nums text-teks3">{{ p.niy || '–' }}</td><td class="lekat font-semibold">{{ p.nama }}</td>
                 <td v-for="t in tanggal" :key="t" class="tgl"><span v-if="matriks[p.employee_id]?.[t]" :class="['sel', 'w-' + STATUS_HADIR[matriks[p.employee_id][t]].w]">{{ STATUS_HADIR[matriks[p.employee_id][t]].s }}</span></td>
                 <td class="text-right font-bold tabular-nums">{{ persenTeks(p.persen) }}</td>
               </tr>
@@ -276,11 +276,11 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
       <template v-if="jenis === 'ringkas' || jenis === 'perhatian'">
         <p v-if="jenis === 'perhatian'" style="margin-bottom: 6pt">Pegawai dengan persentase kehadiran di bawah {{ ambang }}%, diurutkan dari yang terendah.</p>
         <table class="tabel kecil rapat">
-          <colgroup><col style="width:4%"><col style="width:15%"><col style="width:10%"><col style="width:5%"><col style="width:7%"><col style="width:5%"><col style="width:4%"><col style="width:5%"><col style="width:4%"><col style="width:5%"><col style="width:6%"><col style="width:7%"><col style="width:8%"><col style="width:16%"></colgroup>
-          <thead><tr><th>No.</th><th>Nama</th><th>Status kepegawaian</th><th>Hadir</th><th>Terlambat</th><th>Dinas luar</th><th>Izin</th><th>Sakit</th><th>Cuti</th><th>Absen</th><th>Cepat pulang</th><th>Total kehadiran</th><th>Persentase</th><th>Keterangan</th></tr></thead>
+          <colgroup><col style="width:4%"><col style="width:10%"><col style="width:14%"><col style="width:8%"><col style="width:5%"><col style="width:7%"><col style="width:5%"><col style="width:4%"><col style="width:5%"><col style="width:4%"><col style="width:5%"><col style="width:6%"><col style="width:6%"><col style="width:7%"><col style="width:10%"></colgroup>
+          <thead><tr><th>No.</th><th>NIY</th><th>Nama</th><th>Status kepegawaian</th><th>Hadir</th><th>Terlambat</th><th>Dinas luar</th><th>Izin</th><th>Sakit</th><th>Cuti</th><th>Absen</th><th>Cepat pulang</th><th>Total kehadiran</th><th>Persentase</th><th>Keterangan</th></tr></thead>
           <tbody>
             <tr v-for="(p, i) in tampilBaris" :key="p.employee_id">
-              <td class="tengah">{{ i + 1 }}</td><td>{{ p.nama }}</td><td>{{ statusPeg(p.status_kepegawaian) }}</td>
+              <td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ p.niy || '–' }}</td><td>{{ p.nama }}</td><td>{{ statusPeg(p.status_kepegawaian) }}</td>
               <td class="tengah">{{ p.hadir }}</td><td class="tengah">{{ p.terlambat }}</td><td class="tengah">{{ p.dinas_luar }}</td><td class="tengah">{{ p.izin }}</td><td class="tengah">{{ p.sakit }}</td>
               <td class="tengah">{{ p.cuti }}</td><td class="tengah">{{ p.tanpa_keterangan }}</td><td class="tengah">{{ p.cepat_pulang }}</td><td class="tengah">{{ p.total_hadir }}</td>
               <td class="tengah">{{ persenTeks(p.persen) }}</td><td>{{ keteranganPegawai(p) }}</td>
@@ -291,10 +291,10 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
       </template>
       <template v-else-if="jenis === 'matriks'">
         <table class="tabel kecil matriks-cetak">
-          <thead><tr><th style="width:4%">No.</th><th style="width:16%">Nama</th><th v-for="t in tanggal" :key="t">{{ t.slice(8, 10) }}</th><th>H</th><th>T</th><th>I</th><th>S</th><th>A</th><th style="width:5%">%</th></tr></thead>
+          <thead><tr><th style="width:3%">No.</th><th style="width:8%">NIY</th><th style="width:14%">Nama</th><th v-for="t in tanggal" :key="t">{{ t.slice(8, 10) }}</th><th>H</th><th>T</th><th>I</th><th>S</th><th>A</th><th style="width:5%">%</th></tr></thead>
           <tbody>
             <tr v-for="(p, i) in pegawai" :key="p.employee_id">
-              <td class="tengah">{{ i + 1 }}</td><td>{{ p.nama }}</td>
+              <td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ p.niy || '' }}</td><td>{{ p.nama }}</td>
               <td v-for="t in tanggal" :key="t" class="tengah">{{ STATUS_HADIR[matriks[p.employee_id]?.[t]]?.s || '' }}</td>
               <td class="tengah">{{ p.hadir }}</td><td class="tengah">{{ p.terlambat }}</td><td class="tengah">{{ p.izin }}</td><td class="tengah">{{ p.sakit }}</td><td class="tengah">{{ p.tanpa_keterangan }}</td>
               <td class="tengah">{{ persenTeks(p.persen) }}</td>
@@ -306,8 +306,8 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
       <template v-else-if="jenis === 'individu' && individu">
         <table class="data" style="margin-bottom: 8pt">
           <tbody>
-            <tr><td style="width: 40mm">Nama</td><td style="width: 4mm">:</td><td>{{ individu.nama }}</td></tr>
-            <tr><td>NIY</td><td>:</td><td>{{ individu.niy || '–' }}</td></tr>
+            <tr><td style="width: 40mm">NIY</td><td style="width: 4mm">:</td><td>{{ individu.niy || '–' }}</td></tr>
+            <tr><td>Nama</td><td>:</td><td>{{ individu.nama }}</td></tr>
             <tr><td>Jabatan</td><td>:</td><td>{{ individu.jabatan || '–' }}</td></tr>
             <tr><td>Bidang/unit</td><td>:</td><td>{{ individu.unit || '–' }}</td></tr>
             <tr><td>Status kepegawaian</td><td>:</td><td>{{ statusPeg(individu.status_kepegawaian) }}</td></tr>
@@ -337,6 +337,7 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
 .matriks { border-collapse: separate; border-spacing: 0; }
 .matriks th, .matriks td { padding: 6px 4px; border-bottom: 1px solid rgb(var(--garis)); white-space: nowrap; }
 .matriks th.tgl, .matriks td.tgl { min-width: 2.1rem; text-align: center; }
+.matriks .nis { padding-left: 12px; text-align: left; }
 .matriks .lekat { position: sticky; left: 0; z-index: 1; min-width: 11rem; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; padding-left: 12px; background: rgb(var(--permukaan)); text-align: left; }
 .matriks .sel { display: inline-grid; place-items: center; min-width: 1.6rem; height: 1.6rem; border-radius: 6px; font-weight: 800; color: var(--c);
   background: color-mix(in srgb, var(--c) 14%, transparent); }
