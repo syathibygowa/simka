@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/klinik/CetakSuratSakit.vue | v1.0 | Fase 6 – Tahap 3 Jurnal musyrif dan klinik lanjutan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/klinik/CetakSuratSakit.vue | v1.1 | Fase 8 – Tahap 1 QR dan Cek Keabsahan | 10/10/2026 -->
 <script setup>
 // Surat Keterangan Sakit santri (F4, Kop Pondok). Nomor SKS otomatis; tanda tangan elektronik petugas klinik
 // (kanan) dengan kode validasi; kolom "Mengetahui" Kepala Bidang Kesantrian (kiri). Diagnosis hanya tercantum
@@ -9,6 +9,7 @@ import { formatPanjang, formatPendek, formatJam } from '@/lib/tanggal'
 import { useSesi } from '@/stores/sesi'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
+import CatatanValidasi from '@/components/cetak/CatatanValidasi.vue'
 
 const pratinjau = defineModel('pratinjau', { type: Boolean, default: false })
 const props = defineProps({ surat: { type: Object, default: null } })
@@ -39,8 +40,8 @@ const kelas = computed(() => (props.surat?.kelas ? `Kelas ${props.surat.kelas.re
       <TandaTangan :tanggal="surat.tanggal"
         :kiri="{ pengantar: 'Mengetahui,', jabatan: penanda.jabatan || 'Kepala Bidang Kesantrian', nama: penanda.nama, niy: penanda.niy }"
         :kanan="{ jabatan: 'Petugas Klinik', nama: surat.petugas || '', niy: surat.petugas_niy,
-                  elektronik: `Ditandatangani secara elektronik · ${formatPendek(surat.created_at || surat.tanggal)} · Kode ${surat.kode_validasi}` }" />
-      <p style="margin-top: 6pt; font-size: 8.5pt">Kode validasi {{ surat.kode_validasi }} tercatat di SIMKA PRO dan dapat ditanyakan ke Klinik Pondok.</p>
+                  kode: surat.kode_validasi, waktu: surat.created_at || surat.tanggal }" />
+      <CatatanValidasi :kode="surat.kode_validasi" />
     </template>
   </DokumenCetak>
 </template>

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/sesi.js | v1.21 | Fase 8 – Tahap 0 Profil tugas (beranda fungsional, cakupan luas) | 10/10/2026
+// SIMKA PRO | src/stores/sesi.js | v1.22 | Fase 8 – Tahap 0b Pimpinan = Kepala Bidang ke atas | 10/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
 import { muatTemplatWA } from '@/lib/wa'
 import { defineStore } from 'pinia'
@@ -21,7 +21,7 @@ export const useSesi = defineStore('sesi', {
     isAdmin: (s) => ['admin', 'superadmin'].includes(s.pengguna?.peran),
     /** Ciri pengguna untuk menyaring menu (lib/menu.js). */
     ciriMenu: (s) => ({ struktural: !!s.pengguna?.jabatan_struktural, shift: s.punyaShift, izin: s.izinAdmin, fitur: s.fitur, kelompok: s.kelompokSaya.length > 0, jenisKelompok: [...new Set(s.kelompokSaya.map((k) => k.jenis))] }),
-    /** Pimpinan tinggi (Direktur, Wadir, Yayasan, Kepala Bidang/Unit, termasuk Plt): beranda berstatistik. */
+    /** Pimpinan (Kepala Bidang, Direktur, Wadir, Yayasan, termasuk Plt): beranda berstatistik dan fungsi kontrol. */
     pimpinanTinggi: (s) => !!s.tugas?.pimpinan,
     namaPendek: (s) => (s.pengguna?.nama_lengkap ?? '').replace(/^(Ust\.|Ustzh\.)\s*/, '').split(',')[0],
     inisial: (s) => (s.pengguna?.nama_lengkap ?? '?').replace(/^(Ust\.|Ustzh\.)\s*/, '').split(/\s+/).slice(0, 2).map((k) => k[0]).join('').toUpperCase(),

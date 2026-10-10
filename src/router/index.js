@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.12 | Fase 7 – Perbaikan uji coba: Pantauan layar presentasi, kartu dari Profil | 06/10/2026
+// SIMKA PRO | src/router/index.js | v3.13 | Fase 8 – Tahap 1 Cek Keabsahan dan menu Laporan | 10/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -12,6 +12,7 @@ const routes = [
   { path: '/lupa-sandi', component: () => import('@/pages/auth/LupaSandi.vue'), meta: { publik: true, judul: 'Lupa kata sandi' } },
   { path: '/cek-kartu/:kode?', component: () => import('@/pages/kartu/VerifikasiKartu.vue'), props: true, meta: { publik: true, bebas: true, judul: 'Verifikasi kartu pegawai' } },
   { path: '/atur-sandi', component: () => import('@/pages/auth/AturSandi.vue'), meta: { publik: true, bebas: true, judul: 'Atur kata sandi' } },
+  { path: '/cek/:kode?', component: () => import('@/pages/cek/CekDokumen.vue'), props: true, meta: { publik: true, bebas: true, judul: 'Cek Keabsahan Dokumen' } },
   { path: '/pantauan', component: () => import('@/pages/pantauan/Pantauan.vue'), meta: { judul: 'Layar Pantauan' } },
   { path: '/ganti-sandi', component: () => import('@/pages/auth/GantiSandi.vue'), meta: { judul: 'Ganti kata sandi' } },
   {
@@ -68,6 +69,7 @@ const routes = [
       { path: 'kelompok-pegawai', component: () => import('@/pages/kelompok/KelompokPegawai.vue'), meta: { judul: 'Kelompok Pegawai', peran: ADMIN, kembali: '/tugas' } },
       { path: 'beban-kerja/:tab?', component: () => import('@/pages/beban/BebanKerja.vue'), props: true, meta: { judul: 'Ekuivalensi Jam Beban Kerja', kembali: '/tugas' } },
       { path: 'audit-log', component: () => import('@/pages/audit/AuditLog.vue'), meta: { judul: 'Audit Log', kembali: '/tugas' } },
+      { path: 'laporan/:tab?', component: () => import('@/pages/laporan/Laporan.vue'), props: true, meta: { judul: 'Laporan', cetak: true, kembali: '/tugas' } },
       { path: 'segera/:kode', component: () => import('@/pages/umum/Segera.vue'), props: true, meta: { judul: 'Segera hadir', kembali: '/tugas' } },
       { path: ':salah(.*)*', component: () => import('@/pages/umum/TidakDitemukan.vue'), meta: { judul: 'Halaman tidak ditemukan', kembali: '/' } },
     ],

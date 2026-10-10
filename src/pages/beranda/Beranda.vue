@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/Beranda.vue | v1.2 | Fase 8 – Tahap 0 Beranda pegawai fungsional tanpa statistik | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/Beranda.vue | v1.3 | Fase 8 – Tahap 0b Kepala Unit sebagai pegawai biasa | 10/10/2026 -->
 <script setup>
 import { onMounted, onBeforeUnmount } from 'vue'
 import { useSesi } from '@/stores/sesi'
@@ -15,7 +15,7 @@ onBeforeUnmount(() => { stat.berhenti(); br.berhenti() })
 <template>
   <DasborSuperadmin v-if="sesi.isSuperadmin" />
   <DasborAdmin v-else-if="sesi.isAdmin" />
-  <!-- Pimpinan tinggi (Direktur, Wadir, Yayasan, Kepala Bidang/Unit, Plt): beranda berstatistik; pegawai lain: beranda ringkas -->
+  <!-- Pimpinan (Kepala Bidang, Direktur, Wadir, Yayasan, termasuk Plt): beranda berstatistik; pegawai lain: beranda ringkas -->
   <DasborPegawai v-else-if="sesi.pimpinanTinggi" />
   <DasborFungsional v-else />
 </template>

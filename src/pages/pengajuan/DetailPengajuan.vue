@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengajuan/DetailPengajuan.vue | v1.1 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengajuan/DetailPengajuan.vue | v1.2 | Fase 8 – Tahap 1 QR dan Cek Keabsahan | 10/10/2026 -->
 <script setup>
 // Rincian satu pengajuan: data pemohon, alur persetujuan (tanda setiap jenjang), lampiran, keputusan
 // (setujui/tolak, superadmin dapat memutus atas nama), pembatalan, dan surat F4 berkop untuk diunduh/dicetak.
@@ -13,6 +13,7 @@ import { formatPanjang, formatPendek, formatWaktu, uraiPendek } from '@/lib/tang
 import { STATUS_PENGAJUAN, STATUS_JENJANG, KELOMPOK, rentangTanggal } from '@/lib/pengajuan'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
+import CatatanValidasi from '@/components/cetak/CatatanValidasi.vue'
 import TombolWA from '@/components/TombolWA.vue'
 import { pesanWA, halamanAplikasi } from '@/lib/wa'
 
@@ -167,9 +168,9 @@ async function lihatLampiran() {
         <template #ttd>
           <TandaTangan :tanggal="uraiPendek(formatPendek(d.diputus_pada))"
             :kiri="{ pengantar: 'Menyetujui,', jabatan: terakhir?.jabatan_tertulis || '', nama: terakhir?.nama || '', niy: terakhir?.niy,
-                     elektronik: `Ditandatangani secara elektronik · ${formatPendek(terakhir?.waktu)} · Kode ${d.kode_validasi}` }"
+                     kode: d.kode_validasi, waktu: terakhir?.waktu }"
             :kanan="{ jabatan: 'Pemohon', nama: d.pemohon.nama, niy: d.pemohon.niy }" />
-          <p style="margin-top: 6pt; font-size: 8.5pt">Kode validasi {{ d.kode_validasi }} dapat diperiksa keabsahannya pada menu Cek Keabsahan Dokumen SIMKA PRO.</p>
+          <CatatanValidasi :kode="d.kode_validasi" :draf="!d.kode_validasi" />
         </template>
       </DokumenCetak>
     </template>

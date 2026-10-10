@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/cetak.css | v1.4 | Fase 3 – Tahap 3 Jurnal harian | 04/10/2026 */
+/* SIMKA PRO | src/styles/cetak.css | v1.5 | Fase 8 – Tahap 1 QR tanda tangan elektronik | 10/10/2026 */
 /* =====================================================================
    SIMKA PRO · Standar cetak dokumen
    Kertas F4 215 × 330 mm, margin 2 cm, garis tabel ½ pt,
@@ -86,3 +86,10 @@
 /* Fase 3: tabel isian tanpa garis (Nama : …) pada surat */
 .dok table.data { border-collapse: collapse; font-size: 11pt; }
 .dok table.data td { padding: 1pt 2pt; vertical-align: top; border: 0; font-weight: 400; }
+
+/* Fase 8: QR tanda tangan elektronik dan catatan validasi */
+.dok .ttd .ttd-qr { display: flex; align-items: center; gap: 3mm; text-align: left; }
+.dok .ttd .ttd-qr .qr { display: block; width: 19mm; height: 19mm; flex-shrink: 0; }
+.dok .ttd .ttd-qr .qr svg { width: 100%; height: 100%; display: block; }
+.dok .ttd .ttd-qr .ket { font-size: 7.5pt; line-height: 1.3; font-style: italic; color: #333; }
+.dok .catatan-validasi { margin-top: 8pt; padding-top: 4pt; border-top: 0.5pt solid #777; font-size: 8.5pt; line-height: 1.35; text-align: justify; }

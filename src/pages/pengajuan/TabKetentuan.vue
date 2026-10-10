@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengajuan/TabKetentuan.vue | v1.0 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengajuan/TabKetentuan.vue | v1.1 | Fase 8 – Tahap 0b Kepala Unit tidak lagi menyetujui pengajuan | 10/10/2026 -->
 <script setup>
 // Ketentuan pengajuan: dibaca semua pegawai; diubah admin ber-izin "atur_pengajuan" dan superadmin.
 // Berisi jenis pengajuan beserta aturannya, jenjang persetujuan menurut lama hari, dan penunjukan Plt.
@@ -118,7 +118,7 @@ async function hapusPlt(p) {
         </div>
       </div>
       <p class="mt-3 flex gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" />
-        Kepala Bidang/Unit adalah pimpinan terdekat di atas unit pemohon. Direktur dan Wakil Direktur berwenang sama; salah satunya cukup. Wakil kepala bidang menyetujui hanya bila ditunjuk sebagai Plt. Jenjang tanpa pejabat dilewati, dan bila semua kosong pengajuan naik ke jenjang lebih tinggi.</p>
+        Kepala Bidang adalah kepala bidang tempat unit pemohon bernaung (Kepala Unit tidak menyetujui pengajuan). Direktur dan Wakil Direktur berwenang sama; salah satunya cukup. Wakil kepala bidang menyetujui hanya bila ditunjuk sebagai Plt. Jenjang tanpa pejabat dilewati, dan bila semua kosong pengajuan naik ke jenjang lebih tinggi.</p>
     </section>
 
     <section class="kartu w-shift p-5">
@@ -181,7 +181,7 @@ async function hapusPlt(p) {
         <div><label class="label-isian" for="plt-jab">Sebagai Plt. jabatan</label>
           <select id="plt-jab" v-model="fp.structural_position_id" class="isian"><option value="">Pilih jabatan</option>
             <option v-for="j in org.struktural" :key="j.id" :value="j.id">{{ j.nama }}</option></select></div>
-        <div><label class="label-isian" for="plt-unit">Bidang/unit (untuk Kepala Bidang/Unit)</label>
+        <div><label class="label-isian" for="plt-unit">Bidang (untuk Kepala Bidang)</label>
           <select id="plt-unit" v-model="fp.org_unit_id" class="isian"><option value="">–</option>
             <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
         <div class="grid gap-3 sm:grid-cols-2"><InputTanggal v-model="fp.mulai" label="Mulai" /><InputTanggal v-model="fp.sampai" label="Sampai" /></div>

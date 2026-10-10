@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/pengajuan.js | v1.0 | Fase 3 – Tahap 2 Pengajuan berjenjang | 04/10/2026
+// SIMKA PRO | src/lib/pengajuan.js | v1.1 | Fase 8 – Tahap 0b Kepala Unit tidak lagi menyetujui pengajuan | 10/10/2026
 // Label, warna, dan kalimat aturan pengajuan pegawai.
 import { PhThermometer, PhHandPalm, PhBriefcase, PhUmbrella } from '@phosphor-icons/vue'
 
@@ -14,7 +14,7 @@ export const KELOMPOK = {
   sakit: { n: 'Sakit', ikon: PhThermometer, w: 'klinik' }, izin: { n: 'Izin', ikon: PhHandPalm, w: 'pengajuan' },
   dinas_luar: { n: 'Dinas luar', ikon: PhBriefcase, w: 'pegawai' }, cuti: { n: 'Cuti', ikon: PhUmbrella, w: 'santri' },
 }
-export const PERAN_JENJANG = { kepala_bidang: 'Kepala Bidang/Unit', direktur: 'Direktur/Wakil Direktur', yayasan: 'Ketua Yayasan' }
+export const PERAN_JENJANG = { kepala_bidang: 'Kepala Bidang', direktur: 'Direktur/Wakil Direktur', yayasan: 'Ketua Yayasan' }
 
 /** Kalimat aturan satu jenis pengajuan (dibaca semua pegawai di tab Ketentuan dan formulir). */
 export function kalimatAturan(j) {
