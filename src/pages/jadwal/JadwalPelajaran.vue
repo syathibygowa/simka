@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jadwal/JadwalPelajaran.vue | v1.2 | Fase 8 – Tahap 0 guru hanya melihat jadwalnya | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/jadwal/JadwalPelajaran.vue | v1.3 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
 // Jadwal pelajaran. Tab: Jadwal kelas, Jadwal guru, Penugasan mengajar, Pengaturan (mapel dan jam pelajaran),
 // Rekap mengajar. Pengatur: admin ber-izin atur_jadwal (atau hak fitur jadwal_mengajar tingkat 3).
@@ -119,7 +119,7 @@ const namaGuru = computed(() => guruList.value.find((x) => x.id === employeeId.v
       </div>
     </LembarBawah>
 
-    <DokumenCetak :kop="aktif === 'kelas' && g ? g.jenjang : 'pondok'" :judul="aktif === 'kelas' ? `Jadwal Pelajaran ${judulKelompok(g || {})}` : `Jadwal Mengajar ${namaGuru}`"
+    <DokumenCetak :kop="aktif === 'kelas' && g ? g.jenjang : 'pondok'" :judul="aktif === 'kelas' ? `Roster ${judulKelompok(g || {})}` : `Jadwal Mengajar ${namaGuru}`"
       :subjudul="`Tahun Ajaran ${kel.taSekarang?.nama || ''} · keadaan ${formatPanjang(hariIniISO())}`" mendatar v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">
         <thead><tr><th v-for="h in HARI_SEKOLAH" :key="h">{{ HARI[h] }}</th></tr></thead>

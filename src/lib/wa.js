@@ -1,6 +1,6 @@
-// SIMKA PRO | src/lib/wa.js | v1.11 | Fase 7 – Tahap 3 Libur santri | 06/10/2026
+// SIMKA PRO | src/lib/wa.js | v1.12 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026
 // Tautan WhatsApp wa.me dari WA pribadi pegawai (Bagian 25). Isi pesan diambil dari template WA yang
-// dikelola superadmin (Pengaturan → Template WA); bila belum dimuat, dipakai isi bawaan di bawah.
+// dikelola superadmin (Setelan → Template WA); bila belum dimuat, dipakai isi bawaan di bawah.
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { useLembaga } from '@/stores/lembaga'
 import { useSesi } from '@/stores/sesi'

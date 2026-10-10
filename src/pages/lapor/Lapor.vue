@@ -1,6 +1,6 @@
-<!-- SIMKA PRO | src/pages/lapor/Lapor.vue | v1.0 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/lapor/Lapor.vue | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
-// Lapor ke Bidang Terkait (Blueprint Bagian 30).
+// Laporan Terkait (Blueprint Bagian 30).
 //   Laporan saya : laporan yang saya kirim beserta statusnya
 //   Masuk        : laporan untuk unit yang saya tangani (anggota unit, pejabat di atasnya, pimpinan, pengelola)
 //   Rekap        : jumlah per kategori dan unit pada rentang; cetak F4 dan Excel
@@ -40,7 +40,7 @@ const periode = computed(() => `${formatPanjang(mulai.value)} s.d. ${formatPanja
 function ekspor() {
   const kolom = ['No.', 'Kategori', 'Bidang/unit', 'Jumlah', 'Terkirim', 'Diterima', 'Ditindaklanjuti', 'Selesai', 'Mendesak']
   const isi = rekap.value.map((r, i) => [i + 1, r.kategori, r.unit, r.jumlah, r.terkirim, r.diterima, r.ditindaklanjuti, r.selesai, r.mendesak])
-  const ws = XLSX.utils.aoa_to_sheet([[`Rekap Lapor ke Bidang – ${periode.value}`], [], kolom, ...isi])
+  const ws = XLSX.utils.aoa_to_sheet([[`Rekap Laporan – ${periode.value}`], [], kolom, ...isi])
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Rekap'); XLSX.writeFile(wb, `Rekap-Lapor-${mulai.value}-${selesai.value}.xlsx`)
 }
 
@@ -83,7 +83,7 @@ async function simpanKategori(k) {
         </table>
         <p v-if="!rekap.length" class="py-8 text-center text-sm text-teks3">Belum ada laporan pada rentang ini.</p>
       </div>
-      <DokumenCetak kop="pondok" judul="Rekap Lapor ke Bidang Terkait" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+      <DokumenCetak kop="pondok" judul="Rekap Laporan Terkait" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
         <table class="tabel">
           <thead><tr><th style="width:5%">No.</th><th style="width:22%">Kategori</th><th>Bidang/unit</th><th style="width:9%">Jumlah</th><th style="width:9%">Terkirim</th>
             <th style="width:9%">Diterima</th><th style="width:11%">Ditindaklanjuti</th><th style="width:8%">Selesai</th><th style="width:9%">Mendesak</th></tr></thead>

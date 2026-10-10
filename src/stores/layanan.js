@@ -1,5 +1,5 @@
-// SIMKA PRO | src/stores/layanan.js | v1.0 | Fase 6 – Tahap 5 Penutup fase klinik dan lapor | 06/10/2026
-// Ringkasan layanan santri (Klinik, Perizinan, Lapor ke Bidang) untuk Beranda dan profil santri terpadu.
+// SIMKA PRO | src/stores/layanan.js | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026
+// Ringkasan layanan santri (Klinik, Perizinan, Laporan) untuk Beranda dan profil santri terpadu.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { pesanGalat } from './lembaga'

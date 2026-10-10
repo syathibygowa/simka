@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/shift/JadwalShift.vue | v1.0 | Fase 2 – Tahap 5 Jadwal shift | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/shift/JadwalShift.vue | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
 // Jadwal shift pekanan (medis, security). Admin ber-izin atur_presensi menyusun jadwal
 // (manual per sel atau pembuat jadwal bergilir); petugas melihat jadwal dan mengajukan tukar shift.
@@ -258,7 +258,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
               </label>
             </li>
           </ul>
-          <p v-if="!data.pegawai.length" class="text-sm text-teks3">Belum ada pegawai yang memegang pola ini. Atur di Pengaturan Presensi → Jadwal pegawai.</p>
+          <p v-if="!data.pegawai.length" class="text-sm text-teks3">Belum ada pegawai yang memegang pola ini. Atur di Penjadwalan → Jadwal pegawai.</p>
           <button class="tombol-utama w-full" @click="terapkanSel"><PhCheck :size="20" weight="bold" /> Terapkan</button>
           <p class="text-xs text-teks3">Perubahan baru tersimpan setelah menekan "Simpan perubahan".</p>
         </div>

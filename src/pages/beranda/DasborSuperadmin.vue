@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.7 | Fase 7 – Perbaikan uji coba: tombol Layar Pantauan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.8 | Fase 8 – Perbaikan: tautan menu Rekap | 10/10/2026 -->
 <script setup>
 import { ref, computed } from 'vue'
 import {
@@ -44,7 +44,7 @@ const AKSI = [
   { label: 'Semua pengajuan', ket: 'Izin, sakit, cuti, dinas luar', ikon: PhFileText, warna: 'pengajuan', ke: '/pengajuan?tab=semua' },
   { label: 'Agenda dan pengingat', ket: 'Kalender pondok dan undangan', ikon: PhCalendarCheck, warna: 'agenda', ke: '/agenda' },
   { label: 'Kirim berkas pegawai', ket: 'Info, formulir, surat, SK', ikon: PhFolderOpen, warna: 'berkas', ke: '/berkas' },
-  { label: 'Rekap presensi', ket: 'Harian dan bulanan, cetak F4 dan Excel', ikon: PhChartBar, warna: 'rekap', ke: '/rekap-presensi' },
+  { label: 'Rekap presensi', ket: 'Harian dan bulanan, cetak F4 dan Excel', ikon: PhChartBar, warna: 'rekap', ke: '/rekap' },
   { label: 'Pengaturan presensi', ket: 'Titik GPS, pola sesi, jadwal', ikon: PhMapPinArea, warna: 'aturpresensi', ke: '/atur-presensi' },
   { label: 'Pengaturan lembaga', ket: 'Identitas, kalender, kop, penanda tangan', ikon: PhGearSix, warna: 'pengaturan', ke: '/pengaturan' },
   { label: 'Hak akses fitur', ket: 'Per jabatan, bidang, dan individu', ikon: PhKey, warna: 'hakakses', ke: '/hak-akses' },

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/organisasi/Organisasi.vue | v1.1 | Fase 1 – Perbaikan | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/organisasi/Organisasi.vue | v1.2 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
 import { computed, onMounted, ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
@@ -50,7 +50,7 @@ const induk = (u) => org.cariUnit(u.parent_id)?.nama || '–'
 
     <!-- Dokumen cetak: daftar bidang/unit dan jabatan -->
     <div v-if="org.dimuat">
-      <DokumenCetak judul="Struktur Organisasi" :subjudul="`Keadaan per ${formatPanjang(new Date())}`"  v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+      <DokumenCetak judul="Organisasi" :subjudul="`Keadaan per ${formatPanjang(new Date())}`"  v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
         <table class="tabel">
           <colgroup><col style="width:7%"><col style="width:35%"><col style="width:17%"><col style="width:11%"><col style="width:19%"><col style="width:11%"></colgroup>
           <thead><tr><th>No.</th><th>Bidang/Unit</th><th>Kode</th><th>Jenis</th><th>Induk</th><th>Pegawai</th></tr></thead>

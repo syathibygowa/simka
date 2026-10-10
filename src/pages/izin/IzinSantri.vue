@@ -1,6 +1,6 @@
-<!-- SIMKA PRO | src/pages/izin/IzinSantri.vue | v1.1 | Fase 7 – Tahap 3 Libur santri | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/IzinSantri.vue | v1.2 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
-// Perizinan Santri berjenjang (Blueprint Bagian 22, dimajukan dari Fase 7).
+// Perizinan berjenjang (Blueprint Bagian 22, dimajukan dari Fase 7).
 //   Persetujuan : izin yang menunggu keputusan saya (kepala bidang/unit, Direktur/Wadir, Plt, superadmin)
 //   Menunggu    : semua izin yang belum diputus (yang dapat saya lihat)
 //   Aktif       : disetujui atau sedang di luar pondok (terlambat kembali ditandai merah)

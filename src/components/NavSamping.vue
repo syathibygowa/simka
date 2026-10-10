@@ -1,13 +1,13 @@
-<!-- SIMKA PRO | src/components/NavSamping.vue | v1.8 | Fase 8 – Tahap 0 tanpa teks fase | 10/10/2026 -->
+<!-- SIMKA PRO | src/components/NavSamping.vue | v1.9 | Fase 8 – Perbaikan: tombol buka/tutup semua kelompok dihapus | 10/10/2026 -->
 <script setup>
 // Sidebar desktop: menu berkelompok, setiap menu dengan ikon dan warna sendiri.
 // Setiap kelompok dapat dibuka-tutup dengan mengeklik judulnya (pilihan tersimpan di perangkat); bawaan pertama kali:
-// semua tertutup kecuali Utama. Kelompok yang memuat halaman aktif selalu terbuka. Tombol "Buka semua/Tutup semua".
+// semua tertutup kecuali Utama. Kelompok yang memuat halaman aktif selalu terbuka.
 // Dapat diciutkan (hanya ikon, 76 px); saat diciutkan semua menu tampil sebagai ikon dan sidebar terbuka sementara
 // ketika kursor diarahkan ke atasnya, lalu menutup lagi tanpa menggeser isi halaman.
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { PhCaretDoubleLeft, PhCaretDoubleRight, PhCaretDown, PhArrowsInLineVertical, PhArrowsOutLineVertical } from '@phosphor-icons/vue'
+import { PhCaretDoubleLeft, PhCaretDoubleRight, PhCaretDown } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import { useNotifikasi } from '@/stores/notifikasi'
 import { useUI } from '@/stores/ui'
@@ -30,8 +30,6 @@ const kelompok = computed(() => {
 const namaGrup = computed(() => kelompok.value.map((k) => k.g))
 const tertutup = (k) => !k.adaAktif && (ui.grupTutup === null ? k.g !== 'Utama' : ui.grupTutup.includes(k.g))
 const tampilItem = (k) => !lebar.value || !tertutup(k)
-const semuaTerbuka = computed(() => kelompok.value.every((k) => !tertutup(k)))
-const alihSemua = () => ui.aturSemuaGrup(semuaTerbuka.value ? namaGrup.value : [])
 </script>
 <template>
   <aside :class="['layar-saja fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-garis bg-permukaan transition-[width,box-shadow] duration-200 lg:flex', lebar ? 'w-[272px]' : 'w-[76px]', ui.sidebarCiut && melayang && 'shadow-apung']"
@@ -45,10 +43,6 @@ const alihSemua = () => ui.aturSemuaGrup(semuaTerbuka.value ? namaGrup.value : [
           <span class="block text-xs font-medium leading-tight text-teks2">Imam Asy-Syathiby Gowa</span>
         </span>
       </router-link>
-    </div>
-    <div v-show="lebar" class="flex justify-end px-4 pb-1">
-      <button type="button" class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-teks3 hover:bg-permukaan2 hover:text-teks" @click="alihSemua">
-        <component :is="semuaTerbuka ? PhArrowsInLineVertical : PhArrowsOutLineVertical" :size="14" /> {{ semuaTerbuka ? 'Tutup semua kelompok' : 'Buka semua kelompok' }}</button>
     </div>
     <nav class="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-3" aria-label="Menu utama">
       <div v-for="k in kelompok" :key="k.g" class="mt-1.5">

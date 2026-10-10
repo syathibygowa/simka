@@ -1,6 +1,6 @@
-<!-- SIMKA PRO | src/components/LogoSimka.vue | v1.1 | Fase 1 – Perbaikan | 03/10/2026 -->
+<!-- SIMKA PRO | src/components/LogoSimka.vue | v1.2 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
-// Logo aplikasi. Memakai "Ikon SIMKA PRO" dari Pengaturan → Identitas lembaga;
+// Logo aplikasi. Memakai "Ikon SIMKA PRO" dari Setelan → Identitas lembaga;
 // bila belum diisi atau gagal dimuat, memakai tanda bawaan (bintang delapan).
 import { ref, computed, watch } from 'vue'
 import { useLembaga } from '@/stores/lembaga'

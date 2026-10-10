@@ -1,5 +1,5 @@
-// SIMKA PRO | src/lib/lapor.js | v1.0 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026
-// Label baku Lapor ke Bidang Terkait (Blueprint Bagian 30).
+// SIMKA PRO | src/lib/lapor.js | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026
+// Label baku Laporan Terkait (Blueprint Bagian 30).
 import { PhGavel, PhFirstAidKit, PhShieldCheck, PhWrench, PhBookOpenText, PhDotsThreeCircle, PhPaperPlaneTilt, PhCheck, PhArrowsClockwise, PhCheckCircle } from '@phosphor-icons/vue'
 
 export const IKON_KATEGORI = {

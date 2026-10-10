@@ -1,7 +1,7 @@
-<!-- SIMKA PRO | src/components/KartuLayananBeranda.vue | v1.0 | Fase 6 – Tahap 5 Penutup fase klinik dan lapor | 06/10/2026 -->
+<!-- SIMKA PRO | src/components/KartuLayananBeranda.vue | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
 // Kartu statistik langsung layanan santri di Beranda: Klinik (antrean, lewat batas, dirawat, kontrol), Perizinan
-// (menunggu keputusan, di luar pondok, terlambat kembali), dan Lapor ke Bidang (laporan baru, mendesak, laporan saya).
+// (menunggu keputusan, di luar pondok, terlambat kembali), dan Laporan (laporan baru, mendesak, laporan saya).
 // Kartu tampil sesuai hak; diperbarui otomatis saat ada perubahan.
 import { computed, onMounted } from 'vue'
 import { PhHourglass, PhSiren, PhBed, PhCalendarCheck, PhSealCheck, PhSignOut, PhWarningCircle, PhMegaphone, PhTray, PhPaperPlaneTilt, PhFirstAidKit } from '@phosphor-icons/vue'

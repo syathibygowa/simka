@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menuCepat.js | v1.0 | Fase 8 – Tahap 0 Beranda pegawai fungsional | 10/10/2026
+// SIMKA PRO | src/lib/menuCepat.js | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026
 // Menu cepat beranda pegawai fungsional: tombol langsung ke menu kerja sesuai tupoksi masing-masing
 // (musyrif → Musyrif, muhaffizh → Setoran Tahfizh, wali kelas → Absensi Kelas, medis → Klinik, security → Gerbang, dst.).
 // Tupoksi didahulukan, lalu dilengkapi menu umum sampai 8 tombol (2 baris × 4 kolom).
@@ -32,7 +32,7 @@ export function menuCepat(t = {}, c = {}) {
   // ---------- Menu umum setiap pegawai ----------
   const umum = [
     { kode: 'pengajuan', label: 'Pengajuan', ket: 'Izin, sakit, cuti', ikon: PhFileText, warna: 'pengajuan', ke: '/pengajuan' },
-    { kode: 'lapor', label: 'Lapor ke Bidang', ket: 'Sampaikan laporan', ikon: PhMegaphone, warna: 'laporan', ke: '/lapor' },
+    { kode: 'lapor', label: 'Laporan', ket: 'Sampaikan laporan', ikon: PhMegaphone, warna: 'laporan', ke: '/lapor' },
     { kode: 'jurnal', label: 'Jurnal Harian', ket: 'Ceklist tugas', ikon: PhNotebook, warna: 'tatausaha', ke: '/jurnal' },
     { kode: 'agenda', label: 'Agenda', ket: 'Kegiatan pondok', ikon: PhCalendarCheck, warna: 'agenda', ke: '/agenda' },
     { kode: 'berkas', label: 'Berkas Saya', ket: 'SK, formulir', ikon: PhFolderOpen, warna: 'berkas', ke: '/berkas' },

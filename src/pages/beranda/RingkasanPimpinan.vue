@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/RingkasanPimpinan.vue | v1.0 | Fase 3 – Tahap 6 Dashboard per peran | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/RingkasanPimpinan.vue | v1.1 | Fase 8 – Perbaikan: tautan menu Rekap | 10/10/2026 -->
 <script setup>
 // Kartu beranda pimpinan (P2: Kepala Bidang/Unit, Direktur/Wadir, Yayasan, termasuk Plt): antrean persetujuan,
 // kehadiran dan pengisian jurnal anggota unit hari ini, serta anggota yang sedang izin/sakit/cuti/dinas luar.
@@ -14,7 +14,7 @@ const pJurnal = computed(() => (props.d.jurnal_wajib ? Math.round((100 * props.d
   <div class="space-y-3">
     <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       <KartuStatistik judul="Menunggu persetujuan Anda" :nilai="d.persetujuan_menunggu" :ikon="PhStamp" warna="verifikasi" ke="/pengajuan?tab=persetujuan" :keterangan="d.persetujuan_menunggu ? 'Ketuk untuk memutus' : 'Tidak ada antrean'" />
-      <KartuStatistik judul="Anggota hadir hari ini" :nilai="`${d.hadir ?? 0}/${d.anggota ?? 0}`" :ikon="PhUsersThree" warna="presensi" ke="/rekap-presensi" :keterangan="`${d.terlambat ?? 0} terlambat`" />
+      <KartuStatistik judul="Anggota hadir hari ini" :nilai="`${d.hadir ?? 0}/${d.anggota ?? 0}`" :ikon="PhUsersThree" warna="presensi" ke="/rekap" :keterangan="`${d.terlambat ?? 0} terlambat`" />
       <KartuStatistik judul="Jurnal anggota hari ini" :nilai="pJurnal == null ? '–' : pJurnal + '%'" :ikon="PhNotebook" warna="tatausaha" ke="/jurnal/rekap" :keterangan="`${d.jurnal_terisi ?? 0} dari ${d.jurnal_wajib ?? 0} sudah mengisi`" />
       <KartuStatistik judul="Izin, sakit, cuti, dinas" :nilai="d.tidak_hadir?.length ?? 0" :ikon="PhUserMinus" warna="klinik" keterangan="Anggota hari ini" />
     </div>

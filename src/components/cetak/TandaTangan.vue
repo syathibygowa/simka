@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/TandaTangan.vue | v1.3 | Fase 8 – Tahap 1 QR tanda tangan elektronik | 10/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/TandaTangan.vue | v1.4 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
 // Kolom tanda tangan sejajar: kiri pimpinan/atasan, kanan pegawai terkait.
 // Kolom kanan memuat tempat dan tanggal dokumen.
@@ -12,7 +12,7 @@ const lembaga = useLembaga()
 const props = defineProps({
   kiri: { type: Object, required: true },   // { pengantar, jabatan, nama, niy, elektronik, kode, waktu }
   kanan: { type: Object, required: true },  // { jabatan, nama, niy, elektronik, kode, waktu }
-  kota: { type: String, default: '' },  // bawaan: kota surat dari Pengaturan → Identitas
+  kota: { type: String, default: '' },  // bawaan: kota surat dari Setelan → Identitas
   tanggal: String,                           // yyyy-mm-dd; bawaan hari ini
 })
 const kotaSurat = computed(() => props.kota || lembaga.identitas?.kota_surat || 'Gowa')

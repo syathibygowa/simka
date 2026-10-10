@@ -1,5 +1,5 @@
-// SIMKA PRO | src/lib/ikonPwa.js | v1.1 | Perbaikan darurat: pemasangan di HP Xiaomi/Redmi | 06/10/2026
-// Ikon TAB peramban dan ikon layar utama iOS mengikuti "Ikon SIMKA PRO" dari Pengaturan → Identitas lembaga.
+// SIMKA PRO | src/lib/ikonPwa.js | v1.2 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026
+// Ikon TAB peramban dan ikon layar utama iOS mengikuti "Ikon SIMKA PRO" dari Setelan → Identitas lembaga.
 // PERUBAHAN v1.1: manifest PWA TIDAK LAGI dibuat ulang di peramban. Manifest buatan (data URL dengan ikon berubah-ubah)
 // membuat Chrome menganggap aplikasi terpasang (WebAPK) terus berubah sehingga memicu pemasangan/pembaruan berulang,
 // yang pada peluncur Xiaomi/Redmi (MIUI/HyperOS) dapat membuat layar utama tertutup-terbuka terus.

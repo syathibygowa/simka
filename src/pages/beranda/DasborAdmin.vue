@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.8 | Fase 7 – Perbaikan uji coba: tombol Layar Pantauan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.9 | Fase 8 – Perbaikan: tautan menu Rekap | 10/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import {
@@ -38,7 +38,7 @@ const AKSI = [
   { label: 'Agenda dan pengingat', ket: 'Kalender pondok dan undangan', ikon: PhCalendarCheck, warna: 'agenda', ke: '/agenda' },
   { label: 'Kirim berkas pegawai', ket: 'Info, formulir, surat, SK', ikon: PhFolderOpen, warna: 'berkas', ke: '/berkas' },
   { label: 'Verval presensi', ket: 'Presensi luar area, izin sesi, kecurigaan', ikon: PhSealCheck, warna: 'verval', ke: '/verval-presensi' },
-  { label: 'Rekap presensi', ket: 'Harian dan bulanan, cetak F4 dan Excel', ikon: PhChartBar, warna: 'rekap', ke: '/rekap-presensi' },
+  { label: 'Rekap presensi', ket: 'Harian dan bulanan, cetak F4 dan Excel', ikon: PhChartBar, warna: 'rekap', ke: '/rekap' },
   { label: 'Verifikasi akun', ket: 'Periksa pendaftaran pegawai baru', ikon: PhUserCheck, warna: 'verifikasi', ke: '/verifikasi' },
   { label: 'Data pegawai', ket: 'Lihat, cari, dan cetak data', ikon: PhUsersThree, warna: 'pegawai', ke: '/pegawai' },
   { label: 'Cetak daftar pegawai', ket: 'Dokumen F4 dengan kop pondok', ikon: PhPrinter, warna: 'laporan', ke: '/pegawai' },

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/Musyrif.vue | v1.6 | Fase 8 – Tahap 0 musyrif hanya melihat kamar asuhannya | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/Musyrif.vue | v1.7 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
 // Menu Musyrif (kepengasuhan asrama). Musyrif/musyrifah melihat kamar asuhannya; admin, pimpinan, dan pemegang
 // hak fitur Absensi Asrama melihat semua kamar. Tab: Dasbor (statistik langsung, sesi hari ini, perlu perhatian)
@@ -7,7 +7,7 @@
 // v1.4: tab "Semua kamar" selalu tampil bagi superadmin/admin/pimpinan (juga saat belum ada kamar: tampil panduan);
 //       galat pemuatan ditampilkan di halaman dengan tombol Coba lagi (sebelumnya tertahan di "Memuat kamar…").
 // Ringkasan (v1.3): dasbor pemantauan semua kamar bagi admin/pimpinan (tampil bila dapat melihat lebih dari satu kamar).
-// Tab Jurnal dihapus (v1.5): kegiatan tercatat di Jurnal Harian (ceklist/aktivitas tambahan); laporan lewat Lapor ke Bidang.
+// Tab Jurnal dihapus (v1.5): kegiatan tercatat di Jurnal Harian (ceklist/aktivitas tambahan); laporan lewat Laporan.
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { PhGauge, PhChartBar, PhHouseLine, PhLockSimple, PhWhatsappLogo, PhUsersThree, PhSignOut, PhSquaresFour } from '@phosphor-icons/vue'

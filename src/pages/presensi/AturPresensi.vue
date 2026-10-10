@@ -1,6 +1,6 @@
-<!-- SIMKA PRO | src/pages/presensi/AturPresensi.vue | v1.0 | Fase 2 – Tahap 3 Pengaturan presensi | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/AturPresensi.vue | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
-// Pengaturan Presensi (admin dan superadmin): titik GPS, pola sesi, jadwal pegawai, dan aturan umum.
+// Penjadwalan (admin dan superadmin): titik GPS, pola sesi, jadwal pegawai, dan aturan umum.
 // Setiap tab memiliki ikon dan warna sendiri.
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'

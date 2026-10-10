@@ -1,3 +1,4 @@
+<!-- SIMKA PRO | src/components/PilihTema.vue | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
 // Pilihan tema: Terang, Gelap, Ikuti sistem (bawaan).
 import { PhSun, PhMoon, PhDesktop } from '@phosphor-icons/vue'
@@ -8,7 +9,7 @@ const sesi = useSesi()
 const PILIHAN = [
   { k: 'terang', label: 'Terang', ikon: PhSun },
   { k: 'gelap', label: 'Gelap', ikon: PhMoon },
-  { k: 'sistem', label: 'Ikuti sistem', ikon: PhDesktop },
+  { k: 'sistem', label: 'Sistem', ikon: PhDesktop },
 ]
 </script>
 <template>

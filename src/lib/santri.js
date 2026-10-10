@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/santri.js | v1.4 | Perbaikan impor: judul kolom bertanda * dikenali | 06/10/2026
+// SIMKA PRO | src/lib/santri.js | v1.5 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026
 // Label baku, pembacaan NIS pondok, normalisasi isian, dan kolom templat Excel data santri.
 import { normalJK, normalHP } from './kepegawaian'
 import { supabase, MODE_DEMO } from './supabase'
@@ -38,7 +38,7 @@ export function nisBerikutnya(awalan, daftar) {
 }
 
 /**
- * Penanda tangan kepala jenjang dari Pengaturan → Penanda tangan (jabatan tertulis memuat "Wustha" atau "SMA").
+ * Penanda tangan kepala jenjang dari Setelan → Penanda tangan (jabatan tertulis memuat "Wustha" atau "SMA").
  * Bila belum ada, nama dikosongkan agar diisi tangan (tidak memakai nama Direktur).
  */
 const KEPALA_DEMO = {

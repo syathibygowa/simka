@@ -1,8 +1,8 @@
-<!-- SIMKA PRO | src/pages/rekap/RekapPresensi.vue | v1.0 | Fase 2 – Tahap 7 Statistik, rekap, pengingat | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/rekap/RekapPresensi.vue | v1.2 | Fase 8 – Perbaikan: tab di menu Rekap | 10/10/2026 -->
 <script setup>
 // Rekap presensi pegawai (admin dan superadmin): harian (semua sesi semua pegawai) dan periode
 // (ringkasan per pegawai), saring per bidang, ekspor Excel, dan cetak F4 dengan kop + tanda tangan.
-// Laporan resmi lengkap (semua cakupan, PDF bertanda tangan elektronik, QR) di Fase 8.
+// v1.2: ditanam sebagai tab di menu Rekap (prop tertanam menyembunyikan bilah tab sendiri).
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
@@ -19,7 +19,7 @@ import InputTanggal from '@/components/InputTanggal.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
-const props = defineProps({ tab: { type: String, default: 'harian' } })
+const props = defineProps({ tab: { type: String, default: 'harian' }, tertanam: Boolean })
 const router = useRouter(); const rp = useRekapPresensi(); const org = useOrganisasi(); const lembaga = useLembaga(); const sesi = useSesi(); const ui = useUI()
 const TAB = [{ k: 'harian', n: 'Rekap harian', ikon: PhCalendarCheck, w: 'presensi' }, { k: 'periode', n: 'Rekap bulanan/periode', ikon: PhCalendarDots, w: 'laporan' }]
 const aktif = computed(() => TAB.find((t) => t.k === props.tab) || TAB[0])
@@ -99,8 +99,8 @@ const namaUnit = computed(() => unit.value ? org.cariUnit(unit.value)?.nama : 'S
 <template>
   <div class="w-rekap">
     <div class="layar-saja">
-      <nav class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" role="tablist" aria-label="Jenis rekap presensi">
-        <button v-for="t in TAB" :key="t.k" role="tab" :aria-selected="aktif.k === t.k" @click="router.replace(`/rekap-presensi/${t.k}`)"
+      <nav v-if="!tertanam" class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" role="tablist" aria-label="Jenis rekap presensi">
+        <button v-for="t in TAB" :key="t.k" role="tab" :aria-selected="aktif.k === t.k" @click="router.replace(`/rekap/${t.k}`)"
           :class="['tab flex min-h-[44px] shrink-0 items-center gap-2.5 rounded-xl border px-3 text-sm font-semibold', 'w-' + t.w, aktif.k === t.k ? 'aktif text-teks' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">
           <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="t.ikon" :size="20" weight="duotone" /></span><span class="whitespace-nowrap">{{ t.n }}</span>
         </button>
@@ -170,7 +170,7 @@ const namaUnit = computed(() => unit.value ? org.cariUnit(unit.value)?.nama : 'S
       <!-- ===== Periode ===== -->
       <template v-else>
         <p class="mb-3 flex gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" />
-          Dihitung dari sesi wajib yang tercatat. Sesi yang terlewat masuk hitungan "Tanpa keterangan" setelah penutupan otomatis diaktifkan (Pengaturan Presensi → Aturan umum).</p>
+          Dihitung dari sesi wajib yang tercatat. Sesi yang terlewat masuk hitungan "Tanpa keterangan" setelah penutupan otomatis diaktifkan (Penjadwalan → Aturan umum).</p>
         <div class="kartu hidden overflow-x-auto lg:block">
           <table class="w-full text-sm">
             <thead><tr class="border-b border-garis text-center"><th class="p-3 text-left">Nama</th><th class="p-2">Sesi</th><th class="p-2">Hadir</th><th class="p-2">Terlambat</th><th class="p-2">Dinas luar</th>

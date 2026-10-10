@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/agenda/Agenda.vue | v1.2 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/agenda/Agenda.vue | v1.3 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
 // Agenda dan kalender pondok. Semua pegawai melihat agenda yang ditujukan kepadanya beserta hari libur pondok
 // dalam kalender bulanan. Admin ber-izin kelola_agenda membuat agenda dengan sasaran dan pengingat H-n;
@@ -237,7 +237,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
             <span class="min-w-0 flex-1"><span class="block truncate font-semibold">{{ terpilih.nama_lampiran || 'Lampiran' }}</span><span class="block text-xs text-teks3">{{ membuka ? 'Mengambil berkas…' : 'Ketuk untuk membuka' }}</span></span></button>
         </div>
         <p v-if="kelola && terpilih.sumber === 'agenda'" class="mt-3 text-sm text-teks2">Sasaran: {{ terpilih.ringkasan_sasaran }}<template v-if="terpilih.penerima != null"> · {{ terpilih.penerima }} penerima</template></p>
-        <p v-if="terpilih.sumber === 'libur'" class="mt-3 text-sm text-teks3">Diatur di Pengaturan → Tahun ajaran dan kalender.</p>
+        <p v-if="terpilih.sumber === 'libur'" class="mt-3 text-sm text-teks3">Diatur di Setelan → Tahun ajaran dan kalender.</p>
         <div v-if="kelola && terpilih.sumber === 'agenda'" class="mt-4 flex flex-wrap gap-2">
           <button class="tombol-garis" @click="bukaWA(terpilih)"><PhWhatsappLogo :size="20" weight="duotone" /> Undang/ingatkan via WA</button>
           <button class="tombol-garis" @click="ubah(terpilih)"><PhPencilSimple :size="20" weight="duotone" /> {{ terpilih.ulang ? 'Ubah seri' : 'Ubah' }}</button>

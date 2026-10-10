@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/tahfizh.js | v1.3 | Fase 5 – Tahap 4 Ujian kenaikan juz dan sertifikasi | 05/10/2026
+// SIMKA PRO | src/lib/tahfizh.js | v1.4 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026
 // Konversi posisi hafalan (Juz + Halaman ↔ total halaman), rentang juz, label program, dan penanda tangan tahfizh.
 // Posisi disimpan di server sebagai TOTAL HALAMAN: 20 halaman = 1 juz (10 juz 2 halaman = 202).
 import { supabase, MODE_DEMO } from './supabase'
@@ -69,7 +69,7 @@ export function kategoriJuz(total, terdata = true) {
 /** Predikat untuk sebuah nilai menurut rentang pengaturan. */
 export const predikatDari = (nilai, rentang = []) => rentang.find((r) => Number(nilai) >= Number(r.nilai_min) && Number(nilai) <= Number(r.nilai_maks)) || null
 
-/** Penanda tangan dokumen tahfizh: Kepala Bidang Tahfizh dari Pengaturan → Penanda tangan (bila belum ada, nama dikosongkan). */
+/** Penanda tangan dokumen tahfizh: Kepala Bidang Tahfizh dari Setelan → Penanda tangan (bila belum ada, nama dikosongkan). */
 export async function penandaTahfizh() {
   if (MODE_DEMO) return { jabatan: 'Kepala Bidang Tahfizh', nama: 'Ust. Abdurrahman Saleh, Lc.', niy: '1985061201201201' }
   const { data } = await supabase.from('signatories').select('jabatan_tertulis, nama, niy').eq('aktif', true)

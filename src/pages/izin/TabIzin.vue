@@ -1,6 +1,6 @@
-<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.1 | Fase 7 – Tahap 1 Security: gerbang | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.2 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
-// Daftar izin santri. Dipakai di menu Perizinan Santri (cakupan tetap) dan menu Musyrif (disaring per kamar,
+// Daftar izin santri. Dipakai di menu Perizinan (cakupan tetap) dan menu Musyrif (disaring per kamar,
 // dengan pilihan Menunggu/Aktif/Semua). Aksi sesuai hak dari server: setujui/tolak, ubah, batalkan,
 // catat keluar/kembali (hanya petugas Security, Fase 7), WA ke wali.
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'

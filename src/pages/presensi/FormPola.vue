@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/presensi/FormPola.vue | v1.0 | Fase 2 – Tahap 3 Pengaturan presensi | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/FormPola.vue | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
 // Lembar ubah/tambah pola tugas. Pola pribadi (employee_id terisi) dipakai untuk jadwal khusus satu pegawai.
 import { ref, watch } from 'vue'
@@ -60,7 +60,7 @@ async function hapus() {
           <option :value="null">Tanpa kalender (hanya libur yang berlaku untuk semua)</option>
           <option v-for="k in lembaga.holiday_calendars" :key="k.jenis_tugas" :value="k.jenis_tugas">{{ k.nama }}</option>
         </select>
-        <p class="mt-1 text-xs text-teks3">Libur pekanan dan hari libur diatur di Pengaturan → Tahun ajaran dan kalender. Pola shift mengikuti jadwal shift.</p></div>
+        <p class="mt-1 text-xs text-teks3">Libur pekanan dan hari libur diatur di Setelan → Tahun ajaran dan kalender. Pola shift mengikuti jadwal shift.</p></div>
       <div>
         <p class="label-isian">Warna</p>
         <div class="flex flex-wrap gap-2">

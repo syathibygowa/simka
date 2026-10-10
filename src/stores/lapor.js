@@ -1,5 +1,5 @@
-// SIMKA PRO | src/stores/lapor.js | v1.0 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026
-// Lapor ke Bidang Terkait: hak, kategori, pengaturan anonim (superadmin), kirim, tindak lanjut, daftar, rekap.
+// SIMKA PRO | src/stores/lapor.js | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026
+// Laporan Terkait: hak, kategori, pengaturan anonim (superadmin), kirim, tindak lanjut, daftar, rekap.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { pesanGalat } from './lembaga'

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/AbsensiSantri.vue | v1.2 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/AbsensiSantri.vue | v1.3 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
 <script setup>
 // Absensi santri HISBAT. Tab: Sesi saya (pengasuh), Pantauan (admin/pimpinan: semua kelompok, langsung),
 // Rekap (per kelompok dan periode; Excel, cetak F4, WA ke wali).
@@ -59,7 +59,7 @@ const pilihTab = (k) => router.replace(`/absensi-santri/${k}`)
     <template v-else>
       <div class="mb-4 flex flex-wrap items-end gap-3">
         <div class="w-48"><InputTanggal v-model="tanggal" label="Tanggal" wajib /></div>
-        <p class="flex-1 pb-3 text-sm text-teks3">{{ formatHari(tanggal) }} · halaqah dan asrama mengikuti jam sesi di Pengaturan Presensi.</p>
+        <p class="flex-1 pb-3 text-sm text-teks3">{{ formatHari(tanggal) }} · halaqah dan asrama mengikuti jam sesi di Penjadwalan.</p>
       </div>
 
       <div v-if="semua" class="-mx-4 mb-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 xl:grid-cols-4">
