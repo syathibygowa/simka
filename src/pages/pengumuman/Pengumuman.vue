@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.4 | Fase 8 – Isi pengumuman dapat ditulis tebal dan miring | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.5 | Perbaikan: ceklis "Termasuk yang sudah lewat" dihapus | 12/10/2026 -->
 <script setup>
 // Pengumuman: semua pegawai membaca pengumuman yang ditujukan kepadanya (tanda dibaca/belum).
 // Admin, superadmin, dan pegawai yang diberi hak fitur "pengumuman" (tingkat 2+) dapat membuat,
@@ -30,7 +30,7 @@ import TandaTangan from '@/components/cetak/TandaTangan.vue'
 const props = defineProps({ id: String })
 const router = useRouter(); const pg = usePengumuman(); const lembaga = useLembaga(); const sesi = useSesi(); const ui = useUI()
 const kelola = computed(() => pg.bolehKelola())
-const tab = ref('saya'); const cari = ref(''); const lewat = ref(false)
+const tab = ref('saya'); const cari = ref('')
 const form = ref(null); const simpanan = ref(false); const ringkasSasaran = ref('Semua pegawai')
 const pembaca = ref(null); const saringBaca = ref('semua'); const pratinjau = ref(false)
 
@@ -45,7 +45,7 @@ const tampil = computed(() => {
   const q = cari.value.toLowerCase().trim()
   return pg.daftar
     .filter((p) => (tab.value === 'kelola' ? true : p.saya_penerima))
-    .filter((p) => lewat.value || tab.value === 'kelola' || masihBerlaku(p))
+    .filter((p) => tab.value === 'kelola' || masihBerlaku(p))
     .filter((p) => !q || [p.judul, p.isi, p.pembuat].join(' ').toLowerCase().includes(q))
     .sort((a, b) => (tab.value === 'saya' ? Number(b.penting && masihBerlaku(b)) - Number(a.penting && masihBerlaku(a)) : 0) || b.created_at.localeCompare(a.created_at))
 })
@@ -113,7 +113,6 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
       <div class="mb-3 flex flex-wrap items-center gap-2">
         <div class="relative min-w-[14rem] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" class="isian pl-10" placeholder="Cari judul atau isi" aria-label="Cari pengumuman" /></div>
-        <label v-if="tab === 'saya'" class="flex min-h-[44px] items-center gap-2 text-sm font-semibold text-teks2"><input v-model="lewat" type="checkbox" class="h-5 w-5 accent-[#A13A86]" /> Termasuk yang sudah lewat</label>
       </div>
 
       <p v-if="pg.memuat && !pg.daftar.length" class="py-10 text-center text-teks3">Memuat pengumuman…</p>

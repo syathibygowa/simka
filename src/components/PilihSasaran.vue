@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/PilihSasaran.vue | v1.2 | Fase 8 – Tahap 0 tanpa teks fase | 10/10/2026 -->
+<!-- SIMKA PRO | src/components/PilihSasaran.vue | v1.3 | Perbaikan: pilihan jenis kelamin "Semua" tidak tertandai sebelum dipilih | 12/10/2026 -->
 <script setup>
 // Pemilih sasaran bersama (pengumuman, berkas pegawai, agenda): semua pegawai, atau gabungan
 // kelompok pegawai (PH, PI, panitia, dll.), bidang/unit (beserta cabangnya), jabatan fungsional, jabatan struktural, saringan jenis kelamin,
@@ -14,6 +14,7 @@ const props = defineProps({ hitung: Function })
 const emit = defineEmits(['ringkasan'])
 const org = useOrganisasi(); const peg = usePegawai(); const kl = useKelompok()
 const cari = ref(''); const jumlah = ref(null)
+const jkSemua = ref(false)   // "Semua" baru tertandai setelah dipilih (nilai tetap kosong = tanpa saringan)
 onMounted(async () => { await Promise.all([org.muat(), kl.muat(), peg.daftar.length ? null : peg.muat()]); hitungUlang() })
 
 const s = computed(() => ({ unit: [], fungsional: [], struktural: [], pegawai: [], kelompok_pegawai: [], jk: '', ...model.value }))
@@ -89,8 +90,8 @@ watch(ringkasan, (v) => emit('ringkasan', v), { immediate: true })
       <fieldset>
         <legend class="label-isian">Jenis kelamin</legend>
         <div class="flex gap-1.5">
-          <button v-for="j in [{ k: '', n: 'Semua' }, { k: 'L', n: 'Laki-laki' }, { k: 'P', n: 'Perempuan' }]" :key="j.k" type="button" @click="atur({ jk: j.k })"
-            :class="['chip', s.jk === j.k && 'pilih']">{{ j.n }}</button>
+          <button v-for="j in [{ k: '', n: 'Semua' }, { k: 'L', n: 'Laki-laki' }, { k: 'P', n: 'Perempuan' }]" :key="j.k" type="button" @click="(jkSemua = !j.k), atur({ jk: j.k })"
+            :class="['chip', (j.k ? s.jk === j.k : jkSemua && !s.jk) && 'pilih']" :aria-pressed="j.k ? s.jk === j.k : jkSemua && !s.jk">{{ j.n }}</button>
         </div>
       </fieldset>
       <div>

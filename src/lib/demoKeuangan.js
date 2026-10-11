@@ -1,5 +1,5 @@
-// SIMKA PRO | src/lib/demoKeuangan.js | v1.1 | Fase 13 – Pelengkap: semesteran, batas berlaku, kelompok kelas/kamar/halaqah di mode demo | 11/10/2026
-// Meniru migrasi 7600–7700 agar menu Keuangan dapat dicoba tanpa Supabase. Semua nama fiktif.
+// SIMKA PRO | src/lib/demoKeuangan.js | v1.2 | Fase 13 – Demo tagihan tahun lalu, tarif putra/putri, catatan pembayaran lama, impor | 12/10/2026
+// Meniru migrasi 7600–8000 agar menu Keuangan dapat dicoba tanpa Supabase. Semua nama fiktif.
 // Hasil baca selalu salinan (seperti hasil server) agar tampilan menyegar setelah perubahan.
 import { SANTRI_DEMO } from '@/lib/demoSantri'
 import { hariIniISO } from '@/lib/tanggal'
@@ -32,7 +32,7 @@ function siapkan() {
     halaqah: s.jenis_kelamin === 'L' ? ['Halaqah Ust. Hasan', 'Halaqah Ust. Ahmad'][s.nis.charCodeAt(6) % 2] : 'Halaqah Ustzh. Nurul',
     kontak: s.kontak, wali: (() => { const k = s.kontak.filter((c) => c.no_hp).sort((a, b) => b.utama - a.utama)[0]; return k ? { nama: k.nama, hubungan: k.hubungan, no_hp: k.no_hp } : null })() }))
   const jenis = (kode, nama, siklus, nominal, extra = {}) => { const j = { id: id(), kode, nama, siklus, nominal, santri_baru: false, keterangan: null, aktif: true, urutan: D.jenis.length + 1, tarif: [], berlaku_jenjang: null, berlaku_tingkat: null, ...extra }; D.jenis.push(j); return j }
-  const spp = jenis('SPP', 'SPP', 'bulanan', 750000, { keterangan: 'Sumbangan pembinaan pendidikan, makan, dan asrama', tarif: [{ id: id(), jenjang: 'sma', tingkat: null, nominal: 850000 }] })
+  const spp = jenis('SPP', 'SPP', 'bulanan', 750000, { keterangan: 'Sumbangan pembinaan pendidikan, makan, dan asrama', tarif: [{ id: id(), jenjang: 'sma', tingkat: null, jenis_kelamin: null, nominal: 850000 }, { id: id(), jenjang: null, tingkat: null, jenis_kelamin: 'P', nominal: 800000 }] })
   const du = jenis('DAFTAR_ULANG', 'Daftar ulang', 'tahunan', 1500000, { keterangan: 'Kitab, kegiatan, dan kesehatan satu tahun' })
   const pangkal = jenis('PANGKAL', 'Uang pangkal', 'sekali', 5000000, { santri_baru: true, keterangan: 'Santri baru' })
   jenis('SERAGAM', 'Seragam', 'sekali', 650000)
@@ -62,7 +62,19 @@ function siapkan() {
 const s = (sid) => D.santri.find((x) => x.id === sid)
 const j = (fid) => D.jenis.find((x) => x.id === fid)
 const ringkas = (sid) => { const x = s(sid); return x && { id: x.id, nis: x.nis, nama: x.nama, jk: x.jk, jenjang: x.jenjang, tingkat: x.tingkat, status: x.status, kelas: x.kelas, wali: x.wali } }
-const tarif = (f, st) => (f.tarif.find((r) => r.tingkat === st.tingkat)?.nominal ?? f.tarif.find((r) => r.jenjang === st.jenjang && !r.tingkat)?.nominal ?? f.nominal)
+const nilaiTarif = (r) => (r.tingkat ? 4 : 0) + (r.jenjang ? 2 : 0) + (r.jenis_kelamin ? 1 : 0)
+/** Tarif paling khusus: kelas > jenjang > putra/putri (k = { jenjang, tingkat } pada periode tagihan). */
+const tarif = (f, st, k = st) => f.tarif.filter((r) => (!r.tingkat || r.tingkat === k.tingkat) && (!r.jenjang || r.jenjang === k.jenjang) && (!r.jenis_kelamin || r.jenis_kelamin === st.jk))
+  .sort((a, b) => nilaiTarif(b) - nilaiTarif(a))[0]?.nominal ?? f.nominal
+const TA_AKTIF = 2026
+const tahunTA = (iso) => Number(iso.slice(0, 4)) - (Number(iso.slice(5, 7)) < 7 ? 1 : 0)
+/** Kelas santri pada periode acuan (dihitung mundur); null bila belum masuk. */
+function kelasPada(st, acuan) {
+  const ta = tahunTA(acuan); const sel = Math.max(TA_AKTIF - ta, 0)
+  if (st.tahun_masuk && st.tahun_masuk > ta) return null
+  if (!sel) return { jenjang: st.jenjang, tingkat: st.tingkat }
+  const t = st.tingkat - sel; return t < 7 ? null : { jenjang: t >= 10 ? 'sma' : 'wustha', tingkat: t }
+}
 function potongan(st, f, acuan, std) {
   let p = 0; const a = []
   for (const x of D.subsidi.filter((y) => y.student_id === st.id && y.aktif && (!y.fee_type_id || y.fee_type_id === f.id) && y.mulai <= acuan && (!y.sampai || y.sampai >= acuan))) {
@@ -77,17 +89,21 @@ function periode(f, p) {
     if (!p.bulan?.length) throw new Error('Pilih paling sedikit satu bulan tagihan.')
     return p.bulan.map((b) => ({ kunci: b, label: `${f.nama} ${namaBulan(b)}`, acuan: b + '-01', tempo: (p.bulan.length === 1 && tempo) || `${b}-${String(D.pengaturan.jatuh_tempo_hari).padStart(2, '0')}` }))
   }
-  if (f.siklus === 'semesteran') { const sem = Number(p.semester) || 1
-    return [{ kunci: `2026/2027-S${sem}`, label: `${f.nama} Semester ${sem === 1 ? 'Ganjil' : 'Genap'} 2026/2027`, acuan: sem === 1 ? '2026-07-13' : '2027-01-13', tempo: tempo || tambahHari(sem === 1 ? hari : '2027-01-13', 30) }] }
-  if (f.siklus === 'tahunan') return [{ kunci: '2026/2027', label: `${f.nama} 2026/2027`, acuan: '2026-07-13', tempo: tempo || tambahHari(hari, 30) }]
+  const ta = p.tahun_ajaran || `${TA_AKTIF}/${TA_AKTIF + 1}`; const lalu = Number(ta.slice(0, 4)) < TA_AKTIF; const awal = lalu ? `${ta.slice(0, 4)}-07-01` : '2026-07-13'
+  if (f.siklus === 'semesteran') { const sem = Number(p.semester) || 1; const ac = sem === 1 ? awal : `${Number(ta.slice(0, 4)) + 1}-01-${awal.slice(8)}`
+    return [{ kunci: `${ta}-S${sem}`, label: `${f.nama} Semester ${sem === 1 ? 'Ganjil' : 'Genap'} ${ta}`, acuan: ac, tempo: tempo || tambahHari(lalu ? ac : sem === 1 ? hari : ac, 30) }] }
+  if (f.siklus === 'tahunan') return [{ kunci: ta, label: `${f.nama} ${ta}`, acuan: awal, tempo: tempo || tambahHari(lalu ? awal : hari, 30) }]
   return [{ kunci: 'sekali', label: f.nama, acuan: hari, tempo: tempo || tambahHari(hari, 30) }]
 }
 const grup = (gid, st) => { const [jn, ...n] = String(gid).split(':'); return st[jn] === n.join(':') }
-function sasaran(p) {
+/** Sasaran pada satu periode: [{ st, k: kelas saat itu }] */
+function sasaran(p, acuan = hariIniISO()) {
   const x = p.sasaran || {}; const f = j(p.fee_type_id) || {}
-  return D.santri.filter((st) => st.status === 'aktif' && (!f.berlaku_jenjang?.length || f.berlaku_jenjang.includes(st.jenjang))
-    && (!f.berlaku_tingkat?.length || f.berlaku_tingkat.map(Number).includes(st.tingkat)) && (!x.group_id || grup(x.group_id, st)) && (!x.student_ids?.length || x.student_ids.includes(st.id)) && (!x.jenjang || st.jenjang === x.jenjang)
-    && (!x.tingkat?.length || x.tingkat.map(Number).includes(st.tingkat)) && (!x.hanya_baru || st.tahun_masuk === 2026))
+  return D.santri.filter((st) => st.status === 'aktif' && (!x.group_id || grup(x.group_id, st)) && (!x.student_ids?.length || x.student_ids.includes(st.id)))
+    .map((st) => ({ st, k: kelasPada(st, acuan) })).filter(({ st, k }) => k && (!f.berlaku_jenjang?.length || f.berlaku_jenjang.includes(k.jenjang))
+      && (!f.berlaku_tingkat?.length || f.berlaku_tingkat.map(Number).includes(k.tingkat)) && (!f.berlaku_jk || st.jk === f.berlaku_jk)
+      && (!x.jenjang || k.jenjang === x.jenjang) && (!x.tingkat?.length || x.tingkat.map(Number).includes(k.tingkat)) && (!x.jk || st.jk === x.jk)
+      && (!x.hanya_baru || st.tahun_masuk === tahunTA(acuan)))
 }
 const segarkan = (b) => { b.status = b.status === 'batal' ? 'batal' : b.dibayar >= b.nominal ? 'lunas' : b.dibayar > 0 ? 'sebagian' : 'belum' }
 const barisTagihan = (b) => { const st = s(b.student_id); const f = j(b.fee_type_id)
@@ -106,7 +122,7 @@ export const demo = {
   simpanJenis(p) {
     siapkan()
     if (!['sekali', 'semesteran', 'tahunan', 'bulanan'].includes(p.siklus)) throw new Error('Pilih siklus: bulanan, semesteran, tahunan, atau sekali.')
-    const x = { ...salin(p), kode: String(p.kode || '').toUpperCase(), nominal: Number(p.nominal) || 0, tarif: (p.tarif || []).filter((r) => r.jenjang || r.tingkat).map((r) => ({ id: id(), jenjang: r.jenjang || null, tingkat: r.tingkat ? Number(r.tingkat) : null, nominal: Number(r.nominal) || 0 })) }
+    const x = { ...salin(p), kode: String(p.kode || '').toUpperCase(), nominal: Number(p.nominal) || 0, berlaku_jk: p.berlaku_jk || null, tarif: (p.tarif || []).filter((r) => r.jenjang || r.tingkat || r.jenis_kelamin).map((r) => ({ id: id(), jenjang: r.jenjang || null, tingkat: r.tingkat ? Number(r.tingkat) : null, jenis_kelamin: r.jenis_kelamin || null, nominal: Number(r.nominal) || 0 })) }
     const i = D.jenis.findIndex((f) => f.id === p.id)
     if (i >= 0) Object.assign(D.jenis[i], x); else D.jenis.push({ ...x, id: id(), aktif: p.aktif ?? true, urutan: D.jenis.length + 1 })
   },
@@ -126,17 +142,17 @@ export const demo = {
     siapkan(); const f = j(p.fee_type_id); if (!f) throw new Error('Pilih jenis biaya.')
     const per = periode(f, p)
     const baris = []
-    for (const st of sasaran(p)) for (const x of per) { const std = tarif(f, st); const pt = potongan(st, f, x.acuan, std)
-      baris.push({ student_id: st.id, nis: st.nis, nama: st.nama, jk: st.jk, jenjang: st.jenjang, tingkat: st.tingkat, kelas: st.kelas, kunci: x.kunci, label: x.label, standar: std,
+    for (const x of per) for (const { st, k } of sasaran(p, x.acuan)) { const std = tarif(f, st, k); const pt = potongan(st, f, x.acuan, std)
+      baris.push({ student_id: st.id, nis: st.nis, nama: st.nama, jk: st.jk, jenjang: k.jenjang, tingkat: k.tingkat, tingkat_kini: st.tingkat, kelas: st.kelas, kunci: x.kunci, label: x.label, standar: std,
         potongan: pt.potongan, alasan_potongan: pt.alasan, nominal: std - pt.potongan, ada: D.tagihan.some((b) => b.student_id === st.id && b.fee_type_id === f.id && b.kunci_periode === x.kunci && b.status !== 'batal') }) }
     return salin({ periode: per.map((x) => ({ kunci: x.kunci, label: x.label, jatuh_tempo: x.tempo })), baris: baris.sort((a, b) => a.nama.localeCompare(b.nama) || a.kunci.localeCompare(b.kunci)) })
   },
   buat(p, awal = false) {
     if (!awal) siapkan()
     const f = j(p.fee_type_id); let dibuat = 0, dilewati = 0, nominal = 0
-    for (const x of periode(f, p)) for (const st of sasaran(p)) {
+    for (const x of periode(f, p)) for (const { st, k } of sasaran(p, x.acuan)) {
       if (D.tagihan.some((b) => b.student_id === st.id && b.fee_type_id === f.id && b.kunci_periode === x.kunci && b.status !== 'batal')) { dilewati++; continue }
-      const std = tarif(f, st); const pt = potongan(st, f, x.acuan, std)
+      const std = tarif(f, st, k); const pt = potongan(st, f, x.acuan, std)
       const b = { id: id(), student_id: st.id, fee_type_id: f.id, kunci_periode: x.kunci, nama: x.label, tanggal_tagih: x.acuan < hariIniISO() ? x.acuan : hariIniISO(), jatuh_tempo: x.tempo,
         standar: std, potongan: pt.potongan, alasan_potongan: pt.alasan, nominal: std - pt.potongan, dibayar: 0, status: 'belum', catatan: p.catatan || null }
       segarkan(b); D.tagihan.push(b); dibuat++; nominal += b.nominal
@@ -169,10 +185,47 @@ export const demo = {
     const total = alok.reduce((a, x) => a + x.jumlah, 0); if (!total) throw new Error('Tidak ada tagihan yang dibayar.')
     const tgl = p.tanggal || hariIniISO()
     const py = { id: id(), student_id: st.id, tanggal: tgl, cara: p.cara, rekening_tujuan: p.rekening_tujuan || null, penyetor: p.penyetor || null, keterangan: p.keterangan || null,
-      jumlah: total, bukti_id: null, nomor: nomor('kuitansi', tgl), kode_validasi: kode(), status: 'sah', created_at: new Date().toISOString(), dicatat: BENDAHARA.nama, items: [] }
+      jumlah: total, bukti_id: null, nomor: p.riwayat ? null : nomor('kuitansi', tgl), kode_validasi: p.riwayat ? null : kode(), riwayat: !!p.riwayat, status: 'sah', created_at: new Date().toISOString(), dicatat: BENDAHARA.nama, items: [] }
+    if (p.riwayat && !py.keterangan) py.keterangan = 'Catatan pembayaran lama'
     for (const x of alok) { x.b.dibayar += x.jumlah; segarkan(x.b); py.items.push({ bill_id: x.b.id, jumlah: x.jumlah, sisa: x.b.nominal - x.b.dibayar }) }
     D.bayar.push(py)
     return { id: py.id, nomor: py.nomor, kode_validasi: py.kode_validasi, jumlah: total }
+  },
+  /** Impor catatan lama (meniru impor_riwayat_keuangan). */
+  imporRiwayat(p) {
+    siapkan(); const hasil = []; const h = hariIniISO(); const salinan = p.uji ? salin({ t: D.tagihan, b: D.bayar }) : null
+    p.baris.forEach((r, i) => {
+      const st = D.santri.find((x) => x.nis === String(r.nis || '').trim()); let label = r.periode
+      try {
+        if (!st) throw new Error(`NIS ${r.nis || '(kosong)'} tidak ditemukan.`)
+        const f = D.jenis.find((x) => x.kode === String(r.kode || '').trim().toUpperCase()); if (!f) throw new Error(`Kode biaya ${r.kode || '(kosong)'} tidak dikenal.`)
+        const per = String(r.periode || '').trim().toLowerCase(); let kunci, acuan, tempo
+        if (f.siklus === 'bulanan') { const z1 = per.match(/^(\d{4})-(\d{1,2})$/); const z2 = per.match(/^(\d{1,2})[/-](\d{4})$/)
+          const a = z1 ? [z1[1], z1[2]] : z2 ? [z2[2], z2[1]] : null
+          if (!a || Number(a[1]) < 1 || Number(a[1]) > 12) throw new Error(`Periode bulanan "${r.periode}" tidak sah; tulis 2025-07 atau 07/2025.`)
+          kunci = `${a[0]}-${String(a[1]).padStart(2, '0')}`; acuan = kunci + '-01'; label = `${f.nama} ${namaBulan(kunci)}`; tempo = `${kunci}-${String(D.pengaturan.jatuh_tempo_hari).padStart(2, '0')}` }
+        else if (f.siklus === 'tahunan') { if (!/^\d{4}\/\d{4}$/.test(per)) throw new Error(`Periode tahunan "${r.periode}" tidak sah; tulis 2024/2025.`); kunci = per; acuan = per.slice(0, 4) + '-07-01'; label = `${f.nama} ${per}`; tempo = tambahHari(acuan, 30) }
+        else if (f.siklus === 'semesteran') { const z = per.match(/^(\d{4}\/\d{4})[ -]*(s1|s2|1|2|ganjil|genap)$/); if (!z) throw new Error(`Periode semesteran "${r.periode}" tidak sah; tulis 2024/2025-S1.`)
+          const sm = ['s1', '1', 'ganjil'].includes(z[2]) ? 1 : 2; kunci = `${z[1]}-S${sm}`; acuan = sm === 1 ? z[1].slice(0, 4) + '-07-01' : z[1].slice(5) + '-01-01'
+          label = `${f.nama} Semester ${sm === 1 ? 'Ganjil' : 'Genap'} ${z[1]}`; tempo = tambahHari(acuan, 30) }
+        else { kunci = 'sekali'; acuan = r.tanggal_bayar || h; label = f.nama; tempo = acuan }
+        if (acuan > h) throw new Error(`Periode ${r.periode} belum tiba.`)
+        let b = D.tagihan.find((x) => x.student_id === st.id && x.fee_type_id === f.id && x.kunci_periode === kunci && x.status !== 'batal'); let hs; let ket
+        if (!b) { const k = kelasPada(st, acuan); if (!k && f.siklus !== 'sekali') throw new Error(`${st.nama} belum menjadi santri pada periode ${r.periode}.`)
+          const std = r.nominal !== '' && r.nominal != null ? Number(r.nominal) : tarif(f, st, k || st); const pt = r.nominal !== '' && r.nominal != null ? { potongan: 0, alasan: null } : potongan(st, f, acuan, std)
+          b = { id: id(), student_id: st.id, fee_type_id: f.id, kunci_periode: kunci, nama: label, tanggal_tagih: acuan, jatuh_tempo: tempo, standar: std, potongan: pt.potongan, alasan_potongan: pt.alasan, nominal: std - pt.potongan, dibayar: 0, status: 'belum', catatan: 'Impor catatan lama' }
+          segarkan(b); D.tagihan.push(b); hs = 'dibuat'; ket = `Tagihan Rp${b.nominal.toLocaleString('id-ID')} dibuat` }
+        else { hs = 'ada'; ket = `Tagihan sudah ada (Rp${b.nominal.toLocaleString('id-ID')})` }
+        const bayar = Number(r.dibayar) || 0
+        if (bayar > 0) { if (bayar > b.nominal - b.dibayar) throw new Error(`Dibayar Rp${bayar.toLocaleString('id-ID')} melebihi sisa tagihan Rp${(b.nominal - b.dibayar).toLocaleString('id-ID')}.`)
+          const tgl = r.tanggal_bayar || (tempo < h ? tempo : h)
+          demo.bayar({ student_id: st.id, tanggal: tgl, cara: /^trans/i.test(r.cara || '') ? 'transfer' : 'tunai', riwayat: true, keterangan: r.keterangan || 'Impor catatan pembayaran lama', alokasi: [{ bill_id: b.id, jumlah: bayar }] })
+          if (hs === 'ada') hs = 'dibayar'; ket += `; pembayaran Rp${bayar.toLocaleString('id-ID')} dicatat` }
+        hasil.push({ baris: i + 1, nis: st.nis, nama: st.nama, tagihan: label, hasil: hs, ket })
+      } catch (e) { hasil.push({ baris: i + 1, nis: st?.nis || r.nis, nama: st?.nama || null, tagihan: label, hasil: 'galat', ket: e.message }) }
+    })
+    if (salinan) { D.tagihan.splice(0, D.tagihan.length, ...salinan.t); D.bayar.splice(0, D.bayar.length, ...salinan.b) }
+    return salin(hasil)
   },
   batalBayar(pid, alasan) { const py = D.bayar.find((x) => x.id === pid); if (py.status === 'batal') throw new Error('Pembayaran sudah dibatalkan.')
     for (const i of py.items) { const b = D.tagihan.find((x) => x.id === i.bill_id); b.dibayar -= i.jumlah; segarkan(b) } py.status = 'batal'; py.alasan_batal = alasan },

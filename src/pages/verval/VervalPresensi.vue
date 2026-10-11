@@ -1,24 +1,23 @@
-<!-- SIMKA PRO | src/pages/verval/VervalPresensi.vue | v1.1 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/verval/VervalPresensi.vue | v1.2 | Fase 3 – Tab Data presensi dipindah ke menu Data Presensi | 12/10/2026 -->
 <script setup>
 // Verval Presensi (admin ber-izin verval_presensi dan superadmin):
 //   Antrian verval (luar area, pulang luar area, izin sesi) → keputusan final beralasan
 //   Koreksi bertingkat (admin mengajukan → superadmin memutuskan)
 //   Panel kecurigaan (koordinat identik, akurasi tidak wajar, perangkat bersama, selfie identik)
-//   Data presensi per pegawai per tanggal + riwayat status; superadmin dapat mengubah langsung / catat manual.
+//   v1.2: data presensi per pegawai dipindah ke menu tersendiri (Presensi → Data Presensi).
 //   v1.1: setelah verval, admin dapat mengabari pegawai lewat WA; tombol WA di setiap antrian.
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhTray, PhListChecks, PhWarningOctagon, PhMagnifyingGlass, PhMapPin, PhArrowSquareOut, PhClockCounterClockwise, PhPencilSimple, PhPlus, PhCheck, PhX, PhInfo, PhArrowClockwise } from '@phosphor-icons/vue'
+import { PhTray, PhListChecks, PhWarningOctagon, PhMapPin, PhArrowSquareOut, PhCheck, PhX, PhInfo, PhArrowClockwise } from '@phosphor-icons/vue'
 import { useVerval } from '@/stores/verval'
 import { usePegawai } from '@/stores/pegawai'
 import { useAturPresensi } from '@/stores/aturPresensi'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
-import { formatHari, formatPendek, formatJam, formatRelatif, formatWaktu, hariIniISO } from '@/lib/tanggal'
-import { STATUS_PRESENSI, STATUS_PULANG, formatJarak, lencanaSesi } from '@/lib/presensi'
+import { formatHari, formatPendek, formatJam, formatRelatif, formatWaktu } from '@/lib/tanggal'
+import { STATUS_PRESENSI, STATUS_PULANG, formatJarak } from '@/lib/presensi'
 import FotoBerkas from '@/components/FotoBerkas.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
-import InputTanggal from '@/components/InputTanggal.vue'
 import LembarKeputusan from './LembarKeputusan.vue'
 import TombolWA from '@/components/TombolWA.vue'
 import { pesanWA, halamanAplikasi } from '@/lib/wa'
@@ -35,13 +34,11 @@ const TAB = [
   { k: 'antrian', n: 'Antrian verval', ikon: PhTray, w: 'pengajuan' },
   { k: 'koreksi', n: 'Koreksi', ikon: PhListChecks, w: 'verifikasi' },
   { k: 'kecurigaan', n: 'Kecurigaan', ikon: PhWarningOctagon, w: 'klinik' },
-  { k: 'data', n: 'Data presensi', ikon: PhMagnifyingGlass, w: 'pegawai' },
 ]
 const aktif = computed(() => TAB.find((t) => t.k === props.tab) || TAB[0])
 
 const P = (k) => ({ k, n: STATUS_PRESENSI[k].n, w: STATUS_PRESENSI[k].w })
 const PILIH_DATANG = ['hadir', 'terlambat', 'dinas_luar', 'izin', 'sakit', 'tanpa_keterangan'].map(P)
-const PILIH_SEMUA = ['hadir', 'terlambat', 'dinas_luar', 'izin', 'sakit', 'cuti', 'tanpa_keterangan'].map(P)
 const PILIH_PULANG = ['tepat', 'cepat', 'tidak_presensi'].map((k) => ({ k, n: STATUS_PULANG[k].n, w: STATUS_PULANG[k].w }))
 const JENIS_CURIGA = {
   koordinat_identik: { n: 'Koordinat sama persis', ket: (r) => `Sama dengan ${r.jumlah_sebelumnya} presensi sebelumnya (30 hari).` },
@@ -85,40 +82,6 @@ function tinjauC(c, status) {
     pesan: 'Tinjauan tersimpan.', aksi: ({ alasan }) => vv.tinjau(c.id, status, alasan) })
 }
 
-// ---------- Data presensi per pegawai ----------
-const cari = ref(''); const empId = ref(''); const tgl = ref(hariIniISO()); const harian = ref(null); const memuatH = ref(false)
-const daftarPeg = computed(() => {
-  const q = cari.value.toLowerCase().trim()
-  return peg.daftar.filter((p) => p.status_akun === 'aktif' && (!q || [p.nama_lengkap, p.niy].join(' ').toLowerCase().includes(q))).slice(0, 30)
-})
-const pegDipilih = computed(() => peg.cari(empId.value))
-async function muatH() {
-  if (!empId.value) return
-  memuatH.value = true
-  try { harian.value = await vv.harianPegawai(empId.value, tgl.value) } catch (e) { ui.toast(e.message, 'galat') } finally { memuatH.value = false }
-}
-watch([empId, tgl], muatH)
-function koreksiS(s) {
-  bukaLembar({ judul: 'Ajukan koreksi', ringkasan: `${pegDipilih.value?.nama_lengkap} · ${s.nama_sesi} ${formatPendek(s.tanggal)} · sekarang ${lencanaSesi(s).n}`,
-    pilihan: PILIH_SEMUA, bawaan: s.status, pilihanPulang: s.wajib_pulang ? PILIH_PULANG : null, labelTombol: 'Kirim ke superadmin',
-    catatan: 'Koreksi berlaku setelah disetujui superadmin.', pesan: 'Permintaan koreksi terkirim ke superadmin.',
-    aksi: async ({ status, pulang, alasan }) => { await vv.ajukanKoreksi(s.attendance_id, status, pulang, alasan); await muatH() } })
-}
-function ubahS(s) {
-  bukaLembar({ judul: 'Ubah langsung (superadmin)', ringkasan: `${pegDipilih.value?.nama_lengkap} · ${s.nama_sesi} ${formatPendek(s.tanggal)} · sekarang ${lencanaSesi(s).n}`,
-    pilihan: PILIH_SEMUA, bawaan: s.status, pilihanPulang: s.wajib_pulang ? PILIH_PULANG : null, labelTombol: 'Simpan perubahan', pesan: 'Presensi diubah dan tercatat di riwayat.',
-    aksi: async ({ status, pulang, alasan }) => { await vv.ubah(s.attendance_id, status, pulang, alasan); await muatH() } })
-}
-function manualS(s) {
-  bukaLembar({ judul: 'Catat manual (superadmin)', ringkasan: `${pegDipilih.value?.nama_lengkap} · ${s.nama_sesi} ${formatPendek(s.tanggal)} · belum ada data`,
-    pilihan: PILIH_SEMUA, bawaan: 'hadir', labelTombol: 'Catat presensi', pesan: 'Presensi dicatat manual.',
-    aksi: async ({ status, alasan }) => { await vv.catatManual(empId.value, s.tanggal, s.session_id, status, alasan); await muatH() } })
-}
-const riwayat = ref(null)
-async function lihatRiwayat(s) {
-  try { riwayat.value = { s, isi: await vv.riwayat(s.attendance_id) } } catch (e) { ui.toast(e.message, 'galat') }
-}
-const JENIS_RIWAYAT = { presensi: 'Presensi', penutupan: 'Penutupan otomatis', verval: 'Verval admin', koreksi: 'Koreksi disetujui', superadmin: 'Diubah superadmin', pengajuan: 'Pengajuan pegawai', sistem: 'Sistem' }
 </script>
 <template>
   <div class="w-verval">
@@ -173,7 +136,7 @@ const JENIS_RIWAYAT = { presensi: 'Presensi', penutupan: 'Penutupan otomatis', v
 
       <!-- ===== Koreksi ===== -->
       <template v-else-if="aktif.k === 'koreksi'">
-        <p class="mb-3 flex gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" /> Ajukan koreksi dari tab Data presensi. Koreksi berlaku setelah disetujui superadmin.</p>
+        <p class="mb-3 flex gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" /> <span>Ajukan koreksi dari menu <router-link to="/data-presensi" class="font-semibold underline">Data Presensi</router-link>. Koreksi berlaku setelah disetujui superadmin.</span></p>
         <p v-if="!vv.panel.koreksi.length" class="py-10 text-center text-teks3">Belum ada permintaan koreksi.</p>
         <ul class="space-y-2">
           <li v-for="k in vv.panel.koreksi" :key="k.id" class="kartu p-4">
@@ -193,7 +156,7 @@ const JENIS_RIWAYAT = { presensi: 'Presensi', penutupan: 'Penutupan otomatis', v
       </template>
 
       <!-- ===== Kecurigaan ===== -->
-      <template v-else-if="aktif.k === 'kecurigaan'">
+      <template v-else>
         <p v-if="!vv.panel.curiga.length" class="py-10 text-center text-teks3">Tidak ada penanda kecurigaan.</p>
         <ul class="grid gap-3 xl:grid-cols-2">
           <li v-for="c in vv.panel.curiga" :key="c.id" class="kartu flex gap-3 p-4">
@@ -216,66 +179,11 @@ const JENIS_RIWAYAT = { presensi: 'Presensi', penutupan: 'Penutupan otomatis', v
         </ul>
       </template>
 
-      <!-- ===== Data presensi ===== -->
-      <template v-else>
-        <div class="grid gap-4 lg:grid-cols-[22rem_1fr]">
-          <div class="kartu p-3">
-            <div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
-              <input v-model="cari" class="isian pl-10" placeholder="Cari nama atau NIY" aria-label="Cari pegawai" /></div>
-            <ul class="mt-2 max-h-[50vh] overflow-y-auto">
-              <li v-for="p in daftarPeg" :key="p.id">
-                <button :class="['w-full rounded-xl px-3 py-2 text-left text-sm', empId === p.id ? 'bg-[color-mix(in_srgb,var(--c)_14%,transparent)] font-bold' : 'hover:bg-permukaan2']" @click="empId = p.id">
-                  {{ p.nama_lengkap }}<span class="block text-xs font-normal text-teks3">{{ [p.jabatan_struktural, ...(p.jabatan_fungsional || [])].filter(Boolean).join(', ') }}</span></button>
-              </li>
-            </ul>
-          </div>
-          <div class="kartu p-4">
-            <div class="max-w-xs"><InputTanggal v-model="tgl" label="Tanggal" /></div>
-            <p v-if="!empId" class="py-8 text-center text-teks3">Pilih pegawai untuk melihat presensinya.</p>
-            <p v-else-if="memuatH" class="py-8 text-center text-teks3">Memuat…</p>
-            <template v-else-if="harian">
-              <p class="mt-3 font-bold">{{ pegDipilih?.nama_lengkap }} · {{ formatHari(tgl) }}</p>
-              <p v-if="!harian.sesi.length" class="py-6 text-center text-teks3">Tidak ada sesi pada tanggal ini.</p>
-              <ul class="mt-2 space-y-2">
-                <li v-for="s in harian.sesi" :key="s.session_id + s.tanggal" :class="['rounded-2xl border border-garis p-3', 'w-' + lencanaSesi(s).w]">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span class="w-24 font-bold tabular-nums">{{ formatJam(s.mulai) }}–{{ formatJam(s.selesai) }}</span>
-                    <span class="flex-1 font-semibold">{{ s.nama_sesi }} <span class="text-xs font-normal text-teks3">· {{ s.nama_pola }}</span></span>
-                    <span class="lencana">{{ lencanaSesi(s).n }}</span>
-                    <span v-if="s.status_pulang && s.status_pulang !== 'belum'" :class="['lencana', 'w-' + STATUS_PULANG[s.status_pulang].w]">{{ STATUS_PULANG[s.status_pulang].n }}</span>
-                  </div>
-                  <p v-if="s.datang_pada || s.keterangan" class="mt-1 text-xs text-teks3">
-                    <template v-if="s.datang_pada">Datang {{ formatJam(s.datang_pada) }}</template><template v-if="s.pulang_pada"> · Pulang {{ formatJam(s.pulang_pada) }}</template>
-                    <template v-if="s.keterangan"> · {{ s.keterangan }}</template></p>
-                  <div class="mt-1.5 flex flex-wrap gap-1">
-                    <button v-if="s.attendance_id" class="tombol-teks min-h-[36px] px-2 text-sm" @click="lihatRiwayat(s)"><PhClockCounterClockwise :size="16" /> Riwayat</button>
-                    <button v-if="s.attendance_id && s.status !== 'menunggu_verval' && !sesi.isSuperadmin" class="tombol-teks min-h-[36px] px-2 text-sm" @click="koreksiS(s)"><PhPencilSimple :size="16" /> Ajukan koreksi</button>
-                    <button v-if="s.attendance_id && sesi.isSuperadmin" class="tombol-teks min-h-[36px] px-2 text-sm" @click="ubahS(s)"><PhPencilSimple :size="16" /> Ubah langsung</button>
-                    <button v-if="!s.attendance_id && sesi.isSuperadmin" class="tombol-teks min-h-[36px] px-2 text-sm" @click="manualS(s)"><PhPlus :size="16" /> Catat manual</button>
-                  </div>
-                </li>
-              </ul>
-            </template>
-          </div>
-        </div>
-      </template>
     </section>
 
     <LembarKeputusan v-model="lk.buka" :judul="lk.judul" :ringkasan="lk.ringkasan" :pilihan="lk.pilihan || []" :pilihan-pulang="lk.pilihanPulang || null"
       :bawaan="lk.bawaan" :catatan="lk.catatan" :label-tombol="lk.labelTombol" :bahaya="lk.bahaya" :contoh-alasan="lk.contohAlasan" @kirim="kirimKeputusan" />
 
-    <LembarBawah :model-value="!!riwayat" @update:model-value="(v) => !v && (riwayat = null)" :judul="riwayat ? `Riwayat ${riwayat.s.nama_sesi}` : ''">
-      <ol v-if="riwayat" class="relative space-y-3 border-l-2 border-garis pb-2 pl-4">
-        <li v-for="(h, i) in riwayat.isi" :key="i">
-          <p class="text-sm font-bold">{{ JENIS_RIWAYAT[h.jenis] || h.jenis }} · {{ formatWaktu(h.waktu) }}</p>
-          <p class="text-sm text-teks2">{{ h.dari ? STATUS_PRESENSI[h.dari]?.n + ' → ' : '' }}{{ STATUS_PRESENSI[h.ke]?.n }}
-            <template v-if="h.ke_pulang && h.ke_pulang !== h.dari_pulang"> · {{ STATUS_PULANG[h.ke_pulang]?.n }}</template></p>
-          <p v-if="h.alasan" class="text-xs text-teks3">“{{ h.alasan }}”</p>
-          <p v-if="h.oleh" class="text-xs text-teks3">Oleh {{ h.oleh }}</p>
-        </li>
-        <li v-if="!riwayat.isi.length" class="text-sm text-teks3">Belum ada riwayat.</li>
-      </ol>
-    </LembarBawah>
     <LembarBawah :model-value="!!waSetelah" @update:model-value="(v) => !v && (waSetelah = null)" judul="Kabari pegawai lewat WA">
       <div v-if="waSetelah" class="space-y-3 pb-2">
         <p class="text-sm text-teks2">Verval tersimpan dan {{ waSetelah.nama }} sudah mendapat notifikasi di aplikasi. Bila perlu, kabari juga lewat WA:</p>

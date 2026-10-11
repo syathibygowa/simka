@@ -1,15 +1,37 @@
-// SIMKA PRO | src/stores/verval.js | v1.0 | Fase 2 – Tahap 6 Verval dan koreksi | 03/10/2026
+// SIMKA PRO | src/stores/verval.js | v1.1 | Fase 3 – Menu Data Presensi (harian per bidang) | 12/10/2026
 // Panel admin presensi: antrian verval, permintaan koreksi, penanda kecurigaan, dan data presensi per pegawai.
+// v1.1: hariSemua(tanggal, bidang) untuk menu Data Presensi; mode demo menyimpan perubahan di memori.
 // Semua perubahan lewat fungsi server yang memeriksa hak dan mencatat riwayat status.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { pesanGalat } from './lembaga'
 import { hariIniISO } from '@/lib/tanggal'
+import { usePegawai } from './pegawai'
+import { useOrganisasi } from './organisasi'
 
 async function rpc(nama, isi) {
   const { data, error } = await supabase.rpc(nama, isi)
   if (error) throw new Error(error.hint && error.message ? error.message : pesanGalat(error))
   return data
+}
+// ---------- Data presensi contoh (mode demo) ----------
+const ubahanDemo = {}   // kunci emp|tanggal|sesi → { status, status_pulang, keterangan }
+const acakDemo = (t) => { let x = 7; for (const c of t) x = (x * 31 + c.charCodeAt(0)) % 99991; const y = Math.sin(x) * 10000; return y - Math.floor(y) }
+function sesiDemo(p, tanggal) {
+  if (new Date(tanggal + 'T00:00:00Z').getUTCDay() === 0) return []
+  const kini = new Date(); const hariIni = hariIniISO()
+  const mulai = `${tanggal}T07:30:00+08:00`; const selesai = `${tanggal}T14:00:00+08:00`; const sid = 'sesi-kerja'
+  const r = acakDemo(p.id + tanggal); const kunci = `${p.id}|${tanggal}|${sid}`
+  const lewat = tanggal < hariIni || (tanggal === hariIni && kini > new Date(`${tanggal}T08:30:00+08:00`))
+  let status = !lewat ? null : r < 0.74 ? 'hadir' : r < 0.86 ? 'terlambat' : r < 0.89 ? 'dinas_luar' : r < 0.93 ? 'izin' : r < 0.955 ? 'sakit' : r < 0.97 ? 'cuti' : 'tanpa_keterangan'
+  const u = ubahanDemo[kunci]; if (u) status = u.status
+  const hadir = ['hadir', 'terlambat'].includes(status); const tm = status === 'terlambat' ? 3 + (Math.round(r * 40) % 25) : 0
+  return [{ tanggal, session_id: sid, nama_pola: (p.jabatan_fungsional || ['Staf'])[0], nama_sesi: 'Jam kerja', mulai, selesai, wajib_pulang: true, opsional: false,
+    attendance_id: status ? 'demo-' + kunci : null, status, terlambat_menit: tm, sumber: u ? 'manual' : 'gps',
+    datang_pada: hadir ? `${tanggal}T07:${String(20 + tm).padStart(2, '0')}:00+08:00` : null,
+    status_pulang: u?.status_pulang || (hadir ? (tanggal < hariIni ? 'tepat' : 'belum') : null), pulang_pada: hadir && tanggal < hariIni ? `${tanggal}T14:05:00+08:00` : null,
+    keterangan: u?.keterangan || (status === 'izin' ? 'Keperluan keluarga' : status === 'sakit' ? 'Demam' : status === 'dinas_luar' ? 'Rapat di kantor Kemenag' : null),
+    keadaan: status ? 'selesai' : tanggal > hariIni || kini < new Date(`${tanggal}T07:00:00+08:00`) ? 'akan_datang' : 'terbuka' }]
 }
 const jamLalu = (j) => new Date(Date.now() - j * 3600e3).toISOString()
 function panelDemo() {
@@ -63,11 +85,11 @@ export const useVerval = defineStore('verval', {
       await rpc('putuskan_koreksi', { p_id: id, p_setuju: setuju, p_catatan: catatan || null }); await this.muat()
     },
     async ubah(id, status, pulang, alasan) {
-      if (MODE_DEMO) return
+      if (MODE_DEMO) { ubahanDemo[String(id).replace(/^demo-/, '')] = { status, status_pulang: pulang || null, keterangan: alasan }; return }
       await rpc('ubah_presensi', { p_id: id, p_status: status, p_pulang: pulang || null, p_alasan: alasan })
     },
     async catatManual(emp, tanggal, sesi, status, alasan) {
-      if (MODE_DEMO) return
+      if (MODE_DEMO) { ubahanDemo[`${emp}|${tanggal}|${sesi}`] = { status, keterangan: alasan }; return }
       await rpc('catat_presensi_manual', { p_emp: emp, p_tanggal: tanggal, p_session: sesi, p_status: status, p_alasan: alasan })
     },
     async tinjau(id, status, catatan) {
@@ -75,8 +97,20 @@ export const useVerval = defineStore('verval', {
       await rpc('tinjau_kecurigaan', { p_id: id, p_status: status, p_catatan: catatan || null }); await this.muat()
     },
     async harianPegawai(emp, tanggal) {
-      if (MODE_DEMO) return { sesi: [] }
+      if (MODE_DEMO) { const p = usePegawai().cari(emp); return { employee_id: emp, tanggal, sesi: p ? sesiDemo(p, tanggal) : [] } }
       return await rpc('presensi_harian', { p_emp: emp, p_tanggal: tanggal })
+    },
+    /** Semua pegawai aktif (bidang beserta cabangnya) dan sesi presensinya pada satu tanggal */
+    async hariSemua(tanggal, unit) {
+      if (MODE_DEMO) {
+        const peg = usePegawai(); if (!peg.daftar.length) await peg.muat()
+        const org = useOrganisasi(); if (!org.dimuat) await org.muat()
+        const cakup = unit ? org.turunan(unit) : null
+        return { tanggal, pegawai: peg.daftar.filter((p) => p.status_akun === 'aktif' && (!cakup || cakup.has(p.org_unit_id)))
+          .map((p) => ({ employee_id: p.id, nama: p.nama_lengkap, niy: p.niy, jenis_kelamin: p.jenis_kelamin, org_unit_id: p.org_unit_id, unit: p.nama_unit,
+            jabatan: (p.jabatan_fungsional || []).join(', '), sesi: sesiDemo(p, tanggal) })).sort((a, b) => a.nama.localeCompare(b.nama)) }
+      }
+      return await rpc('presensi_hari_pegawai', { p_tanggal: tanggal, p_unit: unit || null })
     },
     async riwayat(id) {
       if (MODE_DEMO || !id) return []

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.19 | Fase 13 – Rute menu Keuangan santri | 11/10/2026
+// SIMKA PRO | src/router/index.js | v3.20 | Fase 3 – Rute menu Data Presensi | 12/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -59,6 +59,8 @@ const routes = [
       { path: 'keuangan/:tab?', component: () => import('@/pages/keuangan/Keuangan.vue'), props: (r) => ({ tab: r.params.tab || '' }), meta: { judul: 'Keuangan Santri', kembali: '/tugas' } },
       { path: 'presensi', component: () => import('@/pages/presensi/Presensi.vue'), meta: { judul: 'Presensi' } },
       { path: 'atur-presensi/:tab?', component: () => import('@/pages/presensi/AturPresensi.vue'), props: true, meta: { judul: 'Penjadwalan', peran: ADMIN, kembali: '/tugas' } },
+      { path: 'data-presensi/:tab?', component: () => import('@/pages/presensi/DataPresensi.vue'), props: true, meta: { judul: 'Data Presensi', peran: ADMIN, kembali: '/tugas' } },
+      { path: 'verval-presensi/data', redirect: '/data-presensi' },
       { path: 'verval-presensi/:tab?', component: () => import('@/pages/verval/VervalPresensi.vue'), props: true, meta: { judul: 'Verval Presensi', peran: ADMIN, kembali: '/tugas' } },
       { path: 'rekap-presensi/:tab?', redirect: (to) => ({ path: `/rekap/${to.params.tab || 'harian'}`, query: to.query }) },
       { path: 'jadwal-shift', component: () => import('@/pages/shift/JadwalShift.vue'), meta: { judul: 'Jadwal Shift', kembali: '/tugas' } },

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/LembarSantriKeu.vue | v1.1 | Fase 13 – Pelengkap: cetak laporan keuangan individu santri | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/LembarSantriKeu.vue | v1.2 | Fase 13 – Penanda catatan pembayaran lama | 12/10/2026 -->
 <script setup>
 // Rincian keuangan satu santri (dibuka dengan ?santri=<id> dari tab mana pun):
 // ringkasan, kontak wali (WA), tagihan (ubah/batalkan beralasan), pembayaran (kuitansi, WA konfirmasi, batalkan),
@@ -140,11 +140,11 @@ async function hapusSubsidi(x) {
         <li v-if="!r.pembayaran.length" class="py-4 text-sm text-teks3">Belum ada pembayaran.</li>
         <li v-for="p in r.pembayaran" :key="p.id" :class="['flex flex-wrap items-center gap-2 py-2.5', p.status === 'batal' && 'opacity-60']">
           <div class="min-w-[170px] flex-1"><p class="font-semibold">{{ formatPendek(p.tanggal) }} · {{ CARA_BAYAR[p.cara] }} <span v-if="p.status === 'batal'" class="lencana w-klinik">Dibatalkan</span></p>
-            <p class="text-xs text-teks3">{{ p.nomor }} · {{ (p.rincian || []).map((x) => x.tagihan).join(', ') }}</p>
+            <p class="text-xs text-teks3">{{ p.riwayat ? 'Catatan lama' : p.nomor }} · {{ (p.rincian || []).map((x) => x.tagihan).join(', ') }}</p>
             <p v-if="p.alasan_batal" class="text-xs text-merah">{{ p.alasan_batal }}</p></div>
           <p class="font-bold tabular-nums">{{ rupiah(p.jumlah) }}</p>
-          <button class="tombol-ikon h-9 w-9" :aria-label="'Cetak kuitansi ' + p.nomor" @click="cetakKuitansi(p)"><PhPrinter :size="18" /></button>
-          <button v-if="p.status === 'sah'" class="tombol-ikon h-9 w-9" :aria-label="'Kirim konfirmasi WA ' + p.nomor" @click="waKuitansi(p)"><PhWhatsappLogo :size="18" /></button>
+          <button v-if="!p.riwayat" class="tombol-ikon h-9 w-9" :aria-label="'Cetak kuitansi ' + p.nomor" @click="cetakKuitansi(p)"><PhPrinter :size="18" /></button>
+          <button v-if="p.status === 'sah' && !p.riwayat" class="tombol-ikon h-9 w-9" :aria-label="'Kirim konfirmasi WA ' + p.nomor" @click="waKuitansi(p)"><PhWhatsappLogo :size="18" /></button>
           <button v-if="keu.hak.kelola && p.status === 'sah'" class="tombol-ikon h-9 w-9 text-merah" :aria-label="'Batalkan pembayaran ' + p.nomor" @click="batalBayar(p)"><PhXCircle :size="18" /></button>
         </li>
       </ul>
@@ -200,7 +200,7 @@ async function hapusSubsidi(x) {
     <table class="tabel">
       <colgroup><col style="width:6%"><col style="width:13%"><col style="width:22%"><col style="width:11%"><col style="width:33%"><col style="width:15%"></colgroup>
       <thead><tr><th>No.</th><th>Tanggal</th><th>Nomor kuitansi</th><th>Cara</th><th>Untuk pembayaran</th><th>Jumlah (Rp)</th></tr></thead>
-      <tbody><tr v-for="(p, i) in sahBayar" :key="p.id"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ formatPendek(p.tanggal) }}</td><td>{{ p.nomor }}</td><td>{{ CARA_BAYAR[p.cara] }}</td>
+      <tbody><tr v-for="(p, i) in sahBayar" :key="p.id"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ formatPendek(p.tanggal) }}</td><td>{{ p.riwayat ? 'Catatan lama' : p.nomor }}</td><td>{{ CARA_BAYAR[p.cara] }}</td>
         <td>{{ (p.rincian || []).map((x) => x.tagihan).join(', ') }}</td><td class="kanan">{{ angka(p.jumlah) }}</td></tr>
         <tr v-if="!sahBayar.length"><td class="tengah">–</td><td colspan="5">Belum ada pembayaran.</td></tr>
         <tr><th colspan="5">Jumlah pembayaran</th><th class="kanan">{{ angka(sahBayar.reduce((a, p) => a + Number(p.jumlah), 0)) }}</th></tr></tbody>

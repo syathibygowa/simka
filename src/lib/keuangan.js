@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/keuangan.js | v1.1 | Fase 13 – Pelengkap: siklus semesteran, kamar/halaqah, WA tagihan baru dan pengingat | 11/10/2026
+// SIMKA PRO | src/lib/keuangan.js | v1.2 | Fase 13 – Tarif putra/putri dan tahun ajaran lalu | 12/10/2026
 // Konstanta tampilan, pengelompokan laporan, dan isian pesan WA keuangan santri.
 import { BULAN, formatPanjang, formatPendek } from '@/lib/tanggal'
 import { rupiah, angka, terbilang, bacaRupiah } from '@/lib/gaji'
@@ -23,6 +23,11 @@ export const CARA_BAYAR = { tunai: 'Tunai', transfer: 'Transfer' }
 export const JENJANG = { wustha: 'Kesetaraan Wustha', sma: 'SMA' }
 export const JENJANG_SINGKAT = { wustha: 'Wustha', sma: 'SMA' }
 export const TINGKAT = { wustha: [7, 8, 9], sma: [10, 11, 12] }
+export const JK_SANTRI = { L: 'Putra', P: 'Putri' }
+/** Label tarif khusus: "Kelas 7 Putri", "SMA", "Putri". */
+export const labelTarif = (t) => [t.tingkat ? `Kelas ${t.tingkat}` : t.jenjang ? JENJANG_SINGKAT[t.jenjang] : '', t.jenis_kelamin ? JK_SANTRI[t.jenis_kelamin] : ''].filter(Boolean).join(' ')
+/** Tahun ajaran sebelumnya: "2026/2027", 2 → ["2026/2027", "2025/2026", "2024/2025"]. */
+export const tahunAjaranMundur = (nama, n = 2) => { const t = Number(String(nama).slice(0, 4)); return Array.from({ length: n + 1 }, (_, i) => `${t - i}/${t - i + 1}`) }
 
 /** Nama periode bulanan "2026-10" → "Oktober 2026". */
 export const namaBulan = (k) => (k && /^\d{4}-\d{2}$/.test(k) ? `${BULAN[Number(k.slice(5)) - 1]} ${k.slice(0, 4)}` : k || '')

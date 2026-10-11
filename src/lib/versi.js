@@ -1,8 +1,8 @@
-// SIMKA PRO | src/lib/versi.js | v11.7.0 | Fase 11 & 13 – Pelengkap sesuai blueprint | 11/10/2026
+// SIMKA PRO | src/lib/versi.js | v11.8.0 | Fase 3 & 13 – Data Presensi, catatan keuangan lama, putra/putri, perbaikan agenda | 12/10/2026
 // Nomor versi aplikasi yang tampil di halaman Profil. Naikkan setiap kali kode diunggah ke GitHub.
 // Keterangan versi tampil kepada pengguna, jadi ditulis tanpa kata "Fase".
-export const VERSI_APLIKASI = '11.7.0'
-export const KETERANGAN_VERSI = 'Pelengkap gaji dan keuangan: log audit, impor jam/potongan, perkiraan potongan, semesteran, tagihan per kelompok, laporan individu'
+export const VERSI_APLIKASI = '11.8.0'
+export const KETERANGAN_VERSI = 'Menu Data Presensi (harian per bidang dan bulanan), catatan keuangan tahun lalu dan impor, tarif putra/putri, cetak agenda per jenis dua kolom'
 
 // Waktu kode dibangun oleh GitHub Actions; dipakai untuk memastikan versi yang tayang adalah yang terbaru.
 /* global __WAKTU_BUILD__ */

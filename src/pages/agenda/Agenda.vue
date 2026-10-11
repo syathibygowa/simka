@@ -1,9 +1,10 @@
-<!-- SIMKA PRO | src/pages/agenda/Agenda.vue | v1.3 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/agenda/Agenda.vue | v1.4 | Perbaikan: cetak per jenis agenda dan tata letak dua kolom; label Sepanjang Hari, Tautan/Link | 12/10/2026 -->
 <script setup>
 // Agenda dan kalender pondok. Semua pegawai melihat agenda yang ditujukan kepadanya beserta hari libur pondok
 // dalam kalender bulanan. Admin ber-izin kelola_agenda membuat agenda dengan sasaran dan pengingat H-n;
 // agenda berjenis libur otomatis masuk kalender libur (izin kalender). Undangan dapat dikirim lewat WA.
 // v1.1: berulang (harian/pekanan/bulanan/tahunan), tautan, lampiran, pengingat menit/jam/hari, 24 warna lembut.
+// v1.4: cetak dapat disaring per jenis (semua, kegiatan, rapat, libur, lainnya) dan disusun dua kolom agar ringkas.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { PhCaretLeft, PhCaretRight, PhPlus, PhCalendarStar, PhUsersThree, PhConfetti, PhDotsThreeCircle, PhSparkle, PhClock, PhMapPin, PhBell, PhPencilSimple, PhTrash, PhWhatsappLogo, PhPrinter, PhCalendarBlank, PhRepeat, PhLink, PhPaperclip, PhX, PhSkipForward, PhCheck } from '@phosphor-icons/vue'
@@ -151,7 +152,14 @@ async function bukaWA(a) { try { wa.value = { a, daftar: await ag.penerima(a.id)
 const pesan = (a, p) => pesanWA('undangan_agenda', { nama: p.nama, judul: a.judul, tanggal: tanggal(a), waktu: waktu(a), lokasi: a.lokasi, keterangan: [a.keterangan, a.tautan && `${a.nama_tautan || 'Tautan'}: ${a.tautan}`].filter(Boolean).join('\n'), tautan: a.tautan || halamanAplikasi(`/agenda/${a.id}`), unit: p.unit })
 
 // ---------- Cetak ----------
-const pratinjau = ref(false)
+const pratinjau = ref(false); const opsiCetak = ref(null)
+const jenisAgenda = (a) => (a.sumber === 'libur' ? 'libur' : a.jenis)
+const dataCetak = computed(() => urut.value.filter((a) => !opsiCetak.value?.jenis || jenisAgenda(a) === opsiCetak.value.jenis))
+const kolomCetak = computed(() => { const d = dataCetak.value; if (!opsiCetak.value?.dua || d.length < 6) return [d]; const h = Math.ceil(d.length / 2); return [d.slice(0, h), d.slice(h)] })
+const judulCetak = computed(() => (opsiCetak.value?.jenis ? `Agenda ${JENIS[opsiCetak.value.jenis].n} Pondok` : 'Agenda Pondok'))
+const jumlahJenis = (k) => urut.value.filter((a) => !k || jenisAgenda(a) === k).length
+function mulaiCetak() { opsiCetak.value = { ...(opsiCetak.value || { jenis: '', dua: true }), buka: true } }
+function lanjutCetak() { opsiCetak.value.buka = false; pratinjau.value = true }
 const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan === 'DIREKTUR' || /^direktur/i.test(s.jabatan_tertulis)) || {})
 </script>
 <template>
@@ -161,7 +169,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
         <button class="tombol-ikon" aria-label="Bulan sebelumnya" @click="geser(-1)"><PhCaretLeft :size="22" weight="bold" /></button>
         <p class="flex-1 text-center text-lg font-bold">{{ judulBulan }}</p>
         <button class="tombol-ikon" aria-label="Bulan berikutnya" @click="geser(1)"><PhCaretRight :size="22" weight="bold" /></button>
-        <button class="tombol-garis hidden min-h-[40px] text-sm sm:inline-flex" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
+        <button class="tombol-garis min-h-[40px] px-3 text-sm" aria-label="Cetak agenda" title="Cetak agenda" @click="mulaiCetak"><PhPrinter :size="18" weight="duotone" /><span class="hidden sm:inline"> Cetak</span></button>
         <button v-if="kelola" class="tombol-utama hidden min-h-[40px] text-sm lg:inline-flex" @click="baru"><PhPlus :size="18" weight="bold" /> Agenda</button>
       </div>
 
@@ -264,7 +272,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
           </div></fieldset>
         <div class="grid gap-3 sm:grid-cols-2"><InputTanggal v-model="form.mulai" label="Tanggal mulai" wajib /><InputTanggal v-model="form.selesai" label="Tanggal selesai" wajib /></div>
         <template v-if="form.jenis !== 'libur'">
-          <label class="flex min-h-[44px] items-center gap-3 font-semibold"><input v-model="form.seharian" type="checkbox" class="h-5 w-5 accent-[#1572B6]" /> Sepanjang hari (tanpa jam)</label>
+          <label class="flex min-h-[44px] items-center gap-3 font-semibold"><input v-model="form.seharian" type="checkbox" class="h-5 w-5 accent-[#1572B6]" /> Sepanjang Hari</label>
           <div v-if="!form.seharian" class="grid gap-3 sm:grid-cols-2">
             <div><label class="label-isian" for="ag-jm">Jam mulai</label><input id="ag-jm" v-model="form.jam_mulai" type="time" class="isian" /></div>
             <div><label class="label-isian" for="ag-js">Jam selesai (opsional)</label><input id="ag-js" v-model="form.jam_selesai" type="time" class="isian" /></div>
@@ -298,7 +306,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
         </template>
         <div><label class="label-isian" for="ag-ket">Keterangan</label><textarea id="ag-ket" v-model="form.keterangan" class="isian min-h-[4.5rem] py-2" placeholder="Hal yang perlu disiapkan peserta" /></div>
         <div class="grid gap-3 sm:grid-cols-[1fr_12rem]">
-          <div><label class="label-isian" for="ag-tautan">Tautan (Zoom, Google Meet, Maps, dll.)</label><input id="ag-tautan" v-model="form.tautan" class="isian" inputmode="url" placeholder="https://" /></div>
+          <div><label class="label-isian" for="ag-tautan">Tautan/Link</label><input id="ag-tautan" v-model="form.tautan" class="isian" inputmode="url" placeholder="https://" /></div>
           <div><label class="label-isian" for="ag-ntautan">Nama tautan</label><input id="ag-ntautan" v-model="form.nama_tautan" class="isian" placeholder="Contoh: Zoom rapat" /></div>
         </div>
         <div>
@@ -332,14 +340,33 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
       </div>
     </LembarBawah>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" judul="Agenda Pondok" :subjudul="`Bulan ${judulBulan}`" :pencetak="sesi.pengguna?.nama_lengkap">
-      <table class="tabel">
-        <colgroup><col style="width:6%"><col style="width:22%"><col style="width:15%"><col style="width:35%"><col style="width:22%"></colgroup>
-        <thead><tr><th>No.</th><th>Hari, tanggal</th><th>Waktu</th><th>Agenda</th><th>Tempat/keterangan</th></tr></thead>
-        <tbody><tr v-for="(a, i) in urut" :key="a.id">
-          <td class="tengah">{{ i + 1 }}</td><td>{{ a.selesai > a.mulai ? `${formatPendek(a.mulai)} s.d. ${formatPendek(a.selesai)}` : formatHari(a.mulai) }}</td>
-          <td>{{ a.sumber === 'libur' || a.jenis === 'libur' ? 'Libur' : waktu(a) }}</td><td>{{ a.judul }}</td><td>{{ a.lokasi || (a.sumber === 'libur' ? NAMA_LIBUR[a.jenis_libur] : '') || '–' }}</td></tr></tbody>
-      </table>
+    <!-- Pilihan cetak -->
+    <LembarBawah :model-value="!!opsiCetak?.buka" @update:model-value="(v) => !v && opsiCetak && (opsiCetak.buka = false)" judul="Cetak agenda">
+      <div v-if="opsiCetak" class="w-agenda space-y-4 pb-2">
+        <fieldset><legend class="label-isian">Jenis agenda</legend>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" :class="['chip', !opsiCetak.jenis && 'pilih']" :aria-pressed="!opsiCetak.jenis" @click="opsiCetak.jenis = ''">Semua ({{ jumlahJenis('') }})</button>
+            <button v-for="(j, k) in JENIS" :key="k" type="button" :class="['chip', opsiCetak.jenis === k && 'pilih']" :aria-pressed="opsiCetak.jenis === k" @click="opsiCetak.jenis = k">{{ j.n }} ({{ jumlahJenis(k) }})</button>
+          </div></fieldset>
+        <label class="flex min-h-[44px] items-center gap-3 font-semibold"><input v-model="opsiCetak.dua" type="checkbox" class="h-5 w-5 accent-[#1572B6]" /> Susun dua kolom (ringkas bila agenda banyak)</label>
+        <button class="tombol-utama w-full" :disabled="!dataCetak.length" @click="lanjutCetak"><PhPrinter :size="20" weight="duotone" /> {{ dataCetak.length ? `Pratinjau ${dataCetak.length} agenda` : 'Tidak ada agenda jenis ini' }}</button>
+      </div>
+    </LembarBawah>
+
+    <DokumenCetak v-model:pratinjau="pratinjau" :judul="judulCetak" :subjudul="`Bulan ${judulBulan}`" :pencetak="sesi.pengguna?.nama_lengkap">
+      <div :class="kolomCetak.length > 1 ? 'agenda-dua' : ''">
+        <table v-for="(kol, ki) in kolomCetak" :key="ki" :class="['tabel', kolomCetak.length > 1 && 'kecil']">
+          <colgroup v-if="kolomCetak.length > 1"><col style="width:9%"><col style="width:27%"><col style="width:20%"><col style="width:44%"></colgroup>
+          <colgroup v-else><col style="width:6%"><col style="width:22%"><col style="width:15%"><col style="width:35%"><col style="width:22%"></colgroup>
+          <thead><tr><th>No.</th><th>Hari, tanggal</th><th>Waktu</th><th>Agenda</th><th v-if="kolomCetak.length === 1">Tempat/keterangan</th></tr></thead>
+          <tbody><tr v-for="(a, i) in kol" :key="a.id + a.mulai">
+            <td class="tengah">{{ i + 1 + (ki ? kolomCetak[0].length : 0) }}</td>
+            <td>{{ a.selesai > a.mulai ? `${formatPendek(a.mulai)} s.d. ${formatPendek(a.selesai)}` : formatHari(a.mulai) }}</td>
+            <td>{{ a.sumber === 'libur' || a.jenis === 'libur' ? 'Libur' : waktu(a) }}</td>
+            <td>{{ a.judul }}<template v-if="kolomCetak.length > 1 && (a.lokasi || a.sumber === 'libur')"><br><i>{{ a.lokasi || NAMA_LIBUR[a.jenis_libur] }}</i></template></td>
+            <td v-if="kolomCetak.length === 1">{{ a.lokasi || (a.sumber === 'libur' ? NAMA_LIBUR[a.jenis_libur] : '') || '–' }}</td></tr></tbody>
+        </table>
+      </div>
       <template #ttd><TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: direktur.jabatan_tertulis || 'Direktur', nama: direktur.nama || '', niy: direktur.niy }" :kanan="{ jabatan: 'Pembuat', nama: sesi.pengguna?.nama_lengkap || '' }" /></template>
     </DokumenCetak>
   </div>
@@ -354,4 +381,9 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
 .chip { display: inline-flex; min-height: 36px; align-items: center; border-radius: 9999px; border: 1px solid rgb(var(--garis)); background: rgb(var(--permukaan)); padding: 0 .8rem; font-size: .8125rem; font-weight: 600; color: rgb(var(--teks-2)); }
 .chip.pilih { border-color: transparent; color: rgb(var(--teks)); background: color-mix(in srgb, var(--c) 14%, rgb(var(--permukaan))); box-shadow: inset 0 0 0 1.5px var(--c); }
 .kartu-ag { box-shadow: inset 4px 0 0 var(--c); }
+</style>
+<style>
+/* Cetak dua kolom: dua tabel bersisian (tidak di-scoped karena dokumen cetak di-teleport) */
+.dok .agenda-dua { display: flex; gap: 4mm; align-items: flex-start; }
+.dok .agenda-dua > table.tabel { width: 50%; }
 </style>

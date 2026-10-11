@@ -1,14 +1,17 @@
-<!-- SIMKA PRO | src/pages/keuangan/LembarBayar.vue | v1.0 | Fase 13 – Catat pembayaran santri, alokasi ke tagihan, foto bukti | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/LembarBayar.vue | v1.1 | Fase 13 – Catatan pembayaran lama (tanpa kuitansi baru) | 12/10/2026 -->
 <script setup>
 // Catat pembayaran seorang santri. Tagihan terbuka tampil berurutan dari jatuh tempo tertua; centang tagihan dan
 // ubah jumlahnya (pembayaran sebagian boleh), atau isi "jumlah diterima" untuk dibagi otomatis ke tagihan tertua.
 // Tanggal bawaan hari ini. Foto bukti transfer (tidak wajib) diunggah ke Google Drive lewat antrian.
 // Setelah tersimpan: kuitansi bernomor bertanda tangan elektronik siap dicetak dan dikirim melalui WA.
+// v1.1: "Catatan pembayaran lama" untuk pembayaran tahun-tahun lalu yang kuitansinya sudah diberikan dahulu:
+//       tidak menerbitkan kuitansi bernomor baru; otomatis tercentang bila tanggal sebelum tahun ajaran aktif.
 import { ref, computed, watch } from 'vue'
 import { PhFloppyDisk, PhCamera, PhCheckSquare, PhSquare, PhMagicWand, PhPrinter, PhWhatsappLogo, PhSealCheck } from '@phosphor-icons/vue'
 import { useKeuangan } from '@/stores/keuangan'
 import { useUI } from '@/stores/ui'
 import { useSesi } from '@/stores/sesi'
+import { useLembaga } from '@/stores/lembaga'
 import { MODE_DEMO } from '@/lib/supabase'
 import { hariIniISO, formatPendek } from '@/lib/tanggal'
 import { rupiah, angka, bacaRupiah, terbilang, CARA_BAYAR, pesanKuitansi } from '@/lib/keuangan'
@@ -20,7 +23,8 @@ import CetakKeuangan from '@/components/cetak/CetakKeuangan.vue'
 
 const props = defineProps({ santri: { type: Object, default: null }, tagihan: { type: Array, default: () => [] }, pilihAwal: { type: Array, default: () => [] } })
 const emit = defineEmits(['tutup', 'tersimpan'])
-const keu = useKeuangan(); const ui = useUI(); const sesi = useSesi()
+const keu = useKeuangan(); const ui = useUI(); const sesi = useSesi(); const lembaga = useLembaga()
+const awalTA = computed(() => lembaga.tahunAktif?.mulai || `${Number(hariIniISO().slice(0, 4)) - (Number(hariIniISO().slice(5, 7)) < 7 ? 1 : 0)}-07-01`)
 const buka = computed({ get: () => !!props.santri, set: (v) => !v && emit('tutup') })
 
 const terbuka = computed(() => props.tagihan.filter((b) => ['belum', 'sebagian'].includes(b.status)).sort((a, b) => a.jatuh_tempo.localeCompare(b.jatuh_tempo)))
@@ -28,10 +32,11 @@ const f = ref(null); const alok = ref({}); const otomatis = ref('')
 watch(() => props.santri, (s) => {
   if (!s) return
   const rek = keu.pengaturan.rekening?.[0]
-  f.value = { tanggal: hariIniISO(), cara: 'tunai', rekening_tujuan: rek ? `${rek.bank} ${rek.nomor}` : '', penyetor: s.wali?.nama || '', keterangan: '', bukti: null, buktiNama: '' }
+  f.value = { tanggal: hariIniISO(), cara: 'tunai', rekening_tujuan: rek ? `${rek.bank} ${rek.nomor}` : '', penyetor: s.wali?.nama || '', keterangan: '', bukti: null, buktiNama: '', riwayat: false }
   alok.value = Object.fromEntries(terbuka.value.map((b) => [b.id, props.pilihAwal.includes(b.id) ? angka(b.sisa) : '']))
   otomatis.value = ''; hasil.value = null
 }, { immediate: true })
+watch(() => f.value?.tanggal, (t) => { if (f.value && t) f.value.riwayat = t < awalTA.value })
 const pilih = (b) => { alok.value[b.id] = alok.value[b.id] ? '' : angka(b.sisa) }
 function bagi() {
   let sisa = bacaRupiah(otomatis.value) || 0
@@ -50,7 +55,7 @@ const proses = ref(false); const hasil = ref(null); const pratinjau = ref(false)
 async function simpan() {
   if (!total.value) return ui.toast('Pilih tagihan dan isi jumlah yang dibayar.', 'galat')
   if (galat.value) return ui.toast(`Jumlah untuk ${galat.value.tagihan} melebihi sisanya.`, 'galat')
-  if (!(await ui.konfirmasi({ judul: `Simpan pembayaran ${rupiah(total.value)}?`, pesan: `${props.santri.nama} · ${CARA_BAYAR[f.value.cara]} · ${formatPendek(f.value.tanggal)}. Kuitansi bernomor akan terbit dan ditandatangani elektronik.`, ya: 'Simpan pembayaran' }))) return
+  if (!(await ui.konfirmasi({ judul: `Simpan pembayaran ${rupiah(total.value)}?`, pesan: `${props.santri.nama} · ${CARA_BAYAR[f.value.cara]} · ${formatPendek(f.value.tanggal)}. ${f.value.riwayat ? 'Dicatat sebagai catatan pembayaran lama, tanpa kuitansi baru.' : 'Kuitansi bernomor akan terbit dan ditandatangani elektronik.'}`, ya: 'Simpan pembayaran' }))) return
   proses.value = true
   try {
     let bukti_id = null
@@ -59,8 +64,9 @@ async function simpan() {
         kategori: 'bukti_bayar', folder: `SIMKA PRO/Keuangan/${f.value.tanggal.slice(0, 4)}/${f.value.tanggal.slice(5, 7)}` })
     }
     const r = await keu.catatPembayaran({ student_id: props.santri.id, tanggal: f.value.tanggal, cara: f.value.cara,
-      rekening_tujuan: f.value.cara === 'transfer' ? f.value.rekening_tujuan : null, penyetor: f.value.penyetor, keterangan: f.value.keterangan, bukti_id,
+      rekening_tujuan: f.value.cara === 'transfer' ? f.value.rekening_tujuan : null, penyetor: f.value.penyetor, keterangan: f.value.keterangan, bukti_id, riwayat: f.value.riwayat,
       alokasi: terbuka.value.filter((b) => bacaRupiah(alok.value[b.id]) > 0).map((b) => ({ bill_id: b.id, jumlah: bacaRupiah(alok.value[b.id]) })) })
+    if (f.value.riwayat) { ui.toast('Catatan pembayaran lama tersimpan.'); emit('tersimpan'); emit('tutup'); return }
     hasil.value = (await keu.kuitansi([r.id]))[0]
     ui.toast(`Pembayaran tersimpan. Kuitansi ${r.nomor}.`); emit('tersimpan')
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
@@ -126,7 +132,9 @@ async function simpan() {
           <label class="tombol-garis w-full cursor-pointer"><PhCamera :size="20" weight="duotone" /> {{ f.bukti ? 'Ganti foto: ' + f.buktiNama.slice(0, 18) : 'Ambil/pilih foto bukti' }}
             <input type="file" accept="image/*" capture="environment" class="sr-only" @change="pilihFoto" /></label></div>
       </div>
-      <button class="tombol-utama w-full" :disabled="proses || !total" @click="simpan"><PhFloppyDisk :size="20" weight="duotone" /> Simpan dan terbitkan kuitansi</button>
+      <label class="flex items-start gap-3 rounded-xl border border-garis p-3"><input v-model="f.riwayat" type="checkbox" class="mt-0.5 h-5 w-5 shrink-0" />
+        <span><span class="font-semibold">Catatan pembayaran lama</span><span class="block text-xs text-teks3">Untuk pembayaran tahun-tahun lalu yang kuitansinya sudah diberikan dahulu: tercatat sebagai pelunasan tanpa menerbitkan kuitansi bernomor baru.</span></span></label>
+      <button class="tombol-utama w-full" :disabled="proses || !total" @click="simpan"><PhFloppyDisk :size="20" weight="duotone" /> {{ f.riwayat ? 'Simpan catatan pembayaran lama' : 'Simpan dan terbitkan kuitansi' }}</button>
     </div>
   </LembarBawah>
 </template>

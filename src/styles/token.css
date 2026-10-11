@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/token.css | v2.4 | Fase 13 – Warna menu Keuangan | 11/10/2026 */
+/* SIMKA PRO | src/styles/token.css | v2.5 | Fase 3 – Warna menu Data Presensi | 12/10/2026 */
 /* =====================================================================
    SIMKA PRO · Token warna dan tema
    Semua warna teks sudah diuji kontrasnya (WCAG AA, ≥ 4,5:1) terhadap
@@ -63,6 +63,7 @@
 .w-aturpresensi { --c: #4A6B12; --c2: #1E7D4F; }
 .w-shift      { --c: #0E6A9E; --c2: #3B4CB0; }
 .w-verval     { --c: #7B2D8E; --c2: #B42A5E; }
+.w-datapresensi { --c: #0E7490; --c2: #1E7D4F; }   /* sian tua — data presensi, 5,4:1 */
 .w-rekap      { --c: #1D6B5F; --c2: #B5501A; }
 .w-audit      { --c: #4B4F8F; --c2: #46525F; }
 .w-berkas     { --c: #2F5D50; --c2: #0E6A9E; }
@@ -96,6 +97,7 @@
 .dark .w-aturpresensi { --c: #B8E06A; --c2: #5BD69A; }
 .dark .w-shift      { --c: #7CC8F2; --c2: #9AA6FF; }
 .dark .w-verval     { --c: #D9A3F0; --c2: #FF8FB8; }
+.dark .w-datapresensi { --c: #67E8F9; --c2: #5BD69A; }
 .dark .w-rekap      { --c: #7FD8C6; --c2: #FFB074; }
 .dark .w-audit      { --c: #B3B8FF; --c2: #B9C6D3; }
 .dark .w-berkas     { --c: #8FD3BF; --c2: #7CC8F2; }

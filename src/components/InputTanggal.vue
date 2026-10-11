@@ -1,9 +1,10 @@
+<!-- SIMKA PRO | src/components/InputTanggal.vue | v1.2 | Perbaikan: keterangan hari/tanggal di bawah isian dihapus (hanya pesan galat) | 12/10/2026 -->
 <script setup>
 // Isian tanggal dd/mm/yyyy. Nilai (v-model) disimpan sebagai yyyy-mm-dd.
 // Bawaan hari ini (WITA), kecuali diberi :bawaan-kosong (mis. tanggal lahir).
 import { ref, watch, onMounted } from 'vue'
 import { PhCalendarBlank } from '@phosphor-icons/vue'
-import { hariIniISO, formatPendek, formatHari, uraiPendek } from '@/lib/tanggal'
+import { hariIniISO, formatPendek, uraiPendek } from '@/lib/tanggal'
 
 const model = defineModel({ type: String, default: '' })
 const props = defineProps({ label: String, bawaanKosong: Boolean, wajib: Boolean, id: { type: String, default: () => 'tgl-' + Math.random().toString(36).slice(2, 7) } })
@@ -34,15 +35,13 @@ function bukaPemilih() { try { pemilih.value.showPicker() } catch { pemilih.valu
     <div class="relative">
       <input :id="id" class="isian pr-12 tabular-nums" inputmode="numeric" placeholder="dd/mm/yyyy" autocomplete="off"
         :value="teks" @input="ketik" @blur="tetapkan" @keydown.enter.prevent="tetapkan"
-        :aria-invalid="!!galat" :aria-describedby="id + '-ket'" />
+        :aria-invalid="!!galat" :aria-describedby="galat ? id + '-ket' : undefined" />
       <button type="button" class="tombol-ikon absolute right-0.5 top-1/2 -translate-y-1/2" @click="bukaPemilih" aria-label="Buka kalender">
         <PhCalendarBlank :size="22" weight="duotone" />
       </button>
       <input ref="pemilih" type="date" tabindex="-1" aria-hidden="true" class="pointer-events-none absolute bottom-0 right-2 h-0 w-0 opacity-0"
         :value="model" @change="model = $event.target.value" />
     </div>
-    <p :id="id + '-ket'" :class="['mt-1 text-xs', galat ? 'text-merah font-semibold' : 'text-teks3']">
-      {{ galat || (model ? formatHari(model) : 'Belum diisi') }}
-    </p>
+    <p v-if="galat" :id="id + '-ket'" class="mt-1 text-xs font-semibold text-merah">{{ galat }}</p>
   </div>
 </template>

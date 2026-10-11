@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.16 | Fase 13 – Menu Keuangan santri (hanya yang ditunjuk superadmin) | 11/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.17 | Fase 3 – Menu Data Presensi (dipisah dari Verval Presensi) | 12/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -6,7 +6,7 @@
 import {
   PhHouse, PhFingerprint, PhUsersThree, PhStudent, PhBookOpenText, PhFileText, PhFirstAidKit,
   PhShieldCheck, PhChartBar, PhEnvelopeSimple, PhWallet, PhMegaphone, PhKey, PhGearSix, PhBell,
-  PhFiles, PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhCashRegister, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut,
+  PhFiles, PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhCashRegister, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut, PhListMagnifyingGlass,
 } from '@phosphor-icons/vue'
 
 const ADMIN = ['admin', 'superadmin']
@@ -20,6 +20,7 @@ export const MENU = [
   { kode: 'presensi',   nama: 'Presensi',        ikon: PhFingerprint,    warna: 'presensi',   ke: '/presensi',          grup: 'Presensi' },
   { kode: 'jadwalshift', nama: 'Jadwal Shift',   ikon: PhCalendarStar,   warna: 'shift',      ke: '/jadwal-shift',      grup: 'Presensi', syarat: 'shift' },
   { kode: 'vervalpresensi', nama: 'Verval Presensi', ikon: PhSealCheck,   warna: 'verval',     ke: '/verval-presensi',   grup: 'Presensi', peran: ADMIN, izin: 'verval_presensi' },
+  { kode: 'datapresensi', nama: 'Data Presensi', ikon: PhListMagnifyingGlass, warna: 'datapresensi', ke: '/data-presensi', grup: 'Presensi', peran: ADMIN, izin: 'verval_presensi' },
   { kode: 'aturpresensi', nama: 'Penjadwalan', ikon: PhMapPinArea, warna: 'aturpresensi', ke: '/atur-presensi', grup: 'Presensi', peran: ADMIN, izin: 'atur_presensi' },
   // Layanan pegawai (milik setiap pegawai)
   { kode: 'pengajuan',  nama: 'Pengajuan',       ikon: PhFileText,       warna: 'pengajuan',  ke: '/pengajuan',         grup: 'Layanan Pegawai' },

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabPembayaran.vue | v1.0 | Fase 13 – Daftar pembayaran, kuitansi, rekap pemasukan | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabPembayaran.vue | v1.1 | Fase 13 – Penanda catatan pembayaran lama | 12/10/2026 -->
 <script setup>
 // Pembayaran santri per rentang tanggal (bawaan: awal bulan ini s.d. hari ini): jumlah, tunai/transfer, per jenis biaya.
 // Setiap baris: cetak kuitansi, kirim konfirmasi WA ke wali, buka rincian santri, batalkan beralasan (kuitansi dicabut).
@@ -59,7 +59,7 @@ async function simpanBatal() {
 
 function ekspor() {
   const aoa = [['No.', 'Tanggal', 'Nomor kuitansi', 'NIS', 'Nama', 'JK', 'Kelas', 'Pembayaran', 'Cara', 'Rekening tujuan', 'Penyetor', 'Jumlah', 'Status', 'Dicatat oleh'],
-    ...tampil.value.map((p, i) => [i + 1, formatPendek(p.tanggal), p.nomor, p.nis, p.nama, p.jk, p.kelas || '', (p.rincian || []).map((r) => `${r.tagihan} (${angka(r.jumlah)})`).join('; '),
+    ...tampil.value.map((p, i) => [i + 1, formatPendek(p.tanggal), p.riwayat ? 'Catatan lama' : p.nomor, p.nis, p.nama, p.jk, p.kelas || '', (p.rincian || []).map((r) => `${r.tagihan} (${angka(r.jumlah)})`).join('; '),
       CARA_BAYAR[p.cara], p.rekening_tujuan || '', p.penyetor || '', Number(p.jumlah), p.status === 'sah' ? 'Sah' : 'Dibatalkan: ' + (p.alasan_batal || ''), p.dicatat || ''])]
   const ws = XLSX.utils.aoa_to_sheet([[`Pembayaran santri ${formatPendek(mulai.value)} s.d. ${formatPendek(akhir.value)}`], [], ...aoa])
   ws['!cols'] = aoa[0].map((j) => ({ wch: ['Nama', 'Pembayaran'].includes(j) ? 34 : 14 }))
@@ -95,15 +95,15 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
         <div class="flex flex-wrap items-start gap-2">
           <button class="min-w-[180px] flex-1 text-left" @click="buka(p)">
             <p class="font-bold">{{ p.nama }} <span class="text-xs font-normal text-teks3">{{ p.nis }} · {{ p.kelas || '–' }}</span></p>
-            <p class="text-xs text-teks3">{{ formatPendek(p.tanggal) }} · {{ CARA_BAYAR[p.cara] }}{{ p.rekening_tujuan ? ' ke ' + p.rekening_tujuan : '' }} · {{ p.nomor }}</p>
+            <p class="text-xs text-teks3">{{ formatPendek(p.tanggal) }} · {{ CARA_BAYAR[p.cara] }}{{ p.rekening_tujuan ? ' ke ' + p.rekening_tujuan : '' }} · <span v-if="p.riwayat" class="lencana w-hakakses">Catatan lama</span><template v-else>{{ p.nomor }}</template></p>
             <p class="text-sm text-teks2">{{ (p.rincian || []).map((r) => r.tagihan).join(', ') }}</p>
             <p v-if="p.status === 'batal'" class="text-xs font-semibold text-merah">Dibatalkan: {{ p.alasan_batal }}</p>
           </button>
           <p class="text-lg font-extrabold tabular-nums">{{ rupiah(p.jumlah) }}</p>
         </div>
         <div class="mt-2 flex flex-wrap gap-1.5">
-          <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="cetak(p)"><PhReceipt :size="18" weight="duotone" /> Kuitansi</button>
-          <button v-if="p.status === 'sah'" class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!p.wali?.no_hp" @click="wa(p)"><PhWhatsappLogo :size="18" weight="duotone" /> WA wali</button>
+          <button v-if="!p.riwayat" class="tombol-garis min-h-[40px] px-3 text-sm" @click="cetak(p)"><PhReceipt :size="18" weight="duotone" /> Kuitansi</button>
+          <button v-if="p.status === 'sah' && !p.riwayat" class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!p.wali?.no_hp" @click="wa(p)"><PhWhatsappLogo :size="18" weight="duotone" /> WA wali</button>
           <button v-if="p.bukti_id" class="tombol-garis min-h-[40px] px-3 text-sm" @click="bukti(p)"><PhImage :size="18" /> Bukti</button>
           <button v-if="keu.hak.kelola && p.status === 'sah'" class="tombol-garis min-h-[40px] px-3 text-sm text-merah" @click="batal = { p, teks: '' }"><PhXCircle :size="18" /> Batalkan</button>
         </div>
@@ -122,7 +122,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
       <table class="tabel">
         <colgroup><col style="width:4%"><col style="width:9%"><col style="width:16%"><col style="width:9%"><col style="width:20%"><col style="width:7%"><col style="width:23%"><col style="width:12%"></colgroup>
         <thead><tr><th>No.</th><th>Tanggal</th><th>Nomor kuitansi</th><th>NIS</th><th>Nama</th><th>Cara</th><th>Pembayaran</th><th>Jumlah (Rp)</th></tr></thead>
-        <tbody><tr v-for="(p, i) in sah" :key="p.id"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ formatPendek(p.tanggal) }}</td><td>{{ p.nomor }}</td><td>{{ p.nis }}</td><td>{{ p.nama }}</td>
+        <tbody><tr v-for="(p, i) in sah" :key="p.id"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ formatPendek(p.tanggal) }}</td><td>{{ p.riwayat ? 'Catatan lama' : p.nomor }}</td><td>{{ p.nis }}</td><td>{{ p.nama }}</td>
           <td>{{ CARA_BAYAR[p.cara] }}</td><td>{{ (p.rincian || []).map((r) => r.tagihan).join(', ') }}</td><td class="kanan">{{ angka(p.jumlah) }}</td></tr>
           <tr><th colspan="7">Jumlah pemasukan</th><th class="kanan">{{ angka(jml(sah)) }}</th></tr></tbody>
       </table>

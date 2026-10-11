@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/keuangan.js | v1.1 | Fase 13 – Pelengkap: daftar kelompok (kelas/kamar/halaqah) | 11/10/2026
+// SIMKA PRO | src/stores/keuangan.js | v1.2 | Fase 13 – Impor catatan keuangan lama | 12/10/2026
 // Menu Keuangan (Blueprint Bagian 37). Hak dihitung server (hak_keuangan): superadmin dan pegawai yang ditunjuk
 // superadmin untuk "keuangan" (Hak Akses → Fitur sensitif). Jabatan Bendahara Wustha/SMA tidak otomatis berhak.
 // Semua penulisan lewat fungsi server; mode demo memakai lib/demoKeuangan.
@@ -54,6 +54,7 @@ export const useKeuangan = defineStore('keuangan', {
     catatPembayaran(p) { return MODE_DEMO ? D(demo.bayar, p) : rpc('catat_pembayaran', { p }) },
     batalkanPembayaran(id, alasan) { return MODE_DEMO ? D(demo.batalBayar, id, alasan) : rpc('batalkan_pembayaran', { p_id: id, p_alasan: alasan }) },
     daftarPembayaran(p = {}) { return MODE_DEMO ? D(demo.pembayaran, p) : rpc('daftar_pembayaran', { p }).then((r) => r || []) },
+    imporRiwayat(p) { return MODE_DEMO ? D(demo.imporRiwayat, p) : rpc('impor_riwayat_keuangan', { p }).then((r) => r || []) },
     kuitansi(ids) { return MODE_DEMO ? D(demo.kuitansi, ids) : rpc('kuitansi', { p_ids: ids }).then((r) => r || []) },
     // ---------- Surat tagihan ----------
     terbitkanSurat(p) { return MODE_DEMO ? D(demo.terbitkanSurat, p) : rpc('terbitkan_surat_tagihan', { p }).then((r) => r || []) },
