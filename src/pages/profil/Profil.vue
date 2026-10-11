@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.8 | Fase 7 – Perbaikan uji coba: kartu pegawai di Profil | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.9 | Fase 11 – Tahap 4 Kartu Slip gaji (buka atau minta ke Bendahara) | 11/10/2026 -->
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -10,6 +10,7 @@ import PilihTema from '@/components/PilihTema.vue'
 import AvatarPengguna from '@/components/AvatarPengguna.vue'
 import PolaKhatam from '@/components/PolaKhatam.vue'
 import KartuDorong from '@/components/KartuDorong.vue'
+import KartuSlipProfil from './KartuSlipProfil.vue'
 import { usePengumuman } from '@/stores/pengumuman'
 import { usePengajuan } from '@/stores/pengajuan'
 import { useKartu } from '@/stores/kartu'
@@ -59,6 +60,8 @@ function ganti(p) { sesi.masukDemo(p); notif.berhenti(); pengumuman.berhenti(); 
       <span class="chip-ikon h-10 w-10"><PhIdentificationBadge :size="22" weight="duotone" /></span>
       <span class="flex-1"><span class="block font-bold">Kartu pegawai</span><span class="block text-sm text-teks3">Lihat, cetak, atau unduh kartu pegawai Anda</span></span>
     </router-link>
+
+    <KartuSlipProfil v-if="!sesi.isSuperadmin" />
 
     <router-link to="/notifikasi" class="kartu w-notifikasi flex items-center gap-3 p-5 hover:bg-permukaan2">
       <span class="chip-ikon h-10 w-10"><PhBell :size="22" weight="duotone" /></span>

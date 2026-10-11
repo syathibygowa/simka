@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.0 | Fase 11 – Tahap 2 Rincian periode gaji | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.1 | Fase 11 – Tahap 4 Ajukan terbit, tanda tangan, cetak slip, revisi | 11/10/2026 -->
 <script setup>
 // Rincian satu periode gaji: ringkasan, daftar pegawai (skema, penyesuaian, pendapatan, potongan, diterima),
 // hitung ulang, impor jumlah diterima dari Excel, ekspor Excel, cetak Daftar Gaji F4 mendatar.
@@ -6,7 +6,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import * as XLSX from 'xlsx'
 import { PhArrowLeft, PhArrowsClockwise, PhUploadSimple, PhFileXls, PhEye, PhTrash, PhMagnifyingGlass, PhUsersThree, PhCoins, PhScales, PhHandCoins,
-  PhWarningCircle, PhDownloadSimple, PhFloppyDisk } from '@phosphor-icons/vue'
+  PhWarningCircle, PhDownloadSimple, PhFloppyDisk, PhPaperPlaneTilt, PhSignature, PhSealCheck, PhArrowUUpLeft, PhReceipt, PhXCircle, PhClock } from '@phosphor-icons/vue'
 import { useGaji } from '@/stores/gaji'
 import { useLembaga } from '@/stores/lembaga'
 import { useSesi } from '@/stores/sesi'
@@ -19,6 +19,7 @@ import InputTanggal from '@/components/InputTanggal.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarBarisGaji from './LembarBarisGaji.vue'
+import CetakSlip from '@/components/cetak/CetakSlip.vue'
 
 const props = defineProps({ id: { type: String, required: true } })
 const emit = defineEmits(['tutup'])
@@ -34,6 +35,37 @@ const pr = computed(() => r.value?.periode || {})
 const baris = computed(() => r.value?.baris || [])
 const boleh = computed(() => !!gaji.hak.kelola && pr.value.status === 'draf')
 const jml = (k) => baris.value.reduce((a, x) => a + Number(x[k] || 0), 0)
+
+// ---------- Penerbitan: ajukan → tanda tangan Bendahara (dan Direktur) → terbit ----------
+const ttd = computed(() => r.value?.ttd || [])
+const ttdSaya = computed(() => pr.value.status === 'diajukan' && ttd.value.some((t) => t.status === 'menunggu' && t.saya))
+const PERAN_TTD = { bendahara: 'Bendahara', direktur: 'Direktur' }
+async function ajukan() {
+  const kurang = baris.value.filter((b) => b.data.catatan?.length).length
+  if (!(await ui.konfirmasi({ judul: `Ajukan penerbitan gaji ${namaPeriode(pr.value)}?`,
+    pesan: `${baris.value.length} slip dengan jumlah diterima ${rupiah(jml('diterima'))} diajukan untuk ditandatangani Bendahara${gaji.pengaturan.ttd_direktur ? ' dan Direktur' : ''}.`
+      + (kurang ? ` Perhatian: ${kurang} pegawai masih memiliki data kurang.` : '') + ' Setelah terbit, slip terkunci dan hanya dapat diubah lewat revisi.', ya: 'Ajukan' }))) return
+  proses.value = true
+  try { const h = await gaji.ajukanTerbit(props.id); await muat(); ui.toast(h === 'terbit' ? 'Gaji terbit. Slip terkunci dan bertanda tangan elektronik.' : 'Diajukan. Menunggu tanda tangan.') }
+  catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
+}
+const fTolak = ref(null)
+async function tandatangani(setuju) {
+  if (!setuju && (!fTolak.value || fTolak.value.trim().length < 3)) { fTolak.value = fTolak.value ?? ''; return ui.toast('Tulis alasan penolakan.', 'galat') }
+  if (setuju && !(await ui.konfirmasi({ judul: 'Tanda tangani daftar gaji?', pesan: `Gaji ${namaPeriode(pr.value)}: ${baris.value.length} pegawai, ${rupiah(jml('diterima'))}. Tanda tangan elektronik Anda tercantum di setiap slip.`, ya: 'Tanda tangani' }))) return
+  proses.value = true
+  try { const h = await gaji.tandatangani(props.id, setuju, fTolak.value); fTolak.value = null; await muat()
+    ui.toast(h === 'terbit' ? 'Ditandatangani. Gaji terbit.' : h === 'ditolak' ? 'Pengajuan dikembalikan ke draf.' : 'Ditandatangani. Menunggu penanda tangan lain.') }
+  catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
+}
+async function tarik() {
+  if (!(await ui.konfirmasi({ judul: 'Tarik pengajuan?', pesan: 'Periode kembali menjadi draf dan tanda tangan yang sudah ada dihapus.', ya: 'Tarik' }))) return
+  try { await gaji.tarikPengajuan(props.id); await muat(); ui.toast('Pengajuan ditarik.') } catch (e) { ui.toast(e.message, 'galat') }
+}
+// Cetak slip (semua yang tampil, atau satu)
+const slipCetak = ref([]); const pratinjauSlip = ref(false)
+const keSlip = (b) => ({ ...b, periode: pr.value, ttd: ttd.value })
+function cetakSlip(daftar) { slipCetak.value = daftar.map(keSlip); pratinjauSlip.value = true }
 
 // ---------- Saringan ----------
 const cari = ref(''); const saring = ref('')
@@ -142,6 +174,36 @@ const jumlahKolom = computed(() => Object.fromEntries(KOLOM_DAFTAR.map(([c]) => 
         </div>
       </div>
 
+      <!-- Penerbitan -->
+      <p v-if="pr.status === 'draf' && pr.alasan_tolak" class="w-klinik mb-3 flex gap-2 rounded-xl p-3 text-sm font-semibold" style="color: var(--c); background: color-mix(in srgb, var(--c) 10%, transparent)">
+        <PhXCircle :size="18" class="mt-0.5 shrink-0" /> Dikembalikan penanda tangan: {{ pr.alasan_tolak }}</p>
+      <section v-if="pr.status !== 'draf' || boleh" :class="['kartu mb-4 p-4', pr.status === 'terbit' ? 'w-presensi' : pr.status === 'diajukan' ? 'w-verifikasi' : 'w-tahfizh']">
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="chip-ikon h-11 w-11 shrink-0"><component :is="pr.status === 'terbit' ? PhSealCheck : pr.status === 'diajukan' ? PhSignature : PhPaperPlaneTilt" :size="24" weight="duotone" /></span>
+          <div class="min-w-[200px] flex-1">
+            <p class="font-bold">{{ pr.status === 'terbit' ? 'Slip terbit dan terkunci' : pr.status === 'diajukan' ? 'Menunggu tanda tangan elektronik' : 'Siap diterbitkan?' }}</p>
+            <p class="text-sm text-teks3">{{ pr.status === 'terbit' ? `Diterbitkan ${formatWaktu(pr.diterbitkan_pada)}. Perubahan hanya lewat revisi slip per pegawai.`
+              : pr.status === 'diajukan' ? `Diajukan ${formatWaktu(pr.diajukan_pada)}.` : `Periksa daftar, lalu ajukan untuk ditandatangani Bendahara${gaji.pengaturan.ttd_direktur ? ' dan Direktur' : ''}.` }}</p>
+          </div>
+          <button v-if="boleh" class="tombol-utama" :disabled="proses" @click="ajukan"><PhPaperPlaneTilt :size="20" weight="duotone" /> Ajukan terbit</button>
+          <button v-if="pr.status === 'terbit' && baris.length" class="tombol-utama" @click="cetakSlip(tampil)"><PhReceipt :size="20" weight="duotone" /> Cetak slip ({{ tampil.length }})</button>
+          <button v-if="pr.status === 'diajukan' && gaji.hak.kelola" class="tombol-garis" @click="tarik"><PhArrowUUpLeft :size="20" /> Tarik pengajuan</button>
+        </div>
+        <ul v-if="ttd.length" class="mt-3 flex flex-wrap gap-2">
+          <li v-for="t in ttd" :key="t.peran" :class="['lencana', t.status === 'ditandatangani' ? 'w-presensi' : t.status === 'ditolak' ? 'w-klinik' : 'w-tahfizh']">
+            <component :is="t.status === 'ditandatangani' ? PhSealCheck : PhClock" :size="14" />
+            {{ PERAN_TTD[t.peran] }}: {{ t.status === 'ditandatangani' ? `${t.nama}, ${formatWaktu(t.waktu)}` : 'menunggu' }}</li>
+        </ul>
+        <div v-if="ttdSaya" class="mt-3 space-y-2 rounded-xl bg-permukaan2 p-3">
+          <p class="text-sm font-semibold">Anda diminta menandatangani daftar gaji ini.</p>
+          <input v-if="fTolak !== null" v-model="fTolak" class="isian" placeholder="Alasan penolakan (wajib bila menolak)" aria-label="Alasan penolakan" />
+          <div class="flex flex-wrap gap-2">
+            <button class="tombol-utama" :disabled="proses" @click="tandatangani(true)"><PhSignature :size="20" weight="duotone" /> Tanda tangani</button>
+            <button class="tombol-garis" :disabled="proses" @click="fTolak === null ? (fTolak = '') : tandatangani(false)"><PhXCircle :size="20" /> {{ fTolak === null ? 'Tolak' : 'Kirim penolakan' }}</button>
+          </div>
+        </div>
+      </section>
+
       <div class="-mx-4 mb-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
         <KartuStatistik class="w-[44%] shrink-0 snap-start sm:w-auto" judul="Pegawai" :nilai="baris.length" :ikon="PhUsersThree" warna="pegawai" :keterangan="`${SARING[3].j} data kurang`" />
         <KartuStatistik class="w-[72%] shrink-0 snap-start sm:w-auto" judul="Menurut skema" :nilai="rupiah(jml('total_skema'))" :ikon="PhCoins" warna="tahfizh" keterangan="Tarif dan honor per jam" />
@@ -189,6 +251,9 @@ const jumlahKolom = computed(() => Object.fromEntries(KOLOM_DAFTAR.map(([c]) => 
                 <span v-if="b.target_diterima != null" class="lencana w-verifikasi mb-0.5">Ditetapkan</span>
                 <span v-else-if="b.item.some((i) => i.sumber === 'penetapan')" class="lencana w-verifikasi mb-0.5">Ketetapan yayasan</span>
                 <span v-if="b.item.some((i) => i.sumber === 'manual' && i.kategori !== 'penyesuaian')" class="lencana w-pengajuan mb-0.5">Diubah</span>
+                <span v-if="b.dalam_revisi" class="lencana w-klinik mb-0.5">Sedang direvisi</span>
+                <span v-else-if="b.revisi_ke" class="lencana w-shift mb-0.5">Revisi ke-{{ b.revisi_ke }}</span>
+                <span v-if="b.dibuka_pegawai" class="lencana w-presensi mb-0.5">Dibuka untuk pegawai</span>
                 <p v-if="b.data.catatan?.length" class="w-klinik font-semibold" style="color: var(--c)">{{ b.data.catatan[0] }}<template v-if="b.data.catatan.length > 1"> (+{{ b.data.catatan.length - 1 }})</template></p>
               </td>
             </tr>
@@ -220,7 +285,9 @@ const jumlahKolom = computed(() => Object.fromEntries(KOLOM_DAFTAR.map(([c]) => 
         </li>
       </ul>
 
-      <LembarBarisGaji :baris="pilihan" :periode="pr" :boleh="boleh" @tutup="pilihId = ''" @berubah="muat" />
+      <LembarBarisGaji :baris="pilihan" :periode="pr" :boleh="boleh || !!pilihan?.dalam_revisi && !!gaji.hak.kelola" @tutup="pilihId = ''" @berubah="muat"
+        @cetak="(b) => cetakSlip([b])" />
+      <CetakSlip v-model:pratinjau="pratinjauSlip" :slip="slipCetak" :pengaturan="gaji.pengaturan" :pencetak="sesi.pengguna?.nama_lengkap" />
 
       <!-- Ubah tanggal bayar -->
       <LembarBawah :model-value="!!fBayar" @update:model-value="(x) => !x && (fBayar = null)" judul="Ubah periode">

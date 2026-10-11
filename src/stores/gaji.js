@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/gaji.js | v1.1 | Fase 11 – Tahap 2 Periode gaji, perhitungan, penetapan yayasan | 11/10/2026
+// SIMKA PRO | src/stores/gaji.js | v1.3 | Fase 11 – Tahap 4 Penerbitan slip, Slip saya, permintaan slip | 11/10/2026
 // Modul Gaji (Blueprint Bagian 36). Hak dihitung server (hak_gaji):
 //   kelola = superadmin, Bendahara (hak fitur slip_gaji 3), admin ber-izin kelola_gaji
 //   lihat  = kelola + admin ber-izin lihat_gaji
@@ -15,7 +15,7 @@ import { demoGaji } from '@/lib/demoGaji'
 export const PENGATURAN_BAWAAN = {
   slip_pegawai: false, ttd_direktur: false, pembulatan: 100, potong_izin: false, potong_sakit: false, potong_cuti: false,
   potong_terlambat: false, tanggal_gajian: 1, honorer_tunjangan_jabatan: true, info_beban_kerja: true, catatan_slip: '',
-  label_penyesuaian: 'Penyesuaian ketetapan yayasan',
+  label_penyesuaian: 'Penyesuaian ketetapan yayasan', potong_kehadiran: false,
 }
 const BANK_DEMO = ['BSI', 'BRI', 'BNI', 'Bank Mandiri', 'BSI']
 let demoPengaturan = { ...PENGATURAN_BAWAAN }
@@ -124,6 +124,36 @@ export const useGaji = defineStore('gaji', {
     async daftarPenetapan() { return MODE_DEMO ? demoGaji.penetapan() : (await rpc('daftar_penetapan_gaji')) || [] },
     async simpanPenetapan(isi) { return MODE_DEMO ? demoGaji.simpanPenetapan(isi, await this._ctx()) : rpc('simpan_penetapan_gaji', { p: isi }) },
     async hapusPenetapan(id) { return MODE_DEMO ? demoGaji.hapusPenetapan(id) : rpc('hapus_penetapan_gaji', { p_id: id }) },
+
+    // ---------- Pinjaman ----------
+    async daftarPinjaman() { return MODE_DEMO ? demoGaji.pinjaman() : (await rpc('daftar_pinjaman')) || [] },
+    async simpanPinjaman(isi) { return MODE_DEMO ? demoGaji.simpanPinjaman(isi, await this._ctx()) : rpc('simpan_pinjaman', { p: isi }) },
+    async bayarPinjaman(id, besaran, tanggal, ket) {
+      return MODE_DEMO ? demoGaji.bayarPinjaman(id, besaran, tanggal, ket) : rpc('bayar_pinjaman', { p_loan: id, p_besaran: besaran, p_tanggal: tanggal || null, p_keterangan: ket })
+    },
+    async batalkanPinjaman(id, alasan) { return MODE_DEMO ? demoGaji.batalkanPinjaman(id) : rpc('batalkan_pinjaman', { p_loan: id, p_alasan: alasan }) },
+
+    // ---------- Simpanan program ----------
+    async daftarSimpanan() { return MODE_DEMO ? demoGaji.simpanan() : (await rpc('daftar_simpanan')) || [] },
+    async simpanProgram(isi) { return MODE_DEMO ? demoGaji.simpanProgram(isi) : rpc('simpan_program_simpanan', { p: isi }) },
+    async simpanAnggota(isi) { return MODE_DEMO ? demoGaji.simpanAnggota(isi, await this._ctx()) : rpc('simpan_anggota_simpanan', { p: isi }) },
+    async catatTransaksi(isi) { return MODE_DEMO ? demoGaji.catatTransaksi(isi) : rpc('catat_transaksi_simpanan', { p: isi }) },
+
+    // ---------- Penerbitan dan slip ----------
+    async ajukanTerbit(id) { return MODE_DEMO ? demoGaji.ajukan(id, this.pengaturan) : rpc('ajukan_periode_gaji', { p_period: id }) },
+    async tandatangani(id, setuju, catatan) { return MODE_DEMO ? demoGaji.tandatangani(id, setuju) : rpc('tandatangani_periode_gaji', { p_period: id, p_setuju: setuju, p_catatan: catatan || null }) },
+    async tarikPengajuan(id) { return MODE_DEMO ? demoGaji.tarik(id) : rpc('tarik_pengajuan_gaji', { p_period: id }) },
+    async mulaiRevisi(lineId, alasan) { return MODE_DEMO ? demoGaji.mulaiRevisi(lineId, alasan) : rpc('mulai_revisi_slip', { p_line: lineId, p_alasan: alasan }) },
+    async terbitkanRevisi(lineId) { return MODE_DEMO ? demoGaji.terbitkanRevisi(lineId) : rpc('terbitkan_revisi_slip', { p_line: lineId }) },
+    async batalkanRevisi(lineId) { return MODE_DEMO ? demoGaji.batalkanRevisi(lineId) : rpc('batalkan_revisi_slip', { p_line: lineId }) },
+    async tutupSlip(lineId) { return MODE_DEMO ? demoGaji.tutupSlip(lineId) : rpc('tutup_slip_pegawai', { p_line: lineId }) },
+    async slipSaya() { return MODE_DEMO ? demoGaji.slipSaya(this.pengaturan) : rpc('slip_saya') },
+    async slipGaji(lineId) { return MODE_DEMO ? demoGaji.slip(lineId) : rpc('slip_gaji', { p_line: lineId }) },
+    async periodeSaya() { return MODE_DEMO ? demoGaji.periodeSaya() : (await rpc('periode_gaji_saya')) || [] },
+    async mintaSlip(periodId, catatan) { return MODE_DEMO ? demoGaji.minta(periodId, catatan) : rpc('minta_slip_gaji', { p_period: periodId || null, p_catatan: catatan || null }) },
+    async daftarPermintaan() { return MODE_DEMO ? demoGaji.permintaan() : (await rpc('daftar_permintaan_slip')) || [] },
+    async tanggapiPermintaan(id, aksi, catatan) { return MODE_DEMO ? demoGaji.tanggapi(id, aksi, catatan) : rpc('tanggapi_permintaan_slip', { p_id: id, p_aksi: aksi, p_catatan: catatan || null }) },
+    async ttdSaya() { return MODE_DEMO ? [] : (await rpc('ttd_gaji_saya')) || [] },
 
     async hapusRekening(id) {
       if (MODE_DEMO) { const p = this.pegawai.find((x) => x.id === id); if (p) p.rekening = null; demoRekening[id] = null; return }

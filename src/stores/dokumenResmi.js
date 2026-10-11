@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/dokumenResmi.js | v1.0 | Fase 8 – Tahap 5 Penerbitan laporan resmi bertanda tangan elektronik | 10/10/2026
+// SIMKA PRO | src/stores/dokumenResmi.js | v1.1 | Fase 11 – Tahap 4 Slip gaji tidak masuk kotak Tanda tangan Dokumen | 11/10/2026
 // Penerbitan laporan resmi: ajukan (salinan beku + kode validasi), tanda tangani/tolak oleh pimpinan, batalkan,
 // cari versi resmi suatu laporan (berdasarkan kunci laporan), ambil salinan beku, dan kotak masuk tanda tangan.
 // Semua hak diperiksa server (fungsi security definer + RLS registri dokumen).
@@ -81,7 +81,7 @@ export const useDokumenResmi = defineStore('dokumenResmi', {
         const id = useSesi().pengguna?.id; if (!id) return
         const { data, error } = await supabase.from('document_signatures')
           .select('id, posisi, status, waktu, catatan, created_at, dok:document_registry!inner(id, kode, jenis_nama, perihal, periode, status, mode_ttd, tautan, diajukan_pada, diterbitkan_oleh, document_signatures(posisi, nama))')
-          .eq('employee_id', id).neq('posisi', 'kanan').order('created_at', { ascending: false }).limit(100)
+          .eq('employee_id', id).neq('posisi', 'kanan').neq('dok.jenis', 'slip_gaji').order('created_at', { ascending: false }).limit(100)
         if (error) throw new Error(pesanGalat(error))
         this.masuk = (data || []).filter((x) => x.dok?.diterbitkan_oleh !== id || x.status === 'menunggu')
           .map((x) => ({ ...x, pengaju: (x.dok.document_signatures || []).find((s) => s.posisi === 'kanan')?.nama }))

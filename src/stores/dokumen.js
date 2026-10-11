@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/dokumen.js | v1.1 | Fase 8 – Tahap 5 tautan versi resmi laporan | 10/10/2026
+// SIMKA PRO | src/stores/dokumen.js | v1.2 | Fase 11 – Tahap 4 Slip gaji tidak tampil di daftar registri Dokumen | 11/10/2026
 // Registri dokumen resmi (surat pengajuan, surat keterangan sakit, laporan resmi) dan pemeriksaan keabsahan publik.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -31,6 +31,7 @@ export const useDokumen = defineStore('dokumen', {
         if (mulai) q = q.gte('diterbitkan_pada', mulai + 'T00:00:00+08:00')
         if (selesai) q = q.lte('diterbitkan_pada', selesai + 'T23:59:59+08:00')
         if (jenis) q = q.eq('jenis', jenis)
+        q = q.neq('jenis', 'slip_gaji')   // slip gaji dikelola di menu Gaji (data sensitif)
         if (status) q = q.eq('status', status)
         const { data, error } = await q
         if (error) throw new Error(pesanGalat(error))

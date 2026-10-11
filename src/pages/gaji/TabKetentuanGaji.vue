@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/TabKetentuanGaji.vue | v1.1 | Fase 11 – Tahap 2 Label penyesuaian ketetapan yayasan | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/TabKetentuanGaji.vue | v1.2 | Fase 11 – Tahap 3 Sakelar utama potongan kehadiran | 11/10/2026 -->
 <script setup>
 // Ketentuan gaji. Pengelola gaji (superadmin, Bendahara, admin ber-izin kelola_gaji) mengubah; pembaca gaji hanya melihat.
 //  • Slip di akun pegawai: bawaan NONAKTIF (arahan yayasan). Bila nonaktif, menu Gaji tidak tampil bagi pegawai;
@@ -81,6 +81,13 @@ async function simpan(pesan = 'Ketentuan gaji tersimpan.') {
       <h3 class="judul-bagian mb-1 flex items-center gap-2"><PhScissors :size="20" weight="duotone" style="color: var(--c)" /> Potongan berbasis kehadiran</h3>
       <p class="mb-2 text-sm text-teks3">Hanya tunjangan fungsional yang dapat dipotong: tunjangan × sesi tidak terlaksana tanpa keterangan ÷ sesi wajib.
         Tunjangan struktural dan kepegawaian tidak pernah dipotong.</p>
+      <div class="mb-2 flex items-start gap-3 rounded-xl bg-permukaan2 p-3">
+        <div class="flex-1"><p class="text-sm font-bold">Berlakukan potongan kehadiran</p>
+          <p class="text-xs text-teks3">{{ f.potong_kehadiran ? 'Aktif: potongan masuk ke periode gaji yang dibuat atau dihitung ulang.' : 'Nonaktif: kehadiran per tugas hanya tampil sebagai perkiraan di rincian gaji. Aktifkan setelah data absensi dan jurnal terisi rutin.' }}</p></div>
+        <button v-if="boleh" role="switch" :aria-checked="!!f.potong_kehadiran" @click="f.potong_kehadiran = !f.potong_kehadiran" aria-label="Berlakukan potongan kehadiran"
+          :class="['relative h-8 w-14 shrink-0 rounded-full transition', f.potong_kehadiran ? 'bg-[#C7332F]' : 'bg-garis']">
+          <span :class="['absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all', f.potong_kehadiran ? 'left-7' : 'left-1']" /></button>
+      </div>
       <label v-for="s in SAKELAR" :key="s.k" class="flex min-h-[44px] items-center gap-3">
         <input type="checkbox" v-model="f[s.k]" :disabled="!boleh" class="h-5 w-5 accent-[#C7332F]" /><span class="text-sm font-semibold">{{ s.n }}</span></label>
     </section>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/Gaji.vue | v1.1 | Fase 11 – Tahap 2 Tab Periode dan Penetapan yayasan | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/Gaji.vue | v1.3 | Fase 11 – Tahap 4 Tab Slip saya, Permintaan slip, Tanda tangan | 11/10/2026 -->
 <script setup>
 // Menu Gaji (Blueprint Bagian 36), satu menu bertab (menggantikan menu Skema Tunjangan):
 //   Periode        : periode gaji bulanan; nominal yang benar-benar diterima (skema + penyesuaian ketetapan yayasan)
@@ -11,7 +11,7 @@
 // Pengelola: superadmin, Bendahara, admin ber-izin kelola_gaji. Pembaca: + admin ber-izin lihat_gaji.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhTable, PhIdentificationBadge, PhCoins, PhBank, PhListChecks, PhInfo, PhReceipt, PhLockSimple, PhCalendarCheck, PhScales } from '@phosphor-icons/vue'
+import { PhTable, PhIdentificationBadge, PhCoins, PhBank, PhListChecks, PhInfo, PhReceipt, PhLockSimple, PhCalendarCheck, PhScales, PhPiggyBank, PhTray, PhSignature } from '@phosphor-icons/vue'
 import { useGaji } from '@/stores/gaji'
 import { useTunjangan } from '@/stores/tunjangan'
 import { useOrganisasi } from '@/stores/organisasi'
@@ -27,6 +27,10 @@ import TabRekening from './TabRekening.vue'
 import TabKetentuanGaji from './TabKetentuanGaji.vue'
 import TabPeriode from './TabPeriode.vue'
 import TabPenetapan from './TabPenetapan.vue'
+import TabPinjamanSimpanan from './TabPinjamanSimpanan.vue'
+import TabSlipSaya from './TabSlipSaya.vue'
+import TabPermintaanSlip from './TabPermintaanSlip.vue'
+import TabTtdGaji from './TabTtdGaji.vue'
 
 const props = defineProps({ tab: { type: String, default: '' } })
 const router = useRouter()
@@ -35,15 +39,19 @@ const siap = ref(false); const galat = ref('')
 const tanggal = ref(hariIniISO())
 
 const TAB = computed(() => [
+  ...(!gaji.hak.lihat && gaji.hak.ttd_menunggu ? [{ k: 'ttd', n: 'Tanda tangan', ikon: PhSignature, w: 'verifikasi', lencana: gaji.hak.ttd_menunggu }] : []),
   ...(gaji.hak.slip_saya && !gaji.hak.lihat ? [{ k: 'slip', n: 'Slip saya', ikon: PhReceipt, w: 'gaji' }] : []),
   ...(gaji.hak.lihat ? [
     { k: 'periode', n: 'Periode gaji', ikon: PhCalendarCheck, w: 'agenda' },
     { k: 'penetapan', n: 'Penetapan yayasan', ikon: PhScales, w: 'verifikasi' },
+    { k: 'pinjaman', n: 'Pinjaman & simpanan', ikon: PhPiggyBank, w: 'berkas' },
+    { k: 'permintaan', n: 'Permintaan slip', ikon: PhTray, w: 'pengajuan', lencana: gaji.hak.permintaan_menunggu || 0 },
     { k: 'peta', n: 'Peta tunjangan', ikon: PhTable, w: 'gaji', lencana: kurang.value || 0 },
     { k: 'jabatan', n: 'Per jabatan', ikon: PhIdentificationBadge, w: 'presensi' },
     { k: 'tarif', n: 'Tarif', ikon: PhCoins, w: 'tahfizh' },
     { k: 'rekening', n: 'Rekening', ikon: PhBank, w: 'shift', lencana: tanpaRekening.value || 0 },
     { k: 'ketentuan', n: 'Ketentuan', ikon: PhListChecks, w: 'pengaturan' },
+    ...(gaji.hak.slip_saya ? [{ k: 'slip', n: 'Slip saya', ikon: PhReceipt, w: 'gaji' }] : []),
   ] : []),
 ])
 const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : TAB.value[0]?.k || ''))
@@ -73,7 +81,7 @@ const penandaKanan = computed(() => (gaji.hak.bendahara ? 'Bendahara' : sesi.isS
     <div v-else-if="!TAB.length" class="kartu w-gaji flex flex-col items-center gap-3 p-8 text-center">
       <span class="chip-ikon h-14 w-14"><PhLockSimple :size="30" weight="duotone" /></span>
       <p class="font-bold">Menu gaji tidak tersedia untuk akun Anda</p>
-      <p class="max-w-md text-sm text-teks3">Bila memerlukan slip gaji, silakan menghubungi Bendahara.</p>
+      <p class="max-w-md text-sm text-teks3">Bila memerlukan slip gaji, ajukan permintaan kepada Bendahara melalui Profil → Slip gaji.</p>
     </div>
     <template v-else>
       <BilahTab class="mb-3" :tab="TAB" :model-value="aktif" label="Bagian gaji" @update:model-value="(k) => router.replace(`/gaji/${k}`)" />
@@ -82,16 +90,15 @@ const penandaKanan = computed(() => (gaji.hak.bendahara ? 'Bendahara' : sesi.isS
       <div :class="'w-' + (TAB.find((t) => t.k === aktif)?.w || 'gaji')">
         <TabPeriode v-if="aktif === 'periode'" />
         <TabPenetapan v-else-if="aktif === 'penetapan'" />
+        <TabPinjamanSimpanan v-else-if="aktif === 'pinjaman'" />
+        <TabPermintaanSlip v-else-if="aktif === 'permintaan'" @berubah="gaji.muatHak()" />
+        <TabTtdGaji v-else-if="aktif === 'ttd'" />
+        <TabSlipSaya v-else-if="aktif === 'slip'" />
         <TabPeta v-else-if="aktif === 'peta'" v-model:tanggal="tanggal" :hasil="hasil" :boleh-ubah="sesi.bolehAdmin('kelola_pegawai')" :penanda-kanan="penandaKanan" @berubah="gaji.muatPegawai(true)" />
         <TabPerJabatan v-else-if="aktif === 'jabatan'" :hasil="hasil" :tarif="tarif" />
         <TabTarif v-else-if="aktif === 'tarif'" :boleh-ubah="!!gaji.hak.kelola" />
         <TabRekening v-else-if="aktif === 'rekening'" />
         <TabKetentuanGaji v-else-if="aktif === 'ketentuan'" />
-        <div v-else-if="aktif === 'slip'" class="kartu w-gaji flex flex-col items-center gap-3 p-8 text-center">
-          <span class="chip-ikon h-14 w-14"><PhReceipt :size="30" weight="duotone" /></span>
-          <p class="font-bold">Belum ada slip gaji</p>
-          <p class="max-w-md text-sm text-teks3">Slip gaji Anda tampil di sini setelah Bendahara menerbitkannya.</p>
-        </div>
       </div>
     </template>
   </div>

@@ -1,11 +1,12 @@
-<!-- SIMKA PRO | src/pages/gaji/LembarBarisGaji.vue | v1.0 | Fase 11 – Tahap 2 Rincian gaji seorang pegawai dalam periode | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/LembarBarisGaji.vue | v1.2 | Fase 11 – Tahap 4 Slip terbit: cetak, revisi, akses pegawai | 11/10/2026 -->
 <script setup>
 // Rincian gaji seorang pegawai pada satu periode: data penentu gaji, komponen pendapatan dan potongan (skema vs nominal),
 // penyesuaian ketetapan yayasan, dan jumlah diterima. Pengelola gaji (periode draf) dapat:
 //   • mengubah nominal komponen atau jam honor (wajib alasan; dipertahankan saat hitung ulang) dan mengembalikannya ke skema,
 //   • menambah pendapatan lain/potongan lain, • menetapkan jumlah diterima (penyesuaian dihitung otomatis), • mengeluarkan pegawai dari periode.
 import { ref, computed, watch } from 'vue'
-import { PhPencilSimple, PhArrowCounterClockwise, PhPlus, PhTrash, PhHandCoins, PhFloppyDisk, PhWarningCircle, PhBank, PhX } from '@phosphor-icons/vue'
+import { PhPencilSimple, PhArrowCounterClockwise, PhPlus, PhTrash, PhHandCoins, PhFloppyDisk, PhWarningCircle, PhBank, PhX, PhCalendarCheck,
+  PhReceipt, PhNotePencil, PhSealCheck, PhLockSimple } from '@phosphor-icons/vue'
 import { useGaji } from '@/stores/gaji'
 import { useUI } from '@/stores/ui'
 import { formatPendek, formatWaktu } from '@/lib/tanggal'
@@ -14,7 +15,7 @@ import { PENDIDIKAN, STATUS_PEGAWAI } from '@/lib/kepegawaian'
 import LembarBawah from '@/components/LembarBawah.vue'
 
 const props = defineProps({ baris: Object, periode: Object, boleh: Boolean })
-const emit = defineEmits(['tutup', 'berubah'])
+const emit = defineEmits(['tutup', 'berubah', 'cetak'])
 const gaji = useGaji(); const ui = useUI()
 const buka = computed({ get: () => !!props.baris, set: (v) => { if (!v) emit('tutup') } })
 const b = computed(() => props.baris)
@@ -71,6 +72,23 @@ async function keluarkan() {
   try { await gaji.hapusBaris(b.value.id); ui.toast('Pegawai dikeluarkan dari periode.'); emit('tutup'); emit('berubah') } catch (e) { ui.toast(e.message, 'galat') }
 }
 const beda = (i) => i.besaran_skema != null && Number(i.besaran_skema) !== Number(i.besaran)
+
+// ---------- Slip terbit: revisi dan akses pegawai ----------
+const terbit = computed(() => !!b.value?.kode_validasi)
+const fRevisi = ref('')
+async function mulaiRevisi() {
+  if (fRevisi.value.trim().length < 3) return ui.toast('Tulis alasan revisi.', 'galat')
+  jalan(() => gaji.mulaiRevisi(b.value.id, fRevisi.value.trim()), 'Slip dibuka untuk revisi. Ubah komponen, lalu Bendahara menerbitkan revisinya.').then(() => { fRevisi.value = '' })
+}
+async function terbitkanRevisi() {
+  if (!(await ui.konfirmasi({ judul: 'Terbitkan revisi slip?', pesan: `Slip ${d.value.nama} diterbitkan ulang dengan kode validasi baru dan tanda tangan elektronik Anda. Slip lama dinyatakan direvisi.`, ya: 'Terbitkan revisi' }))) return
+  jalan(() => gaji.terbitkanRevisi(b.value.id), 'Revisi slip terbit.')
+}
+async function batalRevisi() {
+  if (!(await ui.konfirmasi({ judul: 'Batalkan revisi?', pesan: 'Komponen dikembalikan sesuai slip yang terakhir terbit.', ya: 'Batalkan revisi', bahaya: true }))) return
+  jalan(() => gaji.batalkanRevisi(b.value.id), 'Revisi dibatalkan.')
+}
+const tutupAkses = () => jalan(() => gaji.tutupSlip(b.value.id), 'Akses slip untuk pegawai ini ditutup.')
 </script>
 <template>
   <LembarBawah v-model="buka" :judul="d.nama ? `${d.nama} – ${namaPeriode(periode)}` : ''" lebar>
@@ -123,16 +141,47 @@ const beda = (i) => i.besaran_skema != null && Number(i.besaran_skema) !== Numbe
         <div class="mb-1 flex items-center justify-between"><h3 class="judul-bagian">Potongan</h3>
           <button v-if="boleh" class="tombol-teks min-h-[36px] text-sm" @click="bukaTambah('potongan')"><PhPlus :size="16" weight="bold" /> Potongan lain</button></div>
         <ul class="divide-y divide-garis rounded-xl border border-garis">
-          <li v-for="i in potongan" :key="i.id" class="flex items-start gap-2 px-3 py-2.5">
-            <div class="min-w-0 flex-1"><p class="font-semibold">{{ i.label }}</p><p v-if="i.alasan" class="text-xs text-teks3">{{ i.alasan }}</p></div>
+          <li v-for="i in potongan" :key="i.id" :class="['flex items-start gap-2 px-3 py-2.5', 'w-' + (KATEGORI_ITEM[i.kategori]?.w || 'hakakses')]">
+            <span class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style="background: var(--c)" />
+            <div class="min-w-0 flex-1"><p class="font-semibold">{{ i.label }}</p>
+              <p v-if="i.kategori === 'potongan_kehadiran'" class="text-xs text-teks3">{{ i.rincian?.tanpa }} dari {{ i.rincian?.wajib }} {{ i.rincian?.satuan }} tanpa keterangan · {{ i.rincian?.sumber }}</p>
+              <p v-else-if="i.kategori === 'pinjaman'" class="text-xs text-teks3">Sisa sebelum bulan ini {{ rupiah(i.rincian?.sisa_sebelum) }}</p>
+              <p v-else-if="i.kategori === 'simpanan'" class="text-xs text-teks3">Saldo sebelum bulan ini {{ rupiah(i.rincian?.saldo_sebelum) }}</p>
+              <p class="mt-0.5 flex flex-wrap items-center gap-1 text-xs">
+                <span v-if="i.sumber" :class="['lencana', 'w-' + SUMBER_ITEM[i.sumber].w]">{{ i.sumber === 'skema' ? 'Otomatis' : SUMBER_ITEM[i.sumber].n }}</span>
+                <span v-if="beda(i)" class="text-teks3">otomatis <s>{{ rupiah(i.besaran_skema) }}</s></span>
+                <span v-if="i.alasan" class="text-teks2">{{ i.alasan }}</span></p></div>
             <p class="shrink-0 font-bold tabular-nums">{{ rupiah(i.besaran) }}</p>
             <div v-if="boleh" class="flex shrink-0">
               <button class="tombol-ikon h-9 w-9" @click="bukaUbah(i)" :aria-label="`Ubah ${i.label}`"><PhPencilSimple :size="16" /></button>
+              <button v-if="i.sumber === 'manual' && i.besaran_skema != null" class="tombol-ikon h-9 w-9" @click="kembalikan(i)" :aria-label="`Kembalikan ${i.label} ke nilai otomatis`"><PhArrowCounterClockwise :size="16" /></button>
               <button v-if="i.kategori === 'potongan_lain'" class="tombol-ikon h-9 w-9" @click="hapusItem(i)" :aria-label="`Hapus ${i.label}`"><PhTrash :size="16" /></button>
             </div>
           </li>
           <li v-if="!potongan.length" class="px-3 py-3 text-sm text-teks3">Tidak ada potongan.</li>
         </ul>
+      </section>
+
+      <!-- Kehadiran per tugas (dasar potongan tunjangan fungsional) -->
+      <section v-if="d.kehadiran?.length">
+        <h3 class="judul-bagian mb-1 flex items-center gap-2"><PhCalendarCheck :size="18" weight="duotone" /> Kehadiran per tugas</h3>
+        <p class="mb-2 text-xs text-teks3">{{ gaji.pengaturan.potong_kehadiran ? 'Potongan kehadiran diberlakukan (Ketentuan).' : 'Potongan kehadiran belum diberlakukan; angka di bawah hanya perkiraan.' }}
+          Hari berizin tidak dihitung sebagai sesi wajib.</p>
+        <div class="overflow-x-auto rounded-xl border border-garis">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-permukaan2 text-teks2"><tr><th class="px-3 py-2">Tugas</th><th class="px-2 py-2 text-right">Wajib</th><th class="px-2 py-2 text-right">Terlaksana</th>
+              <th class="px-2 py-2 text-right">Berizin</th><th class="px-2 py-2 text-right">Tanpa ket.</th><th class="px-3 py-2 text-right">Perkiraan potongan</th></tr></thead>
+            <tbody class="divide-y divide-garis">
+              <tr v-for="k in d.kehadiran" :key="k.kode">
+                <td class="px-3 py-2"><p class="font-semibold">{{ k.tugas }}</p><p class="text-xs text-teks3">{{ k.sumber }}</p></td>
+                <td class="px-2 py-2 text-right tabular-nums">{{ k.wajib }}</td><td class="px-2 py-2 text-right tabular-nums">{{ k.terlaksana }}</td>
+                <td class="px-2 py-2 text-right tabular-nums">{{ k.berizin }}</td>
+                <td :class="['px-2 py-2 text-right font-semibold tabular-nums', k.tanpa && 'text-merah']">{{ k.tanpa }}</td>
+                <td class="px-3 py-2 text-right tabular-nums">{{ k.perkiraan ? rupiah(k.perkiraan) : '–' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <!-- Jumlah -->
@@ -180,11 +229,38 @@ const beda = (i) => i.besaran_skema != null && Number(i.besaran_skema) !== Numbe
         <button class="tombol-utama w-full" :disabled="proses" @click="simpanTambah"><PhPlus :size="20" weight="bold" /> Tambahkan</button>
       </div>
 
+      <!-- Slip terbit -->
+      <section v-if="terbit" class="w-presensi rounded-xl border border-garis p-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <PhSealCheck :size="20" weight="duotone" style="color: var(--c)" />
+          <p class="min-w-[180px] flex-1 text-sm"><span class="font-bold">{{ b.nomor_slip }}</span> · kode {{ b.kode_validasi }}
+            <span v-if="b.revisi_ke" class="text-teks3"> · revisi ke-{{ b.revisi_ke }}</span></p>
+          <button class="tombol-garis" @click="emit('cetak', b)"><PhReceipt :size="20" weight="duotone" /> Cetak slip</button>
+        </div>
+        <p v-if="b.dibuka_pegawai" class="mt-2 flex flex-wrap items-center gap-2 text-sm text-teks2">Slip ini dibukakan di akun pegawai.
+          <button v-if="gaji.hak.kelola" class="font-semibold text-merah" @click="tutupAkses"><PhLockSimple :size="14" class="inline" /> Tutup akses</button></p>
+        <ul v-if="b.riwayat?.length" class="mt-2 space-y-0.5 text-xs text-teks3">
+          <li v-for="(r, i) in b.riwayat" :key="i">Versi {{ r.revisi_ke === 0 ? 'awal' : 'revisi ke-' + r.revisi_ke }} (kode {{ r.kode }}): {{ rupiah(r.diterima) }} – diganti karena {{ r.alasan_revisi }}</li>
+        </ul>
+        <div v-if="b.dalam_revisi" class="mt-3 space-y-2 rounded-xl bg-permukaan2 p-3">
+          <p class="text-sm font-semibold">Sedang direvisi: {{ b.alasan_revisi }}</p>
+          <div class="flex flex-wrap gap-2">
+            <button v-if="gaji.hak.bendahara" class="tombol-utama" :disabled="proses" @click="terbitkanRevisi"><PhSealCheck :size="20" weight="duotone" /> Terbitkan revisi</button>
+            <p v-else class="text-sm text-teks3">Revisi diterbitkan (ditandatangani) oleh Bendahara.</p>
+            <button v-if="gaji.hak.kelola" class="tombol-garis" :disabled="proses" @click="batalRevisi">Batalkan revisi</button>
+          </div>
+        </div>
+        <div v-else-if="gaji.hak.kelola && periode?.status === 'terbit'" class="mt-3 flex flex-wrap gap-2">
+          <input v-model="fRevisi" class="isian min-w-[200px] flex-1" placeholder="Alasan revisi, mis. salah input insentif" aria-label="Alasan revisi" />
+          <button class="tombol-garis" :disabled="proses" @click="mulaiRevisi"><PhNotePencil :size="20" /> Revisi slip</button>
+        </div>
+      </section>
+
       <div v-if="boleh && !mode" class="flex flex-wrap gap-2">
         <button class="tombol-utama flex-1" @click="bukaTerima"><PhHandCoins :size="20" weight="duotone" /> Tetapkan jumlah diterima</button>
-        <button class="tombol-garis" @click="keluarkan"><PhTrash :size="20" /> Keluarkan dari periode</button>
+        <button v-if="!terbit" class="tombol-garis" @click="keluarkan"><PhTrash :size="20" /> Keluarkan dari periode</button>
       </div>
-      <p v-else-if="!boleh" class="text-sm text-teks3">{{ periode?.status === 'draf' ? 'Hanya pengelola gaji yang dapat mengubah.' : 'Periode ini tidak lagi dapat diubah.' }}
+      <p v-else-if="!boleh && !terbit" class="text-sm text-teks3">{{ periode?.status === 'draf' ? 'Hanya pengelola gaji yang dapat mengubah.' : 'Periode sedang diajukan untuk ditandatangani.' }}
         Dibayar {{ formatPendek(periode?.tanggal_bayar) }}.</p>
     </div>
   </LembarBawah>
