@@ -1,7 +1,8 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabPengaturanKeu.vue | v1.0 | Fase 13 – Jenis biaya dan tarif, subsidi santri, ketentuan keuangan | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabPengaturanKeu.vue | v1.1 | Fase 13 – Pelengkap: siklus semesteran dan batas berlaku jenjang/kelas | 11/10/2026 -->
 <script setup>
 // Pengaturan keuangan santri (satu tab, tiga bagian):
-//   Jenis biaya : kode, nama, siklus (bulanan/tahunan/sekali), nominal standar, tarif khusus per jenjang/tingkat,
+//   Jenis biaya : kode, nama, siklus (bulanan/semesteran/tahunan/sekali), nominal standar, tarif khusus per jenjang/tingkat,
+//                 batas berlaku (hanya jenjang/kelas tertentu; santri lain otomatis tidak ditagih),
 //                 bawaan "hanya santri baru". Jenis yang sudah dipakai tagihan dinonaktifkan, bukan dihapus.
 //   Subsidi     : keringanan per santri (persen/nominal, semua jenis atau jenis tertentu, berjangka).
 //   Ketentuan   : rekening lembaga (tercetak di surat tagihan), tanggal jatuh tempo bulanan, batas surat tagihan,
@@ -21,8 +22,8 @@ const BAGIAN = [{ k: 'jenis', n: 'Jenis biaya', ikon: PhInvoice }, { k: 'subsidi
 
 // ---------- Jenis biaya ----------
 const fj = ref(null); const proses = ref(false)
-const baruJenis = () => { fj.value = { id: null, kode: '', nama: '', siklus: 'bulanan', nominal: '', santri_baru: false, keterangan: '', aktif: true, tarif: [] } }
-const ubahJenis = (j) => { fj.value = { ...j, nominal: angka(j.nominal), tarif: j.tarif.map((t) => ({ jenjang: t.jenjang || '', tingkat: t.tingkat || '', nominal: angka(t.nominal) })) } }
+const baruJenis = () => { fj.value = { id: null, kode: '', nama: '', siklus: 'bulanan', nominal: '', santri_baru: false, keterangan: '', aktif: true, tarif: [], berlaku_jenjang: [], berlaku_tingkat: [] } }
+const ubahJenis = (j) => { fj.value = { ...j, berlaku_jenjang: [...(j.berlaku_jenjang || [])], berlaku_tingkat: [...(j.berlaku_tingkat || [])].map(Number), nominal: angka(j.nominal), tarif: j.tarif.map((t) => ({ jenjang: t.jenjang || '', tingkat: t.tingkat || '', nominal: angka(t.nominal) })) } }
 async function simpanJenis() {
   const d = fj.value
   if (!/^[A-Z0-9_]{2,20}$/.test(String(d.kode).toUpperCase())) return ui.toast('Kode 2–20 huruf kapital/angka/garis bawah, contoh SPP atau DAFTAR_ULANG.', 'galat')
@@ -55,6 +56,8 @@ async function simpanKetentuan() {
   try { await keu.simpanPengaturan({ ...fk.value, rekening: fk.value.rekening.filter((r) => r.bank || r.nomor || r.atas_nama) }); isiKetentuan(); ui.toast('Ketentuan keuangan disimpan.') }
   catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
+const toggle = (arr, v) => { const i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v) }
+const berlakuTeks = (j) => [...(j.berlaku_jenjang || []).map((k) => JENJANG[k]), ...(j.berlaku_tingkat || []).map((t) => 'kelas ' + t)].join(', ')
 const tarifLabel = (t) => (t.tingkat ? `Kelas ${t.tingkat}` : JENJANG[t.jenjang])
 </script>
 <template>
@@ -78,6 +81,7 @@ const tarifLabel = (t) => (t.tingkat ? `Kelas ${t.tingkat}` : JENJANG[t.jenjang]
                 <span v-if="!j.aktif" class="lencana w-hakakses">Nonaktif</span></p></div>
             <p class="text-lg font-extrabold tabular-nums">{{ rupiah(j.nominal) }}</p>
           </div>
+          <p v-if="berlakuTeks(j)" class="mt-2 text-sm font-semibold" style="color: var(--c)">Hanya untuk: {{ berlakuTeks(j) }}</p>
           <p v-if="j.tarif.length" class="mt-2 text-sm text-teks2">Tarif khusus: {{ j.tarif.map((t) => `${tarifLabel(t)} ${rupiah(t.nominal)}`).join(' · ') }}</p>
           <p v-if="j.keterangan" class="mt-1 text-sm text-teks3">{{ j.keterangan }}</p>
           <div class="mt-2 flex items-center gap-2"><span class="flex-1 text-xs text-teks3">{{ j.jumlah_tagihan }} tagihan</span>
@@ -144,7 +148,7 @@ const tarifLabel = (t) => (t.tingkat ? `Kelas ${t.tingkat}` : JENJANG[t.jenjang]
           <div><label class="label-isian" for="jb-nm">Nama</label><input id="jb-nm" v-model="fj.nama" class="isian" placeholder="SPP" /></div>
         </div>
         <div><span class="label-isian">Siklus</span>
-          <div class="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Siklus tagihan">
+          <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-4" role="radiogroup" aria-label="Siklus tagihan">
             <button v-for="(s, k) in SIKLUS" :key="k" type="button" role="radio" :aria-checked="fj.siklus === k" @click="fj.siklus = k"
               :class="['min-h-[44px] rounded-xl border text-sm font-semibold', fj.siklus === k ? 'border-transparent bg-[#1572B6] text-white' : 'border-garis text-teks2']">{{ s.n }}</button></div>
           <p class="mt-1 text-xs text-teks3">{{ SIKLUS[fj.siklus].ket }}</p></div>
@@ -158,6 +162,16 @@ const tarifLabel = (t) => (t.tingkat ? `Kelas ${t.tingkat}` : JENJANG[t.jenjang]
             <button class="tombol-ikon h-11 w-11 text-merah" aria-label="Hapus tarif" @click="fj.tarif.splice(i, 1)"><PhTrash :size="20" /></button>
           </div>
           <button type="button" class="tombol-garis min-h-[40px] px-3 text-sm" @click="fj.tarif.push({ jenjang: '', tingkat: '', nominal: '' })"><PhPlus :size="18" /> Tambah tarif khusus</button>
+        </div>
+        <div>
+          <p class="label-isian">Berlaku untuk (kosong = semua santri)</p>
+          <div class="flex flex-wrap gap-1.5">
+            <button v-for="(n, k) in JENJANG" :key="k" type="button" :aria-pressed="fj.berlaku_jenjang.includes(k)" @click="toggle(fj.berlaku_jenjang, k)"
+              :class="['min-h-[40px] rounded-xl border px-3 text-sm font-semibold', fj.berlaku_jenjang.includes(k) ? 'border-transparent bg-[#0B7F81] text-white' : 'border-garis text-teks2']">{{ n }}</button>
+            <button v-for="t in [7, 8, 9, 10, 11, 12]" :key="t" type="button" :aria-pressed="fj.berlaku_tingkat.includes(t)" @click="toggle(fj.berlaku_tingkat, t)"
+              :class="['min-h-[40px] min-w-[52px] rounded-xl border px-2 text-sm font-semibold', fj.berlaku_tingkat.includes(t) ? 'border-transparent bg-[#0B7F81] text-white' : 'border-garis text-teks2']">Kelas {{ t }}</button>
+          </div>
+          <p class="mt-1 text-xs text-teks3">Santri di luar jenjang/kelas ini otomatis tidak ditagih saat tagihan massal dibuat.</p>
         </div>
         <label class="flex items-center gap-3"><input v-model="fj.santri_baru" type="checkbox" class="h-5 w-5" /> Bawaan sasaran: hanya santri baru</label>
         <div><label class="label-isian" for="jb-ket">Keterangan (tidak wajib)</label><input id="jb-ket" v-model="fj.keterangan" class="isian" /></div>

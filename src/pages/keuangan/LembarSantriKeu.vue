@@ -1,14 +1,18 @@
-<!-- SIMKA PRO | src/pages/keuangan/LembarSantriKeu.vue | v1.0 | Fase 13 – Rincian keuangan seorang santri | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/LembarSantriKeu.vue | v1.1 | Fase 13 – Pelengkap: cetak laporan keuangan individu santri | 11/10/2026 -->
 <script setup>
 // Rincian keuangan satu santri (dibuka dengan ?santri=<id> dari tab mana pun):
 // ringkasan, kontak wali (WA), tagihan (ubah/batalkan beralasan), pembayaran (kuitansi, WA konfirmasi, batalkan),
 // subsidi, dan surat tagihan. Tombol utama: catat pembayaran, surat tagihan, WA tunggakan, tambah subsidi.
+// v1.1: cetak Laporan Keuangan Santri (individu) F4: tagihan, pembayaran, subsidi, dan sisa; TTD Mengetahui Direktur · Bendahara.
 import { ref, computed, watch } from 'vue'
-import { PhReceipt, PhPaperPlaneTilt, PhWhatsappLogo, PhPercent, PhPencilSimple, PhXCircle, PhPrinter, PhTrash, PhFloppyDisk, PhWarningCircle } from '@phosphor-icons/vue'
+import { PhReceipt, PhPaperPlaneTilt, PhWhatsappLogo, PhPercent, PhPencilSimple, PhXCircle, PhPrinter, PhTrash, PhFloppyDisk, PhWarningCircle, PhFileText } from '@phosphor-icons/vue'
+import { useLembaga } from '@/stores/lembaga'
+import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
+import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import { useKeuangan } from '@/stores/keuangan'
 import { useUI } from '@/stores/ui'
 import { useSesi } from '@/stores/sesi'
-import { formatPendek, formatWaktu } from '@/lib/tanggal'
+import { formatPendek, formatWaktu, formatPanjang, hariIniISO } from '@/lib/tanggal'
 import { rupiah, angka, bacaRupiah, STATUS_TAGIHAN, CARA_BAYAR, JENJANG, pesanKuitansi, pesanTunggakan } from '@/lib/keuangan'
 import { tautanWA } from '@/lib/wa'
 import LembarBawah from '@/components/LembarBawah.vue'
@@ -36,6 +40,11 @@ const BAGIAN = computed(() => [
   { k: 'subsidi', n: 'Subsidi', j: (r.value?.subsidi || []).length }, { k: 'surat', n: 'Surat tagihan', j: (r.value?.surat || []).length },
 ])
 const HUB = { ayah: 'Ayah', ibu: 'Ibu', wali: 'Wali' }
+// Laporan individu (cetak F4)
+const lembaga = useLembaga(); lembaga.muat()
+const laporan = ref(false)
+const direktur = computed(() => lembaga.signatories.find((x) => /^direktur$/i.test(x.jabatan_tertulis)) || {})
+const sahBayar = computed(() => (r.value?.pembayaran || []).filter((p) => p.status === 'sah'))
 
 // ---------- Lembar anak ----------
 const bayar = ref(null); const surat = ref(null); const suratIds = ref(null); const subsidi = ref(null)
@@ -88,6 +97,7 @@ async function hapusSubsidi(x) {
         <button v-if="keu.hak.kelola" class="tombol-garis" :disabled="!terbuka.length" @click="surat = [s]"><PhPaperPlaneTilt :size="20" weight="duotone" /> Surat tagihan</button>
         <a v-if="s.wali?.no_hp && terbuka.length" :href="tautanWA(s.wali.no_hp, pesanTunggak)" target="_blank" rel="noopener" class="tombol-garis w-presensi" style="color: var(--c)"><PhWhatsappLogo :size="20" weight="duotone" /> WA {{ lewat.length ? 'tunggakan' : 'tagihan' }}</a>
         <button v-if="keu.hak.kelola" class="tombol-garis" @click="subsidi = { student_id: s.id, nama: s.nama, mulai: '' }"><PhPercent :size="20" /> Subsidi</button>
+        <button class="tombol-garis" @click="laporan = true"><PhFileText :size="20" weight="duotone" /> Cetak laporan</button>
       </div>
       <ul v-if="r.kontak.length" class="flex flex-wrap gap-2 text-sm">
         <li v-for="k in r.kontak" :key="k.hubungan" class="rounded-xl bg-permukaan2 px-3 py-1.5">{{ HUB[k.hubungan] }}: <b>{{ k.nama || '–' }}</b> {{ k.no_hp || '(tanpa HP)' }}<span v-if="k.utama" class="text-xs text-teks3"> · utama</span></li>
@@ -170,6 +180,46 @@ async function hapusSubsidi(x) {
   <LembarBayar :santri="bayar" :tagihan="r?.tagihan || []" @tutup="bayar = null" @tersimpan="segar" />
   <LembarSuratTagihan :santri="surat" :ids="suratIds" @tutup="(surat = null), (suratIds = null)" @terbit="segar" />
   <LembarSubsidi :isi="subsidi" @tutup="subsidi = null" @tersimpan="segar" />
+  <DokumenCetak v-if="r" v-model:pratinjau="laporan" judul="Laporan Keuangan Santri" :subjudul="`Posisi per ${formatPanjang(hariIniISO())}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <table class="meta-dok" style="margin-bottom: 6pt"><tbody>
+      <tr><td style="width: 1%; white-space: nowrap; padding-right: 6pt">Nama santri</td><td>: {{ s.nama }}</td><td style="width: 1%; white-space: nowrap; padding-right: 6pt">Kelas/jenjang</td><td>: {{ s.kelas || '–' }} · {{ JENJANG[s.jenjang] }}</td></tr>
+      <tr><td style="white-space: nowrap; padding-right: 6pt">NIS</td><td>: {{ s.nis }}</td><td style="white-space: nowrap; padding-right: 6pt">Orang tua/wali</td><td>: {{ s.wali?.nama || '–' }}{{ s.wali?.no_hp ? ' (' + s.wali.no_hp + ')' : '' }}</td></tr>
+    </tbody></table>
+    <p style="font-weight: bold; margin: 4pt 0 2pt">A. Tagihan</p>
+    <table class="tabel">
+      <colgroup><col style="width:6%"><col style="width:30%"><col style="width:13%"><col style="width:12%"><col style="width:12%"><col style="width:13%"><col style="width:14%"></colgroup>
+      <thead><tr><th>No.</th><th>Tagihan</th><th>Jatuh tempo</th><th>Nominal (Rp)</th><th>Subsidi (Rp)</th><th>Dibayar (Rp)</th><th>Sisa/status</th></tr></thead>
+      <tbody><tr v-for="(b, i) in aktifTagihan" :key="b.id"><td class="tengah">{{ i + 1 }}</td><td>{{ b.tagihan }}</td><td class="tengah">{{ formatPendek(b.jatuh_tempo) }}</td>
+        <td class="kanan">{{ angka(b.nominal) }}</td><td class="kanan">{{ angka(b.potongan) }}</td><td class="kanan">{{ angka(b.dibayar) }}</td>
+        <td class="kanan">{{ b.status === 'lunas' ? 'Lunas' : angka(b.sisa) + (b.lewat ? ' *' : '') }}</td></tr>
+        <tr><th colspan="3">Jumlah</th><th class="kanan">{{ angka(jml(aktifTagihan, 'nominal')) }}</th><th class="kanan">{{ angka(jml(aktifTagihan, 'potongan')) }}</th>
+          <th class="kanan">{{ angka(jml(aktifTagihan, 'dibayar')) }}</th><th class="kanan">{{ angka(jml(terbuka, 'sisa')) }}</th></tr></tbody>
+    </table>
+    <p v-if="lewat.length" class="catatan-cetak" style="margin-top: 2pt">* telah melewati jatuh tempo; jumlah tunggakan {{ rupiah(jml(lewat, 'sisa')) }}.</p>
+    <p style="font-weight: bold; margin: 8pt 0 2pt">B. Pembayaran</p>
+    <table class="tabel">
+      <colgroup><col style="width:6%"><col style="width:13%"><col style="width:22%"><col style="width:11%"><col style="width:33%"><col style="width:15%"></colgroup>
+      <thead><tr><th>No.</th><th>Tanggal</th><th>Nomor kuitansi</th><th>Cara</th><th>Untuk pembayaran</th><th>Jumlah (Rp)</th></tr></thead>
+      <tbody><tr v-for="(p, i) in sahBayar" :key="p.id"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ formatPendek(p.tanggal) }}</td><td>{{ p.nomor }}</td><td>{{ CARA_BAYAR[p.cara] }}</td>
+        <td>{{ (p.rincian || []).map((x) => x.tagihan).join(', ') }}</td><td class="kanan">{{ angka(p.jumlah) }}</td></tr>
+        <tr v-if="!sahBayar.length"><td class="tengah">–</td><td colspan="5">Belum ada pembayaran.</td></tr>
+        <tr><th colspan="5">Jumlah pembayaran</th><th class="kanan">{{ angka(sahBayar.reduce((a, p) => a + Number(p.jumlah), 0)) }}</th></tr></tbody>
+    </table>
+    <template v-if="r.subsidi.length">
+      <p style="font-weight: bold; margin: 8pt 0 2pt">C. Subsidi/keringanan</p>
+      <table class="tabel">
+        <colgroup><col style="width:6%"><col style="width:16%"><col style="width:24%"><col style="width:30%"><col style="width:24%"></colgroup>
+        <thead><tr><th>No.</th><th>Besaran</th><th>Jenis biaya</th><th>Alasan</th><th>Berlaku</th></tr></thead>
+        <tbody><tr v-for="(x, i) in r.subsidi" :key="x.id"><td class="tengah">{{ i + 1 }}</td><td>{{ x.jenis === 'persen' ? Number(x.nilai) + '%' : rupiah(x.nilai) }}</td>
+          <td>{{ x.jenis_biaya || 'Semua jenis biaya' }}</td><td>{{ x.alasan }}</td><td>{{ formatPendek(x.mulai) }} s.d. {{ x.sampai ? formatPendek(x.sampai) : 'seterusnya' }}</td></tr></tbody>
+      </table>
+    </template>
+    <p style="margin-top: 8pt">Sisa seluruh tagihan per tanggal laporan: <b>{{ rupiah(jml(terbuka, 'sisa')) }}</b>.</p>
+    <template #ttd>
+      <TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: direktur.jabatan_tertulis || 'Direktur', nama: direktur.nama || '', niy: direktur.niy }"
+        :kanan="{ jabatan: keu.jabatanSaya, nama: sesi.pengguna?.nama_lengkap || '', niy: sesi.pengguna?.niy }" />
+    </template>
+  </DokumenCetak>
   <CetakKeuangan v-model:pratinjau="pratinjau" jenis="kuitansi" :dok="kuitansi" :pengaturan="keu.pengaturan" :pencetak="sesi.pengguna?.nama_lengkap" />
   <LembarBawah :model-value="!!alasan" @update:model-value="(v) => !v && (alasan = null)" :judul="alasan?.judul">
     <div v-if="alasan" class="space-y-3 pb-2">

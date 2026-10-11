@@ -1,11 +1,13 @@
-<!-- SIMKA PRO | src/pages/gaji/TabSlipSaya.vue | v1.0 | Fase 11 – Tahap 4 Slip gaji milik pegawai | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/TabSlipSaya.vue | v1.1 | Fase 11 – Pelengkap: perkiraan potongan berjalan (hanya bila slip tampil di akun pegawai) | 11/10/2026 -->
 <script setup>
 // Slip gaji milik akun yang sedang masuk: tampil bila Ketentuan "slip di akun pegawai" aktif, atau slip dibukakan Bendahara.
 // Daftar per bulan, rincian, cetak/unduh PDF (Simpan sebagai PDF di jendela cetak), ringkasan pinjaman dan simpanan.
 // ?slip=<id> membuka rincian (dari notifikasi).
+// v1.1: kartu "Perkiraan potongan bulan ini" per tugas (sesi wajib, terlaksana, berizin, tanpa keterangan) — tampil HANYA bila
+//       Ketentuan "slip tampil di akun pegawai" aktif (arahan yayasan); slip yang dibukakan satu per satu tidak memunculkannya.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { PhReceipt, PhCaretRight, PhHandCoins, PhPiggyBank, PhLockSimple, PhSealCheck } from '@phosphor-icons/vue'
+import { PhReceipt, PhCaretRight, PhHandCoins, PhPiggyBank, PhLockSimple, PhSealCheck, PhCalculator, PhInfo } from '@phosphor-icons/vue'
 import { useGaji } from '@/stores/gaji'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
@@ -18,6 +20,10 @@ const route = useRoute(); const router = useRouter(); const gaji = useGaji(); co
 const isi = ref(null); const memuat = ref(true)
 async function muat() { try { isi.value = await gaji.slipSaya() } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false } }
 onMounted(muat)
+// Perkiraan potongan berjalan (hanya bila slip tampil di akun pegawai)
+const kira = ref(null)
+onMounted(async () => { if (!gaji.pengaturan.slip_pegawai) return; try { kira.value = await gaji.perkiraanSaya() } catch { kira.value = null } })
+const jmlKira = computed(() => (kira.value?.tugas || []).reduce((a, t) => a + Number(t.perkiraan || 0), 0))
 const slipId = computed(() => (typeof route.query.slip === 'string' ? route.query.slip : ''))
 const pilihan = computed(() => isi.value?.slip?.find((s) => s.id === slipId.value) || null)
 const buka = computed({ get: () => !!pilihan.value, set: (v) => { if (!v) router.replace({ query: { ...route.query, slip: undefined } }) } })
@@ -30,6 +36,26 @@ const pot = computed(() => (pilihan.value?.item || []).filter((i) => i.jenis ===
   <div>
     <p v-if="memuat" class="kartu p-8 text-center text-sm text-teks3">Memuat…</p>
     <template v-else-if="isi">
+      <section v-if="kira" class="kartu w-tahfizh mb-4 p-4 sm:p-5">
+        <h3 class="judul-bagian mb-1 flex items-center gap-2"><PhCalculator :size="20" weight="duotone" style="color: var(--c)" /> Perkiraan potongan bulan ini</h3>
+        <p class="mb-3 text-sm text-teks3">Kehadiran tugas sampai {{ formatPendek(kira.sampai) }}. Angka ini perkiraan; nominal resmi tertera pada slip setelah terbit.</p>
+        <p v-if="!kira.tugas.length" class="rounded-xl bg-permukaan2 p-3 text-sm text-teks3">Tidak ada tunjangan fungsional yang dihitung berdasarkan kehadiran.</p>
+        <ul class="divide-y divide-garis">
+          <li v-for="t in kira.tugas" :key="t.kode" class="flex flex-wrap items-center gap-2 py-2.5">
+            <div class="min-w-[180px] flex-1"><p class="font-semibold">{{ t.tugas }} <span class="text-xs font-normal text-teks3">· {{ t.sumber }}</span></p>
+              <p class="text-xs text-teks3">{{ t.terlaksana }} dari {{ t.wajib }} {{ t.satuan || 'sesi' }} terlaksana · {{ t.berizin }} berizin · <b :class="t.tanpa ? 'text-merah' : ''">{{ t.tanpa }} tanpa keterangan</b></p></div>
+            <p class="text-right tabular-nums"><span class="block text-xs text-teks3">tunjangan {{ rupiah(t.tunjangan) }}</span>
+              <span :class="['block font-bold', t.perkiraan ? 'text-merah' : '']">{{ t.perkiraan ? '−' + rupiah(t.perkiraan) : 'tidak ada potongan' }}</span></p>
+          </li>
+        </ul>
+        <p v-if="kira.tugas.length" class="mt-2 flex justify-between gap-2 rounded-xl bg-permukaan2 p-3 text-sm"><span class="font-semibold">Perkiraan potongan kehadiran</span><span class="font-extrabold tabular-nums">{{ rupiah(jmlKira) }}</span></p>
+        <p v-if="kira.pinjaman.length || kira.simpanan.length" class="mt-2 text-sm text-teks2">Potongan lain bulan ini:
+          <template v-for="(x, i) in kira.pinjaman" :key="'p' + i">cicilan {{ x.keterangan || 'pinjaman' }} {{ rupiah(Math.min(x.cicilan, x.sisa)) }}; </template>
+          <template v-for="(x, i) in kira.simpanan" :key="'s' + i">simpanan {{ x.program }} {{ rupiah(x.setoran) }}; </template></p>
+        <p class="mt-2 flex gap-1.5 text-xs text-teks3"><PhInfo :size="14" class="mt-0.5 shrink-0" />
+          {{ kira.potong_aktif ? 'Potongan kehadiran diberlakukan pada slip.' : 'Saat ini potongan kehadiran belum diberlakukan; angka di atas hanya informasi.' }}
+          Potongan = tunjangan × sesi tanpa keterangan ÷ sesi wajib{{ kira.potong_izin ? '' : '; izin, sakit, dan cuti yang disetujui tidak memotong' }}.</p>
+      </section>
       <div v-if="!isi.slip?.length" class="kartu w-gaji flex flex-col items-center gap-3 p-8 text-center">
         <span class="chip-ikon h-14 w-14"><component :is="isi.terbuka ? PhReceipt : PhLockSimple" :size="30" weight="duotone" /></span>
         <p class="font-bold">{{ isi.terbuka ? 'Belum ada slip gaji' : 'Slip gaji tidak ditampilkan' }}</p>

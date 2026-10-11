@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/keuangan.js | v1.0 | Fase 13 – Keuangan santri: hak, ketentuan, jenis biaya, tagihan, pembayaran, surat tagihan | 11/10/2026
+// SIMKA PRO | src/stores/keuangan.js | v1.1 | Fase 13 – Pelengkap: daftar kelompok (kelas/kamar/halaqah) | 11/10/2026
 // Menu Keuangan (Blueprint Bagian 37). Hak dihitung server (hak_keuangan): superadmin dan pegawai yang ditunjuk
 // superadmin untuk "keuangan" (Hak Akses → Fitur sensitif). Jabatan Bendahara Wustha/SMA tidak otomatis berhak.
 // Semua penulisan lewat fungsi server; mode demo memakai lib/demoKeuangan.
@@ -65,6 +65,7 @@ export const useKeuangan = defineStore('keuangan', {
     rincianSantri(id) { return MODE_DEMO ? D(demo.rincianSantri, id) : rpc('rincian_keuangan_santri', { p_sid: id }) },
     posisiTunggakan(tgl) { return MODE_DEMO ? D(demo.posisi, tgl) : rpc('posisi_tunggakan', { p_tanggal: tgl || null }).then((r) => r || []) },
     ringkasan() { return MODE_DEMO ? D(demo.ringkasan) : rpc('ringkasan_keuangan') },
+    kelompok() { return MODE_DEMO ? D(demo.kelompok) : rpc('kelompok_keuangan').then((r) => r || []) },
     ringkasanBeranda() { return MODE_DEMO ? D(demo.beranda) : rpc('ringkasan_keuangan_beranda') },
   },
 })

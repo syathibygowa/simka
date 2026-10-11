@@ -1,38 +1,44 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabTagihan.vue | v1.0 | Fase 13 – Buat tagihan massal dan daftar tagihan | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabTagihan.vue | v1.1 | Fase 13 – Pelengkap: semesteran, sasaran per kelas/kamar/halaqah, WA tagihan baru dan pengingat | 11/10/2026 -->
 <script setup>
 // Buat tagihan massal: pilih jenis biaya → periode (bulan-bulan untuk bulanan; tahun ajaran untuk tahunan; sekali)
 // → sasaran (jenjang, tingkat, santri baru saja, atau santri tertentu) → pratinjau (standar, subsidi, tagihan, sudah ada)
 // → buat. Tagihan yang sudah ada (santri + jenis + periode) otomatis dilewati.
-// Daftar tagihan: saring jenis, periode, status; ekspor Excel; ketuk baris membuka rincian santri.
+// Daftar tagihan: saring jenis, periode, status, kelompok; ekspor Excel; ketuk baris membuka rincian santri.
+// v1.1: siklus semesteran; sasaran kelas/kamar/halaqah tertentu; sesudah tagihan dibuat → kabari wali (WA "tagihan baru");
+//       saringan "Segera jatuh tempo"/"Lewat jatuh tempo" → WA pengingat/tunggakan berurutan ke wali.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import * as XLSX from 'xlsx'
-import { PhPlus, PhEye, PhCheckCircle, PhFileXls, PhMagnifyingGlass, PhInvoice, PhX } from '@phosphor-icons/vue'
+import { PhPlus, PhEye, PhCheckCircle, PhFileXls, PhMagnifyingGlass, PhInvoice, PhX, PhWhatsappLogo } from '@phosphor-icons/vue'
 import { useKeuangan } from '@/stores/keuangan'
 import { useLembaga } from '@/stores/lembaga'
 import { useUI } from '@/stores/ui'
 import { formatPendek, hariIniISO } from '@/lib/tanggal'
-import { rupiah, angka, SIKLUS, STATUS_TAGIHAN, JENJANG, TINGKAT, namaBulan, bulanTahunAjaran } from '@/lib/keuangan'
+import { rupiah, angka, SIKLUS, STATUS_TAGIHAN, JENJANG, TINGKAT, namaBulan, bulanTahunAjaran, perSantri, pesanTagihanBaru, pesanPengingat, pesanTunggakan } from '@/lib/keuangan'
+import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 
 const emit = defineEmits(['berubah'])
 const keu = useKeuangan(); const lembaga = useLembaga(); const ui = useUI(); const router = useRouter(); const route = useRoute()
 const daftar = ref([]); const memuat = ref(true)
-const saring = ref({ fee_type_id: '', kunci_periode: '', status: typeof route.query.status === 'string' ? route.query.status : '', q: '' })
+const saring = ref({ fee_type_id: '', kunci_periode: '', status: typeof route.query.status === 'string' ? route.query.status : '', q: '', group_id: '' })
+const kelompok = ref([])
+const JENIS_KEL = { kelas: 'Kelas', kamar: 'Kamar', halaqah: 'Halaqah' }
 async function muat() {
   memuat.value = true
-  try { daftar.value = await keu.daftarTagihan({ fee_type_id: saring.value.fee_type_id, kunci_periode: saring.value.kunci_periode, status: saring.value.status }) }
+  try { daftar.value = await keu.daftarTagihan({ fee_type_id: saring.value.fee_type_id, kunci_periode: saring.value.kunci_periode, status: saring.value.status, group_id: saring.value.group_id }) }
   catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false }
 }
-onMounted(() => { muat(); lembaga.muat(); if (route.query.buat) mulai() })
-watch(() => [saring.value.fee_type_id, saring.value.kunci_periode, saring.value.status], muat)
+onMounted(() => { muat(); lembaga.muat(); if (route.query.buat) mulai(); keu.kelompok().then((k) => { kelompok.value = k }).catch(() => {}) })
+watch(() => [saring.value.fee_type_id, saring.value.kunci_periode, saring.value.status, saring.value.group_id], muat)
+watch(() => route.query.status, (v) => { if (typeof v === 'string') saring.value.status = v })
 const periodeAda = computed(() => [...new Set(daftar.value.map((b) => b.kunci_periode))].sort())
 const tampil = computed(() => { const c = saring.value.q.toLowerCase().trim(); return c ? daftar.value.filter((b) => b.nama.toLowerCase().includes(c) || b.nis.startsWith(c)) : daftar.value })
 const jml = (k) => tampil.value.reduce((a, b) => a + Number(b[k] || 0), 0)
-const STATUS = [{ k: '', n: 'Semua' }, { k: 'tunggak', n: 'Belum lunas' }, { k: 'lewat', n: 'Lewat jatuh tempo' }, { k: 'lunas', n: 'Lunas' }, { k: 'batal', n: 'Dibatalkan' }]
+const STATUS = [{ k: '', n: 'Semua' }, { k: 'tunggak', n: 'Belum lunas' }, { k: 'segera', n: 'Segera jatuh tempo' }, { k: 'lewat', n: 'Lewat jatuh tempo' }, { k: 'lunas', n: 'Lunas' }, { k: 'batal', n: 'Dibatalkan' }]
 const buka = (b) => router.replace({ query: { ...route.query, santri: b.student_id } })
-const labelPeriode = (k) => (k === 'sekali' ? 'Sekali' : namaBulan(k))
+const labelPeriode = (k) => (k === 'sekali' ? 'Sekali' : /-S[12]$/.test(k) ? `Semester ${k.endsWith('1') ? 'ganjil' : 'genap'} ${k.slice(0, 9)}` : namaBulan(k))
 
 // ---------- Buat tagihan ----------
 const f = ref(null); const pra = ref(null); const proses = ref(false); const cariSantri = ref(''); const semuaSantri = ref([])
@@ -40,7 +46,7 @@ const taAktif = computed(() => lembaga.tahunAktif?.nama || `${hariIniISO().slice
 const BULAN_TA = computed(() => bulanTahunAjaran(taAktif.value))
 function mulai() {
   f.value = { fee_type_id: keu.jenisAktif[0]?.id || '', bulan: [hariIniISO().slice(0, 7)], academic_year_id: lembaga.tahunAktif?.id || '', jatuh_tempo: '',
-    jenjang: '', tingkat: [], hanya_baru: false, santri: [], catatan: '' }
+    semester: lembaga.tahunAktif?.semester || 1, jenjang: '', tingkat: [], group_id: '', hanya_baru: false, santri: [], catatan: '' }
   pra.value = null; cariSantri.value = ''
 }
 const jenisPilih = computed(() => keu.jenis.find((j) => j.id === f.value?.fee_type_id))
@@ -49,8 +55,8 @@ const toggle = (arr, v) => { const i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1)
 const calon = computed(() => { const c = cariSantri.value.toLowerCase().trim(); return c ? semuaSantri.value.filter((s) => s.status === 'aktif' && (s.nama.toLowerCase().includes(c) || s.nis.startsWith(c)) && !f.value.santri.some((x) => x.id === s.id)).slice(0, 8) : [] })
 watch(cariSantri, async (v) => { if (v && !semuaSantri.value.length) try { semuaSantri.value = await keu.santri({}) } catch { /* abaikan */ } })
 const muatan = () => ({ fee_type_id: f.value.fee_type_id, bulan: jenisPilih.value?.siklus === 'bulanan' ? [...f.value.bulan].sort() : undefined,
-  academic_year_id: f.value.academic_year_id || undefined, jatuh_tempo: f.value.jatuh_tempo || undefined, catatan: f.value.catatan,
-  sasaran: { jenjang: f.value.jenjang || undefined, tingkat: f.value.tingkat, hanya_baru: f.value.hanya_baru, student_ids: f.value.santri.map((s) => s.id) } })
+  academic_year_id: f.value.academic_year_id || undefined, semester: f.value.semester, jatuh_tempo: f.value.jatuh_tempo || undefined, catatan: f.value.catatan,
+  sasaran: { jenjang: f.value.jenjang || undefined, tingkat: f.value.tingkat, group_id: f.value.group_id || undefined, hanya_baru: f.value.hanya_baru, student_ids: f.value.santri.map((s) => s.id) } })
 async function pratinjau() {
   if (!f.value.fee_type_id) return ui.toast('Pilih jenis biaya.', 'galat')
   proses.value = true
@@ -60,9 +66,21 @@ const baru = computed(() => (pra.value?.baris || []).filter((x) => !x.ada))
 async function buat() {
   if (!(await ui.konfirmasi({ judul: `Buat ${baru.value.length} tagihan?`, pesan: `${jenisPilih.value.nama}, jumlah ${rupiah(baru.value.reduce((a, x) => a + Number(x.nominal), 0))}. Tagihan yang sudah ada dilewati.`, ya: 'Buat tagihan' }))) return
   proses.value = true
-  try { const r = await keu.buatTagihan(muatan()); ui.toast(`${r.dibuat} tagihan dibuat${r.dilewati ? `, ${r.dilewati} sudah ada` : ''}.`); f.value = null; await muat(); emit('berubah') }
+  try {
+    const kunci = pra.value.periode.map((x) => x.kunci); const fid = f.value.fee_type_id
+    const r = await keu.buatTagihan(muatan()); ui.toast(`${r.dibuat} tagihan dibuat${r.dilewati ? `, ${r.dilewati} sudah ada` : ''}.`); f.value = null; await muat()   // tidak memicu muat ulang tab (agar lembar "Kabari wali" tetap terbuka)
+    if (r.dibuat) { const baruDibuat = await keu.daftarTagihan({ fee_type_id: fid, kunci, status: 'tunggak' }); kirim.value = { jenis: 'baru', santri: perSantri(baruDibuat) } }
+  }
   catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
+
+// ---------- WA ke wali ----------
+const kirim = ref(null)   // { jenis: 'baru' | 'segera' | 'lewat', santri: [...] }
+const bukaKirim = () => { kirim.value = { jenis: saring.value.status === 'segera' ? 'segera' : 'lewat', santri: perSantri(tampil.value.filter((b) => ['belum', 'sebagian'].includes(b.status))) } }
+const JUDUL_KIRIM = { baru: 'Kabari wali: tagihan baru', segera: 'WA pengingat jatuh tempo', lewat: 'WA pemberitahuan tunggakan' }
+const penerimaWA = computed(() => (kirim.value?.santri || []).map((x) => ({ employee_id: x.id, nama: `${x.wali?.nama || 'Wali'} – ${x.nama}`, no_hp: x.wali?.no_hp,
+  unit: `${x.kelas || '–'} · ${rupiah(x.isi.reduce((a, b) => a + Number(b.sisa), 0))}`, x })))
+const pesanKirim = (p) => (kirim.value.jenis === 'baru' ? pesanTagihanBaru : kirim.value.jenis === 'segera' ? pesanPengingat : pesanTunggakan)(p.x, p.x.isi, keu.pengaturan)
 
 function ekspor() {
   const aoa = [['No.', 'NIS', 'Nama', 'JK', 'Kelas', 'Jenis', 'Tagihan', 'Jatuh tempo', 'Standar', 'Subsidi', 'Tagihan (Rp)', 'Dibayar', 'Sisa', 'Status', 'Keterangan subsidi'],
@@ -76,6 +94,8 @@ function ekspor() {
   <div>
     <div class="mb-3 flex flex-wrap items-end gap-2">
       <select v-model="saring.fee_type_id" class="isian w-48" aria-label="Jenis biaya"><option value="">Semua jenis</option><option v-for="j in keu.jenis" :key="j.id" :value="j.id">{{ j.nama }}</option></select>
+      <select v-model="saring.group_id" class="isian w-44" aria-label="Kelompok"><option value="">Semua kelompok</option>
+        <optgroup v-for="(n, jn) in JENIS_KEL" :key="jn" :label="n"><option v-for="g in kelompok.filter((x) => x.jenis === jn)" :key="g.id" :value="g.id">{{ g.nama }} ({{ g.anggota }})</option></optgroup></select>
       <select v-model="saring.kunci_periode" class="isian w-44" aria-label="Periode"><option value="">Semua periode</option><option v-for="k in periodeAda" :key="k" :value="k">{{ labelPeriode(k) }}</option></select>
       <div class="relative min-w-[180px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="saring.q" type="search" class="isian pl-10" placeholder="Cari nama atau NIS" aria-label="Cari santri" /></div>
@@ -86,6 +106,8 @@ function ekspor() {
       <button v-for="s in STATUS" :key="s.k" type="button" @click="saring.status = s.k" :aria-pressed="saring.status === s.k"
         :class="['min-h-[40px] shrink-0 rounded-xl border px-3 text-sm font-semibold', saring.status === s.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis text-teks2']">{{ s.n }}</button>
     </div>
+    <button v-if="['segera', 'lewat', 'tunggak'].includes(saring.status) && tampil.length" class="tombol-garis mb-3 w-presensi" style="color: var(--c)" @click="bukaKirim">
+      <PhWhatsappLogo :size="20" weight="duotone" /> {{ saring.status === 'segera' ? 'WA pengingat jatuh tempo ke wali' : 'WA tunggakan ke wali' }}</button>
     <p v-if="!keu.jenisAktif.length" class="kartu mb-3 p-4 text-sm">Belum ada jenis biaya aktif. Isi dulu di <router-link to="/keuangan/pengaturan" class="font-semibold underline">Pengaturan → Jenis biaya</router-link>.</p>
     <p v-if="memuat" class="kartu p-8 text-center text-sm text-teks3">Memuat…</p>
     <p v-else-if="!tampil.length" class="kartu p-8 text-center text-sm text-teks3">Tidak ada tagihan yang sesuai.</p>
@@ -118,11 +140,20 @@ function ekspor() {
       </ul>
     </template>
 
+    <LembarBawah :model-value="!!kirim" @update:model-value="(v) => !v && (kirim = null)" :judul="kirim ? JUDUL_KIRIM[kirim.jenis] : ''" lebar>
+      <div v-if="kirim" class="pb-2">
+        <p v-if="kirim.jenis === 'baru'" class="mb-3 text-sm text-teks2">Tagihan sudah dibuat. Kabari wali satu per satu melalui WhatsApp (pesan dapat disunting di Setelan → Template WA), atau tutup bila tidak perlu.</p>
+        <DaftarKirimWA :penerima="penerimaWA" :pesan="pesanKirim" :kunci="'tagihan-' + kirim.jenis + '-' + hariIniISO()" />
+      </div>
+    </LembarBawah>
+
     <!-- Buat tagihan massal -->
     <LembarBawah :model-value="!!f" @update:model-value="(v) => !v && (f = null)" judul="Buat tagihan" lebar>
       <div v-if="f" class="space-y-4 pb-2">
         <div><label class="label-isian" for="bt-jns">Jenis biaya</label>
           <select id="bt-jns" v-model="f.fee_type_id" class="isian"><option v-for="j in keu.jenisAktif" :key="j.id" :value="j.id">{{ j.nama }} · {{ SIKLUS[j.siklus].n }} · {{ rupiah(j.nominal) }}</option></select>
+          <p v-if="jenisPilih?.berlaku_jenjang?.length || jenisPilih?.berlaku_tingkat?.length" class="mt-1 text-xs font-semibold" style="color: var(--c)">
+            Hanya untuk {{ [...(jenisPilih.berlaku_jenjang || []).map((k) => JENJANG[k]), ...(jenisPilih.berlaku_tingkat || []).map((t) => 'kelas ' + t)].join(', ') }}</p>
           <p v-if="jenisPilih?.tarif?.length" class="mt-1 text-xs text-teks3">Tarif khusus: {{ jenisPilih.tarif.map((t) => `${t.tingkat ? 'tingkat ' + t.tingkat : JENJANG[t.jenjang]} ${rupiah(t.nominal)}`).join('; ') }}</p></div>
         <div v-if="jenisPilih?.siklus === 'bulanan'">
           <p class="label-isian">Bulan tagihan ({{ taAktif }})</p>
@@ -130,8 +161,12 @@ function ekspor() {
             <button v-for="b in BULAN_TA" :key="b" type="button" :aria-pressed="f.bulan.includes(b)" @click="toggle(f.bulan, b)"
               :class="['min-h-[40px] rounded-xl border text-sm font-semibold', f.bulan.includes(b) ? 'border-transparent bg-[#1572B6] text-white' : 'border-garis text-teks2']">{{ namaBulan(b).replace(/ \d+$/, '').slice(0, 3) }} {{ b.slice(2, 4) }}</button>
           </div></div>
-        <div v-else-if="jenisPilih?.siklus === 'tahunan'"><label class="label-isian" for="bt-ta">Tahun ajaran</label>
-          <select id="bt-ta" v-model="f.academic_year_id" class="isian"><option v-for="t in lembaga.academic_years" :key="t.id" :value="t.id">{{ t.nama }}{{ t.aktif ? ' (aktif)' : '' }}</option></select></div>
+        <div v-else-if="['tahunan', 'semesteran'].includes(jenisPilih?.siklus)" class="grid gap-3 sm:grid-cols-2"><div><label class="label-isian" for="bt-ta">Tahun ajaran</label>
+          <select id="bt-ta" v-model="f.academic_year_id" class="isian" @change="pra = null"><option v-for="t in lembaga.academic_years" :key="t.id" :value="t.id">{{ t.nama }}{{ t.aktif ? ' (aktif)' : '' }}</option></select></div>
+          <div v-if="jenisPilih?.siklus === 'semesteran'"><span class="label-isian">Semester</span>
+            <div class="flex rounded-xl bg-permukaan2 p-1" role="radiogroup" aria-label="Semester">
+              <button v-for="sm in [1, 2]" :key="sm" type="button" role="radio" :aria-checked="f.semester === sm" @click="(f.semester = sm), (pra = null)"
+                :class="['min-h-[40px] flex-1 rounded-lg text-sm font-semibold', f.semester === sm ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ sm === 1 ? 'Ganjil' : 'Genap' }}</button></div></div></div>
         <div class="grid gap-3 sm:grid-cols-2">
           <InputTanggal v-if="jenisPilih?.siklus !== 'bulanan' || f.bulan.length === 1" v-model="f.jatuh_tempo" label="Jatuh tempo (kosong = bawaan)" bawaan-kosong />
           <p v-else class="self-end text-xs text-teks3">Jatuh tempo setiap bulan: tanggal {{ keu.pengaturan.jatuh_tempo_hari }} (Ketentuan).</p>
@@ -146,6 +181,8 @@ function ekspor() {
             <button v-for="t in (f.jenjang ? TINGKAT[f.jenjang] : [7, 8, 9, 10, 11, 12])" :key="t" type="button" :aria-pressed="f.tingkat.includes(t)" @click="toggle(f.tingkat, t)"
               :class="['min-h-[40px] min-w-[52px] rounded-xl border px-2 text-sm font-semibold', f.tingkat.includes(t) ? 'border-transparent bg-[#0B7F81] text-white' : 'border-garis text-teks2']">Kelas {{ t }}</button>
           </div>
+          <select v-model="f.group_id" class="isian mt-2" aria-label="Kelompok tertentu" @change="pra = null"><option value="">Semua kelas/kamar/halaqah</option>
+            <optgroup v-for="(n, jn) in JENIS_KEL" :key="jn" :label="n"><option v-for="g in kelompok.filter((x) => x.jenis === jn)" :key="g.id" :value="g.id">{{ g.nama }} ({{ g.anggota }} santri)</option></optgroup></select>
           <label class="mt-2 flex items-center gap-2 text-sm"><input v-model="f.hanya_baru" type="checkbox" class="h-5 w-5" @change="pra = null" /> Hanya santri baru (masuk tahun ajaran ini)</label>
           <div class="mt-2"><input v-model="cariSantri" type="search" class="isian" placeholder="Atau tambahkan santri tertentu: cari nama/NIS" aria-label="Cari santri tertentu" />
             <ul v-if="calon.length" class="mt-1 divide-y divide-garis rounded-xl border border-garis">

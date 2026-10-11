@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/gaji.js | v1.5 | Fase 11 – Tahap 6 Hak gaji dari penunjukan superadmin; jabatan penanda tangan | 11/10/2026
+// SIMKA PRO | src/stores/gaji.js | v1.6 | Fase 11 – Pelengkap: impor komponen dan perkiraan potongan pegawai | 11/10/2026
 // Modul Gaji (Blueprint Bagian 36). Hak dihitung server (hak_gaji):
 //   kelola = superadmin + pegawai yang ditunjuk superadmin (Hak Akses → Fitur sensitif) bertingkat kelola
 //   lihat  = kelola + yang ditunjuk bertingkat lihat. Jabatan Bendahara tidak otomatis membuka gaji.
@@ -124,6 +124,12 @@ export const useGaji = defineStore('gaji', {
       if (MODE_DEMO) return demoGaji.imporDiterima(periodId, baris, await this._ctx())
       return rpc('impor_diterima_gaji', { p_period: periodId, p: baris })
     },
+
+    async imporKomponen(periodId, baris) {
+      if (MODE_DEMO) return demoGaji.imporKomponen(periodId, baris, await this._ctx())
+      return (await rpc('impor_komponen_gaji', { p_period: periodId, p: baris })) || []
+    },
+    async perkiraanSaya(bulan) { return MODE_DEMO ? demoGaji.perkiraanSaya(this.pengaturan) : rpc('perkiraan_gaji_saya', { p_bulan: bulan || null }) },
 
     // ---------- Penetapan yayasan ----------
     async daftarPenetapan() { return MODE_DEMO ? demoGaji.penetapan() : (await rpc('daftar_penetapan_gaji')) || [] },

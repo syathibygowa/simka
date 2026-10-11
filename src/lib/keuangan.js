@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/keuangan.js | v1.0 | Fase 13 – Tahap 1 Konstanta dan pembantu keuangan santri | 11/10/2026
+// SIMKA PRO | src/lib/keuangan.js | v1.1 | Fase 13 – Pelengkap: siklus semesteran, kamar/halaqah, WA tagihan baru dan pengingat | 11/10/2026
 // Konstanta tampilan, pengelompokan laporan, dan isian pesan WA keuangan santri.
 import { BULAN, formatPanjang, formatPendek } from '@/lib/tanggal'
 import { rupiah, angka, terbilang, bacaRupiah } from '@/lib/gaji'
@@ -9,7 +9,8 @@ export { rupiah, angka, terbilang, bacaRupiah }
 
 export const SIKLUS = {
   bulanan: { n: 'Bulanan', w: 'agenda', ket: 'Ditagih setiap bulan (mis. SPP, makan, asrama)' },
-  tahunan: { n: 'Tahunan', w: 'santri', ket: 'Ditagih sekali setiap tahun ajaran (mis. daftar ulang, kitab)' },
+  semesteran: { n: 'Semesteran', w: 'shift', ket: 'Ditagih setiap semester ganjil/genap (mis. ujian, kitab per semester)' },
+  tahunan: { n: 'Tahunan', w: 'santri', ket: 'Ditagih sekali setiap tahun ajaran (mis. daftar ulang)' },
   sekali: { n: 'Sekali', w: 'pengajuan', ket: 'Ditagih satu kali (mis. uang pangkal, seragam)' },
 }
 export const STATUS_TAGIHAN = {
@@ -37,6 +38,7 @@ export const labelSantri = (s) => `${s.nama} · ${s.nis}${s.kelas ? ' · ' + s.k
 export function kelompokTunggakan(baris, cakupan) {
   const kunci = {
     santri: (r) => r.student_id, kelas: (r) => r.kelas || `${JENJANG_SINGKAT[r.jenjang]} tingkat ${r.tingkat}`,
+    kamar: (r) => r.kamar || 'Belum berkamar', halaqah: (r) => r.halaqah || 'Belum berhalaqah',
     jenis: (r) => r.jenis, jenjang: (r) => JENJANG[r.jenjang] || r.jenjang,
   }[cakupan]
   const m = new Map()
@@ -70,6 +72,18 @@ export const pesanTagihan = (l, peng) => pesanWA('tagihan_santri', { ...penerima
 export const pesanKuitansi = (k) => pesanWA('kuitansi_santri', { ...penerima(k.santri), rincian: (k.rincian || []).map((r) => `• ${r.tagihan}: ${rupiah(r.jumlah)}${Number(r.sisa) ? ` (sisa ${rupiah(r.sisa)})` : ' (lunas)'}`).join('\n'),
   jumlah: rupiah(k.jumlah), tanggal: formatPanjang(k.tanggal), nomor: k.nomor, kode_validasi: k.kode_validasi,
   sisa: Number(k.sisa_total) ? `Sisa seluruh tagihan ananda: ${rupiah(k.sisa_total)}.` : 'Seluruh tagihan ananda saat ini sudah lunas.' })
+/** Tagihan baru satu santri (baris daftar_tagihan) → pesan pemberitahuan. */
+export const pesanTagihanBaru = (santri, baris, peng) => pesanWA('tagihan_baru', { ...penerima(santri), rincian: rincianWA(baris.map((b) => ({ ...b, lewat: false }))),
+  total: rupiah(baris.reduce((a, b) => a + Number(b.sisa), 0)), batas_bayar: formatPanjang(baris.map((b) => b.jatuh_tempo).sort()[0]), rekening: rekeningWA(peng?.rekening) })
+/** Pengingat menjelang jatuh tempo satu santri → pesan. */
+export const pesanPengingat = (santri, baris, peng) => pesanWA('pengingat_jatuh_tempo', { ...penerima(santri), rincian: rincianWA(baris.map((b) => ({ ...b, lewat: false }))),
+  total: rupiah(baris.reduce((a, b) => a + Number(b.sisa), 0)), batas_bayar: formatPanjang(baris.map((b) => b.jatuh_tempo).sort()[0]), rekening: rekeningWA(peng?.rekening) })
+/** Kelompokkan baris tagihan per santri (untuk daftar kirim WA). */
+export function perSantri(baris) {
+  const m = new Map()
+  for (const b of baris) { const x = m.get(b.student_id) || { id: b.student_id, nama: b.nama, nis: b.nis, kelas: b.kelas, wali: b.wali, isi: [] }; x.isi.push(b); m.set(b.student_id, x) }
+  return [...m.values()]
+}
 /** Tunggakan satu santri (baris posisi_tunggakan atau tagihan terbuka) → pesan pemberitahuan. */
 export const pesanTunggakan = (santri, baris, peng) => pesanWA('tunggakan_santri', { ...penerima(santri), rincian: rincianWA(baris.map((b) => ({ ...b, lewat: false }))),
   total: rupiah(baris.reduce((a, b) => a + Number(b.sisa), 0)), rekening: rekeningWA(peng?.rekening) })

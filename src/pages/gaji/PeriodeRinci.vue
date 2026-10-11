@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.3 | Fase 11 – Tahap 6 Jabatan penanda tangan dari penunjukan superadmin | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.4 | Fase 11 – Pelengkap: impor Excel jam honor, potongan, dan tambahan | 11/10/2026 -->
 <script setup>
 // Rincian satu periode gaji: ringkasan, daftar pegawai (skema, penyesuaian, pendapatan, potongan, diterima),
 // hitung ulang, impor jumlah diterima dari Excel, ekspor Excel, cetak Daftar Gaji F4 mendatar.
@@ -19,6 +19,7 @@ import InputTanggal from '@/components/InputTanggal.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarBarisGaji from './LembarBarisGaji.vue'
+import LembarImporKomponen from './LembarImporKomponen.vue'
 import CetakSlip from '@/components/cetak/CetakSlip.vue'
 
 const props = defineProps({ id: { type: String, required: true } })
@@ -126,7 +127,7 @@ function templat() {
   ws['!cols'] = [12, 34, 16, 18, 40].map((wch) => ({ wch }))
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Jumlah diterima'); XLSX.writeFile(wb, nmBerkas('Templat-Gaji-Diterima'))
 }
-const masukan = ref(null); const impor = ref(null)
+const masukan = ref(null); const impor = ref(null); const imporKomponen = ref(false)
 async function bacaBerkas(e) {
   const berkas = e.target.files?.[0]; e.target.value = ''
   if (!berkas) return
@@ -222,6 +223,7 @@ const jumlahKolom = computed(() => Object.fromEntries(KOLOM_DAFTAR.map(([c]) => 
         <button v-if="boleh" class="tombol-garis" @click="templat"><PhDownloadSimple :size="20" /> Templat jumlah diterima</button>
         <button v-if="boleh" class="tombol-garis" @click="masukan.click()"><PhUploadSimple :size="20" weight="duotone" /> Impor jumlah diterima</button>
         <input ref="masukan" type="file" accept=".xlsx,.xls" class="hidden" @change="bacaBerkas" />
+        <button v-if="boleh" class="tombol-garis" @click="imporKomponen = true"><PhUploadSimple :size="20" weight="duotone" /> Impor jam/potongan</button>
         <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
         <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak</button>
         <button v-if="boleh" class="tombol-garis" @click="hapus"><PhTrash :size="20" /> Hapus</button>
@@ -305,6 +307,7 @@ const jumlahKolom = computed(() => Object.fromEntries(KOLOM_DAFTAR.map(([c]) => 
       </LembarBawah>
 
       <!-- Impor jumlah diterima -->
+      <LembarImporKomponen :periode="imporKomponen ? pr : null" :baris="baris" @tutup="imporKomponen = false" @selesai="muat" />
       <LembarBawah :model-value="!!impor" @update:model-value="(x) => !x && (impor = null)" judul="Impor jumlah diterima" lebar>
         <div v-if="impor" class="space-y-4 pb-2">
           <p class="text-sm text-teks2">{{ impor.isi.length }} baris terbaca. Jumlah diterima menjadi nominal slip; selisihnya dengan hasil hitung tampil sebagai

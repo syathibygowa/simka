@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/wa.js | v1.13 | Fase 13 – Template WA keuangan santri (tagihan, kuitansi, tunggakan) | 11/10/2026
+// SIMKA PRO | src/lib/wa.js | v1.14 | Fase 13 – Template WA tagihan baru dan pengingat jatuh tempo | 11/10/2026
 // Tautan WhatsApp wa.me dari WA pribadi pegawai (Bagian 25). Isi pesan diambil dari template WA yang
 // dikelola superadmin (Setelan → Template WA); bila belum dimuat, dipakai isi bawaan di bawah.
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -39,6 +39,8 @@ export const BAWAAN_WA = {
   libur_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan bahwa pada *{periode_libur}* ananda *{nama_santri}* ({kelas}) *{status_libur}*.\n• Pulang: {waktu_pulang}\n• Batas kembali: {batas_kembali}\n{keterangan}\n\nMohon ananda dijemput dan diantar kembali tepat waktu.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   tagihan_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami sampaikan tagihan ananda *{nama_santri}* (NIS {nis}, {kelas}):\n{rincian}\n\n*Jumlah: {total}*\nMohon dibayarkan paling lambat *{batas_bayar}*.\n\nPembayaran dapat ditransfer ke:\n{rekening}\n\nSurat tagihan resmi nomor {nomor}; keabsahan dapat diperiksa dengan kode {kode_validasi} di {tautan_cek}\n\nApabila sudah membayar, mohon kirimkan bukti transfer melalui nomor ini.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   kuitansi_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nAlhamdulillah, pembayaran untuk ananda *{nama_santri}* ({kelas}) telah kami terima:\n{rincian}\n\n*Jumlah: {jumlah}*\nTanggal: {tanggal}\nKuitansi nomor {nomor} (kode validasi {kode_validasi}).\n{sisa}\n\nJazakumullahu khairan atas kerja samanya.\n{pengirim}\n{jabatan_pengirim}',
+  tagihan_baru: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan tagihan baru untuk ananda *{nama_santri}* ({kelas}):\n{rincian}\n\n*Jumlah: {total}*\nJatuh tempo: {batas_bayar}\n\nPembayaran dapat ditransfer ke:\n{rekening}\n\nMohon kirimkan bukti transfer melalui nomor ini.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  pengingat_jatuh_tempo: '{salam}, Bapak/Ibu {nama_wali}.\n\nMengingatkan dengan hormat, tagihan ananda *{nama_santri}* ({kelas}) akan jatuh tempo pada *{batas_bayar}*:\n{rincian}\n\n*Jumlah: {total}*\n\nPembayaran dapat ditransfer ke:\n{rekening}\n\nApabila sudah membayar, mohon abaikan pesan ini.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   tunggakan_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nMohon maaf mengganggu. Berdasarkan catatan kami, terdapat tagihan ananda *{nama_santri}* ({kelas}) yang telah melewati jatuh tempo:\n{rincian}\n\n*Jumlah: {total}*\n\nPembayaran dapat ditransfer ke:\n{rekening}\n\nApabila sudah membayar, mohon kirimkan bukti transfer melalui nomor ini. Bila ada kendala, silakan menghubungi kami.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   verval_presensi: '{salam}, {nama}.\n\nPresensi Anda pada sesi {sesi}, {tanggal} telah diverval dengan status *{status_presensi}*.\nCatatan: {catatan_verval}\n\n{penutup}\n{pengirim}',
 }

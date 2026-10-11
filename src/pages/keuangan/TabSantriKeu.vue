@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabSantriKeu.vue | v1.0 | Fase 13 – Daftar keuangan per santri | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabSantriKeu.vue | v1.1 | Fase 13 – Pelengkap: saringan kelas/kamar/halaqah | 11/10/2026 -->
 <script setup>
 // Per santri: tagihan, dibayar, sisa, tunggakan lewat tempo, subsidi, wali (WA). Ketuk santri → rincian (?santri=).
 // Pilih beberapa santri → terbitkan surat tagihan sekaligus. Ekspor Excel dan cetak F4.
@@ -19,9 +19,11 @@ import LembarSuratTagihan from './LembarSuratTagihan.vue'
 const keu = useKeuangan(); const lembaga = useLembaga(); const sesi = useSesi(); const ui = useUI()
 const router = useRouter(); const route = useRoute()
 const daftar = ref([]); const memuat = ref(true)
-const q = ref(''); const jenjang = ref(''); const status = ref(typeof route.query.status === 'string' ? route.query.status : '')
-async function muat() { memuat.value = true; try { daftar.value = await keu.santri({}) } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false } }
-onMounted(() => { muat(); lembaga.muat() })
+const q = ref(''); const jenjang = ref(''); const grup = ref(''); const kelompok = ref([]); const status = ref(typeof route.query.status === 'string' ? route.query.status : '')
+async function muat() { memuat.value = true; try { daftar.value = await keu.santri({ group_id: grup.value }) } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false } }
+onMounted(() => { muat(); lembaga.muat(); keu.kelompok().then((k) => { kelompok.value = k }).catch(() => {}) })
+watch(grup, muat)
+const namaGrup = computed(() => kelompok.value.find((g) => g.id === grup.value)?.nama || '')
 const SARING = computed(() => [
   { k: '', n: 'Semua', j: daftar.value.length }, { k: 'tunggak', n: 'Ada sisa', j: daftar.value.filter((x) => x.sisa > 0).length },
   { k: 'lewat', n: 'Lewat jatuh tempo', j: daftar.value.filter((x) => x.lewat > 0).length }, { k: 'lunas', n: 'Lunas', j: daftar.value.filter((x) => x.tagihan > 0 && !x.sisa).length },
@@ -55,6 +57,8 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
     <div class="mb-3 flex flex-wrap items-end gap-2">
       <div class="relative min-w-[200px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="q" type="search" class="isian pl-10" placeholder="Cari nama atau NIS" aria-label="Cari santri" /></div>
+      <select v-model="grup" class="isian w-48" aria-label="Kelompok"><option value="">Semua kelompok</option>
+        <optgroup v-for="(n, jn) in { kelas: 'Kelas', kamar: 'Kamar', halaqah: 'Halaqah' }" :key="jn" :label="n"><option v-for="g in kelompok.filter((x) => x.jenis === jn)" :key="g.id" :value="g.id">{{ g.nama }}</option></optgroup></select>
       <select v-model="jenjang" class="isian w-48" aria-label="Jenjang"><option value="">Semua jenjang</option><option v-for="(n, k) in JENJANG" :key="k" :value="k">{{ n }}</option></select>
       <button class="tombol-garis" :disabled="!tampil.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Excel</button>
       <button class="tombol-garis" :disabled="!tampil.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Cetak</button>
@@ -110,7 +114,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
     </template>
 
     <LembarSuratTagihan :santri="surat" @tutup="surat = null" @terbit="(pilih = new Set()), muat()" />
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Daftar Tagihan Santri" :subjudul="`Posisi per ${formatPanjang(hariIniISO())}${jenjang ? ' · ' + JENJANG[jenjang] : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Daftar Tagihan Santri" :subjudul="`Posisi per ${formatPanjang(hariIniISO())}${namaGrup ? ' · ' + namaGrup : ''}${jenjang ? ' · ' + JENJANG[jenjang] : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:4%"><col style="width:9%"><col style="width:22%"><col style="width:4%"><col style="width:8%"><col v-for="n in 4" :key="n" style="width:10%"><col style="width:13%"></colgroup>
         <thead><tr><th>No.</th><th>NIS</th><th>Nama</th><th>JK</th><th>Kelas</th><th>Tagihan (Rp)</th><th>Dibayar (Rp)</th><th>Sisa (Rp)</th><th>Lewat tempo (Rp)</th><th>Wali</th></tr></thead>

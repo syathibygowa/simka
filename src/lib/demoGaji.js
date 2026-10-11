@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoGaji.js | v1.3 | Fase 11 – Tahap 5 Pengingat kenaikan, ringkasan Beranda, dan pembanding bulan lalu di mode demo | 11/10/2026
+// SIMKA PRO | src/lib/demoGaji.js | v1.4 | Fase 11 – Pelengkap: impor komponen dan perkiraan potongan pegawai di mode demo | 11/10/2026
 // Tiruan sederhana fungsi server periode gaji (migrasi 7100) agar tampilan dapat dicoba tanpa Supabase.
 // Logika sama: komponen skema → honor (honorer) → komponen yang diubah dipertahankan → penyesuaian dari
 // jumlah diterima yang ditetapkan atau penetapan yayasan.
@@ -146,6 +146,37 @@ export const demoGaji = {
       l.target_diterima = Number(String(r.diterima).replace(/[^0-9]/g, '')); l.alasan_target = r.keterangan || 'Impor data gaji diterima'; hitung(l, ctx); n++
     })
     return { disimpan: n, gagal }
+  },
+  imporKomponen(pid, baris, ctx) {
+    draf(pid)
+    return baris.map((r) => {
+      const l = D.baris[pid].find((x) => x.data.niy === String(r.niy))
+      if (!l) return { niy: r.niy, hasil: 'lewati', ket: 'NIY tidak ada pada periode ini' }
+      const ket = []
+      for (const [k, kode] of [['jam_guru', 'guru'], ['jam_muhaffizh', 'muhaffizh']]) {
+        if (r[k] == null || r[k] === '') continue
+        const i = l.item.find((x) => x.kategori === 'honor' && x.kode === kode)
+        if (!i) { ket.push('tidak ada honor ' + kode); continue }
+        Object.assign(i, { jumlah: Number(r[k]), besaran: Math.round(Number(r[k]) * i.tarif), sumber: 'manual', alasan: 'Impor Excel', diubah_pada: new Date().toISOString() }); ket.push(`jam ${kode} ${r[k]}`)
+      }
+      for (const [k, kat, jenis, bawaan] of [['potongan', 'potongan_lain', 'potongan', 'Potongan lain'], ['tambahan', 'tambahan', 'pendapatan', 'Tambahan']]) {
+        if (r[k] == null || r[k] === '') continue
+        l.item = l.item.filter((x) => !(x.kategori === kat && x.alasan === 'Impor Excel'))
+        const v = Math.round(Number(r[k]) || 0)
+        if (v > 0) l.item.push({ id: id(), jenis, kategori: kat, label: r['ket_' + k] || bawaan, besaran: v, sumber: 'manual', alasan: 'Impor Excel', urutan: jenis === 'pendapatan' ? 96 : 199 })
+        ket.push(`${k} Rp${v.toLocaleString('id-ID')}`)
+      }
+      hitung(l, ctx)
+      return { niy: r.niy, nama: l.data.nama, hasil: 'diubah', ket: ket.join('; ') }
+    })
+  },
+  perkiraanSaya(pengaturan) {
+    if (!pengaturan.slip_pegawai) throw new Error('Perkiraan potongan tidak ditampilkan di akun pegawai.')
+    const h = new Date().toISOString().slice(0, 10)
+    return { bulan: h.slice(0, 7), sampai: h, potong_aktif: !!pengaturan.potong_kehadiran, potong_izin: !!pengaturan.potong_izin,
+      tugas: [{ kode: 'MUHAFFIZH', tugas: 'Muhaffizh', sumber: 'Absensi halaqah', satuan: 'sesi', wajib: 24, terlaksana: 21, berizin: 1, tanpa: 2, tunjangan: 500000, perkiraan: 41700 },
+        { kode: 'WALI_KELAS', tugas: 'Wali Kelas', sumber: 'Absensi kelas', satuan: 'hari', wajib: 9, terlaksana: 9, berizin: 0, tanpa: 0, tunjangan: 250000, perkiraan: 0 }],
+      pinjaman: [{ keterangan: 'Pinjaman renovasi rumah', cicilan: 500000, sisa: 3500000 }], simpanan: [{ program: 'Umrah', setoran: 100000 }] }
   },
   penetapan: () => D.penetapan.map((d) => ({ ...d })),
   simpanPenetapan(isi, ctx) {

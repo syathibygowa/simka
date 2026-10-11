@@ -1,7 +1,8 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabTunggakan.vue | v1.0 | Fase 13 – Laporan tunggakan per tanggal (per santri, kelas, jenis, jenjang) | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabTunggakan.vue | v1.1 | Fase 13 – Pelengkap: per kamar/halaqah dan periode jatuh tempo (harian, pekanan, bulanan, rentang) | 11/10/2026 -->
 <script setup>
 // Posisi tunggakan per tanggal (bawaan hari ini): tagihan yang jatuh tempo paling lambat tanggal itu dan masih bersisa
-// pada tanggal itu. Dikelompokkan per santri, kelas, jenis biaya, atau jenjang. Cetak F4 dan Excel.
+// pada tanggal itu. Dikelompokkan per santri, kelas, kamar, halaqah, jenis biaya, atau jenjang. Cetak F4 dan Excel.
+// Periode jatuh tempo (v1.1): semua, hari ini, pekan ini, bulan ini, bulan lalu, semester ini, atau rentang tanggal.
 // Per santri: WA pemberitahuan tunggakan ke wali (satu per satu atau berurutan) dan surat tagihan massal.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -13,6 +14,7 @@ import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 import { formatPendek, formatPanjang, hariIniISO } from '@/lib/tanggal'
 import { rupiah, angka, kelompokTunggakan, pesanTunggakan, JENJANG } from '@/lib/keuangan'
+import { periodeCepat } from '@/lib/laporanKehadiran'
 import { tautanWA } from '@/lib/wa'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
@@ -23,12 +25,20 @@ import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarSuratTagihan from './LembarSuratTagihan.vue'
 
 const keu = useKeuangan(); const lembaga = useLembaga(); const sesi = useSesi(); const ui = useUI(); const router = useRouter(); const route = useRoute()
-const tanggal = ref(hariIniISO()); const cakupan = ref('santri'); const jenjang = ref(''); const baris = ref([]); const memuat = ref(true)
+const tanggal = ref(hariIniISO()); const dari = ref(''); const periode = ref(''); const cakupan = ref('santri'); const jenjang = ref(''); const baris = ref([]); const memuat = ref(true)
 async function muat() { memuat.value = true; try { baris.value = await keu.posisiTunggakan(tanggal.value) } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false } }
 onMounted(() => { muat(); lembaga.muat() })
 watch(tanggal, muat)
-const CAKUPAN = [{ k: 'santri', n: 'Per santri' }, { k: 'kelas', n: 'Per kelas' }, { k: 'jenis', n: 'Per jenis biaya' }, { k: 'jenjang', n: 'Per jenjang' }]
-const data = computed(() => baris.value.filter((r) => !jenjang.value || r.jenjang === jenjang.value))
+const PERIODE = [{ k: '', n: 'Semua tunggakan' }, { k: 'hari', n: 'Jatuh tempo hari ini' }, { k: 'pekan', n: 'Pekan ini' }, { k: 'bulan', n: 'Bulan ini' },
+  { k: 'bulan_lalu', n: 'Bulan lalu' }, { k: 'semester', n: 'Semester ini' }, { k: 'rentang', n: 'Rentang tanggal' }]
+watch(periode, (k) => {
+  if (!k) { dari.value = ''; tanggal.value = hariIniISO() }
+  else if (k !== 'rentang') { const x = periodeCepat(k); dari.value = x.mulai; tanggal.value = x.selesai }
+  else if (!dari.value) dari.value = hariIniISO().slice(0, 8) + '01'
+})
+const CAKUPAN = [{ k: 'santri', n: 'Per santri' }, { k: 'kelas', n: 'Per kelas' }, { k: 'kamar', n: 'Per kamar' }, { k: 'halaqah', n: 'Per halaqah' }, { k: 'jenis', n: 'Per jenis biaya' }, { k: 'jenjang', n: 'Per jenjang' }]
+const data = computed(() => baris.value.filter((r) => (!jenjang.value || r.jenjang === jenjang.value) && (!dari.value || r.jatuh_tempo >= dari.value)))
+const teksPeriode = computed(() => (dari.value ? `jatuh tempo ${formatPanjang(dari.value)} s.d. ${formatPanjang(tanggal.value)}` : `posisi per ${formatPanjang(tanggal.value)}`))
 const kelompok = computed(() => kelompokTunggakan(data.value, cakupan.value))
 const total = computed(() => data.value.reduce((a, r) => a + Number(r.sisa), 0))
 const santri = computed(() => kelompokTunggakan(data.value, 'santri'))
@@ -41,11 +51,11 @@ const penerima = computed(() => santri.value.map((k) => ({ employee_id: k.studen
 const pesan = (p) => pesanTunggakan({ nama: p.k.nama, nis: p.k.nis, kelas: p.k.kelas, wali: p.k.wali }, p.k.isi, keu.pengaturan)
 
 function ekspor() {
-  const aoa = [['No.', 'NIS', 'Nama', 'JK', 'Kelas', 'Jenjang', 'Jenis biaya', 'Tagihan', 'Jatuh tempo', 'Hari lewat', 'Nominal', 'Dibayar', 'Sisa', 'Wali', 'HP wali'],
-    ...data.value.map((r, i) => [i + 1, r.nis, r.nama, r.jk, r.kelas || '', JENJANG[r.jenjang], r.jenis, r.tagihan, formatPendek(r.jatuh_tempo), r.hari_lewat, Number(r.nominal), Number(r.dibayar), Number(r.sisa), r.wali?.nama || '', r.wali?.no_hp || ''])]
+  const aoa = [['No.', 'NIS', 'Nama', 'JK', 'Kelas', 'Kamar', 'Halaqah', 'Jenjang', 'Jenis biaya', 'Tagihan', 'Jatuh tempo', 'Hari lewat', 'Nominal', 'Dibayar', 'Sisa', 'Wali', 'HP wali'],
+    ...data.value.map((r, i) => [i + 1, r.nis, r.nama, r.jk, r.kelas || '', r.kamar || '', r.halaqah || '', JENJANG[r.jenjang], r.jenis, r.tagihan, formatPendek(r.jatuh_tempo), r.hari_lewat, Number(r.nominal), Number(r.dibayar), Number(r.sisa), r.wali?.nama || '', r.wali?.no_hp || ''])]
   const ringkas = [[`Rekap tunggakan ${judulCakupan.value}`, '', '', ''], ['Kelompok', 'Santri', 'Tagihan', 'Sisa'], ...kelompok.value.map((k) => [k.nama, k.jumlahSantri, k.tagihan, k.sisa]), ['Jumlah', santri.value.length, data.value.length, total.value]]
   const wb = XLSX.utils.book_new()
-  const w1 = XLSX.utils.aoa_to_sheet([[`Posisi tunggakan per ${formatPanjang(tanggal.value)}`], [], ...aoa]); w1['!cols'] = aoa[0].map((j) => ({ wch: ['Nama', 'Tagihan', 'Wali'].includes(j) ? 28 : 12 }))
+  const w1 = XLSX.utils.aoa_to_sheet([[`Tunggakan santri, ${teksPeriode.value}`], [], ...aoa]); w1['!cols'] = aoa[0].map((j) => ({ wch: ['Nama', 'Tagihan', 'Wali'].includes(j) ? 28 : 12 }))
   XLSX.utils.book_append_sheet(wb, w1, 'Rincian'); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ringkas), 'Rekap')
   XLSX.writeFile(wb, `Tunggakan-Santri-${tanggal.value}.xlsx`)
 }
@@ -55,14 +65,17 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
 <template>
   <div>
     <div class="mb-3 flex flex-wrap items-end gap-2">
-      <div class="w-48"><InputTanggal v-model="tanggal" label="Posisi per tanggal" /></div>
+      <div class="w-52"><label class="label-isian" for="tg-per">Periode</label>
+        <select id="tg-per" v-model="periode" class="isian"><option v-for="x in PERIODE" :key="x.k" :value="x.k">{{ x.n }}</option></select></div>
+      <div v-if="periode === 'rentang'" class="w-44"><InputTanggal v-model="dari" label="Jatuh tempo dari" /></div>
+      <div class="w-44"><InputTanggal v-model="tanggal" :label="periode ? 'Sampai tanggal' : 'Posisi per tanggal'" /></div>
       <select v-model="jenjang" class="isian w-48" aria-label="Jenjang"><option value="">Semua jenjang</option><option v-for="(n, k) in JENJANG" :key="k" :value="k">{{ n }}</option></select>
       <div class="flex-1" />
       <button class="tombol-garis" :disabled="!data.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Excel</button>
       <button class="tombol-garis" :disabled="!data.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Cetak</button>
     </div>
     <div class="-mx-4 mb-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0">
-      <KartuStatistik class="w-[72%] shrink-0 snap-start sm:w-auto" judul="Jumlah tunggakan" :nilai="rupiah(total)" :ikon="PhWarningCircle" warna="klinik" :keterangan="'Per ' + formatPanjang(tanggal)" />
+      <KartuStatistik class="w-[72%] shrink-0 snap-start sm:w-auto" judul="Jumlah tunggakan" :nilai="rupiah(total)" :ikon="PhWarningCircle" warna="klinik" :keterangan="teksPeriode.charAt(0).toUpperCase() + teksPeriode.slice(1)" />
       <KartuStatistik class="w-[44%] shrink-0 snap-start sm:w-auto" judul="Santri menunggak" :nilai="santri.length" :ikon="PhUsersThree" warna="pengajuan" :keterangan="santri.filter((k) => k.wali?.no_hp).length + ' memiliki WA wali'" />
       <KartuStatistik class="w-[44%] shrink-0 snap-start sm:w-auto" judul="Tagihan tertunggak" :nilai="data.length" :ikon="PhInvoice" warna="tahfizh" :keterangan="'Tertua ' + (data.length ? formatPendek(data.map((r) => r.jatuh_tempo).sort()[0]) : '–')" />
     </div>
@@ -100,7 +113,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
       <DaftarKirimWA :penerima="penerima" :pesan="pesan" :kunci="'tunggakan-' + tanggal" />
     </LembarBawah>
     <LembarSuratTagihan :santri="surat" @tutup="surat = null" @terbit="muat" />
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Laporan Tunggakan Keuangan Santri" :subjudul="`Posisi per ${formatPanjang(tanggal)} · ${CAKUPAN.find((c) => c.k === cakupan).n}${jenjang ? ' · ' + JENJANG[jenjang] : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Laporan Tunggakan Keuangan Santri" :subjudul="`${teksPeriode.charAt(0).toUpperCase() + teksPeriode.slice(1)} · ${CAKUPAN.find((c) => c.k === cakupan).n}${jenjang ? ' · ' + JENJANG[jenjang] : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table v-if="cakupan === 'santri'" class="tabel">
         <colgroup><col style="width:4%"><col style="width:9%"><col style="width:20%"><col style="width:4%"><col style="width:8%"><col style="width:31%"><col style="width:10%"><col style="width:14%"></colgroup>
         <thead><tr><th>No.</th><th>NIS</th><th>Nama</th><th>JK</th><th>Kelas</th><th>Tagihan tertunggak</th><th>Tertua</th><th>Sisa (Rp)</th></tr></thead>
@@ -110,7 +123,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
       </table>
       <table v-else class="tabel">
         <colgroup><col style="width:6%"><col style="width:46%"><col style="width:14%"><col style="width:14%"><col style="width:20%"></colgroup>
-        <thead><tr><th>No.</th><th>{{ cakupan === 'kelas' ? 'Kelas' : cakupan === 'jenis' ? 'Jenis biaya' : 'Jenjang' }}</th><th>Santri</th><th>Tagihan</th><th>Sisa (Rp)</th></tr></thead>
+        <thead><tr><th>No.</th><th>{{ { kelas: 'Kelas', kamar: 'Kamar', halaqah: 'Halaqah', jenis: 'Jenis biaya', jenjang: 'Jenjang' }[cakupan] }}</th><th>Santri</th><th>Tagihan</th><th>Sisa (Rp)</th></tr></thead>
         <tbody><tr v-for="(k, i) in kelompok" :key="k.kunci"><td class="tengah">{{ i + 1 }}</td><td>{{ k.nama }}</td><td class="tengah">{{ k.jumlahSantri }}</td><td class="tengah">{{ k.tagihan }}</td><td class="kanan">{{ angka(k.sisa) }}</td></tr>
           <tr><th colspan="2">Jumlah</th><th>{{ santri.length }}</th><th>{{ data.length }}</th><th class="kanan">{{ angka(total) }}</th></tr></tbody>
       </table>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/audit/AuditLog.vue | v1.0 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/audit/AuditLog.vue | v1.1 | Fase 11 & 13 – Nama jenis data gaji dan keuangan | 11/10/2026 -->
 <script setup>
 // Audit log 30 hari terakhir. Pegawai melihat aktivitasnya sendiri; admin ber-izin "audit_log" dan
 // superadmin melihat semua. Saring tanggal, pelaku, dan jenis data; rincian perubahan per kolom;
@@ -30,6 +30,10 @@ const TABEL = {
   doc_number_formats: 'Penomoran dokumen', letter_subject_codes: 'Kode perihal surat', holidays: 'Hari libur', holiday_calendars: 'Kalender libur',
   academic_years: 'Tahun ajaran', salary_rates: 'Tarif tunjangan', gps_points: 'Titik GPS', task_patterns: 'Pola tugas presensi',
   pattern_sessions: 'Sesi presensi', shift_rosters: 'Jadwal shift', shift_swaps: 'Tukar shift', announcements: 'Pengumuman',
+  gaji: 'Gaji (periode, komponen, slip)', salary_decisions: 'Penetapan gaji yayasan', employee_loans: 'Pinjaman pegawai', loan_payments: 'Pembayaran pinjaman',
+  savings_programs: 'Program simpanan', savings_members: 'Anggota simpanan', savings_transactions: 'Transaksi simpanan', employee_bank_accounts: 'Rekening gaji pegawai',
+  payroll_slip_requests: 'Permintaan slip gaji', sensitive_access: 'Akses fitur sensitif', fee_types: 'Jenis biaya santri', fee_rates: 'Tarif biaya santri',
+  fee_subsidies: 'Subsidi santri', bills: 'Tagihan santri', payments: 'Pembayaran santri', payment_items: 'Rincian pembayaran santri', billing_letters: 'Surat tagihan santri',
 }
 const AKSI = {
   tambah: { n: 'Menambah', i: PhPlusCircle, w: 'presensi' }, ubah: { n: 'Mengubah', i: PhPencilSimpleLine, w: 'pegawai' },
