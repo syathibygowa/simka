@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/wa.js | v1.12 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026
+// SIMKA PRO | src/lib/wa.js | v1.13 | Fase 13 – Template WA keuangan santri (tagihan, kuitansi, tunggakan) | 11/10/2026
 // Tautan WhatsApp wa.me dari WA pribadi pegawai (Bagian 25). Isi pesan diambil dari template WA yang
 // dikelola superadmin (Setelan → Template WA); bila belum dimuat, dipakai isi bawaan di bawah.
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -37,6 +37,9 @@ export const BAWAAN_WA = {
   izin_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan izin {jenis_izin} ananda *{nama_santri}* ({kelas}) *{status}*.\n• Alasan: {alasan}\n• Keluar: {waktu_keluar}\n• Batas kembali: {batas_kembali}\n• Penjemput: {penjemput}\n\nMohon ananda diantar kembali ke pondok sebelum batas waktu.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   titipan_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan titipan untuk ananda *{nama_santri}* ({kelas}) {status_titipan}.\n• Barang: {barang}\n• Pengirim: {pengirim_titipan}\n• Diterima di pos: {waktu_terima}\n{pengambilan}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   libur_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan bahwa pada *{periode_libur}* ananda *{nama_santri}* ({kelas}) *{status_libur}*.\n• Pulang: {waktu_pulang}\n• Batas kembali: {batas_kembali}\n{keterangan}\n\nMohon ananda dijemput dan diantar kembali tepat waktu.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  tagihan_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami sampaikan tagihan ananda *{nama_santri}* (NIS {nis}, {kelas}):\n{rincian}\n\n*Jumlah: {total}*\nMohon dibayarkan paling lambat *{batas_bayar}*.\n\nPembayaran dapat ditransfer ke:\n{rekening}\n\nSurat tagihan resmi nomor {nomor}; keabsahan dapat diperiksa dengan kode {kode_validasi} di {tautan_cek}\n\nApabila sudah membayar, mohon kirimkan bukti transfer melalui nomor ini.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  kuitansi_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nAlhamdulillah, pembayaran untuk ananda *{nama_santri}* ({kelas}) telah kami terima:\n{rincian}\n\n*Jumlah: {jumlah}*\nTanggal: {tanggal}\nKuitansi nomor {nomor} (kode validasi {kode_validasi}).\n{sisa}\n\nJazakumullahu khairan atas kerja samanya.\n{pengirim}\n{jabatan_pengirim}',
+  tunggakan_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nMohon maaf mengganggu. Berdasarkan catatan kami, terdapat tagihan ananda *{nama_santri}* ({kelas}) yang telah melewati jatuh tempo:\n{rincian}\n\n*Jumlah: {total}*\n\nPembayaran dapat ditransfer ke:\n{rekening}\n\nApabila sudah membayar, mohon kirimkan bukti transfer melalui nomor ini. Bila ada kendala, silakan menghubungi kami.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   verval_presensi: '{salam}, {nama}.\n\nPresensi Anda pada sesi {sesi}, {tanggal} telah diverval dengan status *{status_presensi}*.\nCatatan: {catatan_verval}\n\n{penutup}\n{pengirim}',
 }
 
@@ -82,6 +85,9 @@ export const ISIAN_WA = [
   { grup: 'Security (titipan)', isian: [['status_titipan', 'Status titipan (diterima/diserahkan)'], ['barang', 'Jenis dan uraian barang'], ['pengirim_titipan', 'Pengirim titipan'],
     ['waktu_terima', 'Waktu titipan diterima di pos'], ['pengambilan', 'Keterangan pengambilan (nama dan waktu)']] },
   { grup: 'Libur santri', isian: [['periode_libur', 'Nama periode libur'], ['status_libur', 'Keputusan libur ananda'], ['waktu_pulang', 'Waktu pulang']] },
+  { grup: 'Keuangan santri', isian: [['rincian', 'Rincian tagihan/pembayaran (satu baris per tagihan)'], ['total', 'Jumlah tagihan'], ['jumlah', 'Jumlah dibayar'],
+    ['batas_bayar', 'Batas pembayaran'], ['rekening', 'Rekening lembaga'], ['nomor', 'Nomor kuitansi/surat tagihan'], ['kode_validasi', 'Kode validasi dokumen'],
+    ['tautan_cek', 'Tautan Cek Keabsahan'], ['sisa', 'Keterangan sisa tagihan'], ['tanggal', 'Tanggal pembayaran']] },
   { grup: 'Bebas', isian: [['pesan', 'Isi pesan bebas']] },
 ]
 

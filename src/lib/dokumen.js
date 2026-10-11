@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/dokumen.js | v1.2 | Fase 10 – Tahap 2 Jenis dokumen surat keluar | 11/10/2026
+// SIMKA PRO | src/lib/dokumen.js | v1.3 | Fase 13 – Jenis dokumen slip gaji, kuitansi, surat tagihan | 11/10/2026
 // Kode validasi dokumen bertanda tangan elektronik: alamat halaman Cek Keabsahan (dibuka dengan memindai QR),
 // penyeragaman kode ketikan, label status, dan QR (SVG, tanpa layanan luar).
 import { svgQR } from './kartu'
@@ -28,4 +28,7 @@ export const JENIS_DOKUMEN = {
   laporan_kehadiran_santri: 'Laporan kehadiran santri',
   laporan_layanan: 'Laporan layanan',
   surat_keluar: 'Surat keluar',
+  slip_gaji: 'Slip gaji',
+  kuitansi: 'Kuitansi pembayaran santri',
+  tagihan_santri: 'Surat tagihan santri',
 }

@@ -1,16 +1,20 @@
-<!-- SIMKA PRO | src/pages/beranda/RingkasanPribadi.vue | v1.4 | Fase 11 – Tahap 5 Kartu gaji (tanda tangan, permintaan slip, periode, kenaikan masa kerja) | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/RingkasanPribadi.vue | v1.5 | Fase 13 – Kartu keuangan santri (pemasukan hari ini, tunggakan, jatuh tempo) | 11/10/2026 -->
 <script setup>
 // Kartu beranda pribadi (semua pegawai): jurnal hari ini, pengajuan, agenda terdekat, pengumuman dan berkas baru.
 // v1.2: kartu menonjol "Dokumen menunggu tanda tangan Anda" (laporan resmi) bila ada.
 // v1.3: kartu menonjol "Surat perlu tindakan Anda" (surat masuk/disposisi; draf surat yang perlu diperiksa Tata Usaha).
 // v1.4: kartu "Gaji" bagi penanda tangan dan pengelola/pembaca gaji: daftar gaji menunggu tanda tangan, permintaan slip,
 //       status periode terakhir, dan pegawai yang naik masa kerja bulan ini/bulan depan. Tanpa nominal (data sensitif).
+// v1.5: kartu "Keuangan santri" bagi yang ditunjuk superadmin: pemasukan hari ini, santri menunggak, jatuh tempo pekan ini.
 import { computed, onMounted, ref } from 'vue'
 import { PhSignature, PhEnvelopeSimple } from '@phosphor-icons/vue'
 import { usePersuratan } from '@/stores/persuratan'
 import { useSesi } from '@/stores/sesi'
 import { useDokumenResmi } from '@/stores/dokumenResmi'
 import { useGaji } from '@/stores/gaji'
+import { useKeuangan } from '@/stores/keuangan'
+import { rupiah } from '@/lib/gaji'
+import { PhCashRegister } from '@phosphor-icons/vue'
 import { PhWallet } from '@phosphor-icons/vue'
 import { PhNotebook, PhFileText, PhCalendarCheck, PhMegaphone, PhFolderOpen, PhCaretRight, PhWarningCircle, PhUmbrella, PhPushPin } from '@phosphor-icons/vue'
 import { formatHari, formatPendek } from '@/lib/tanggal'
@@ -50,6 +54,12 @@ const kartuGaji = computed(() => {
   if (!b.length) return null
   return { judul: x.ttd_menunggu ? 'Daftar gaji menunggu tanda tangan Anda' : x.permintaan ? 'Permintaan slip gaji menunggu' : 'Gaji pegawai', ket: b.join(' · '), ke, menonjol: !!(x.ttd_menunggu || x.permintaan) }
 })
+// Keuangan santri (hanya yang ditunjuk superadmin)
+const keu = useKeuangan(); const rk = ref(null)
+onMounted(async () => { if (!sesi.keuangan) return; try { rk.value = await keu.ringkasanBeranda() } catch { rk.value = null } })
+const ketKeuangan = computed(() => { const x = rk.value; if (!x) return ''
+  return [`Masuk hari ini ${rupiah(x.masuk_hari_ini)} (${x.transaksi_hari_ini} transaksi)`, x.santri_menunggak ? `${x.santri_menunggak} santri menunggak` : 'tidak ada tunggakan',
+    x.tempo_pekan ? `${x.tempo_pekan} tagihan jatuh tempo pekan ini` : '', x.ada_penanda_tangan ? '' : 'penanda tangan belum ditunjuk'].filter(Boolean).join(' · ') })
 </script>
 <template>
   <router-link v-if="dr.menunggu.length" to="/rekap/tandatangan" class="kartu w-pengajuan mb-3 flex items-center gap-3 border-l-4 border-l-[color:var(--c)] p-4 hover:-translate-y-0.5 hover:shadow-apung">
@@ -70,6 +80,11 @@ const kartuGaji = computed(() => {
     <span class="chip-ikon h-11 w-11 shrink-0"><PhWallet :size="24" weight="duotone" /></span>
     <span class="min-w-0 flex-1"><span class="block font-bold">{{ kartuGaji.judul }}</span>
       <span class="block text-sm text-teks2">{{ kartuGaji.ket }}</span></span>
+    <PhCaretRight :size="18" class="text-teks3" />
+  </router-link>
+  <router-link v-if="rk" :to="rk.santri_menunggak ? '/keuangan/tunggakan' : '/keuangan'" class="kartu w-keuangan mb-3 flex items-center gap-3 p-4 hover:-translate-y-0.5 hover:shadow-apung">
+    <span class="chip-ikon h-11 w-11 shrink-0"><PhCashRegister :size="24" weight="duotone" /></span>
+    <span class="min-w-0 flex-1"><span class="block font-bold">Keuangan santri</span><span class="block text-sm text-teks2">{{ ketKeuangan }}</span></span>
     <PhCaretRight :size="18" class="text-teks3" />
   </router-link>
   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.18 | Fase 11 – Tahap 5 Menu Tunjangan terpisah dari menu Gaji | 11/10/2026
+// SIMKA PRO | src/router/index.js | v3.19 | Fase 13 – Rute menu Keuangan santri | 11/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -56,6 +56,7 @@ const routes = [
       { path: 'tunjangan/:tab?', component: () => import('@/pages/gaji/Gaji.vue'), props: (r) => ({ tab: r.params.tab || '', menu: 'tunjangan' }), meta: { judul: 'Tunjangan', kembali: '/tugas' } },
       { path: 'jabatan-tunjangan/:tab?', redirect: '/tunjangan/peta' },
       { path: 'segera/gaji', redirect: '/gaji' },
+      { path: 'keuangan/:tab?', component: () => import('@/pages/keuangan/Keuangan.vue'), props: (r) => ({ tab: r.params.tab || '' }), meta: { judul: 'Keuangan Santri', kembali: '/tugas' } },
       { path: 'presensi', component: () => import('@/pages/presensi/Presensi.vue'), meta: { judul: 'Presensi' } },
       { path: 'atur-presensi/:tab?', component: () => import('@/pages/presensi/AturPresensi.vue'), props: true, meta: { judul: 'Penjadwalan', peran: ADMIN, kembali: '/tugas' } },
       { path: 'verval-presensi/:tab?', component: () => import('@/pages/verval/VervalPresensi.vue'), props: true, meta: { judul: 'Verval Presensi', peran: ADMIN, kembali: '/tugas' } },

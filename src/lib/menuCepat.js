@@ -1,10 +1,10 @@
-// SIMKA PRO | src/lib/menuCepat.js | v1.4 | Fase 11 – Tahap 6 Menu cepat Gaji hanya untuk yang berhak (bukan semua jabatan Bendahara) | 11/10/2026
+// SIMKA PRO | src/lib/menuCepat.js | v1.5 | Fase 13 – Menu cepat Keuangan; Gaji hanya untuk yang berhak | 11/10/2026
 // Menu cepat beranda pegawai fungsional: tombol langsung ke menu kerja sesuai tupoksi masing-masing
 // (musyrif → Musyrif, muhaffizh → Setoran Tahfizh, wali kelas → Absensi Kelas, medis → Klinik, security → Gerbang, dst.).
 // Tupoksi didahulukan, lalu dilengkapi menu umum sampai 8 tombol (2 baris × 4 kolom).
 import {
   PhBuildings, PhBookOpenText, PhCheckSquareOffset, PhMedal, PhChalkboardTeacher, PhCalendarDots, PhFirstAidKit, PhShieldCheck,
-  PhGraduationCap, PhCalendarStar, PhSignOut, PhUsersThree, PhFileText, PhMegaphone, PhCalendarCheck, PhFolderOpen, PhClockCountdown, PhNotebook, PhEnvelopeSimple, PhWallet,
+  PhGraduationCap, PhCalendarStar, PhSignOut, PhUsersThree, PhFileText, PhMegaphone, PhCalendarCheck, PhFolderOpen, PhClockCountdown, PhNotebook, PhEnvelopeSimple, PhWallet, PhCashRegister,
 } from '@phosphor-icons/vue'
 
 /** @param {object} t profil tugas (sesi.tugas), @param {object} c ciri tambahan: { shift, persuratan, gaji } */
@@ -29,6 +29,7 @@ export function menuCepat(t = {}, c = {}) {
     tambah({ kode: 'izin', label: 'Izin Santri', ket: 'Usulan izin', ikon: PhSignOut, warna: 'pengajuan', ke: '/izin-santri/menunggu' })
   }
   if ((t.struktural || []).includes('TATA_USAHA') || c.persuratan) tambah({ kode: 'persuratan', label: 'Persuratan', ket: 'Surat dan disposisi', ikon: PhEnvelopeSimple, warna: 'tatausaha', ke: '/persuratan' })
+  if (c.keuangan) tambah({ kode: 'keuangan', label: 'Keuangan', ket: 'Tagihan dan pembayaran santri', ikon: PhCashRegister, warna: 'keuangan', ke: '/keuangan' })
   if (c.gaji) tambah({ kode: 'gaji', label: 'Gaji', ket: c.gajiLihat ? 'Periode, slip, laporan' : 'Slip gaji Anda', ikon: PhWallet, warna: 'gaji', ke: '/gaji' })
   if (c.shift) tambah({ kode: 'shift', label: 'Jadwal Shift', ket: 'Giliran tugas', ikon: PhCalendarStar, warna: 'shift', ke: '/jadwal-shift' })
   // ---------- Menu umum setiap pegawai ----------

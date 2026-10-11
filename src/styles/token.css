@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/token.css | v2.3 | Fase 6 – Tahap M1 Menu Musyrif | 06/10/2026 */
+/* SIMKA PRO | src/styles/token.css | v2.4 | Fase 13 – Warna menu Keuangan | 11/10/2026 */
 /* =====================================================================
    SIMKA PRO · Token warna dan tema
    Semua warna teks sudah diuji kontrasnya (WCAG AA, ≥ 4,5:1) terhadap
@@ -51,6 +51,7 @@
 .w-laporan    { --c: #B5501A; --c2: #8C6200; }
 .w-tatausaha  { --c: #7A4E2D; --c2: #B5501A; }
 .w-gaji       { --c: #156E5A; --c2: #1E7D4F; }
+.w-keuangan   { --c: #9A4F00; --c2: #156E5A; }   /* amber tua — keuangan santri, 6,1:1 */
 .w-pengumuman { --c: #A13A86; --c2: #6D44B8; }
 .w-notifikasi { --c: #9A5B00; --c2: #C7332F; }
 .w-hakakses   { --c: #46525F; --c2: #2F5FA8; }
@@ -83,6 +84,7 @@
 .dark .w-laporan    { --c: #FFB074; --c2: #F2C24B; }
 .dark .w-tatausaha  { --c: #E0B48C; --c2: #FFB074; }
 .dark .w-gaji       { --c: #6FD9BE; --c2: #5BD69A; }
+.dark .w-keuangan   { --c: #FFB86B; --c2: #6FD9BE; }
 .dark .w-pengumuman { --c: #F49AD9; --c2: #C3A6FF; }
 .dark .w-notifikasi { --c: #FFC266; --c2: #FF8A7A; }
 .dark .w-hakakses   { --c: #B9C6D3; --c2: #8AB4F8; }
