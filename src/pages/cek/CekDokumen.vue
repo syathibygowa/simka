@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/cek/CekDokumen.vue | v1.0 | Fase 8 – Tahap 1 Registri dokumen dan Cek Keabsahan | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/cek/CekDokumen.vue | v1.1 | Fase 8 – Status ditolak dan tanda tangan basah | 11/10/2026 -->
 <script setup>
 // Halaman publik Cek Keabsahan Dokumen (tanpa masuk). Dibuka dengan memindai QR pada dokumen atau mengetik
 // kode validasi 8 karakter. Menampilkan data asli dari database (jenis, nomor, perihal, nama yang bersangkutan,
@@ -16,7 +16,7 @@ const router = useRouter(); const dok = useDokumen()
 const hasil = ref(null); const memuat = ref(false); const kodeIsi = ref(rapikanKode(props.kode)); const waktu = ref('')
 const st = computed(() => STATUS_DOKUMEN[hasil.value?.status] || STATUS_DOKUMEN.sah)
 const ikon = computed(() => (hasil.value?.status === 'sah' ? PhSealCheck : PhSealWarning))
-const judul = computed(() => ({ sah: 'Dokumen sah', draf: 'Dokumen belum disahkan', direvisi: 'Dokumen sudah direvisi', dicabut: 'Dokumen sudah dicabut' })[hasil.value?.status] || 'Dokumen sah')
+const judul = computed(() => ({ sah: 'Dokumen sah', draf: 'Dokumen belum disahkan', direvisi: 'Dokumen sudah direvisi', dicabut: 'Dokumen sudah dicabut', ditolak: 'Dokumen ditolak penanda tangan' })[hasil.value?.status] || 'Dokumen sah')
 const tgl = (v) => (v ? `${formatPanjang(v)} pukul ${formatJam(v)} WITA` : '–')
 
 async function periksa(k) {
@@ -65,7 +65,7 @@ onMounted(() => props.kode && periksa(props.kode))
         <ul class="mt-1.5 space-y-1.5">
           <li v-for="(p, i) in hasil.penanda" :key="i" class="rounded-xl bg-permukaan px-3 py-2 text-sm">
             <span class="block font-semibold">{{ p.nama }}</span>
-            <span class="block text-xs text-teks3">{{ p.jabatan }} · {{ tgl(p.waktu) }}</span>
+            <span class="block text-xs text-teks3">{{ p.jabatan }} · {{ hasil.mode_ttd === 'basah' ? 'tanda tangan basah (manual)' : 'elektronik, ' + tgl(p.waktu) }}</span>
           </li>
           <li v-if="!hasil.penanda?.length" class="text-sm text-teks3">Belum ada tanda tangan.</li>
         </ul>

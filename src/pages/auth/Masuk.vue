@@ -1,6 +1,10 @@
-<!-- SIMKA PRO | src/pages/auth/Masuk.vue | v1.1 | Fase 1 – Akun dan hak akses | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/auth/Masuk.vue | v1.3 | Fase 8 – Perbaikan: catatan Ingat saya dihapus (hemat ruang) | 11/10/2026 -->
 <script setup>
-import { ref } from 'vue'
+// v1.2: "Ingat saya di perangkat ini". Username diingat di perangkat; kata sandi disimpan oleh PENGELOLA SANDI
+// peramban/HP (Google Password Manager, iCloud Keychain, dll.), bukan oleh aplikasi, sehingga tetap aman.
+// Saat halaman dibuka, isian terisi otomatis dari pengelola sandi (Chrome/Edge/Android lewat Credential Management
+// API; Safari/iPhone lewat saran isi otomatis keyboard) → pengguna cukup menekan Masuk.
+import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { PhUser, PhLockKey, PhEye, PhEyeSlash, PhCrown, PhUserGear, PhIdentificationBadge } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
@@ -11,7 +15,34 @@ import PolaKhatam from '@/components/PolaKhatam.vue'
 import PilihTema from '@/components/PilihTema.vue'
 
 const sesi = useSesi(); const router = useRouter(); const route = useRoute()
-const username = ref(''); const sandi = ref(''); const lihat = ref(false)
+const KUNCI_INGAT = 'simka.ingat'
+const bacaIngat = () => { try { return JSON.parse(localStorage.getItem(KUNCI_INGAT) || 'null') } catch { return null } }
+const tersimpan = bacaIngat()
+const username = ref(tersimpan?.username || ''); const sandi = ref(''); const lihat = ref(false)
+const ingat = ref(tersimpan ? !!tersimpan.aktif : true)
+const bisaKredensial = typeof window !== 'undefined' && 'PasswordCredential' in window && !!navigator.credentials
+onMounted(async () => {
+  if (MODE_DEMO || !ingat.value || !bisaKredensial) return
+  try {
+    // Ambil sandi tersimpan dari pengelola sandi (bisa menampilkan pilihan akun bila tersimpan lebih dari satu)
+    const k = await navigator.credentials.get({ password: true, mediation: 'optional' })
+    if (k && k.type === 'password' && k.password) { username.value = k.id; sandi.value = k.password }
+  } catch { /* pengguna menutup pilihan akun atau peramban menolak; isi manual */ }
+})
+async function simpanIngat() {
+  try {
+    if (ingat.value) localStorage.setItem(KUNCI_INGAT, JSON.stringify({ aktif: true, username: username.value.trim() }))
+    else localStorage.setItem(KUNCI_INGAT, JSON.stringify({ aktif: false }))
+  } catch { /* penyimpanan peramban tidak tersedia */ }
+  if (ingat.value && bisaKredensial) {
+    try { await navigator.credentials.store(new window.PasswordCredential({ id: username.value.trim(), password: sandi.value, name: sesi.pengguna?.nama_lengkap || username.value.trim() })) }
+    catch { /* pengelola sandi tidak tersedia */ }
+  }
+}
+function lupakan() {
+  try { localStorage.setItem(KUNCI_INGAT, JSON.stringify({ aktif: false })) } catch { /* abaikan */ }
+  username.value = ''; sandi.value = ''; ingat.value = false
+}
 const galat = ref(''); const proses = ref(false)
 const lanjut = () => router.replace(sesi.wajibGantiSandi ? '/ganti-sandi' : (route.query.lanjut || '/'))
 
@@ -19,7 +50,7 @@ async function kirim() {
   galat.value = ''
   if (!username.value || !sandi.value) { galat.value = 'Isi username dan kata sandi.'; return }
   proses.value = true
-  try { await sesi.masukDengan(username.value.trim(), sandi.value); lanjut() }
+  try { await sesi.masukDengan(username.value.trim(), sandi.value); await simpanIngat(); lanjut() }
   catch (e) { galat.value = e.message }
   finally { proses.value = false }
 }
@@ -52,23 +83,28 @@ const PERAN_DEMO = [
       <div class="mx-auto w-full max-w-md">
         <h1 class="text-2xl font-extrabold">Masuk</h1>
         <p class="mt-1 text-teks2">Gunakan username dan kata sandi akun pegawai Anda.</p>
-        <form class="mt-6 space-y-4" @submit.prevent="kirim" novalidate>
+        <form class="mt-6 space-y-4" method="post" action="#" @submit.prevent="kirim" novalidate>
           <div>
             <label for="u" class="label-isian">Username</label>
             <div class="relative">
               <PhUser :size="20" weight="duotone" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-              <input id="u" v-model="username" class="isian pl-11" autocomplete="username" autocapitalize="none" placeholder="contoh: hasanbasri" :disabled="MODE_DEMO" />
+              <input id="u" v-model="username" name="username" class="isian pl-11" autocomplete="username" autocapitalize="none" placeholder="contoh: hasanbasri" :disabled="MODE_DEMO" />
             </div>
           </div>
           <div>
             <label for="s" class="label-isian">Kata sandi</label>
             <div class="relative">
               <PhLockKey :size="20" weight="duotone" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-              <input id="s" v-model="sandi" :type="lihat ? 'text' : 'password'" class="isian pl-11 pr-12" autocomplete="current-password" :disabled="MODE_DEMO" />
+              <input id="s" v-model="sandi" name="password" :type="lihat ? 'text' : 'password'" class="isian pl-11 pr-12" autocomplete="current-password" :disabled="MODE_DEMO" />
               <button type="button" class="tombol-ikon absolute right-0.5 top-1/2 -translate-y-1/2" @click="lihat = !lihat" :aria-label="lihat ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'">
                 <component :is="lihat ? PhEyeSlash : PhEye" :size="22" />
               </button>
             </div>
+          </div>
+          <div class="flex items-center justify-between gap-3">
+            <label class="flex min-h-[44px] cursor-pointer items-center gap-2.5 text-sm font-semibold">
+              <input v-model="ingat" type="checkbox" class="h-5 w-5 accent-[#C7332F]" :disabled="MODE_DEMO" /> Ingat saya di perangkat ini</label>
+            <button v-if="tersimpan?.username" type="button" class="text-sm font-semibold text-teks3 hover:text-teks" @click="lupakan">Lupakan</button>
           </div>
           <p v-if="galat" class="rounded-xl bg-[#C7332F]/10 px-3.5 py-2.5 text-sm font-semibold text-merah" role="alert">{{ galat }}</p>
           <button class="tombol-utama w-full" :disabled="proses || MODE_DEMO">{{ proses ? 'Memeriksa…' : 'Masuk' }}</button>

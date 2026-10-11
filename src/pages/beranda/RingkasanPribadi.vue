@@ -1,7 +1,10 @@
-<!-- SIMKA PRO | src/pages/beranda/RingkasanPribadi.vue | v1.1 | Fase 3 – Perbaikan P2 (agenda lanjutan) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/RingkasanPribadi.vue | v1.2 | Fase 8 – Kartu dokumen menunggu tanda tangan | 11/10/2026 -->
 <script setup>
 // Kartu beranda pribadi (semua pegawai): jurnal hari ini, pengajuan, agenda terdekat, pengumuman dan berkas baru.
-import { computed } from 'vue'
+// v1.2: kartu menonjol "Dokumen menunggu tanda tangan Anda" (laporan resmi) bila ada.
+import { computed, onMounted } from 'vue'
+import { PhSignature } from '@phosphor-icons/vue'
+import { useDokumenResmi } from '@/stores/dokumenResmi'
 import { PhNotebook, PhFileText, PhCalendarCheck, PhMegaphone, PhFolderOpen, PhCaretRight, PhWarningCircle, PhUmbrella, PhPushPin } from '@phosphor-icons/vue'
 import { formatHari, formatPendek } from '@/lib/tanggal'
 
@@ -10,8 +13,16 @@ const j = computed(() => props.d.jurnal || {})
 const persen = computed(() => (j.value.butir_total ? Math.round((100 * j.value.butir_selesai) / j.value.butir_total) : 0))
 const jam = (v) => (v ? String(v).slice(0, 5).replace(':', '.') : '')
 const STATUS = { menunggu: 'menunggu', disetujui: 'disetujui' }
+const dr = useDokumenResmi()
+onMounted(() => dr.muatMasuk().catch(() => {}))
 </script>
 <template>
+  <router-link v-if="dr.menunggu.length" to="/rekap/tandatangan" class="kartu w-pengajuan mb-3 flex items-center gap-3 border-l-4 border-l-[color:var(--c)] p-4 hover:-translate-y-0.5 hover:shadow-apung">
+    <span class="chip-ikon h-11 w-11 shrink-0"><PhSignature :size="24" weight="duotone" /></span>
+    <span class="min-w-0 flex-1"><span class="block font-bold">{{ dr.menunggu.length }} dokumen menunggu tanda tangan Anda</span>
+      <span class="block truncate text-sm text-teks2">{{ dr.menunggu.slice(0, 2).map((x) => x.dok.perihal + (x.dok.periode ? ' (' + x.dok.periode + ')' : '')).join(' · ') }}</span></span>
+    <PhCaretRight :size="18" class="text-teks3" />
+  </router-link>
   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
     <!-- Jurnal -->
     <router-link to="/jurnal" class="kartu w-tatausaha flex flex-col p-4 hover:-translate-y-0.5 hover:shadow-apung">
