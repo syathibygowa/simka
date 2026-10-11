@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/gaji.js | v1.0 | Fase 11 – Tahap 1 Menu Gaji: hak, ketentuan, rekening | 11/10/2026
+// SIMKA PRO | src/stores/gaji.js | v1.1 | Fase 11 – Tahap 2 Periode gaji, perhitungan, penetapan yayasan | 11/10/2026
 // Modul Gaji (Blueprint Bagian 36). Hak dihitung server (hak_gaji):
 //   kelola = superadmin, Bendahara (hak fitur slip_gaji 3), admin ber-izin kelola_gaji
 //   lihat  = kelola + admin ber-izin lihat_gaji
@@ -8,10 +8,14 @@ import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { pesanGalat } from './lembaga'
 import { usePegawai } from './pegawai'
+import { useTunjangan } from './tunjangan'
+import { useOrganisasi } from './organisasi'
+import { demoGaji } from '@/lib/demoGaji'
 
 export const PENGATURAN_BAWAAN = {
   slip_pegawai: false, ttd_direktur: false, pembulatan: 100, potong_izin: false, potong_sakit: false, potong_cuti: false,
   potong_terlambat: false, tanggal_gajian: 1, honorer_tunjangan_jabatan: true, info_beban_kerja: true, catatan_slip: '',
+  label_penyesuaian: 'Penyesuaian ketetapan yayasan',
 }
 const BANK_DEMO = ['BSI', 'BRI', 'BNI', 'Bank Mandiri', 'BSI']
 let demoPengaturan = { ...PENGATURAN_BAWAAN }
@@ -81,6 +85,45 @@ export const useGaji = defineStore('gaji', {
       await this.muatPegawai(true)
       return hasil
     },
+
+    // ---------- Periode gaji ----------
+    /** Konteks mesin demo (tarif, organisasi, pegawai, ketentuan). */
+    async _ctx() {
+      const tunj = useTunjangan(); const org = useOrganisasi()
+      await Promise.all([tunj.muat(), org.muat(), this.muatPegawai()])
+      return { tarif: tunj.tarif, org, pegawai: this.pegawai, pengaturan: this.pengaturan }
+    },
+    async daftarPeriode() { return MODE_DEMO ? demoGaji.daftar() : (await rpc('daftar_periode_gaji')) || [] },
+    async buatPeriode(tahun, bulan, tanggalBayar = null) {
+      if (MODE_DEMO) return demoGaji.buat(tahun, bulan, tanggalBayar, await this._ctx())
+      return rpc('buat_periode_gaji', { p_tahun: tahun, p_bulan: bulan, p_tanggal_bayar: tanggalBayar || null })
+    },
+    async rincianPeriode(id) { return MODE_DEMO ? demoGaji.rincian(id) : rpc('rincian_periode_gaji', { p_period: id }) },
+    async hitungUlang(id) { return MODE_DEMO ? demoGaji.hitungUlang(id, await this._ctx()) : rpc('hitung_ulang_periode_gaji', { p_period: id }) },
+    async ubahPeriode(id, isi) { return MODE_DEMO ? demoGaji.ubahPeriode(id, isi) : rpc('ubah_periode_gaji', { p_period: id, p: isi }) },
+    async hapusPeriode(id) { return MODE_DEMO ? demoGaji.hapusPeriode(id) : rpc('hapus_periode_gaji', { p_period: id }) },
+    async tambahBaris(periodId, empId) { return MODE_DEMO ? null : rpc('tambah_baris_gaji', { p_period: periodId, p_emp: empId }) },
+    async hapusBaris(lineId) { return MODE_DEMO ? demoGaji.hapusBaris(lineId) : rpc('hapus_baris_gaji', { p_line: lineId }) },
+    async ubahItem(itemId, besaran, jumlah, alasan) {
+      if (MODE_DEMO) return demoGaji.ubahItem(itemId, besaran, jumlah, alasan, await this._ctx())
+      return rpc('ubah_item_gaji', { p_item: itemId, p_besaran: besaran, p_jumlah: jumlah, p_alasan: alasan })
+    },
+    async kembalikanItem(itemId) { return MODE_DEMO ? demoGaji.kembalikan(itemId, await this._ctx()) : rpc('kembalikan_item_gaji', { p_item: itemId }) },
+    async tambahItem(lineId, isi) { return MODE_DEMO ? demoGaji.tambahItem(lineId, isi, await this._ctx()) : rpc('tambah_item_gaji', { p_line: lineId, p: isi }) },
+    async hapusItem(itemId) { return MODE_DEMO ? demoGaji.hapusItem(itemId, await this._ctx()) : rpc('hapus_item_gaji', { p_item: itemId }) },
+    async aturDiterima(lineId, nilai, alasan) {
+      if (MODE_DEMO) return demoGaji.aturDiterima(lineId, nilai, alasan, await this._ctx())
+      return rpc('atur_diterima_gaji', { p_line: lineId, p_diterima: nilai, p_alasan: alasan })
+    },
+    async imporDiterima(periodId, baris) {
+      if (MODE_DEMO) return demoGaji.imporDiterima(periodId, baris, await this._ctx())
+      return rpc('impor_diterima_gaji', { p_period: periodId, p: baris })
+    },
+
+    // ---------- Penetapan yayasan ----------
+    async daftarPenetapan() { return MODE_DEMO ? demoGaji.penetapan() : (await rpc('daftar_penetapan_gaji')) || [] },
+    async simpanPenetapan(isi) { return MODE_DEMO ? demoGaji.simpanPenetapan(isi, await this._ctx()) : rpc('simpan_penetapan_gaji', { p: isi }) },
+    async hapusPenetapan(id) { return MODE_DEMO ? demoGaji.hapusPenetapan(id) : rpc('hapus_penetapan_gaji', { p_id: id }) },
 
     async hapusRekening(id) {
       if (MODE_DEMO) { const p = this.pegawai.find((x) => x.id === id); if (p) p.rekening = null; demoRekening[id] = null; return }

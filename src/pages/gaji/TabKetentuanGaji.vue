@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/TabKetentuanGaji.vue | v1.0 | Fase 11 – Tahap 1 Ketentuan gaji | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/TabKetentuanGaji.vue | v1.1 | Fase 11 – Tahap 2 Label penyesuaian ketetapan yayasan | 11/10/2026 -->
 <script setup>
 // Ketentuan gaji. Pengelola gaji (superadmin, Bendahara, admin ber-izin kelola_gaji) mengubah; pembaca gaji hanya melihat.
 //  • Slip di akun pegawai: bawaan NONAKTIF (arahan yayasan). Bila nonaktif, menu Gaji tidak tampil bagi pegawai;
@@ -95,6 +95,13 @@ async function simpan(pesan = 'Ketentuan gaji tersimpan.') {
       <label class="flex min-h-[44px] items-center gap-3">
         <input type="checkbox" v-model="f.info_beban_kerja" :disabled="!boleh" class="h-5 w-5 accent-[#C7332F]" />
         <span class="text-sm font-semibold"><PhClockCountdown :size="14" class="inline" /> Tampilkan kelebihan/kekurangan jam beban kerja di slip (informasi, tanpa nominal)</span></label>
+    </section>
+
+    <!-- Label penyesuaian -->
+    <section class="kartu w-verifikasi p-4 sm:p-5 xl:col-span-2">
+      <h3 class="judul-bagian mb-1">Nama baris penyesuaian di slip</h3>
+      <p class="mb-2 text-sm text-teks3">Selisih antara skema dan gaji yang ditetapkan yayasan tampil di slip dengan nama ini (nilai bisa plus atau minus).</p>
+      <input v-model="f.label_penyesuaian" :disabled="!boleh" maxlength="60" class="isian" placeholder="Penyesuaian ketetapan yayasan" />
     </section>
 
     <!-- Catatan kaki -->

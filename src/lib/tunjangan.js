@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/tunjangan.js | v1.1 | Fase 11 – Tahap 1 Aturan honorer, label kategori | 11/10/2026
+// SIMKA PRO | src/lib/tunjangan.js | v1.2 | Fase 11 – Tahap 2 Honorer guru/muhaffizh tanpa tunjangan fungsionalnya (dibayar per jam) | 11/10/2026
 // Perkiraan tunjangan per pegawai dari tarif berlaku (Bagian 36 blueprint).
 // Ini PERKIRAAN untuk pemetaan jabatan; slip gaji resmi dihitung server pada Fase 11
 // (termasuk honor per jam dari jurnal mengajar dan potongan berbasis kehadiran).
@@ -32,6 +32,7 @@ export function petaTarif(semua, tanggal) {
  * Hitung perkiraan tunjangan seorang pegawai.
  * Honorer (keputusan Fase 11): honor per jam + tunjangan jabatan struktural/fungsional bila memegang jabatan
  * (opsi.honorerJabatan, bawaan ya); tanpa tunjangan pendidikan, masa kerja, kepegawaian, kesehatan, dan level muhaffizh.
+ * Honorer Guru mapel/Muhaffizh tidak menerima tunjangan fungsional itu karena sudah dibayar per jam (sama dengan server).
  * @returns {{ rincian: {kategori, label, besaran}[], per: Record<string, number>, total: number, catatan: string[] }}
  */
 export function hitungTunjangan(p, tarif, org, tanggal, opsi = {}) {
@@ -48,7 +49,7 @@ export function hitungTunjangan(p, tarif, org, tanggal, opsi = {}) {
   // Fungsional (akumulasi)
   const fung = (p.fungsional_ids || []).map((id) => org.fungsional.find((f) => f.id === id)).filter(Boolean)
   if (!fung.length) catatan.push('Belum memiliki jabatan fungsional.')
-  for (const f of jabatanDihitung ? fung : []) { const r = t('fungsional', f.kode); r ? tambah('fungsional', f.nama, Number(r.besaran)) : catatan.push(`Tarif ${f.nama} belum diatur.`) }
+  for (const f of jabatanDihitung ? fung.filter((x) => !(honorer && ['GURU', 'MUHAFFIZH'].includes(x.kode))) : []) { const r = t('fungsional', f.kode); r ? tambah('fungsional', f.nama, Number(r.besaran)) : catatan.push(`Tarif ${f.nama} belum diatur.`) }
 
   // Pendidikan
   if (honorer) { /* honorer tidak menerima tunjangan pendidikan */ }
