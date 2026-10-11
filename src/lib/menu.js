@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.14 | Fase 11 – Tahap 1 Menu Gaji menggantikan Skema Tunjangan | 11/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.15 | Fase 11 – Tahap 5 Menu Tunjangan terpisah dari Gaji | 11/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -61,6 +61,8 @@ export const MENU = [
     syarat: (c) => !!c.persuratan || (c.izin || []).includes('kelola_persuratan') || Number(c.fitur?.tata_usaha ?? 0) >= 1 },
   // Gaji: pengelola/pembaca gaji (superadmin, Bendahara, admin ber-izin) dan pegawai bila slip ditampilkan di akun pegawai
   { kode: 'gaji',       nama: 'Gaji',            ikon: PhWallet,         warna: 'gaji',       ke: '/gaji',              grup: 'Administrasi', hak: (c) => !!c.gaji },
+  // Tunjangan: tarif, peta tunjangan, rekening, pengingat kenaikan (pengelola dan pembaca gaji)
+  { kode: 'tunjangan',  nama: 'Tunjangan',       ikon: PhCoins,          warna: 'tahfizh',    ke: '/tunjangan',         grup: 'Administrasi', hak: (c) => !!c.gajiLihat },
   // Sistem
   { kode: 'auditlog',   nama: 'Audit Log',       ikon: PhClockCounterClockwise, warna: 'audit', ke: '/audit-log',     grup: 'Sistem' },
   { kode: 'organisasi', nama: 'Organisasi', ikon: PhTreeStructure, warna: 'sistem',  ke: '/organisasi',        grup: 'Sistem', peran: ['superadmin'] },

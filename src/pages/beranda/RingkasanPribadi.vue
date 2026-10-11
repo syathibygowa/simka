@@ -1,13 +1,17 @@
-<!-- SIMKA PRO | src/pages/beranda/RingkasanPribadi.vue | v1.3 | Fase 10 – Penutup: kartu surat perlu tindakan | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/RingkasanPribadi.vue | v1.4 | Fase 11 – Tahap 5 Kartu gaji (tanda tangan, permintaan slip, periode, kenaikan masa kerja) | 11/10/2026 -->
 <script setup>
 // Kartu beranda pribadi (semua pegawai): jurnal hari ini, pengajuan, agenda terdekat, pengumuman dan berkas baru.
 // v1.2: kartu menonjol "Dokumen menunggu tanda tangan Anda" (laporan resmi) bila ada.
 // v1.3: kartu menonjol "Surat perlu tindakan Anda" (surat masuk/disposisi; draf surat yang perlu diperiksa Tata Usaha).
+// v1.4: kartu "Gaji" bagi penanda tangan dan pengelola/pembaca gaji: daftar gaji menunggu tanda tangan, permintaan slip,
+//       status periode terakhir, dan pegawai yang naik masa kerja bulan ini/bulan depan. Tanpa nominal (data sensitif).
 import { computed, onMounted, ref } from 'vue'
 import { PhSignature, PhEnvelopeSimple } from '@phosphor-icons/vue'
 import { usePersuratan } from '@/stores/persuratan'
 import { useSesi } from '@/stores/sesi'
 import { useDokumenResmi } from '@/stores/dokumenResmi'
+import { useGaji } from '@/stores/gaji'
+import { PhWallet } from '@phosphor-icons/vue'
 import { PhNotebook, PhFileText, PhCalendarCheck, PhMegaphone, PhFolderOpen, PhCaretRight, PhWarningCircle, PhUmbrella, PhPushPin } from '@phosphor-icons/vue'
 import { formatHari, formatPendek } from '@/lib/tanggal'
 
@@ -29,6 +33,23 @@ const ketSurat = computed(() => {
   if (x.lewat_batas_saya) b.push(`${x.lewat_batas_saya} lewat batas`)
   return b.join(' · ')
 })
+// Gaji (hanya bila menu Gaji tampil untuk akun ini)
+const gj = useGaji(); const rg = ref(null)
+onMounted(async () => { if (!sesi.gaji && !sesi.gajiLihat) return; try { rg.value = await gj.ringkasanBeranda() } catch { rg.value = null } })
+const STATUS_GAJI = { draf: 'masih draf', diajukan: 'menunggu tanda tangan', terbit: 'sudah terbit' }
+const kartuGaji = computed(() => {
+  const x = rg.value; if (!x) return null
+  const b = []; let ke = '/gaji'
+  if (x.ttd_menunggu) { b.push(`${x.ttd_menunggu} daftar gaji menunggu tanda tangan Anda`); ke = x.kelola !== undefined ? '/gaji/periode' : '/gaji/ttd' }
+  if (x.permintaan) { b.push(`${x.permintaan} permintaan slip`); if (!x.ttd_menunggu) ke = '/gaji/permintaan' }
+  if (x.kelola !== undefined) {
+    if (x.periode) b.push(`Gaji ${x.periode.nama} ${STATUS_GAJI[x.periode.status] || x.periode.status}`)
+    if (!x.periode_bulan_ini && x.kelola) b.push('Periode bulan ini belum dibuat')
+    if (x.naik_bulan_ini || x.naik_bulan_depan) { b.push(`Naik masa kerja: ${x.naik_bulan_ini || 0} bulan ini, ${x.naik_bulan_depan || 0} bulan depan`); if (!x.ttd_menunggu && !x.permintaan) ke = '/tunjangan/pengingat' }
+  }
+  if (!b.length) return null
+  return { judul: x.ttd_menunggu ? 'Daftar gaji menunggu tanda tangan Anda' : x.permintaan ? 'Permintaan slip gaji menunggu' : 'Gaji pegawai', ket: b.join(' · '), ke, menonjol: !!(x.ttd_menunggu || x.permintaan) }
+})
 </script>
 <template>
   <router-link v-if="dr.menunggu.length" to="/rekap/tandatangan" class="kartu w-pengajuan mb-3 flex items-center gap-3 border-l-4 border-l-[color:var(--c)] p-4 hover:-translate-y-0.5 hover:shadow-apung">
@@ -42,6 +63,13 @@ const ketSurat = computed(() => {
     <span class="chip-ikon h-11 w-11 shrink-0"><PhEnvelopeSimple :size="24" weight="duotone" /></span>
     <span class="min-w-0 flex-1"><span class="block font-bold">{{ tindakan }} surat perlu tindakan Anda</span>
       <span class="block truncate text-sm text-teks2">{{ ketSurat }}</span></span>
+    <PhCaretRight :size="18" class="text-teks3" />
+  </router-link>
+  <router-link v-if="kartuGaji" :to="kartuGaji.ke"
+    :class="['kartu w-gaji mb-3 flex items-center gap-3 p-4 hover:-translate-y-0.5 hover:shadow-apung', kartuGaji.menonjol ? 'border-l-4 border-l-[color:var(--c)]' : '']">
+    <span class="chip-ikon h-11 w-11 shrink-0"><PhWallet :size="24" weight="duotone" /></span>
+    <span class="min-w-0 flex-1"><span class="block font-bold">{{ kartuGaji.judul }}</span>
+      <span class="block text-sm text-teks2">{{ kartuGaji.ket }}</span></span>
     <PhCaretRight :size="18" class="text-teks3" />
   </router-link>
   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

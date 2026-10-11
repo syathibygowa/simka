@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoGaji.js | v1.2 | Fase 11 – Tahap 4 Penerbitan slip dan permintaan slip di mode demo | 11/10/2026
+// SIMKA PRO | src/lib/demoGaji.js | v1.3 | Fase 11 – Tahap 5 Pengingat kenaikan, ringkasan Beranda, dan pembanding bulan lalu di mode demo | 11/10/2026
 // Tiruan sederhana fungsi server periode gaji (migrasi 7100) agar tampilan dapat dicoba tanpa Supabase.
 // Logika sama: komponen skema → honor (honorer) → komponen yang diubah dipertahankan → penyesuaian dari
 // jumlah diterima yang ditetapkan atau penetapan yayasan.
@@ -97,6 +97,7 @@ const ringkas = (pr) => {
 }
 const cariBaris = (lineId) => Object.values(D.baris).flat().find((l) => l.id === lineId)
 const cariItem = (itemId) => { for (const l of Object.values(D.baris).flat()) { const i = l.item.find((x) => x.id === itemId); if (i) return { l, i } } return {} }
+const BULAN_D = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
 const draf = (periodId) => { if (D.periode.find((x) => x.id === periodId)?.status !== 'draf') throw new Error('Periode gaji sudah tidak dapat diubah.') }
 
 export const demoGaji = {
@@ -111,7 +112,13 @@ export const demoGaji = {
     return pr.id
   },
   // Salinan baru setiap dibaca (seperti hasil server) agar tampilan menyegar
-  rincian: (pid) => JSON.parse(JSON.stringify({ periode: D.periode.find((x) => x.id === pid), ttd: D.periode.find((x) => x.id === pid)?.ttd || [], baris: [...(D.baris[pid] || [])].sort((a, b) => a.data.nama.localeCompare(b.data.nama)) })),
+  rincian(pid) {
+    const pr = D.periode.find((x) => x.id === pid)
+    const lalu = pr && D.periode.filter((x) => x.tahun * 12 + x.bulan < pr.tahun * 12 + pr.bulan).sort((a, b) => b.tahun - a.tahun || b.bulan - a.bulan)[0]
+    const bl = (l) => { const x = lalu && D.baris[lalu.id].find((y) => y.employee_id === l.employee_id)
+      return x ? { periode: `${BULAN_D[lalu.bulan - 1]} ${lalu.tahun}`, diterima: x.diterima, skema: x.total_skema, pendapatan: x.total_pendapatan, potongan: x.total_potongan } : null }
+    return JSON.parse(JSON.stringify({ periode: pr, ttd: pr?.ttd || [], baris: [...(D.baris[pid] || [])].map((l) => ({ ...l, bulan_lalu: bl(l) })).sort((a, b) => a.data.nama.localeCompare(b.data.nama)) }))
+  },
   hitungUlang(pid, ctx) { draf(pid); for (const l of D.baris[pid]) hitung(l, ctx); D.periode.find((x) => x.id === pid).dihitung_pada = new Date().toISOString() },
   ubahPeriode(pid, isi) { draf(pid); Object.assign(D.periode.find((x) => x.id === pid), isi) },
   hapusPeriode(pid) { draf(pid); D.periode = D.periode.filter((x) => x.id !== pid); delete D.baris[pid] },
@@ -173,6 +180,21 @@ export const demoGaji = {
   tanggapi(rid, aksi, catatan) {
     const r = D.minta.find((x) => x.id === rid); r.status = { buka: 'dibuka', cetak: 'dicetak', tolak: 'ditolak' }[aksi]; r.tanggapan = catatan
     if (aksi === 'buka') for (const pr of D.periode.filter((x) => x.status === 'terbit')) { const l = (D.baris[pr.id] || [])[0]; if (l) l.dibuka_pegawai = true }
+  },
+  pengingat(bulan, ctx) {
+    const b = (bulan || new Date().toISOString().slice(0, 10)).slice(0, 7); const [th, bl] = b.split('-').map(Number)
+    const tarif = petaTarif(ctx.tarif, b + '-28')
+    const mk = ctx.pegawai.filter((p) => p.tmt_tugas && p.status_kepegawaian !== 'honorer' && Number(p.tmt_tugas.slice(5, 7)) === bl && th - Number(p.tmt_tugas.slice(0, 4)) >= 1 && th - Number(p.tmt_tugas.slice(0, 4)) <= 12)
+      .map((p) => { const n = th - Number(p.tmt_tugas.slice(0, 4)); const lama = Number(tarif.masa_kerja?.[String(n - 1)]?.besaran || 0), baru = Number(tarif.masa_kerja?.[String(n)]?.besaran || 0)
+        return { employee_id: p.id, niy: p.niy, nama: p.nama_lengkap, tmt: p.tmt_tugas, tanggal: `${b}-${p.tmt_tugas.slice(8, 10)}`, tahun_baru: n, tarif_lama: lama, tarif_baru: baru, selisih: baru - lama } })
+    return { bulan: b + '-01', masa_kerja: mk, perubahan: [
+      { employee_id: 'p2', niy: '2020071502', nama: 'Ustzh. Nurul Aini, S.Pd.', jenis: 'pendidikan', nilai_lama: 'S1', nilai_baru: 'S2', dicatat: new Date().toISOString(), oleh: 'Superadmin SIMKA' },
+      { employee_id: 'p11', niy: '2020011511', nama: 'Ust. Ilham Saputra, S.Sos.', jenis: 'status_kepegawaian', nilai_lama: 'kontrak', nilai_baru: 'tetap', dicatat: new Date(Date.now() - 864e6).toISOString(), oleh: 'Superadmin SIMKA' }] }
+  },
+  ringkasanBeranda() {
+    const pr = [...D.periode].sort((a, b) => b.tahun - a.tahun || b.bulan - a.bulan)[0]
+    return { ttd_menunggu: 0, kelola: true, periode: pr ? { id: pr.id, nama: `${BULAN_D[pr.bulan - 1]} ${pr.tahun}`, status: pr.status } : null, periode_bulan_ini: !!pr,
+      permintaan: D.minta.filter((x) => x.status === 'menunggu').length, naik_bulan_ini: 1, naik_bulan_depan: 2, perubahan: 2 }
   },
   hapusPenetapan(pid) { D.penetapan = D.penetapan.filter((x) => x.id !== pid) },
   pinjaman: () => JSON.parse(JSON.stringify(D.pinjaman.map((x) => { const n = x.riwayat.reduce((a, r) => a + r.besaran, 0); return { ...x, dibayar: n, sisa: x.pokok - n } }))),

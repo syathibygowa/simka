@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/gaji.js | v1.3 | Fase 11 – Tahap 4 Penerbitan slip, Slip saya, permintaan slip | 11/10/2026
+// SIMKA PRO | src/stores/gaji.js | v1.4 | Fase 11 – Tahap 5 Pengingat kenaikan dan ringkasan Beranda | 11/10/2026
 // Modul Gaji (Blueprint Bagian 36). Hak dihitung server (hak_gaji):
 //   kelola = superadmin, Bendahara (hak fitur slip_gaji 3), admin ber-izin kelola_gaji
 //   lihat  = kelola + admin ber-izin lihat_gaji
@@ -153,6 +153,8 @@ export const useGaji = defineStore('gaji', {
     async mintaSlip(periodId, catatan) { return MODE_DEMO ? demoGaji.minta(periodId, catatan) : rpc('minta_slip_gaji', { p_period: periodId || null, p_catatan: catatan || null }) },
     async daftarPermintaan() { return MODE_DEMO ? demoGaji.permintaan() : (await rpc('daftar_permintaan_slip')) || [] },
     async tanggapiPermintaan(id, aksi, catatan) { return MODE_DEMO ? demoGaji.tanggapi(id, aksi, catatan) : rpc('tanggapi_permintaan_slip', { p_id: id, p_aksi: aksi, p_catatan: catatan || null }) },
+    async pengingat(bulan) { return MODE_DEMO ? demoGaji.pengingat(bulan, await this._ctx()) : rpc('pengingat_kenaikan', { p_bulan: bulan || null }) },
+    async ringkasanBeranda() { return MODE_DEMO ? demoGaji.ringkasanBeranda() : rpc('ringkasan_gaji_beranda') },
     async ttdSaya() { return MODE_DEMO ? [] : (await rpc('ttd_gaji_saya')) || [] },
 
     async hapusRekening(id) {

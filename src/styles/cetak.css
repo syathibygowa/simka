@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/cetak.css | v1.7 | Fase 10 – Perbaikan: catatan tanda tangan elektronik di kaki halaman | 11/10/2026 */
+/* SIMKA PRO | src/styles/cetak.css | v1.8 | Fase 11 – Tahap 5 Baris jumlah rata kanan pada laporan gaji | 11/10/2026 */
 /* =====================================================================
    SIMKA PRO · Standar cetak dokumen
    Kertas F4 215 × 330 mm, margin 2 cm, garis tabel ½ pt,
@@ -78,7 +78,7 @@
 .dok table.tabel.kecil { font-size: 8pt; }
 .dok table.tabel.kecil th, .dok table.tabel.kecil td { padding: 2pt 3pt; }
 .dok table.tabel.kecil th { font-size: 7.5pt; overflow-wrap: normal; word-break: normal; }
-.dok table.tabel td.kanan { text-align: right; }
+.dok table.tabel td.kanan, .dok table.tabel th.kanan { text-align: right; }
 
 /* Fase 3: penanda tanda tangan elektronik di ruang tanda tangan */
 .dok .ttd .ruang { display: flex; align-items: center; justify-content: center; }

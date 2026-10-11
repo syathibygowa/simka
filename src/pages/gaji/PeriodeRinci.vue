@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.1 | Fase 11 – Tahap 4 Ajukan terbit, tanda tangan, cetak slip, revisi | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.2 | Fase 11 – Tahap 5 Selisih terhadap bulan lalu per pegawai dan saringan "Berubah dari bulan lalu" | 11/10/2026 -->
 <script setup>
 // Rincian satu periode gaji: ringkasan, daftar pegawai (skema, penyesuaian, pendapatan, potongan, diterima),
 // hitung ulang, impor jumlah diterima dari Excel, ekspor Excel, cetak Daftar Gaji F4 mendatar.
@@ -75,11 +75,15 @@ const SARING = computed(() => [
   { k: 'sesuai', n: 'Ada penyesuaian', j: baris.value.filter((b) => Number(b.total_penyesuaian)).length },
   { k: 'ubah', n: 'Diubah', j: baris.value.filter(diubah).length },
   { k: 'kurang', n: 'Data kurang', j: baris.value.filter((b) => b.data.catatan?.length).length },
+  { k: 'berubah', n: 'Berubah dari bulan lalu', j: baris.value.filter((b) => beda(b)).length },
 ])
+// Selisih jumlah diterima terhadap periode sebelumnya (null bila pegawai tidak ada pada periode sebelumnya)
+const beda = (b) => (b.bulan_lalu ? Number(b.diterima) - Number(b.bulan_lalu.diterima) : null)
+const teksBeda = (b) => { const v = beda(b); return v == null ? '' : (v > 0 ? '▲ +' : '▼ −') + rupiah(Math.abs(v)) }
 const tampil = computed(() => {
   const q = cari.value.toLowerCase().trim()
   return baris.value.filter((b) => (!q || [b.data.nama, b.data.niy, b.data.jabatan_struktural, ...(b.data.jabatan_fungsional || [])].join(' ').toLowerCase().includes(q))
-    && (!saring.value || (saring.value === 'sesuai' ? Number(b.total_penyesuaian) : saring.value === 'ubah' ? diubah(b) : b.data.catatan?.length)))
+    && (!saring.value || (saring.value === 'sesuai' ? Number(b.total_penyesuaian) : saring.value === 'ubah' ? diubah(b) : saring.value === 'berubah' ? beda(b) : b.data.catatan?.length)))
 })
 const jabatan = (d) => [d.jabatan_struktural, ...(d.jabatan_fungsional || [])].filter(Boolean).join(', ') || '–'
 
@@ -246,7 +250,8 @@ const jumlahKolom = computed(() => Object.fromEntries(KOLOM_DAFTAR.map(([c]) => 
                 {{ Number(b.total_penyesuaian) ? (Number(b.total_penyesuaian) > 0 ? '+' : '') + rupiah(b.total_penyesuaian) : '–' }}</td>
               <td class="px-3 py-2.5 text-right tabular-nums">{{ rupiah(b.total_pendapatan) }}</td>
               <td class="px-3 py-2.5 text-right tabular-nums">{{ Number(b.total_potongan) ? rupiah(b.total_potongan) : '–' }}</td>
-              <td class="px-3 py-2.5 text-right font-extrabold tabular-nums">{{ rupiah(b.diterima) }}</td>
+              <td class="px-3 py-2.5 text-right font-extrabold tabular-nums">{{ rupiah(b.diterima) }}
+                <p v-if="beda(b)" :class="['text-xs font-semibold', beda(b) > 0 ? 'w-presensi' : 'w-pengajuan']" style="color: var(--c)" :title="`${b.bulan_lalu.periode}: ${rupiah(b.bulan_lalu.diterima)}`">{{ teksBeda(b) }}</p></td>
               <td class="max-w-[220px] px-3 py-2.5 text-xs">
                 <span v-if="b.target_diterima != null" class="lencana w-verifikasi mb-0.5">Ditetapkan</span>
                 <span v-else-if="b.item.some((i) => i.sumber === 'penetapan')" class="lencana w-verifikasi mb-0.5">Ketetapan yayasan</span>
@@ -280,6 +285,7 @@ const jumlahKolom = computed(() => Object.fromEntries(KOLOM_DAFTAR.map(([c]) => 
               <span v-if="Number(b.total_penyesuaian)" :class="['lencana', Number(b.total_penyesuaian) < 0 ? 'w-klinik' : 'w-presensi']">Penyesuaian {{ Number(b.total_penyesuaian) > 0 ? '+' : '' }}{{ rupiah(b.total_penyesuaian) }}</span>
               <span v-if="b.item.some((i) => i.sumber === 'manual' && i.kategori !== 'penyesuaian')" class="lencana w-pengajuan">Diubah</span>
               <span v-if="b.data.catatan?.length" class="lencana w-klinik"><PhWarningCircle :size="12" /> {{ b.data.catatan.length }} data kurang</span>
+              <span v-if="beda(b)" :class="['lencana', beda(b) > 0 ? 'w-presensi' : 'w-pengajuan']">{{ teksBeda(b) }} dari {{ b.bulan_lalu.periode }}</span>
             </div>
           </button>
         </li>
