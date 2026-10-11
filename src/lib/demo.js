@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demo.js | v1.10 | Fase 8 – Tahap 5 penanda tangan demo terhubung akun | 11/10/2026
+// SIMKA PRO | src/lib/demo.js | v1.11 | Fase 11 – Tahap 6 Fitur slip gaji dipindah ke Fitur sensitif | 11/10/2026
 // Data contoh untuk MODE DEMO. Nama pegawai di bawah fiktif.
 const menitLalu = (m) => new Date(Date.now() - m * 60000).toISOString()
 
@@ -178,7 +178,7 @@ export const FITUR_DEMO = [
   ['jurnal_harian', 'Jurnal harian', 'Kepegawaian', 3], ['berkas_pegawai', 'Berkas pegawai', 'Kepegawaian', 3], ['kartu_pegawai', 'Kartu pegawai', 'Kepegawaian', 3],
   ['data_santri', 'Data santri', 'Santri', 4], ['absensi_kelas', 'Absensi kelas', 'Santri', 4], ['absensi_halaqah', 'Absensi halaqah', 'Santri', 4],
   ['absensi_asrama', 'Absensi asrama', 'Santri', 4], ['tahfizh', 'Tahfizh', 'Santri', 5], ['klinik', 'Klinik', 'Layanan', 6], ['gerbang', 'Gerbang dan izin keluar', 'Layanan', 7],
-  ['pantauan', 'Pantauan langsung', 'Layanan', 7], ['tata_usaha', 'Tata usaha', 'Administrasi', 10], ['slip_gaji', 'Slip gaji', 'Administrasi', 11],
+  ['pantauan', 'Pantauan langsung', 'Layanan', 7], ['tata_usaha', 'Tata usaha', 'Administrasi', 10],
   ['laporan', 'Laporan dan ekspor', 'Administrasi', 8], ['pengumuman', 'Pengumuman', 'Sistem', 3], ['pengaturan_lembaga', 'Pengaturan lembaga', 'Sistem', 1],
   ['hak_akses', 'Hak akses', 'Sistem', 1], ['audit_log', 'Audit log', 'Sistem', 3],
 ].map(([kode, nama, kelompok, fase], i) => ({ kode, nama, kelompok, fase, urutan: i }))

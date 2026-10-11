@@ -1,8 +1,8 @@
-// SIMKA PRO | src/lib/versi.js | v11.4.0 | Fase 11 – Tahap 5 Menu Tunjangan terpisah, laporan gaji, pengingat kenaikan | 11/10/2026
+// SIMKA PRO | src/lib/versi.js | v11.5.0 | Fase 11 – Tahap 6 Akses fitur sensitif ditunjuk superadmin | 11/10/2026
 // Nomor versi aplikasi yang tampil di halaman Profil. Naikkan setiap kali kode diunggah ke GitHub.
 // Keterangan versi tampil kepada pengguna, jadi ditulis tanpa kata "Fase".
-export const VERSI_APLIKASI = '11.4.0'
-export const KETERANGAN_VERSI = 'Menu Tunjangan terpisah dari Gaji, laporan gaji, dan pengingat kenaikan masa kerja'
+export const VERSI_APLIKASI = '11.5.0'
+export const KETERANGAN_VERSI = 'Akses gaji dan keuangan hanya untuk pegawai yang ditunjuk superadmin'
 
 // Waktu kode dibangun oleh GitHub Actions; dipakai untuk memastikan versi yang tayang adalah yang terbaru.
 /* global __WAKTU_BUILD__ */

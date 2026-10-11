@@ -1,9 +1,11 @@
-<!-- SIMKA PRO | src/pages/hakakses/HakAkses.vue | v1.1 | Fase 8 – Tahap 0 tanpa teks fase | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/hakakses/HakAkses.vue | v1.2 | Fase 11 – Tahap 6 Tab Fitur sensitif (gaji, keuangan) | 11/10/2026 -->
 <script setup>
 // Hak akses fitur tiga lapis (superadmin): per jabatan (dasar) → per bidang → per individu (tertinggi).
+// Tab "Fitur sensitif": gaji dan keuangan santri hanya untuk pegawai yang ditunjuk superadmin (bukan per jabatan).
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhIdentificationBadge, PhTreeStructure, PhUser, PhInfo, PhListChecks } from '@phosphor-icons/vue'
+import { PhIdentificationBadge, PhTreeStructure, PhUser, PhInfo, PhListChecks, PhLockKey } from '@phosphor-icons/vue'
+import TabAksesSensitif from './TabAksesSensitif.vue'
 import { useAkses, TINGKAT } from '@/stores/akses'
 import { useOrganisasi } from '@/stores/organisasi'
 import { usePegawai } from '@/stores/pegawai'
@@ -21,6 +23,7 @@ const TAB = [
   { k: 'jabatan', n: 'Per jabatan', ikon: PhIdentificationBadge, w: 'presensi', ket: 'Lapis dasar: hak bawaan setiap jabatan fungsional dan struktural.' },
   { k: 'bidang', n: 'Per bidang', ikon: PhTreeStructure, w: 'santri', ket: 'Lapis kedua: menambah atau mencabut akses seluruh pegawai di bidang/unit beserta cabangnya.' },
   { k: 'individu', n: 'Per individu', ikon: PhUser, w: 'pengajuan', ket: 'Lapis tertinggi: pengecualian untuk pegawai tertentu. Akses superadmin tidak dapat dicabut.' },
+  { k: 'sensitif', n: 'Fitur sensitif', ikon: PhLockKey, w: 'gaji', ket: 'Gaji dan keuangan santri: hanya superadmin dan pegawai yang ditunjuk di sini.' },
 ]
 const aktif = computed(() => TAB.find((t) => t.k === props.tab) || TAB[0])
 
@@ -83,7 +86,8 @@ const WARNA_TINGKAT = ['w-hakakses', 'w-pegawai', 'w-presensi', 'w-pengaturan']
     </nav>
     <p class="mb-4 flex gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" />{{ aktif.ket }} Semua aturan diperiksa di server, bukan sekadar menyembunyikan menu.</p>
 
-    <p v-if="!siap" class="py-10 text-center text-teks3">Memuat hak akses…</p>
+    <TabAksesSensitif v-if="aktif.k === 'sensitif'" />
+    <p v-else-if="!siap" class="py-10 text-center text-teks3">Memuat hak akses…</p>
     <div v-else :class="['lg:grid lg:grid-cols-[300px_1fr] lg:gap-5', 'w-' + aktif.w]">
       <!-- Daftar sasaran -->
       <aside class="kartu mb-4 p-3 lg:sticky lg:top-[96px] lg:mb-0 lg:max-h-[calc(100dvh-120px)] lg:overflow-y-auto">

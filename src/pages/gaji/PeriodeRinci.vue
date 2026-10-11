@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.2 | Fase 11 – Tahap 5 Selisih terhadap bulan lalu per pegawai dan saringan "Berubah dari bulan lalu" | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.3 | Fase 11 – Tahap 6 Jabatan penanda tangan dari penunjukan superadmin | 11/10/2026 -->
 <script setup>
 // Rincian satu periode gaji: ringkasan, daftar pegawai (skema, penyesuaian, pendapatan, potongan, diterima),
 // hitung ulang, impor jumlah diterima dari Excel, ekspor Excel, cetak Daftar Gaji F4 mendatar.
@@ -353,7 +353,7 @@ const jumlahKolom = computed(() => Object.fromEntries(KOLOM_DAFTAR.map(([c]) => 
         <p class="catatan-cetak">Nominal dalam rupiah. Kolom penyesuaian memuat {{ gaji.pengaturan.label_penyesuaian.toLowerCase() }}.</p>
         <template #ttd>
           <TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: direktur.jabatan_tertulis || 'Direktur', nama: direktur.nama || '', niy: direktur.niy }"
-            :kanan="{ jabatan: gaji.hak.bendahara ? 'Bendahara' : 'Pengelola Sistem', nama: sesi.pengguna?.nama_lengkap || '', niy: sesi.pengguna?.niy }" :tanggal="pr.tanggal_bayar" />
+            :kanan="{ jabatan: gaji.jabatanSaya, nama: sesi.pengguna?.nama_lengkap || '', niy: sesi.pengguna?.niy }" :tanggal="pr.tanggal_bayar" />
         </template>
       </DokumenCetak>
     </template>

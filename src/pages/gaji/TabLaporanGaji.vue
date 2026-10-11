@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/TabLaporanGaji.vue | v1.0 | Fase 11 – Tahap 5 Laporan gaji: rekap per bidang, daftar penerimaan, perbandingan bulan lalu | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/TabLaporanGaji.vue | v1.1 | Fase 11 – Tahap 6 Jabatan penanda tangan dari penunjukan superadmin | 11/10/2026 -->
 <script setup>
 // Laporan atas satu periode gaji (jumlah yang benar-benar diterima, termasuk penyesuaian ketetapan yayasan):
 //   1. Rekap per bidang      : jumlah pegawai, menurut skema, penyesuaian, pendapatan, potongan, diterima per bidang induk
@@ -129,7 +129,7 @@ function ekspor() {
 }
 
 const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.test(s.jabatan_tertulis)) || {})
-const ttdKanan = computed(() => ({ jabatan: gaji.hak.bendahara ? 'Bendahara' : 'Pengelola Sistem', nama: sesi.pengguna?.nama_lengkap || '', niy: sesi.pengguna?.niy }))
+const ttdKanan = computed(() => ({ jabatan: gaji.jabatanSaya, nama: sesi.pengguna?.nama_lengkap || '', niy: sesi.pengguna?.niy }))
 </script>
 <template>
   <div>

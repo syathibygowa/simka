@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/Gaji.vue | v2.0 | Fase 11 – Tahap 5 Dipisah menjadi menu Gaji dan menu Tunjangan; tab Laporan dan Pengingat | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/Gaji.vue | v2.1 | Fase 11 – Tahap 6 Pengelola gaji = ditunjuk superadmin (bukan jabatan Bendahara) | 11/10/2026 -->
 <script setup>
 // Dua menu memakai halaman ini (prop "menu"), agar tab tidak terlalu banyak:
 // MENU GAJI (/gaji)
@@ -13,7 +13,7 @@
 //   Tarif          : tarif komponen bertanggal berlaku (diubah pengelola gaji)
 //   Rekening       : cara bayar, bank, nomor rekening, atas nama (tampil di slip)
 //   Pengingat      : kenaikan masa kerja per bulan dan perubahan data penentu gaji
-// Pengelola: superadmin, Bendahara, admin ber-izin kelola_gaji. Pembaca: + admin ber-izin lihat_gaji.
+// Pengelola dan pembaca: superadmin dan pegawai yang ditunjuk superadmin (Hak Akses → Fitur sensitif).
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { PhTable, PhIdentificationBadge, PhCoins, PhBank, PhListChecks, PhInfo, PhReceipt, PhLockSimple, PhCalendarCheck, PhScales, PhPiggyBank, PhTray, PhSignature, PhChartBar, PhTrendUp } from '@phosphor-icons/vue'
@@ -91,7 +91,7 @@ watch(aktif, (k) => {
   }
   if (k && k !== props.tab) router.replace({ path: `${dasar.value}/${k}`, query: router.currentRoute.value.query })
 }, { immediate: true })
-const penandaKanan = computed(() => (gaji.hak.bendahara ? 'Bendahara' : sesi.isSuperadmin ? 'Pengelola Sistem' : 'Petugas'))
+const penandaKanan = computed(() => gaji.jabatanSaya)
 </script>
 <template>
   <div>

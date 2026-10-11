@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/TabRekening.vue | v1.0 | Fase 11 – Tahap 1 Rekening penerimaan gaji | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/TabRekening.vue | v1.1 | Fase 11 – Tahap 6 Jabatan penanda tangan dari penunjukan superadmin | 11/10/2026 -->
 <script setup>
 // Rekening penerimaan gaji setiap pegawai aktif: cara bayar (transfer/tunai), bank, nomor rekening, atas nama.
 // Tampil di slip gaji. Diubah pengelola gaji (satu per satu atau impor Excel); pembaca gaji hanya melihat.
@@ -219,7 +219,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
       </table>
       <template #ttd>
         <TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: direktur.jabatan_tertulis || 'Direktur', nama: direktur.nama || '', niy: direktur.niy }"
-          :kanan="{ jabatan: gaji.hak.bendahara ? 'Bendahara' : 'Pengelola Sistem', nama: sesi.pengguna?.nama_lengkap || '', niy: sesi.pengguna?.niy }" :tanggal="hariIniISO()" />
+          :kanan="{ jabatan: gaji.jabatanSaya, nama: sesi.pengguna?.nama_lengkap || '', niy: sesi.pengguna?.niy }" :tanggal="hariIniISO()" />
       </template>
     </DokumenCetak>
   </div>

@@ -1,7 +1,8 @@
-// SIMKA PRO | src/stores/gaji.js | v1.4 | Fase 11 – Tahap 5 Pengingat kenaikan dan ringkasan Beranda | 11/10/2026
+// SIMKA PRO | src/stores/gaji.js | v1.5 | Fase 11 – Tahap 6 Hak gaji dari penunjukan superadmin; jabatan penanda tangan | 11/10/2026
 // Modul Gaji (Blueprint Bagian 36). Hak dihitung server (hak_gaji):
-//   kelola = superadmin, Bendahara (hak fitur slip_gaji 3), admin ber-izin kelola_gaji
-//   lihat  = kelola + admin ber-izin lihat_gaji
+//   kelola = superadmin + pegawai yang ditunjuk superadmin (Hak Akses → Fitur sensitif) bertingkat kelola
+//   lihat  = kelola + yang ditunjuk bertingkat lihat. Jabatan Bendahara tidak otomatis membuka gaji.
+//   bendahara/jabatan_ttd = penanda tangan gaji yang ditunjuk (mis. Bendahara Yayasan)
 //   slip_saya = slip ditampilkan di akun pegawai (ketentuan, bawaan TIDAK sesuai arahan yayasan)
 // Data pegawai untuk gaji dibaca lewat pegawai_gaji() karena Bendahara secara peran adalah pegawai biasa.
 import { defineStore } from 'pinia'
@@ -29,12 +30,16 @@ async function rpc(nama, args) {
 
 export const useGaji = defineStore('gaji', {
   state: () => ({ hak: {}, hakDimuat: false, pengaturan: { ...PENGATURAN_BAWAAN }, pegawai: [], pegawaiDimuat: false }),
+  getters: {
+    /** Jabatan pengguna saat ini pada dokumen gaji yang dicetaknya */
+    jabatanSaya: (s) => s.hak.jabatan_ttd || (s.hak.superadmin ? 'Pengelola Sistem' : 'Pengelola Gaji'),
+  },
   actions: {
     async muatHak() {
       if (MODE_DEMO) {
         const { useSesi } = await import('./sesi'); const peran = useSesi().peran
         const kelola = peran !== 'pegawai'
-        this.hak = { kelola, lihat: kelola, superadmin: peran === 'superadmin', bendahara: false, slip_saya: demoPengaturan.slip_pegawai, tampil: kelola || demoPengaturan.slip_pegawai }
+        this.hak = { kelola, lihat: kelola, superadmin: peran === 'superadmin', bendahara: peran === 'superadmin', jabatan_ttd: peran === 'superadmin' ? 'Bendahara Yayasan' : null, slip_saya: demoPengaturan.slip_pegawai, tampil: kelola || demoPengaturan.slip_pegawai }
         this.pengaturan = { ...demoPengaturan }
       } else {
         const h = await rpc('hak_gaji')

@@ -1,6 +1,6 @@
-<!-- SIMKA PRO | src/pages/gaji/TabKetentuanGaji.vue | v1.2 | Fase 11 – Tahap 3 Sakelar utama potongan kehadiran | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/TabKetentuanGaji.vue | v1.3 | Fase 11 – Tahap 6 Keterangan pengelola gaji yang ditunjuk superadmin | 11/10/2026 -->
 <script setup>
-// Ketentuan gaji. Pengelola gaji (superadmin, Bendahara, admin ber-izin kelola_gaji) mengubah; pembaca gaji hanya melihat.
+// Ketentuan gaji. Pengelola gaji (superadmin dan yang ditunjuk bertingkat kelola) mengubah; pembaca gaji hanya melihat.
 //  • Slip di akun pegawai: bawaan NONAKTIF (arahan yayasan). Bila nonaktif, menu Gaji tidak tampil bagi pegawai;
 //    pegawai yang memerlukan slip meminta kepada Bendahara (dicetak atau dibuka khusus untuknya, Tahap slip).
 //  • Tanda tangan slip: Bendahara selalu; Direktur opsional.
