@@ -1,9 +1,12 @@
-<!-- SIMKA PRO | src/pages/beranda/RingkasanPribadi.vue | v1.2 | Fase 8 – Kartu dokumen menunggu tanda tangan | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/RingkasanPribadi.vue | v1.3 | Fase 10 – Penutup: kartu surat perlu tindakan | 11/10/2026 -->
 <script setup>
 // Kartu beranda pribadi (semua pegawai): jurnal hari ini, pengajuan, agenda terdekat, pengumuman dan berkas baru.
 // v1.2: kartu menonjol "Dokumen menunggu tanda tangan Anda" (laporan resmi) bila ada.
-import { computed, onMounted } from 'vue'
-import { PhSignature } from '@phosphor-icons/vue'
+// v1.3: kartu menonjol "Surat perlu tindakan Anda" (surat masuk/disposisi; draf surat yang perlu diperiksa Tata Usaha).
+import { computed, onMounted, ref } from 'vue'
+import { PhSignature, PhEnvelopeSimple } from '@phosphor-icons/vue'
+import { usePersuratan } from '@/stores/persuratan'
+import { useSesi } from '@/stores/sesi'
 import { useDokumenResmi } from '@/stores/dokumenResmi'
 import { PhNotebook, PhFileText, PhCalendarCheck, PhMegaphone, PhFolderOpen, PhCaretRight, PhWarningCircle, PhUmbrella, PhPushPin } from '@phosphor-icons/vue'
 import { formatHari, formatPendek } from '@/lib/tanggal'
@@ -15,12 +18,30 @@ const jam = (v) => (v ? String(v).slice(0, 5).replace(':', '.') : '')
 const STATUS = { menunggu: 'menunggu', disetujui: 'disetujui' }
 const dr = useDokumenResmi()
 onMounted(() => dr.muatMasuk().catch(() => {}))
+// Persuratan: surat masuk/disposisi yang menunggu saya dan draf surat yang perlu diperiksa (Tata Usaha)
+const ps = usePersuratan(); const sesi = useSesi(); const surat = ref(null)
+onMounted(async () => { if (!sesi.persuratan) return; try { surat.value = await ps.ringkasan() } catch { surat.value = null } })
+const tindakan = computed(() => (surat.value?.perlu_tindakan_saya || 0) + (surat.value?.keluar_diperiksa || 0))
+const ketSurat = computed(() => {
+  const x = surat.value || {}; const b = []
+  if (x.perlu_tindakan_saya) b.push(`${x.perlu_tindakan_saya} surat masuk/disposisi`)
+  if (x.keluar_diperiksa) b.push(`${x.keluar_diperiksa} draf surat keluar perlu diperiksa`)
+  if (x.lewat_batas_saya) b.push(`${x.lewat_batas_saya} lewat batas`)
+  return b.join(' · ')
+})
 </script>
 <template>
   <router-link v-if="dr.menunggu.length" to="/rekap/tandatangan" class="kartu w-pengajuan mb-3 flex items-center gap-3 border-l-4 border-l-[color:var(--c)] p-4 hover:-translate-y-0.5 hover:shadow-apung">
     <span class="chip-ikon h-11 w-11 shrink-0"><PhSignature :size="24" weight="duotone" /></span>
     <span class="min-w-0 flex-1"><span class="block font-bold">{{ dr.menunggu.length }} dokumen menunggu tanda tangan Anda</span>
       <span class="block truncate text-sm text-teks2">{{ dr.menunggu.slice(0, 2).map((x) => x.dok.perihal + (x.dok.periode ? ' (' + x.dok.periode + ')' : '')).join(' · ') }}</span></span>
+    <PhCaretRight :size="18" class="text-teks3" />
+  </router-link>
+  <router-link v-if="tindakan" :to="surat?.perlu_tindakan_saya ? '/persuratan/untuk-saya' : '/persuratan/keluar'"
+    class="kartu w-tatausaha mb-3 flex items-center gap-3 border-l-4 border-l-[color:var(--c)] p-4 hover:-translate-y-0.5 hover:shadow-apung">
+    <span class="chip-ikon h-11 w-11 shrink-0"><PhEnvelopeSimple :size="24" weight="duotone" /></span>
+    <span class="min-w-0 flex-1"><span class="block font-bold">{{ tindakan }} surat perlu tindakan Anda</span>
+      <span class="block truncate text-sm text-teks2">{{ ketSurat }}</span></span>
     <PhCaretRight :size="18" class="text-teks3" />
   </router-link>
   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

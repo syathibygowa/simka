@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/DokumenCetak.vue | v1.3 | Fase 8 – Perbaikan: kop mendatar proporsional | 10/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/DokumenCetak.vue | v1.5 | Fase 10 – Perbaikan: catatan tanda tangan elektronik di kaki halaman | 11/10/2026 -->
 <script setup>
 // Kerangka dokumen cetak F4: kop surat, judul, isi (slot), tanda tangan, catatan cetak.
 // Pratinjau tampil sebagai jendela munculan (pop-up) dengan tombol Cetak dan Tutup.
@@ -16,6 +16,8 @@ const props = defineProps({
   kop: { type: String, default: 'pondok' }, judul: String, subjudul: String, nomor: String, pencetak: String,
   kopData: { type: Object, default: null }, // draf kop (cetak uji dari Pengaturan)
   mendatar: Boolean,                        // kertas F4 mendatar (330 × 215 mm) untuk tabel lebar
+  sembunyikanJudul: Boolean,                // surat resmi: judul disusun sendiri (judul tetap tampil di bilah pratinjau)
+  tanpaCatatan: Boolean,                    // surat resmi: tanpa baris "Dicetak melalui SIMKA PRO…"
 })
 const dicetak = computed(() => {
   const s = sekarang()
@@ -47,13 +49,16 @@ const cetak = () => window.print()
       </div>
       <div :class="pratinjau && 'gulir-munculan'">
         <article :class="['dok lembar-f4', mendatar && 'mendatar']" :style="pratinjau ? { zoom: skala } : null">
-          <KopSurat :kop="kopData || lembaga.kop(kop)" :kode="kop" :mendatar="mendatar" />
-          <h1 class="judul-dok">{{ judul }}</h1>
-          <p v-if="nomor" class="subjudul-dok">Nomor: {{ nomor }}</p>
-          <p v-if="subjudul" class="subjudul-dok">{{ subjudul }}</p>
-          <slot />
-          <slot name="ttd" />
-          <p class="catatan-cetak">{{ dicetak }}</p>
+          <!-- Tabel tata halaman: tfoot berulang di setiap halaman menyediakan ruang untuk catatan validasi di kaki halaman -->
+          <table class="tata-halaman"><tbody><tr><td>
+            <KopSurat :kop="kopData || lembaga.kop(kop)" :kode="kop" :mendatar="mendatar" />
+            <h1 v-if="!sembunyikanJudul" class="judul-dok">{{ judul }}</h1>
+            <p v-if="nomor && !sembunyikanJudul" class="subjudul-dok">Nomor: {{ nomor }}</p>
+            <p v-if="subjudul" class="subjudul-dok">{{ subjudul }}</p>
+            <slot />
+            <slot name="ttd" />
+            <p v-if="!tanpaCatatan" class="catatan-cetak">{{ dicetak }}</p>
+          </td></tr></tbody><tfoot><tr><td><div class="ruang-kaki" /></td></tr></tfoot></table>
         </article>
       </div>
     </div>

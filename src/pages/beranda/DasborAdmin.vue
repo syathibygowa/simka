@@ -1,5 +1,6 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.11 | Fase 8 – Perbaikan: Untuk Anda tetap di atas, di luar slider | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.12 | Fase 10 – Penutup: kelompok statistik Persuratan | 11/10/2026 -->
 <script setup>
+import KartuPersuratanBeranda from '@/components/KartuPersuratanBeranda.vue'
 import { ref, computed, onMounted } from 'vue'
 import {
   PhUsersThree, PhHourglass, PhUserCircleDashed, PhGenderMale, PhGenderFemale, PhPulse,
@@ -30,7 +31,7 @@ import KartuSecurityBeranda from '@/components/KartuSecurityBeranda.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
-const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'layanan', 'security', 'kendali'])
+const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'layanan', 'surat', 'security', 'kendali'])
 const stat = useStatistik(); const br = useBeranda(); const peg = usePegawai()
 const d = computed(() => stat.data || {}); const ch = computed(() => stat.berubah)
 const menunggu = computed(() => peg.daftar.filter((p) => p.status_akun === 'menunggu'))
@@ -73,6 +74,7 @@ const AKSI = [
       <template #santri><KartuSantriBeranda /></template>
       <template #tahfizh><KartuTahfizhBeranda /></template>
       <template #layanan><KartuLayananBeranda /></template>
+      <template #surat><KartuPersuratanBeranda /></template>
       <template #security><KartuSecurityBeranda /></template>
       <template #kendali>
     <div class="flex flex-wrap items-center justify-between gap-2">

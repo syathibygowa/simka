@@ -1,5 +1,6 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.10 | Fase 8 – Perbaikan: Untuk Anda tetap di atas, di luar slider | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.11 | Fase 10 – Penutup: kelompok statistik Persuratan | 11/10/2026 -->
 <script setup>
+import KartuPersuratanBeranda from '@/components/KartuPersuratanBeranda.vue'
 import { ref, computed } from 'vue'
 import {
   PhUsersThree, PhUserCheck, PhHourglass, PhUserCircleDashed, PhKey, PhTreeStructure, PhCloudArrowUp,
@@ -29,7 +30,7 @@ import KartuSecurityBeranda from '@/components/KartuSecurityBeranda.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
-const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'layanan', 'security', 'pondok'])
+const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'layanan', 'surat', 'security', 'pondok'])
 const stat = useStatistik(); const br = useBeranda()
 const d = computed(() => stat.data || {})
 const ch = computed(() => stat.berubah)
@@ -81,6 +82,7 @@ const AKSI = [
       <template #santri><KartuSantriBeranda /></template>
       <template #tahfizh><KartuTahfizhBeranda /></template>
       <template #layanan><KartuLayananBeranda /></template>
+      <template #surat><KartuPersuratanBeranda /></template>
       <template #security><KartuSecurityBeranda /></template>
       <template #pondok>
     <div class="flex flex-wrap items-center justify-between gap-2">

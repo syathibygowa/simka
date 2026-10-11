@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.12 | Fase 8 – Perbaikan: menu Rekap menjadi Dokumen | 10/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.13 | Fase 10 – Tahap 1 Menu Persuratan | 11/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -57,7 +57,9 @@ export const MENU = [
       || (c.jenisKelompok || []).some((j) => ['kamar', 'kelas', 'halaqah'].includes(j)) },
   // Dokumen: rekap presensi, laporan kehadiran, dan dokumen resmi dalam satu menu bertab (hemat menu)
   { kode: 'rekap',      nama: 'Dokumen',         ikon: PhFiles,    warna: 'rekap',      ke: '/rekap',             grup: 'Administrasi' },
-  { kode: 'tatausaha',  nama: 'Tata Usaha',      ikon: PhEnvelopeSimple, warna: 'tatausaha',  ke: '/segera/tatausaha',  grup: 'Administrasi', fase: 10 },
+  // Persuratan: Tata Usaha/pengelola, pimpinan penerima surat, dan pegawai yang pernah menerima disposisi
+  { kode: 'persuratan', nama: 'Persuratan',      ikon: PhEnvelopeSimple, warna: 'tatausaha',  ke: '/persuratan',        grup: 'Administrasi',
+    syarat: (c) => !!c.persuratan || (c.izin || []).includes('kelola_persuratan') || Number(c.fitur?.tata_usaha ?? 0) >= 1 },
   { kode: 'gaji',       nama: 'Gaji',            ikon: PhWallet,         warna: 'gaji',       ke: '/segera/gaji',       grup: 'Administrasi', fase: 11 },
   // Sistem
   { kode: 'auditlog',   nama: 'Audit Log',       ikon: PhClockCounterClockwise, warna: 'audit', ke: '/audit-log',     grup: 'Sistem' },

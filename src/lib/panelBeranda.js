@@ -1,6 +1,6 @@
-// SIMKA PRO | src/lib/panelBeranda.js | v1.0 | Fase 8 – Perbaikan beranda pimpinan: statistik bergeser per kelompok | 10/10/2026
+// SIMKA PRO | src/lib/panelBeranda.js | v1.1 | Fase 10 – Penutup: kelompok Persuratan | 11/10/2026
 // Daftar kelompok statistik beranda (urutan, nama chip, ikon, warna) untuk komponen SliderStatistik.
-import { PhFingerprint, PhClipboardText, PhUsersThree, PhStudent, PhBookOpenText, PhFirstAidKit, PhShieldCheck, PhBuildings, PhSparkle, PhUserGear } from '@phosphor-icons/vue'
+import { PhFingerprint, PhClipboardText, PhUsersThree, PhStudent, PhBookOpenText, PhFirstAidKit, PhShieldCheck, PhBuildings, PhSparkle, PhUserGear, PhEnvelopeSimple } from '@phosphor-icons/vue'
 const P = {
   presensi: { n: 'Presensi', ikon: PhFingerprint, w: 'presensi' },
   pimpinan: { n: 'Unit saya', ikon: PhUsersThree, w: 'pegawai' },
@@ -8,6 +8,7 @@ const P = {
   santri: { n: 'Santri', ikon: PhStudent, w: 'santri' },
   tahfizh: { n: 'Tahfizh', ikon: PhBookOpenText, w: 'tahfizh' },
   layanan: { n: 'Layanan santri', ikon: PhFirstAidKit, w: 'klinik' },
+  surat: { n: 'Persuratan', ikon: PhEnvelopeSimple, w: 'tatausaha' },
   security: { n: 'Security', ikon: PhShieldCheck, w: 'security' },
   pondok: { n: 'Pondok', ikon: PhBuildings, w: 'beranda' },
   kendali: { n: 'Data pegawai', ikon: PhUserGear, w: 'verifikasi' },

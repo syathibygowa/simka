@@ -1,10 +1,10 @@
-// SIMKA PRO | src/lib/menuCepat.js | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026
+// SIMKA PRO | src/lib/menuCepat.js | v1.2 | Fase 10 – Tahap 1 Menu cepat Persuratan untuk Tata Usaha | 11/10/2026
 // Menu cepat beranda pegawai fungsional: tombol langsung ke menu kerja sesuai tupoksi masing-masing
 // (musyrif → Musyrif, muhaffizh → Setoran Tahfizh, wali kelas → Absensi Kelas, medis → Klinik, security → Gerbang, dst.).
 // Tupoksi didahulukan, lalu dilengkapi menu umum sampai 8 tombol (2 baris × 4 kolom).
 import {
   PhBuildings, PhBookOpenText, PhCheckSquareOffset, PhMedal, PhChalkboardTeacher, PhCalendarDots, PhFirstAidKit, PhShieldCheck,
-  PhGraduationCap, PhCalendarStar, PhSignOut, PhUsersThree, PhFileText, PhMegaphone, PhCalendarCheck, PhFolderOpen, PhClockCountdown, PhNotebook,
+  PhGraduationCap, PhCalendarStar, PhSignOut, PhUsersThree, PhFileText, PhMegaphone, PhCalendarCheck, PhFolderOpen, PhClockCountdown, PhNotebook, PhEnvelopeSimple,
 } from '@phosphor-icons/vue'
 
 /** @param {object} t profil tugas (sesi.tugas), @param {object} c ciri tambahan: { shift } */
@@ -28,6 +28,7 @@ export function menuCepat(t = {}, c = {}) {
     tambah({ kode: 'asuhan', label: 'Santri Asuhan', ket: 'Kelompok yang Anda ampu', ikon: PhUsersThree, warna: 'santri', ke: '/kelompok-santri' })
     tambah({ kode: 'izin', label: 'Izin Santri', ket: 'Usulan izin', ikon: PhSignOut, warna: 'pengajuan', ke: '/izin-santri/menunggu' })
   }
+  if ((t.struktural || []).includes('TATA_USAHA') || c.persuratan) tambah({ kode: 'persuratan', label: 'Persuratan', ket: 'Surat dan disposisi', ikon: PhEnvelopeSimple, warna: 'tatausaha', ke: '/persuratan' })
   if (c.shift) tambah({ kode: 'shift', label: 'Jadwal Shift', ket: 'Giliran tugas', ikon: PhCalendarStar, warna: 'shift', ke: '/jadwal-shift' })
   // ---------- Menu umum setiap pegawai ----------
   const umum = [
