@@ -1,13 +1,13 @@
-// SIMKA PRO | src/lib/menuCepat.js | v1.2 | Fase 10 – Tahap 1 Menu cepat Persuratan untuk Tata Usaha | 11/10/2026
+// SIMKA PRO | src/lib/menuCepat.js | v1.3 | Fase 11 – Tahap 1 Menu cepat Gaji untuk Bendahara | 11/10/2026
 // Menu cepat beranda pegawai fungsional: tombol langsung ke menu kerja sesuai tupoksi masing-masing
 // (musyrif → Musyrif, muhaffizh → Setoran Tahfizh, wali kelas → Absensi Kelas, medis → Klinik, security → Gerbang, dst.).
 // Tupoksi didahulukan, lalu dilengkapi menu umum sampai 8 tombol (2 baris × 4 kolom).
 import {
   PhBuildings, PhBookOpenText, PhCheckSquareOffset, PhMedal, PhChalkboardTeacher, PhCalendarDots, PhFirstAidKit, PhShieldCheck,
-  PhGraduationCap, PhCalendarStar, PhSignOut, PhUsersThree, PhFileText, PhMegaphone, PhCalendarCheck, PhFolderOpen, PhClockCountdown, PhNotebook, PhEnvelopeSimple,
+  PhGraduationCap, PhCalendarStar, PhSignOut, PhUsersThree, PhFileText, PhMegaphone, PhCalendarCheck, PhFolderOpen, PhClockCountdown, PhNotebook, PhEnvelopeSimple, PhWallet,
 } from '@phosphor-icons/vue'
 
-/** @param {object} t profil tugas (sesi.tugas), @param {object} c ciri tambahan: { shift } */
+/** @param {object} t profil tugas (sesi.tugas), @param {object} c ciri tambahan: { shift, persuratan, gaji } */
 export function menuCepat(t = {}, c = {}) {
   const fungsi = new Set(t.fungsional || []); const kel = new Set(t.kelompok || [])
   const d = []
@@ -29,6 +29,7 @@ export function menuCepat(t = {}, c = {}) {
     tambah({ kode: 'izin', label: 'Izin Santri', ket: 'Usulan izin', ikon: PhSignOut, warna: 'pengajuan', ke: '/izin-santri/menunggu' })
   }
   if ((t.struktural || []).includes('TATA_USAHA') || c.persuratan) tambah({ kode: 'persuratan', label: 'Persuratan', ket: 'Surat dan disposisi', ikon: PhEnvelopeSimple, warna: 'tatausaha', ke: '/persuratan' })
+  if ((t.struktural || []).includes('BENDAHARA') || c.gaji) tambah({ kode: 'gaji', label: 'Gaji', ket: (t.struktural || []).includes('BENDAHARA') ? 'Tarif, rekening, slip' : 'Slip gaji Anda', ikon: PhWallet, warna: 'gaji', ke: '/gaji' })
   if (c.shift) tambah({ kode: 'shift', label: 'Jadwal Shift', ket: 'Giliran tugas', ikon: PhCalendarStar, warna: 'shift', ke: '/jadwal-shift' })
   // ---------- Menu umum setiap pegawai ----------
   const umum = [

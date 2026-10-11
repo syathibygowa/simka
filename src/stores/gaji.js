@@ -1,0 +1,91 @@
+// SIMKA PRO | src/stores/gaji.js | v1.0 | Fase 11 – Tahap 1 Menu Gaji: hak, ketentuan, rekening | 11/10/2026
+// Modul Gaji (Blueprint Bagian 36). Hak dihitung server (hak_gaji):
+//   kelola = superadmin, Bendahara (hak fitur slip_gaji 3), admin ber-izin kelola_gaji
+//   lihat  = kelola + admin ber-izin lihat_gaji
+//   slip_saya = slip ditampilkan di akun pegawai (ketentuan, bawaan TIDAK sesuai arahan yayasan)
+// Data pegawai untuk gaji dibaca lewat pegawai_gaji() karena Bendahara secara peran adalah pegawai biasa.
+import { defineStore } from 'pinia'
+import { supabase, MODE_DEMO } from '@/lib/supabase'
+import { pesanGalat } from './lembaga'
+import { usePegawai } from './pegawai'
+
+export const PENGATURAN_BAWAAN = {
+  slip_pegawai: false, ttd_direktur: false, pembulatan: 100, potong_izin: false, potong_sakit: false, potong_cuti: false,
+  potong_terlambat: false, tanggal_gajian: 1, honorer_tunjangan_jabatan: true, info_beban_kerja: true, catatan_slip: '',
+}
+const BANK_DEMO = ['BSI', 'BRI', 'BNI', 'Bank Mandiri', 'BSI']
+let demoPengaturan = { ...PENGATURAN_BAWAAN }
+const demoRekening = {}
+
+async function rpc(nama, args) {
+  const { data, error } = await supabase.rpc(nama, args)
+  if (error) throw new Error(pesanGalat(error))
+  return data
+}
+
+export const useGaji = defineStore('gaji', {
+  state: () => ({ hak: {}, hakDimuat: false, pengaturan: { ...PENGATURAN_BAWAAN }, pegawai: [], pegawaiDimuat: false }),
+  actions: {
+    async muatHak() {
+      if (MODE_DEMO) {
+        const { useSesi } = await import('./sesi'); const peran = useSesi().peran
+        const kelola = peran !== 'pegawai'
+        this.hak = { kelola, lihat: kelola, superadmin: peran === 'superadmin', bendahara: false, slip_saya: demoPengaturan.slip_pegawai, tampil: kelola || demoPengaturan.slip_pegawai }
+        this.pengaturan = { ...demoPengaturan }
+      } else {
+        const h = await rpc('hak_gaji')
+        this.hak = h || {}
+        this.pengaturan = { ...PENGATURAN_BAWAAN, ...(h?.pengaturan || {}) }
+      }
+      this.hakDimuat = true
+      return this.hak
+    },
+
+    async muatPegawai(paksa = false) {
+      if (this.pegawaiDimuat && !paksa) return this.pegawai
+      if (MODE_DEMO) {
+        const peg = usePegawai(); if (!peg.daftar.length) await peg.muat()
+        this.pegawai = peg.daftar.filter((p) => p.status_keaktifan === 'aktif').map((p, i) => ({
+          ...p, pendidikan_terakhir: p.pendidikan_terakhir || ['S1', 'S1-LN', 'S2', 'SMA'][i % 4],
+          rekening: demoRekening[p.id] !== undefined ? demoRekening[p.id]
+            : i % 5 === 4 ? null : i % 7 === 3 ? { cara_bayar: 'tunai' }
+              : { cara_bayar: 'transfer', bank: BANK_DEMO[i % 5], nomor_rekening: String(7100000000 + i * 1234567), atas_nama: p.nama_lengkap.replace(/^(Ust\.|Ustzh\.)\s*/, '').split(',')[0] },
+        }))
+      } else {
+        this.pegawai = (await rpc('pegawai_gaji')) || []
+      }
+      this.pegawaiDimuat = true
+      return this.pegawai
+    },
+
+    async simpanPengaturan(isi) {
+      if (MODE_DEMO) { demoPengaturan = { ...demoPengaturan, ...isi }; this.pengaturan = { ...demoPengaturan }; this.hak.slip_saya = demoPengaturan.slip_pegawai; return this.pengaturan }
+      this.pengaturan = { ...PENGATURAN_BAWAAN, ...(await rpc('simpan_pengaturan_gaji', { p: isi })) }
+      this.hak.slip_saya = !!this.pengaturan.slip_pegawai
+      return this.pengaturan
+    },
+
+    /** Simpan satu rekening (objek) atau banyak (larik hasil impor Excel). Hasil: { disimpan, gagal[] }. */
+    async simpanRekening(isi) {
+      if (MODE_DEMO) {
+        const daftar = Array.isArray(isi) ? isi : [isi]; let n = 0
+        for (const r of daftar) {
+          const p = this.pegawai.find((x) => x.id === r.employee_id || (r.niy && x.niy === String(r.niy)))
+          if (!p) continue
+          p.rekening = r.cara_bayar === 'tunai' ? { cara_bayar: 'tunai', catatan: r.catatan || null } : { cara_bayar: 'transfer', bank: r.bank, nomor_rekening: String(r.nomor_rekening).replace(/\s+/g, ''), atas_nama: r.atas_nama, catatan: r.catatan || null }
+          demoRekening[p.id] = p.rekening; n++
+        }
+        return { disimpan: n, gagal: [] }
+      }
+      const hasil = await rpc('simpan_rekening', { p: isi })
+      await this.muatPegawai(true)
+      return hasil
+    },
+
+    async hapusRekening(id) {
+      if (MODE_DEMO) { const p = this.pegawai.find((x) => x.id === id); if (p) p.rekening = null; demoRekening[id] = null; return }
+      await rpc('hapus_rekening', { p_emp: id })
+      const p = this.pegawai.find((x) => x.id === id); if (p) p.rekening = null
+    },
+  },
+})

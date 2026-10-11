@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.13 | Fase 10 – Tahap 1 Menu Persuratan | 11/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.14 | Fase 11 – Tahap 1 Menu Gaji menggantikan Skema Tunjangan | 11/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -30,7 +30,6 @@ export const MENU = [
   { kode: 'pegawai',    nama: 'Data Pegawai',    ikon: PhUsersThree,     warna: 'pegawai',    ke: '/pegawai',           grup: 'Kepegawaian', peran: ADMIN },
   { kode: 'kelompok',   nama: 'Tim Kerja', ikon: PhUsersFour,     warna: 'pegawai',    ke: '/kelompok-pegawai',  grup: 'Kepegawaian', peran: ADMIN, izin: 'kelola_kelompok' },
   { kode: 'verifikasi', nama: 'Verifikasi Akun', ikon: PhUserCheck,      warna: 'verifikasi', ke: '/verifikasi',        grup: 'Kepegawaian', peran: ADMIN, izin: 'verval_akun' },
-  { kode: 'tunjangan',  nama: 'Skema Tunjangan', ikon: PhCoins,    warna: 'gaji',       ke: '/jabatan-tunjangan', grup: 'Kepegawaian', peran: ['superadmin'] },
   // Fase berikutnya
   { kode: 'santri',     nama: 'Data Santri',     ikon: PhStudent,        warna: 'santri',     ke: '/santri',            grup: 'Santri', fitur: 'data_santri' },
   { kode: 'kelompoksantri', nama: 'Kelompok Santri', ikon: PhChalkboardTeacher, warna: 'kelompoksantri', ke: '/kelompok-santri', grup: 'Santri',
@@ -60,7 +59,8 @@ export const MENU = [
   // Persuratan: Tata Usaha/pengelola, pimpinan penerima surat, dan pegawai yang pernah menerima disposisi
   { kode: 'persuratan', nama: 'Persuratan',      ikon: PhEnvelopeSimple, warna: 'tatausaha',  ke: '/persuratan',        grup: 'Administrasi',
     syarat: (c) => !!c.persuratan || (c.izin || []).includes('kelola_persuratan') || Number(c.fitur?.tata_usaha ?? 0) >= 1 },
-  { kode: 'gaji',       nama: 'Gaji',            ikon: PhWallet,         warna: 'gaji',       ke: '/segera/gaji',       grup: 'Administrasi', fase: 11 },
+  // Gaji: pengelola/pembaca gaji (superadmin, Bendahara, admin ber-izin) dan pegawai bila slip ditampilkan di akun pegawai
+  { kode: 'gaji',       nama: 'Gaji',            ikon: PhWallet,         warna: 'gaji',       ke: '/gaji',              grup: 'Administrasi', hak: (c) => !!c.gaji },
   // Sistem
   { kode: 'auditlog',   nama: 'Audit Log',       ikon: PhClockCounterClockwise, warna: 'audit', ke: '/audit-log',     grup: 'Sistem' },
   { kode: 'organisasi', nama: 'Organisasi', ikon: PhTreeStructure, warna: 'sistem',  ke: '/organisasi',        grup: 'Sistem', peran: ['superadmin'] },
@@ -83,8 +83,10 @@ export const GRUP = ['Utama', 'Presensi', 'Layanan Pegawai', 'Kepegawaian', 'San
 /** Menu sesuai peran. ciri.shift = pegawai memegang pola shift (menu Jadwal Shift tampil juga untuk admin). */
 /** ciri.izin = izin admin yang dimiliki; menu ber-"izin" hanya tampil bagi superadmin atau admin yang memiliki izin itu. */
 /** ciri.fitur = hak fitur pegawai; menu ber-"fitur" tampil bagi admin/superadmin atau pegawai dengan tingkat ≥ 1. */
+/** m.hak(ciri) = syarat yang berlaku juga bagi admin (hanya superadmin yang dikecualikan), mis. menu Gaji. */
 export const menuUntuk = (peran, ciri = {}) => MENU.filter((m) => (!m.peran || m.peran.includes(peran))
   && (!m.syarat || ADMIN.includes(peran) || (typeof m.syarat === 'function' ? m.syarat(ciri) : ciri[m.syarat]))
   && (!m.fitur || ADMIN.includes(peran) || Number(ciri.fitur?.[m.fitur] ?? 0) >= 1)
-  && (!m.izin || peran === 'superadmin' || (ciri.izin || []).includes(m.izin)))
+  && (!m.izin || peran === 'superadmin' || (ciri.izin || []).includes(m.izin))
+  && (!m.hak || peran === 'superadmin' || m.hak(ciri)))
 export const cariMenu = (kode) => MENU.find((m) => m.kode === kode)

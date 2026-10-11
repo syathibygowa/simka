@@ -1,7 +1,8 @@
-<!-- SIMKA PRO | src/pages/tunjangan/TabPeta.vue | v1.1 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/tunjangan/TabPeta.vue | v1.2 | Fase 11 – Tahap 1 Dipakai menu Gaji: ubah jabatan hanya pengelola data pegawai | 11/10/2026 -->
 <script setup>
 // Peta jabatan per pegawai dalam bentuk tabel: jabatan yang diemban, komponen tunjangan,
-// jumlah perkiraan, dan keterangan kekurangan data. Jabatan dapat diubah langsung dari baris tabel.
+// jumlah perkiraan, dan keterangan kekurangan data. Jabatan dapat diubah langsung dari baris tabel oleh pemegang izin
+// kelola data pegawai (bolehUbah); pengelola gaji lain (Bendahara) hanya melihat rincian.
 import { ref, computed } from 'vue'
 import * as XLSX from 'xlsx'
 import { PhMagnifyingGlass, PhWarningCircle, PhEye, PhFileXls, PhFloppyDisk, PhCheckCircle, PhPencilSimple, PhUsersThree, PhCoins } from '@phosphor-icons/vue'
@@ -19,7 +20,8 @@ import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
 const tanggal = defineModel('tanggal', { type: String })
-const props = defineProps({ hasil: { type: Array, default: () => [] } })
+const props = defineProps({ hasil: { type: Array, default: () => [] }, bolehUbah: { type: Boolean, default: true }, penandaKanan: { type: String, default: 'Pengelola Sistem' } })
+const emit = defineEmits(['berubah'])
 const org = useOrganisasi(); const peg = usePegawai(); const lembaga = useLembaga(); const sesi = useSesi(); const ui = useUI()
 
 const cari = ref(''); const bidang = ref(''); const hanyaCatatan = ref(false); const pratinjau = ref(false)
@@ -62,7 +64,7 @@ async function simpan() {
       unit_struktural_id: f.struktural_id ? (p.unit_struktural_id || p.org_unit_id || null) : null, level_muhaffizh: muhaffizh.value ? f.level_muhaffizh : '',
       pendidikan_terakhir: f.pendidikan_terakhir, status_kepegawaian: f.status_kepegawaian, kategori_honorer: f.status_kepegawaian === 'honorer' ? f.kategori_honorer : '',
       tanggal_berlaku: f.tanggal_berlaku })
-    ui.toast(`Jabatan ${p.nama_lengkap} diperbarui.`); ubah.value = null
+    ui.toast(`Jabatan ${p.nama_lengkap} diperbarui.`); ubah.value = null; emit('berubah')
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 
@@ -126,7 +128,8 @@ function ekspor() {
               <span v-if="!h.catatan.length" class="lencana w-presensi"><PhCheckCircle :size="12" weight="fill" /> Lengkap</span>
               <ul v-else class="w-klinik space-y-0.5 text-xs font-semibold" style="color: var(--c)"><li v-for="c in h.catatan" :key="c">{{ c }}</li></ul>
             </td>
-            <td class="pr-2 pt-1.5"><button class="tombol-ikon h-9 w-9" @click="buka({ p, h })" :aria-label="`Ubah jabatan ${p.nama_lengkap}`"><PhPencilSimple :size="18" /></button></td>
+            <td class="pr-2 pt-1.5"><button class="tombol-ikon h-9 w-9" @click="buka({ p, h })" :aria-label="bolehUbah ? `Ubah jabatan ${p.nama_lengkap}` : `Rincian ${p.nama_lengkap}`">
+              <component :is="bolehUbah ? PhPencilSimple : PhEye" :size="18" /></button></td>
           </tr>
         </tbody>
         <tfoot class="border-t-2 border-garis bg-permukaan2 font-bold">
@@ -167,6 +170,7 @@ function ekspor() {
           </ul>
           <ul v-if="ubah.h.catatan.length" class="w-klinik mt-2 space-y-0.5 text-sm font-semibold" style="color: var(--c)"><li v-for="c in ubah.h.catatan" :key="c">{{ c }}</li></ul>
         </div>
+        <template v-if="bolehUbah">
         <div><p class="label-isian">Jabatan fungsional</p>
           <div class="flex flex-wrap gap-1.5">
             <button v-for="j in org.fungsional.filter((x) => x.aktif || ubah.f.fungsional_ids.includes(x.id))" :key="j.id" type="button" @click="pilih(j)" :aria-pressed="ubah.f.fungsional_ids.includes(j.id)"
@@ -188,6 +192,9 @@ function ekspor() {
         </div>
         <p class="text-xs text-teks3">Perubahan dicatat di riwayat kepegawaian. TMT tugas dan data lain diubah melalui halaman biodata pegawai.</p>
         <button class="tombol-utama w-full" :disabled="proses" @click="simpan"><PhFloppyDisk :size="20" weight="duotone" /> {{ proses ? 'Menyimpan…' : 'Simpan perubahan jabatan' }}</button>
+        </template>
+        <p v-else class="text-sm text-teks3">Data jabatan, pendidikan, status, dan TMT diubah oleh admin kepegawaian di menu Data Pegawai.
+          Bila ada data yang belum lengkap, sampaikan kepada admin atau superadmin.</p>
       </div>
     </LembarBawah>
 
@@ -212,7 +219,7 @@ function ekspor() {
       <p class="catatan-cetak">Nominal dalam rupiah. Perkiraan tunjangan tetap; honor per jam dan potongan berbasis kehadiran dihitung pada slip gaji.</p>
       <template #ttd>
         <TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: direktur.jabatan_tertulis || 'Direktur', nama: direktur.nama || '', niy: direktur.niy }"
-          :kanan="{ jabatan: 'Pengelola Sistem', nama: sesi.pengguna?.nama_lengkap || '' }" :tanggal="tanggal" />
+          :kanan="{ jabatan: penandaKanan, nama: sesi.pengguna?.nama_lengkap || '' }" :tanggal="tanggal" />
       </template>
     </DokumenCetak>
   </div>

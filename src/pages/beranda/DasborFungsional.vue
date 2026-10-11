@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborFungsional.vue | v1.2 | Fase 10 – Tahap 1 Menu cepat Persuratan | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborFungsional.vue | v1.3 | Fase 11 – Tahap 1 Menu cepat Gaji (Bendahara) | 11/10/2026 -->
 <script setup>
 // Beranda pegawai fungsional (wali kelas, guru mapel, musyrif, muhaffizh, pembina, medis, security, staf, dll.),
 // yaitu semua pegawai di luar pimpinan tinggi, admin, dan superadmin. Tanpa kartu statistik (hasil evaluasi pondok):
@@ -23,7 +23,7 @@ const ringkas = computed(() => {
   const b = dp.berikut
   return `${dp.selesaiWajib} dari ${dp.jumlahWajib} sesi tercatat${b ? ` · berikutnya ${b.nama_sesi} ${formatJam(b.mulai)}` : ''}`
 })
-const menu = computed(() => menuCepat(sesi.tugas, { shift: sesi.punyaShift, persuratan: sesi.persuratan }))
+const menu = computed(() => menuCepat(sesi.tugas, { shift: sesi.punyaShift, persuratan: sesi.persuratan, gaji: sesi.gaji }))
 </script>
 <template>
   <div class="space-y-5 lg:space-y-6">

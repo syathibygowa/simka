@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.16 | Fase 10 – Tahap 1 Rute Persuratan | 11/10/2026
+// SIMKA PRO | src/router/index.js | v3.17 | Fase 11 – Tahap 1 Rute Gaji (Skema Tunjangan dialihkan) | 11/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -52,7 +52,9 @@ const routes = [
       { path: 'kelompok-santri/impor', component: () => import('@/pages/kelompoksantri/ImporKelompok.vue'), meta: { judul: 'Impor Pembagian Kelompok', kembali: '/kelompok-santri' } },
       { path: 'kelompok-santri/k/:id', component: () => import('@/pages/kelompoksantri/DetailKelompok.vue'), meta: { judul: 'Kelompok Santri', cetak: true, kembali: '/kelompok-santri' } },
       { path: 'kelompok-santri/:tab?', component: () => import('@/pages/kelompoksantri/KelompokSantri.vue'), props: true, meta: { judul: 'Kelompok Santri', kembali: '/tugas' } },
-      { path: 'jabatan-tunjangan/:tab?', component: () => import('@/pages/tunjangan/JabatanTunjangan.vue'), props: true, meta: { judul: 'Skema Tunjangan', peran: ['superadmin'], kembali: '/tugas' } },
+      { path: 'gaji/:tab?', component: () => import('@/pages/gaji/Gaji.vue'), props: true, meta: { judul: 'Gaji', kembali: '/tugas' } },
+      { path: 'jabatan-tunjangan/:tab?', redirect: '/gaji/peta' },
+      { path: 'segera/gaji', redirect: '/gaji' },
       { path: 'presensi', component: () => import('@/pages/presensi/Presensi.vue'), meta: { judul: 'Presensi' } },
       { path: 'atur-presensi/:tab?', component: () => import('@/pages/presensi/AturPresensi.vue'), props: true, meta: { judul: 'Penjadwalan', peran: ADMIN, kembali: '/tugas' } },
       { path: 'verval-presensi/:tab?', component: () => import('@/pages/verval/VervalPresensi.vue'), props: true, meta: { judul: 'Verval Presensi', peran: ADMIN, kembali: '/tugas' } },

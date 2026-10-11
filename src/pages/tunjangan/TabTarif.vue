@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tunjangan/TabTarif.vue | v1.0 | Fase 1 – Jabatan dan tunjangan | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/tunjangan/TabTarif.vue | v1.1 | Fase 11 – Tahap 1 Dipakai menu Gaji: ubah hanya pengelola gaji | 11/10/2026 -->
 <script setup>
 // Tarif komponen gaji. Perubahan tarif dibuat sebagai tarif baru dengan tanggal berlaku,
 // sehingga perhitungan periode lama tetap memakai tarif lama.
@@ -13,6 +13,7 @@ import { PENDIDIKAN, STATUS_PEGAWAI, LEVEL_MUHAFFIZH } from '@/lib/kepegawaian'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 
+defineProps({ bolehUbah: { type: Boolean, default: true } })
 const tunj = useTunjangan(); const org = useOrganisasi(); const ui = useUI()
 const kini = computed(() => petaTarif(tunj.tarif, hariIniISO()))
 const HONORER = { guru_lama: 'Guru lama (per jam)', guru_baru: 'Guru baru (per jam)', muhaffizh_lama: 'Muhaffizh lama (per jam)', muhaffizh_baru: 'Muhaffizh baru (per jam)' }
@@ -64,7 +65,7 @@ async function hapus(r) {
             </p>
           </div>
           <span :class="['font-bold tabular-nums', !kini[kat]?.[kunci] && 'text-teks3']">{{ kini[kat]?.[kunci] ? formatRupiah(kini[kat][kunci].besaran) : '–' }}</span>
-          <button class="tombol-ikon h-10 w-10" @click="ubah(kat, kunci, nama)" :aria-label="`Ubah tarif ${nama}`"><PhPencilSimple :size="18" /></button>
+          <button v-if="bolehUbah" class="tombol-ikon h-10 w-10" @click="ubah(kat, kunci, nama)" :aria-label="`Ubah tarif ${nama}`"><PhPencilSimple :size="18" /></button>
         </li>
       </ul>
     </section>
