@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.17 | Fase 3 – Menu Data Presensi (dipisah dari Verval Presensi) | 12/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.18 | Fase 4 – Menu Wali Kelas dan Guru Mapel | 12/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -6,7 +6,7 @@
 import {
   PhHouse, PhFingerprint, PhUsersThree, PhStudent, PhBookOpenText, PhFileText, PhFirstAidKit,
   PhShieldCheck, PhChartBar, PhEnvelopeSimple, PhWallet, PhMegaphone, PhKey, PhGearSix, PhBell,
-  PhFiles, PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhCashRegister, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut, PhListMagnifyingGlass,
+  PhFiles, PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhCashRegister, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut, PhListMagnifyingGlass, PhChalkboard, PhPresentationChart,
 } from '@phosphor-icons/vue'
 
 const ADMIN = ['admin', 'superadmin']
@@ -41,6 +41,12 @@ export const MENU = [
   { kode: 'tahunajaran', nama: 'Naik Kelas', ikon: PhCalendarPlus, warna: 'agenda', ke: '/tahun-ajaran-baru', grup: 'Santri', peran: ADMIN, izin: 'kelompok_santri' },
   { kode: 'jadwalpelajaran', nama: 'Roster', ikon: PhCalendarDots, warna: 'jadwal', ke: '/jadwal-pelajaran', grup: 'Santri',
     syarat: (c) => c.kelompok || Number(c.fitur?.jadwal_mengajar ?? 0) >= 1 },
+  // Wali Kelas: wali kelas yang ditetapkan pada kelas, pimpinan/pemegang hak Absensi Kelas atau Jadwal mengajar, admin
+  { kode: 'walikelas', nama: 'Wali Kelas', ikon: PhChalkboard, warna: 'walikelas', ke: '/wali-kelas', grup: 'Santri',
+    syarat: (c) => (c.jenisKelompok || []).includes('kelas') || Number(c.fitur?.absensi_kelas ?? 0) >= 1 || !!c.luas?.jadwal_mengajar },
+  // Guru Mapel: guru yang memiliki penugasan mengajar, pimpinan (pantauan), pemegang hak Jadwal mengajar, admin
+  { kode: 'gurumapel', nama: 'Guru Mapel', ikon: PhPresentationChart, warna: 'gurumapel', ke: '/guru-mapel', grup: 'Santri',
+    syarat: (c) => !!c.mengajar || !!c.pimpinan || Number(c.fitur?.jadwal_mengajar ?? 0) >= 3 || !!c.luas?.jadwal_mengajar },
   { kode: 'musyrif', nama: 'Musyrif', ikon: PhBuildings, warna: 'musyrif', ke: '/musyrif', grup: 'Santri',
     syarat: (c) => (c.jenisKelompok || []).includes('kamar') || Number(c.fitur?.absensi_asrama ?? 0) >= 1 },
   { kode: 'ekskul', nama: 'Ekskul', ikon: PhMedal, warna: 'ekskul', ke: '/ekskul', grup: 'Santri',

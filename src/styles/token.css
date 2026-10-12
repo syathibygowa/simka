@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/token.css | v2.5 | Fase 3 – Warna menu Data Presensi | 12/10/2026 */
+/* SIMKA PRO | src/styles/token.css | v2.6 | Fase 4 – Warna menu Wali Kelas dan Guru Mapel | 12/10/2026 */
 /* =====================================================================
    SIMKA PRO · Token warna dan tema
    Semua warna teks sudah diuji kontrasnya (WCAG AA, ≥ 4,5:1) terhadap
@@ -64,6 +64,8 @@
 .w-shift      { --c: #0E6A9E; --c2: #3B4CB0; }
 .w-verval     { --c: #7B2D8E; --c2: #B42A5E; }
 .w-datapresensi { --c: #0E7490; --c2: #1E7D4F; }   /* sian tua — data presensi, 5,4:1 */
+.w-walikelas  { --c: #3F6212; --c2: #0E6A9E; }   /* hijau zaitun — wali kelas, 7,0:1 */
+.w-gurumapel  { --c: #6B3FA0; --c2: #1572B6; }   /* ungu nila — guru mapel, 7,4:1 */
 .w-rekap      { --c: #1D6B5F; --c2: #B5501A; }
 .w-audit      { --c: #4B4F8F; --c2: #46525F; }
 .w-berkas     { --c: #2F5D50; --c2: #0E6A9E; }
@@ -98,6 +100,8 @@
 .dark .w-shift      { --c: #7CC8F2; --c2: #9AA6FF; }
 .dark .w-verval     { --c: #D9A3F0; --c2: #FF8FB8; }
 .dark .w-datapresensi { --c: #67E8F9; --c2: #5BD69A; }
+.dark .w-walikelas  { --c: #BEF264; --c2: #7CC8F2; }
+.dark .w-gurumapel  { --c: #D0B3FF; --c2: #8EC9FF; }
 .dark .w-rekap      { --c: #7FD8C6; --c2: #FFB074; }
 .dark .w-audit      { --c: #B3B8FF; --c2: #B9C6D3; }
 .dark .w-berkas     { --c: #8FD3BF; --c2: #7CC8F2; }

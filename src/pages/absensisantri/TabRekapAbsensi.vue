@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/TabRekapAbsensi.vue | v1.0 | Fase 4 – Tahap 3 Absensi HISBAT | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/TabRekapAbsensi.vue | v1.1 | Fase 4 – Dapat dikunci pada satu kelompok (menu Wali Kelas) | 12/10/2026 -->
 <script setup>
 // Rekap kehadiran santri per kelompok dan periode: kelas, halaqah, asrama, dan gabungan program pokok
 // (Terlambat dan Bolos dihitung hadir). Ekspor Excel, cetak F4 mendatar, WA rekap ke wali, salin rekap umum untuk grup.
@@ -20,7 +20,7 @@ import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
 
-defineProps({ semua: Boolean })
+const props = defineProps({ semua: Boolean, group: { type: String, default: '' } })   // group: kunci pada satu kelompok (menu Wali Kelas)
 const abs = useAbsensiSantri(); const kel = useKelompokSantri(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
 const awalBulan = () => hariIniISO().slice(0, 8) + '01'
 const mulai = ref(awalBulan()); const selesai = ref(hariIniISO()); const groupId = ref(''); const baris = ref([]); const memuat = ref(false)
@@ -30,7 +30,7 @@ const pilihan = computed(() => kel.dariTA.filter((g) => ['kelas', 'halaqah', 'ka
 const g = computed(() => kel.cari(groupId.value))
 onMounted(async () => {
   await Promise.all([kel.daftar.length ? null : kel.muat(), san.muat()])
-  groupId.value = pilihan.value.find((x) => x.asuhan_saya)?.id || pilihan.value[0]?.id || ''
+  groupId.value = props.group || pilihan.value.find((x) => x.asuhan_saya)?.id || pilihan.value[0]?.id || ''
 })
 async function muat() {
   if (!groupId.value || !mulai.value || !selesai.value) return
@@ -84,8 +84,8 @@ const pesanKe = (p) => pesanWA('rekap_santri', { nama_wali: p.k?.nama, nama_sant
 </script>
 <template>
   <div>
-    <div class="kartu mb-4 grid gap-3 p-4 sm:grid-cols-[1fr_auto_auto]">
-      <div><label class="label-isian" for="rk-g">Kelompok</label>
+    <div :class="['kartu mb-4 grid gap-3 p-4', group ? 'sm:grid-cols-[auto_auto_1fr]' : 'sm:grid-cols-[1fr_auto_auto]']">
+      <div v-if="!group"><label class="label-isian" for="rk-g">Kelompok</label>
         <select id="rk-g" v-model="groupId" class="isian">
           <option v-for="x in pilihan" :key="x.id" :value="x.id">{{ x.jenis === 'kelas' ? judulKelompok(x) : `${JENIS_KELOMPOK[x.jenis].n} · ${judulKelompok(x)}` }}{{ x.asuhan_saya ? ' (asuhan saya)' : '' }}</option>
           <option v-if="!pilihan.length" value="">Belum ada kelompok</option>

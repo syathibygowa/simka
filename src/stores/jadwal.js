@@ -1,9 +1,10 @@
-// SIMKA PRO | src/stores/jadwal.js | v1.0 | Fase 4 – Tahap 5 Jadwal pelajaran dan jurnal mengajar | 04/10/2026
+// SIMKA PRO | src/stores/jadwal.js | v1.1 | Fase 4 – Slot mengajar untuk menu Guru Mapel dan Wali Kelas | 12/10/2026
 // Mata pelajaran, jam pelajaran, penugasan mengajar, jadwal pelajaran per kelas/guru, jurnal mengajar, dan rekap.
 // Penulisan lewat fungsi SQL (hak atur_jadwal; guru menulis jurnal dan rencana materinya sendiri).
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { dataJadwalDemo } from '@/lib/demoJadwal'
+import { dataKelompokDemo } from '@/lib/demoKelompok'
 import { pesanGalat } from './lembaga'
 import { useSesi } from './sesi'
 import { useKelompokSantri } from './kelompokSantri'
@@ -120,6 +121,29 @@ export const useJadwal = defineStore('jadwal', {
         })
       }
       return (await rpc('rekap_mengajar', { p_mulai: mulai, p_selesai: selesai, p_emp: emp })) || []
+    },
+    /** Setiap jam pelajaran terjadwal pada rentang beserta status jurnal (terlaksana | tidak_terlaksana | belum) dan lewat. */
+    async slot(mulai, selesai, group = null, emp = null) {
+      if (!MODE_DEMO) return (await rpc('slot_mengajar', { p_mulai: mulai, p_selesai: selesai, p_group: group, p_emp: emp })) || []
+      await this.muat(); const d = dataJadwalDemo(); const kel = useKelompokSantri(); await kel.muat()
+      const kini = new Date(); const hasil = []; const MATERI = ['Pengenalan bab baru', 'Latihan soal', 'Diskusi kelompok', 'Ulangan harian', 'Pembahasan tugas', 'Praktik']
+      for (let t = mulai; t <= selesai; ) {
+        const dt = new Date(`${t}T12:00:00+08:00`); const dow = dt.getUTCDay()
+        if (dow !== 0) {
+          for (const sc of d.jadwal.filter((x) => x.hari === dow && (!group || x.group_id === group) && (!emp || x.employee_id === emp))) {
+            const tg = d.penugasan.find((x) => x.id === sc.assignment_id); const p = d.jam.find((x) => x.id === sc.period_id); const g = dataKelompokDemo([]).kelompok.find((x) => x.id === sc.group_id)
+            const lewat = new Date(`${t}T${p.jam_selesai}:00+08:00`) <= kini
+            const jr = d.jurnal.find((x) => x.assignment_id === tg.id && x.tanggal === t && x.period_id === p.id)
+            const h = [...(t + sc.id)].reduce((n, c) => (n * 31 + c.charCodeAt(0)) % 997, 7)
+            const st = jr ? jr.status : !lewat ? 'belum' : h % 17 === 0 ? 'tidak_terlaksana' : h % 9 === 0 ? 'belum' : 'terlaksana'
+            hasil.push({ tanggal: t, jam_ke: p.nama, urutan: p.urutan, jam_mulai: p.jam_mulai, jam_selesai: p.jam_selesai, group_id: sc.group_id, kelas: g?.nama, jenjang: g?.jenjang,
+              assignment_id: tg.id, period_id: p.id, mapel: d.mapel.find((m) => m.id === tg.subject_id)?.nama, employee_id: tg.employee_id, guru: tg.nama_guru, niy: null, no_hp: '081234500000', wali_kelas: (g?.pengasuh || []).map((x) => x.nama).join(', ') || null,
+              status: st, materi: jr?.materi || (st === 'terlaksana' ? MATERI[h % MATERI.length] : null), keterangan: jr?.keterangan || (st === 'tidak_terlaksana' ? 'Guru dinas luar' : null), pengisi: null, lewat })
+          }
+        }
+        dt.setUTCDate(dt.getUTCDate() + 1); t = dt.toISOString().slice(0, 10)
+      }
+      return hasil.sort((a, b) => a.tanggal.localeCompare(b.tanggal) || a.jam_mulai.localeCompare(b.jam_mulai) || String(a.kelas).localeCompare(String(b.kelas)))
     },
     idSaya,
   },
