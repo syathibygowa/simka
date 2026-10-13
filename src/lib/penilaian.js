@@ -1,4 +1,5 @@
-// SIMKA PRO | src/lib/penilaian.js | v1.0 | Fase 12 – Tahap 1 Pengaturan penilaian | 13/10/2026
+// SIMKA PRO | src/lib/penilaian.js | v1.1 | Fase 12 – Tahap 6 Status efektif periode, permintaan ubah nilai | 13/10/2026
+// v1.1: statusEfektif (Dibuka tetapi batas pengisian lewat = Ditutup), STATUS_UBAH, LABEL_UBAH.
 // Label baku penilaian dan rapor: jenis rapor, cara menentukan nilai rapor, kelompok predikat, sumber nilai mapel rapor,
 // bank kalimat catatan, serta fungsi bantu predikat dan pembulatan.
 
@@ -90,3 +91,18 @@ export function labelSumber(m) {
   return '← ' + (s.length === 1 ? s[0].nama : s.map((x) => `${x.nama} ${Number(x.bobot)}%`).join(' + '))
 }
 export const sumberKurang = (m) => m.sumber === 'mapel' && !(m.sumber_mapel || []).length
+
+/** Status periode yang berlaku: "dibuka" dengan batas pengisian yang sudah lewat dianggap "ditutup". */
+export function statusEfektif(p, hariIni = new Date().toISOString().slice(0, 10)) {
+  if (!p) return 'disiapkan'
+  if (p.status_efektif) return p.status_efektif
+  return p.status === 'dibuka' && p.batas_isi && p.batas_isi < hariIni ? 'ditutup' : p.status || 'disiapkan'
+}
+/** Status permintaan ubah nilai. */
+export const STATUS_UBAH = {
+  menunggu: { n: 'Menunggu', w: 'pengajuan' }, disetujui: { n: 'Disetujui', w: 'presensi' }, ditolak: { n: 'Ditolak', w: 'klinik' }, dibatalkan: { n: 'Dibatalkan', w: 'hakakses' },
+}
+/** Nama bagian nilai pada permintaan ubah nilai. */
+export const LABEL_UBAH = { nilai: 'Nilai rapor', keterampilan: 'Keterampilan', sikap: 'Sikap', deskripsi: 'Deskripsi', tajwid: 'Tajwid', itqan: 'Itqan' }
+/** Ringkasan perubahan, mis. "Nilai rapor 68 → 76; Sikap B → A". */
+export const ringkasUbah = (perubahan) => Object.entries(perubahan || {}).map(([k, v]) => `${LABEL_UBAH[k] || k} ${v?.lama ?? '–'} → ${v?.baru ?? '–'}`).join('; ')

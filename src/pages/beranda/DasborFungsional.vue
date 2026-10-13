@@ -1,9 +1,9 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborFungsional.vue | v1.3 | Fase 11 – Tahap 1 Menu cepat Gaji (Bendahara) | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborFungsional.vue | v1.4 | Fase 12 – Tahap 6 Pengingat penilaian di Untuk Anda | 13/10/2026 -->
 <script setup>
 // Beranda pegawai fungsional (wali kelas, guru mapel, musyrif, muhaffizh, pembina, medis, security, staf, dll.),
 // yaitu semua pegawai di luar pimpinan tinggi, admin, dan superadmin. Tanpa kartu statistik (hasil evaluasi pondok):
 // 1) sapaan + presensi hari ini, 2) menu cepat 4 kolom sesuai tupoksi, 3) "Untuk Anda" (jurnal, pengajuan, agenda,
-// pengumuman, berkas).
+// pengumuman, berkas). v1.4: pengingat penilaian (nilai kosong, catatan wali, UTAS draf, pengembangan diri) di Untuk Anda.
 import { computed, onMounted } from 'vue'
 import { PhFingerprint, PhCaretRight, PhLightning, PhSparkle } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
@@ -13,6 +13,7 @@ import { formatJam } from '@/lib/tanggal'
 import { menuCepat } from '@/lib/menuCepat'
 import Sapaan from './Sapaan.vue'
 import RingkasanPribadi from './RingkasanPribadi.vue'
+import TugasPenilaianBeranda from '@/components/TugasPenilaianBeranda.vue'
 
 const sesi = useSesi(); const br = useBeranda(); const dp = useDataPresensi()
 onMounted(() => dp.muatHarian())
@@ -57,6 +58,7 @@ const menu = computed(() => menuCepat(sesi.tugas, { shift: sesi.punyaShift, pers
     <!-- Untuk Anda -->
     <section class="space-y-3" aria-labelledby="judul-untuk-anda">
       <h2 id="judul-untuk-anda" class="judul-bagian flex items-center gap-2 px-1"><PhSparkle :size="20" weight="duotone" class="text-[rgb(var(--merah))]" /> Untuk Anda</h2>
+      <TugasPenilaianBeranda />
       <RingkasanPribadi v-if="br.data?.pribadi" :d="br.data.pribadi" />
       <div v-else class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-hidden="true">
         <div v-for="i in 4" :key="i" class="kartu h-36 animate-pulse bg-permukaan2" />

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.12 | Fase 10 – Penutup: kelompok statistik Persuratan | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.13 | Fase 12 – Tahap 6 Kelompok statistik Penilaian | 13/10/2026 -->
 <script setup>
 import KartuPersuratanBeranda from '@/components/KartuPersuratanBeranda.vue'
 import { ref, computed, onMounted } from 'vue'
@@ -26,12 +26,13 @@ import AksiCepat from './AksiCepat.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
 import KartuTahfizhBeranda from '@/components/KartuTahfizhBeranda.vue'
+import KartuPenilaianBeranda from '@/components/KartuPenilaianBeranda.vue'
 import KartuLayananBeranda from '@/components/KartuLayananBeranda.vue'
 import KartuSecurityBeranda from '@/components/KartuSecurityBeranda.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
-const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'layanan', 'surat', 'security', 'kendali'])
+const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'penilaian', 'layanan', 'surat', 'security', 'kendali'])
 const stat = useStatistik(); const br = useBeranda(); const peg = usePegawai()
 const d = computed(() => stat.data || {}); const ch = computed(() => stat.berubah)
 const menunggu = computed(() => peg.daftar.filter((p) => p.status_akun === 'menunggu'))
@@ -73,6 +74,7 @@ const AKSI = [
       </template>
       <template #santri><KartuSantriBeranda /></template>
       <template #tahfizh><KartuTahfizhBeranda /></template>
+      <template #penilaian><KartuPenilaianBeranda /></template>
       <template #layanan><KartuLayananBeranda /></template>
       <template #surat><KartuPersuratanBeranda /></template>
       <template #security><KartuSecurityBeranda /></template>

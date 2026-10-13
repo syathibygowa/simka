@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/IsiNilai.vue | v1.0 | Fase 12 – Tahap 2 Isian nilai guru mapel | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/IsiNilai.vue | v1.1 | Fase 12 – Tahap 6 Permintaan ubah nilai saat periode ditutup | 13/10/2026 -->
 <script setup>
 // Lembar nilai satu kelas–mapel × semester (Guru Mapel → Nilai). Bagian:
 //   Isian nilai : isian per komponen (Harian 1, Harian 2, Ulangan, UTS, UAS, …) yang ditambah guru sendiri; tampilan tabel
@@ -8,6 +8,7 @@
 //                 otomatis yang dapat diganti per santri
 //   Sikap       : diisi di akhir semester (A/B/C/K)
 //   TP          : tujuan pembelajaran (rapor SMA: dipakai pada deskripsi capaian)
+// v1.1: periode ditutup/batas pengisian lewat → guru pengampu mengajukan permintaan ubah nilai (AjukanUbahNilai).
 // Perubahan disimpan dengan tombol Simpan; meninggalkan halaman dengan perubahan belum tersimpan meminta konfirmasi.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
@@ -21,6 +22,8 @@ import { hariIniISO, formatPendek } from '@/lib/tanggal'
 import BilahTab from '@/components/BilahTab.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import AjukanUbahNilai from './AjukanUbahNilai.vue'
+import { statusEfektif } from '@/lib/penilaian'
 
 const route = useRoute(); const router = useRouter(); const nl = useNilai(); const ui = useUI()
 const galat = ref(''); const proses = ref('')
@@ -147,7 +150,7 @@ const ringkasSaran = computed(() => { const v = santri.value.map((s) => saran(s.
             <h2 class="text-lg font-bold">{{ L.tugas.mapel }} · Kelas {{ L.tugas.kelas }}</h2>
             <p class="text-sm text-teks2">{{ JENJANG_PENDEK[L.tugas.jenjang] }} · {{ LABEL_SEMESTER[L.semester] }} · {{ L.tugas.guru }}</p>
             <div class="mt-2 flex flex-wrap gap-1.5">
-              <span :class="['lencana', 'w-' + STATUS_PERIODE[L.periode?.status || 'disiapkan'].w]">Periode {{ STATUS_PERIODE[L.periode?.status || 'disiapkan'].n.toLowerCase() }}</span>
+              <span :class="['lencana', 'w-' + STATUS_PERIODE[statusEfektif(L.periode)].w]">Periode {{ STATUS_PERIODE[statusEfektif(L.periode)].n.toLowerCase() }}</span>
               <span class="lencana w-rapor">{{ MODE_NILAI[L.mode].n }}</span>
               <span class="lencana w-pengajuan">{{ ket.label_ambang }} {{ kkm }}</span>
               <span v-for="r in L.mapel_rapor" :key="r.id" class="lencana w-penilaian"><PhLink :size="12" /> rapor: {{ r.nama }}</span>
@@ -160,6 +163,7 @@ const ringkasSaran = computed(() => { const v = santri.value.map((s) => saran(s.
           </div>
         </div>
         <p v-if="!boleh" class="mt-3 flex items-start gap-2 rounded-xl bg-permukaan2 p-3 text-sm text-teks2"><PhLockSimple :size="18" class="mt-0.5 shrink-0" /><span>Baca saja. {{ L.alasan }}</span></p>
+        <AjukanUbahNilai v-if="!boleh && L.tugas?.milik_saya && statusEfektif(L.periode) === 'ditutup'" :key="'un' + semester" :L="L" :semester="semester" />
         <p v-else-if="!L.tugas.milik_saya" class="mt-3 flex items-start gap-2 rounded-xl bg-permukaan2 p-3 text-sm text-teks2"><PhInfo :size="18" class="mt-0.5 shrink-0" /><span>Anda mengisi atas nama guru pengampu sebagai pengelola nilai.</span></p>
       </section>
 

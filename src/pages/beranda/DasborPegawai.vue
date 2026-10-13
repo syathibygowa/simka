@@ -1,8 +1,9 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.16 | Fase 10 – Penutup: kelompok statistik Persuratan | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.17 | Fase 12 – Tahap 6 Kelompok statistik Penilaian | 13/10/2026 -->
 <script setup>
 import KartuPersuratanBeranda from '@/components/KartuPersuratanBeranda.vue'
 import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
 import KartuTahfizhBeranda from '@/components/KartuTahfizhBeranda.vue'
+import KartuPenilaianBeranda from '@/components/KartuPenilaianBeranda.vue'
 import KartuLayananBeranda from '@/components/KartuLayananBeranda.vue'
 import KartuSecurityBeranda from '@/components/KartuSecurityBeranda.vue'
 import { computed, onMounted } from 'vue'
@@ -25,7 +26,7 @@ import IndikatorLangsung from './IndikatorLangsung.vue'
 import { useBeranda } from '@/stores/beranda'
 import ItemNotifikasi from '@/components/ItemNotifikasi.vue'
 
-const PANEL = panelBeranda(['pimpinan', 'santri', 'tahfizh', 'layanan', 'surat', 'security'])
+const PANEL = panelBeranda(['pimpinan', 'santri', 'tahfizh', 'penilaian', 'layanan', 'surat', 'security'])
 const notif = useNotifikasi(); const sesi = useSesi(); const router = useRouter(); const dp = useDataPresensi(); const br = useBeranda()
 onMounted(() => dp.muatHarian())
 // Ringkasan presensi hari ini pada kartu sapaan
@@ -68,6 +69,7 @@ const menu = computed(() => menuUntuk(sesi.peran, sesi.ciriMenu).filter((m) => !
       <!-- Pimpinan pemegang hak data santri: kartu statistik santri langsung -->
       <template #santri><KartuSantriBeranda v-if="sesi.tingkat('data_santri') >= 1" /></template>
       <template #tahfizh><KartuTahfizhBeranda v-if="sesi.kelompokSaya.some((k) => k.jenis === 'halaqah') || sesi.tingkat('tahfizh') >= 1 || sesi.tingkat('data_santri') >= 1" /></template>
+      <template #penilaian><KartuPenilaianBeranda /></template>
       <template #layanan><KartuLayananBeranda /></template>
       <template #surat><KartuPersuratanBeranda /></template>
       <template #security><KartuSecurityBeranda /></template>

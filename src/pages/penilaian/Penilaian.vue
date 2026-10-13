@@ -1,6 +1,8 @@
-<!-- SIMKA PRO | src/pages/penilaian/Penilaian.vue | v1.0 | Fase 12 – Tahap 1 Pengaturan penilaian | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/Penilaian.vue | v1.1 | Fase 12 – Tahap 6 Rekap dan permintaan ubah nilai | 13/10/2026 -->
 <script setup>
-// Menu Penilaian (kelompok menu Penilaian). Tahap 1: pengaturan per tahun ajaran.
+// Menu Penilaian (kelompok menu Penilaian). v1.1: Rekap (kemajuan pengisian untuk pimpinan) dan Permintaan ubah nilai.
+//   Rekap          : kemajuan pengisian rapor per kelas, guru, UTAS, ekskul (semester berjalan)
+//   Permintaan     : permintaan ubah nilai setelah periode ditutup; disetujui/ditolak pengelola nilai (riwayat)
 //   Periode        : periode penilaian per jenis rapor × semester (disiapkan/dibuka/ditutup), tanggal rapor, hari efektif, tema kokurikuler
 //   Mapel rapor    : susunan mapel di rapor per jenis × tingkat (urutan, kelompok, KKM/KKTP, SUMBER NILAI dari mapel ajar)
 //   Komponen nilai : kategori isian guru (Harian, Ulangan, UTS, UAS, …) beserta bobot, cara menentukan nilai rapor
@@ -10,7 +12,7 @@
 // Pengisian nilai tetap di menu kerja masing-masing (Guru Mapel, Tahfizh, Ekskul, Wali Kelas) mulai tahap berikutnya.
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhCalendarCheck, PhListNumbers, PhScales, PhMedal, PhChatText, PhGearSix, PhLockSimple, PhExam } from '@phosphor-icons/vue'
+import { PhCalendarCheck, PhListNumbers, PhScales, PhMedal, PhChatText, PhGearSix, PhLockSimple, PhExam, PhChartBar, PhPencilLine } from '@phosphor-icons/vue'
 import { usePenilaian } from '@/stores/penilaian'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import { useUI } from '@/stores/ui'
@@ -21,17 +23,22 @@ import TabKomponenNilai from './TabKomponenNilai.vue'
 import TabPredikatNilai from './TabPredikatNilai.vue'
 import TabKalimatRapor from './TabKalimatRapor.vue'
 import TabKetentuanNilai from './TabKetentuanNilai.vue'
+import TabRekapNilai from './TabRekapNilai.vue'
+import TabPermintaanNilai from './TabPermintaanNilai.vue'
+import { useUbahNilai } from '@/stores/ubahNilai'
 
 const props = defineProps({ tab: { type: String, default: '' } })
 const router = useRouter(); const pn = usePenilaian(); const kel = useKelompokSantri(); const ui = useUI()
-const ta = ref(''); const galat = ref('')
+const un = useUbahNilai(); const ta = ref(''); const galat = ref('')
 async function muat() { galat.value = ''; try { await pn.muat(ta.value) } catch (e) { galat.value = e.message } }
-onMounted(async () => { try { await kel.muat() } catch { /* daftar tahun ajaran tidak tersedia */ } ta.value = kel.taAktif?.id || kel.tahunAjaran[0]?.id || ''; await muat() })
+onMounted(async () => { un.muat('menunggu').catch(() => {}); try { await kel.muat() } catch { /* daftar tahun ajaran tidak tersedia */ } ta.value = kel.taAktif?.id || kel.tahunAjaran[0]?.id || ''; await muat() })
 async function gantiTA() { await muat(); if (galat.value) ui.toast(galat.value, 'galat') }
 
 const kurangSumber = computed(() => pn.mapel.filter((m) => m.aktif && m.sumber === 'mapel' && !(m.sumber_mapel || []).length).length)
 const dibuka = computed(() => pn.periode.filter((p) => p.status === 'dibuka').length)
 const TAB = computed(() => [
+  { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'laporan' },
+  { k: 'permintaan', n: 'Permintaan ubah nilai', ikon: PhPencilLine, w: 'pengajuan', lencana: un.menunggu || null },
   { k: 'periode', n: 'Periode', ikon: PhCalendarCheck, w: 'agenda', jumlah: dibuka.value ? `${dibuka.value} dibuka` : null },
   { k: 'mapel', n: 'Mapel rapor', ikon: PhListNumbers, w: 'rapor', lencana: kurangSumber.value || null },
   { k: 'komponen', n: 'Komponen nilai', ikon: PhScales, w: 'gurumapel' },
@@ -39,7 +46,7 @@ const TAB = computed(() => [
   { k: 'catatan', n: 'Catatan otomatis', ikon: PhChatText, w: 'walikelas' },
   { k: 'ketentuan', n: 'Ketentuan rapor', ikon: PhGearSix, w: 'pengaturan' },
 ])
-const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : 'periode'))
+const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : 'rekap'))
 const pindah = (x) => router.replace(`/penilaian/${x}`)
 const bisaUbah = computed(() => pn.bolehAtur() && !pn.terkunci)
 </script>
@@ -48,7 +55,7 @@ const bisaUbah = computed(() => pn.bolehAtur() && !pn.terkunci)
     <section class="kartu kepala mb-4 flex flex-wrap items-center gap-3 p-4 sm:p-5">
       <span class="chip-ikon h-12 w-12"><PhExam :size="26" weight="duotone" /></span>
       <div class="min-w-0 flex-1 basis-[55%]">
-        <h2 class="text-lg font-bold">Pengaturan penilaian dan rapor</h2>
+        <h2 class="text-lg font-bold">Penilaian dan rapor</h2>
         <p class="text-sm text-teks2">Rapor SMA (Kurikulum Merdeka), Rapor Wustha (K13 disesuaikan), dan Rapor Tahfizh. Pengaturan berlaku per tahun ajaran dan disalin otomatis ke tahun ajaran berikutnya.</p>
       </div>
       <div class="w-full sm:w-56"><label class="label-isian" for="pn-ta">Tahun ajaran</label>
@@ -64,7 +71,9 @@ const bisaUbah = computed(() => pn.bolehAtur() && !pn.terkunci)
     </div>
     <template v-else-if="pn.dimuat && pn.ta">
       <BilahTab class="mb-4" :tab="TAB" :model-value="aktif" label="Bagian pengaturan penilaian" @update:model-value="pindah" />
-      <TabPeriodeNilai v-if="aktif === 'periode'" />
+      <TabRekapNilai v-if="aktif === 'rekap'" @permintaan="pindah('permintaan')" />
+      <TabPermintaanNilai v-else-if="aktif === 'permintaan'" />
+      <TabPeriodeNilai v-else-if="aktif === 'periode'" />
       <TabMapelRapor v-else-if="aktif === 'mapel'" />
       <TabKomponenNilai v-else-if="aktif === 'komponen'" />
       <TabPredikatNilai v-else-if="aktif === 'predikat'" />

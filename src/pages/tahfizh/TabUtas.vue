@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabUtas.vue | v1.1 | Fase 12 – Tahap 4 UTAS per kelas atau per halaqah | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabUtas.vue | v1.2 | Fase 12 – Tahap 6 Permintaan ubah nilai UTAS | 13/10/2026 -->
 <script setup>
 // Ujian Tahfizh Akhir Semester (UTAS), di Tahfizh → Ujian → UTAS (SOP UTAS pondok).
 //   Panitia (admin/superadmin/pengatur rapor tahfizh): menetapkan penguji per kelas, membagi peserta otomatis (bergilir,
@@ -6,18 +6,20 @@
 //   Penguji: mengisi juz diujikan (terisi otomatis: N juz resmi terakhir; SMA 5, Wustha 3), Tajwid dan Itqan → nilai akhir,
 //   predikat (sebutan Arab/Indonesia sesuai Ketentuan), Tuntas bila ≥ KKM; lalu Kirim (final).
 //   Cetak: pembagian penguji dan peserta, daftar hasil UTAS per kelas/halaqah (F4).
+// v1.2: nilai final/periode ditutup → penguji mengajukan permintaan ubah nilai (Tajwid/Itqan) kepada panitia; kunci batas pengisian.
 // v1.1: pembagian per KELAS atau per HALAQAH (dipilih panitia per semester). Per halaqah: muhaffizh menguji halaqah lain;
 //       muhaffizh tidak dapat ditetapkan sebagai penguji halaqahnya sendiri.
 import { ref, computed, onMounted, watch } from 'vue'
 import {
   PhUsersThree, PhShuffle, PhUserSwitch, PhPaperPlaneTilt, PhFloppyDisk, PhLockSimpleOpen, PhPrinter, PhMagnifyingGlass, PhPlus, PhX, PhCheckCircle,
-  PhListChecks, PhHourglass, PhSealCheck, PhInfo, PhPencilSimple, PhTrash,
+  PhListChecks, PhHourglass, PhSealCheck, PhInfo, PhPencilSimple, PhTrash, PhPencilLine,
 } from '@phosphor-icons/vue'
 import { useUtas } from '@/stores/utas'
 import { usePegawai } from '@/stores/pegawai'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
-import { predikatDari, sebutanPredikat, JENIS_RAPOR } from '@/lib/penilaian'
+import { predikatDari, sebutanPredikat, JENIS_RAPOR, statusEfektif } from '@/lib/penilaian'
+import { useUbahNilai } from '@/stores/ubahNilai'
 import { LABEL_SEMESTER } from '@/lib/nilai'
 import { ringkasJuz, penandaTahfizh } from '@/lib/tahfizh'
 import { JENJANG_PENDEK } from '@/lib/santri'
@@ -37,7 +39,7 @@ const panitia = computed(() => !!D.value?.hak?.panitia)
 const ket = computed(() => D.value?.ketentuan || {})
 const predikat = computed(() => D.value?.predikat || [])
 const sebut = (n) => sebutanPredikat(predikatDari(n, predikat.value), ket.value.bahasa)
-const tutup = computed(() => D.value?.periode?.status === 'ditutup')
+const tutup = computed(() => statusEfektif(D.value?.periode) === 'ditutup')
 const mode = computed(() => D.value?.mode || 'kelas')
 const LBL = computed(() => (mode.value === 'halaqah' ? 'Halaqah' : 'Kelas'))
 const namaK = (k) => (mode.value === 'halaqah' ? k.nama : `Kelas ${k.nama}`)
@@ -59,10 +61,10 @@ const peserta = computed(() => { const q = cari.value.toLowerCase().trim()
 const perKelas = computed(() => { const g = []; for (const p of peserta.value) { let x = g.find((y) => y.id === p.group_id); if (!x) { x = { id: p.group_id, nama: p.jenis_kelompok === 'halaqah' ? p.kelompok : `Kelas ${p.kelompok || p.kelas || '–'}`, item: [] }; g.push(x) } x.item.push(p) } return g })
 const statistik = computed(() => { const d = D.value?.peserta || []; const mine = lihat.value === 'saya' ? d.filter((p) => p.saya) : d
   return [
-    { judul: 'Peserta', nilai: mine.length, ikon: PhUsersThree, warna: 'santri', ket: lihat.value === 'saya' ? 'Yang Anda uji' : `Semua ${LBL.value.toLowerCase()}` },
-    { judul: 'Sudah dinilai', nilai: mine.filter((p) => p.nilai_akhir != null).length, ikon: PhListChecks, warna: 'agenda', ket: 'Tajwid dan Itqan terisi' },
-    { judul: 'Final', nilai: mine.filter((p) => p.status === 'final').length, ikon: PhSealCheck, warna: 'presensi', ket: 'Sudah dikirim penguji' },
-    { judul: `Di bawah KKM ${Number(ket.value.kkm || 0)}`, nilai: mine.filter((p) => p.nilai_akhir != null && !p.tuntas).length, ikon: PhHourglass, warna: 'klinik', ket: 'Remedial' },
+    { judul: 'Peserta', nilai: mine.length, ikon: PhUsersThree, warna: 'santri', keterangan: lihat.value === 'saya' ? 'Yang Anda uji' : `Semua ${LBL.value.toLowerCase()}` },
+    { judul: 'Sudah dinilai', nilai: mine.filter((p) => p.nilai_akhir != null).length, ikon: PhListChecks, warna: 'agenda', keterangan: 'Tajwid dan Itqan terisi' },
+    { judul: 'Final', nilai: mine.filter((p) => p.status === 'final').length, ikon: PhSealCheck, warna: 'presensi', keterangan: 'Sudah dikirim penguji' },
+    { judul: `Di bawah KKM ${Number(ket.value.kkm || 0)}`, nilai: mine.filter((p) => p.nilai_akhir != null && !p.tuntas).length, ikon: PhHourglass, warna: 'klinik', keterangan: 'Remedial' },
   ] })
 
 // ---------- Isian nilai (salinan lokal) ----------
@@ -98,6 +100,21 @@ function pakaiUsul() { juzPilih.value = [...(pjuz.value.juz_usul || [])] }
 const lembarCat = ref(false); const pcat = ref(null); const catTeks = ref('')
 function bukaCat(p) { pcat.value = p; catTeks.value = isi.value[p.id].catatan; lembarCat.value = true }
 function terapCat() { set(pcat.value, 'catatan', catTeks.value.trim()); lembarCat.value = false }
+
+// ---------- Permintaan ubah nilai (penguji, nilai final atau periode ditutup) ----------
+const un = useUbahNilai(); const lembarUbah = ref(false); const pUbah = ref(null); const fUbah = ref({ tajwid: '', itqan: '', alasan: '' })
+const bolehAjukan = (p) => p.saya && !panitia.value && (p.status === 'final' || tutup.value) && p.nilai_akhir != null
+function bukaUbah(p) { pUbah.value = p; fUbah.value = { tajwid: p.tajwid ?? '', itqan: p.itqan ?? '', alasan: '' }; lembarUbah.value = true }
+async function kirimUbah() {
+  const p = pUbah.value; const f = fUbah.value
+  if (f.alasan.trim().length < 5) return ui.toast('Alasan perubahan wajib diisi (minimal 5 huruf).', 'galat')
+  const isi = { jenis: 'utas', utas_result_id: p.id, alasan: f.alasan.trim() }
+  for (const k of ['tajwid', 'itqan']) { if (!(Number(f[k]) >= 0 && Number(f[k]) <= 100) || f[k] === '') return ui.toast('Nilai harus 0–100.', 'galat'); if (Number(f[k]) !== Number(p[k])) isi[k] = Number(f[k]) }
+  if (!('tajwid' in isi) && !('itqan' in isi)) return ui.toast('Tidak ada nilai yang berubah.', 'galat')
+  proses.value = 'ubah'
+  try { await un.ajukan(isi, { lama: { tajwid: p.tajwid, itqan: p.itqan }, nis: p.nis, nama: p.nama, jenis_kelamin: p.jenis_kelamin, kelas: p.kelas }); lembarUbah.value = false; ui.toast('Permintaan ubah nilai dikirim ke panitia UTAS.') }
+  catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = '' }
+}
 
 // ---------- Panitia ----------
 const lembarPenguji = ref(false); const kelasAtur = ref(null); const pengujiPilih = ref([]); const cariPeg = ref('')
@@ -229,6 +246,7 @@ const namaCetak = (k) => (k.jenis === 'halaqah' ? k.nama : `Kelas ${k.nama}`)
                 :class="['mt-0.5 block h-10 w-16 rounded-lg border bg-permukaan text-center text-sm tabular-nums text-teks', ubah.has(p.id) ? 'border-[color:var(--c)]' : 'border-garis']" @change="set(p, 'itqan', $event.target.value)" /></label>
               <div class="w-24 text-center"><p class="text-lg font-extrabold tabular-nums" style="color: var(--c)">{{ akhir(p) ?? '–' }}</p>
                 <p v-if="akhir(p) != null" :class="['text-[11px] font-semibold', akhir(p) >= Number(ket.kkm) ? 'text-teks2' : 'text-merah']"><i v-if="ket.bahasa === 'arab'">{{ sebut(akhir(p)) }}</i><template v-else>{{ sebut(akhir(p)) }}</template>{{ akhir(p) >= Number(ket.kkm) ? '' : ' · remedial' }}</p></div>
+              <button v-if="bolehAjukan(p)" class="tombol-ikon h-10 w-10" :aria-label="`Ajukan perubahan nilai ${p.nama}`" title="Ajukan perubahan nilai" @click="bukaUbah(p)"><PhPencilLine :size="16" /></button>
               <button v-if="bolehIsi(p)" class="tombol-ikon h-10 w-10" :aria-label="`Catatan ${p.nama}`" :title="isi[p.id].catatan || 'Catatan penguji'" @click="bukaCat(p)"><PhPencilSimple :size="16" :weight="isi[p.id].catatan ? 'fill' : 'regular'" /></button>
             </div>
           </li>
@@ -253,6 +271,19 @@ const namaCetak = (k) => (k.jenis === 'halaqah' ? k.nama : `Kelas ${k.nama}`)
         <p class="text-sm text-teks2">Usulan otomatis: <b>{{ pjuz.juz_usul?.length ? ringkasJuz(pjuz.juz_usul) : 'belum ada hafalan resmi' }}</b> ({{ pjuz.jenjang === 'sma' ? ket.juz_sma : ket.juz_wustha }} juz terakhir untuk {{ JENIS_RAPOR[pjuz.jenjang]?.pendek }}).</p>
         <GridJuz v-model="juzPilih" label="Juz diujikan" label-pilih="Diujikan" />
         <div class="flex gap-2"><button class="tombol-garis" type="button" @click="pakaiUsul">Pakai usulan</button><button class="tombol-utama flex-1" type="button" @click="terapJuz">Terapkan ({{ juzPilih.length }} juz)</button></div>
+      </div>
+    </LembarBawah>
+
+    <!-- Permintaan ubah nilai -->
+    <LembarBawah v-model="lembarUbah" :judul="pUbah ? `Ajukan perubahan nilai · ${pUbah.nama}` : ''">
+      <div class="space-y-3 pb-2">
+        <p class="text-xs text-teks3">Nilai sudah final{{ tutup ? ' / periode ditutup' : '' }}. Perubahan diajukan kepada panitia UTAS dan berlaku setelah disetujui.</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="label-isian" for="uu-t">Tajwid (kini {{ pUbah?.tajwid ?? '–' }})</label><input id="uu-t" v-model="fUbah.tajwid" type="number" min="0" max="100" class="isian tabular-nums" /></div>
+          <div><label class="label-isian" for="uu-i">Itqan (kini {{ pUbah?.itqan ?? '–' }})</label><input id="uu-i" v-model="fUbah.itqan" type="number" min="0" max="100" class="isian tabular-nums" /></div>
+        </div>
+        <div><label class="label-isian" for="uu-a">Alasan perubahan</label><textarea id="uu-a" v-model="fUbah.alasan" rows="2" class="isian" placeholder="Contoh: salah input nilai tajwid" /></div>
+        <button class="tombol-utama w-full" :disabled="!!proses" @click="kirimUbah"><PhPaperPlaneTilt :size="20" weight="duotone" /> {{ proses === 'ubah' ? 'Mengirim…' : 'Kirim permintaan' }}</button>
       </div>
     </LembarBawah>
 

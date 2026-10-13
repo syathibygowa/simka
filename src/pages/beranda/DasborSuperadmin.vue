@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.11 | Fase 10 – Penutup: kelompok statistik Persuratan | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.12 | Fase 12 – Tahap 6 Kelompok statistik Penilaian | 13/10/2026 -->
 <script setup>
 import KartuPersuratanBeranda from '@/components/KartuPersuratanBeranda.vue'
 import { ref, computed } from 'vue'
@@ -25,12 +25,13 @@ import AksiCepat from './AksiCepat.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
 import KartuTahfizhBeranda from '@/components/KartuTahfizhBeranda.vue'
+import KartuPenilaianBeranda from '@/components/KartuPenilaianBeranda.vue'
 import KartuLayananBeranda from '@/components/KartuLayananBeranda.vue'
 import KartuSecurityBeranda from '@/components/KartuSecurityBeranda.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
-const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'layanan', 'surat', 'security', 'pondok'])
+const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'penilaian', 'layanan', 'surat', 'security', 'pondok'])
 const stat = useStatistik(); const br = useBeranda()
 const d = computed(() => stat.data || {})
 const ch = computed(() => stat.berubah)
@@ -81,6 +82,7 @@ const AKSI = [
       </template>
       <template #santri><KartuSantriBeranda /></template>
       <template #tahfizh><KartuTahfizhBeranda /></template>
+      <template #penilaian><KartuPenilaianBeranda /></template>
       <template #layanan><KartuLayananBeranda /></template>
       <template #surat><KartuPersuratanBeranda /></template>
       <template #security><KartuSecurityBeranda /></template>

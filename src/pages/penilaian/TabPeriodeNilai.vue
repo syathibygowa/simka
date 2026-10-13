@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabPeriodeNilai.vue | v1.0 | Fase 12 – Tahap 1 Pengaturan penilaian | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabPeriodeNilai.vue | v1.1 | Fase 12 – Tahap 6 Penanda kunci otomatis batas pengisian | 13/10/2026 -->
 <script setup>
 // Periode penilaian per jenis rapor × semester: status (Disiapkan → Dibuka → Ditutup), batas pengisian, tanggal rapor
 // (dicetak di atas tanda tangan), hari efektif (otomatis dari kalender, dapat diubah), dan tema kokurikuler (SMA).
@@ -6,7 +6,7 @@ import { ref, computed, watch } from 'vue'
 import { PhFloppyDisk, PhLockSimple, PhLockSimpleOpen, PhHourglassMedium, PhInfo } from '@phosphor-icons/vue'
 import { usePenilaian } from '@/stores/penilaian'
 import { useUI } from '@/stores/ui'
-import { JENIS_RAPOR, STATUS_PERIODE } from '@/lib/penilaian'
+import { JENIS_RAPOR, STATUS_PERIODE, statusEfektif } from '@/lib/penilaian'
 import { formatPanjang } from '@/lib/tanggal'
 import InputTanggal from '@/components/InputTanggal.vue'
 
@@ -55,7 +55,8 @@ async function simpan(p) {
             <button v-for="(st, kunci) in STATUS_PERIODE" :key="kunci" type="button" role="radio" :aria-checked="p.status === kunci" :disabled="!boleh(k.j) || proses === p.id"
               :class="['min-h-[40px] rounded-xl text-sm font-semibold disabled:cursor-not-allowed', p.status === kunci ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']" @click="ubahStatus(p, kunci)">{{ st.n }}</button>
           </div>
-          <p class="mb-3 text-xs text-teks3">{{ STATUS_PERIODE[p.status].ket }}<template v-if="p.pengubah"> Terakhir diubah oleh {{ p.pengubah }}.</template></p>
+          <p class="mb-3 text-xs text-teks3">{{ STATUS_PERIODE[p.status].ket }}<template v-if="p.pengubah"> Terakhir diubah oleh {{ p.pengubah }}.</template>
+            <b v-if="statusEfektif(p) !== p.status" class="block text-merah">Batas pengisian sudah lewat: guru dan pengasuh tidak dapat mengisi lagi (terkunci otomatis); perubahan melalui permintaan ubah nilai.</b></p>
           <div class="grid gap-3 sm:grid-cols-2">
             <InputTanggal v-model="form[p.id].batas_isi" label="Batas pengisian nilai" bawaan-kosong />
             <InputTanggal v-model="form[p.id].tanggal_rapor" label="Tanggal rapor" bawaan-kosong />
