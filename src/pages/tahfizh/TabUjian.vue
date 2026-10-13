@@ -1,6 +1,6 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.1 | Fase 5 – Tahap 6 Penutup fase tahfizh | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.2 | Fase 12 – Tahap 3 Jenis ujian UTAS | 13/10/2026 -->
 <script setup>
-// Ujian tahfizh: kenaikan juz dan sertifikasi berjenjang (5, 10, 15 … juz).
+// Ujian tahfizh: kenaikan juz, sertifikasi berjenjang (5, 10, 15 … juz), dan UTAS (Fase 12, TabUtas.vue).
 // Muhaffizh merekomendasikan → penguji aktif menerima notifikasi (dan dapat dikabari WA) → penguji mengambil/menjadwalkan
 // atau admin menetapkan penguji → penguji menilai Tajwid & Itqan → Tuntas/Remidi. Kenaikan juz Tuntas otomatis menjadi
 // usulan capaian juz di tab Capaian. Muhaffizh tidak menguji santri halaqahnya sendiri. Daftar diperbarui langsung.
@@ -21,16 +21,19 @@ import LembarBawah from '@/components/LembarBawah.vue'
 import GridJuz from '@/components/GridJuz.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import InputJam from '@/components/InputJam.vue'
+import TabUtas from './TabUtas.vue'
 
+const props = defineProps({ hanyaUtas: Boolean })
 const tz = useTahfizh(); const sesi = useSesi(); const ui = useUI()
-const jenis = ref('kenaikan'); const status = ref('aktif'); const daftar = ref([]); const memuat = ref(false); const proses = ref(false); const cari = ref('')
+const jenis = ref(props.hanyaUtas ? 'utas' : 'kenaikan'); const status = ref('aktif'); const daftar = ref([]); const memuat = ref(false); const proses = ref(false); const cari = ref('')
 const pengelola = computed(() => tz.hak.atur || tz.hak.validasi)
 async function muat() {
   memuat.value = true
   try { daftar.value = await tz.daftarUjian(jenis.value, status.value || null) } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false }
 }
-watch([jenis, status], muat)
+watch([jenis, status], () => { if (jenis.value !== 'utas') muat() })
 onMounted(async () => {
+  if (props.hanyaUtas) return
   if (!tz.hakDimuat) await tz.muatHak()
   if (!tz.pengaturan) await tz.muatPengaturan()
   if (!tz.santri.length) await tz.muatSantri()
@@ -124,8 +127,10 @@ const bolehBatal = (u) => ['menunggu', 'dijadwalkan'].includes(u.status) && (u.m
 </script>
 <template>
   <div>
-    <BilahTab v-model="jenis" class="mb-3" label="Jenis ujian"
-      :tab="[{ k: 'kenaikan', n: 'Kenaikan juz', ikon: PhExam, w: 'tahfizh' }, { k: 'sertifikasi', n: 'Sertifikasi', ikon: PhCertificate, w: 'pengajuan' }]" />
+    <BilahTab v-if="!hanyaUtas" v-model="jenis" class="mb-3" label="Jenis ujian"
+      :tab="[{ k: 'kenaikan', n: 'Kenaikan juz', ikon: PhExam, w: 'tahfizh' }, { k: 'sertifikasi', n: 'Sertifikasi', ikon: PhCertificate, w: 'pengajuan' }, { k: 'utas', n: 'UTAS', ikon: PhUsersThree, w: 'penilaian' }]" />
+    <TabUtas v-if="jenis === 'utas'" />
+    <template v-else>
 
     <div class="flex flex-wrap items-center gap-2">
       <select v-model="status" class="isian w-auto" aria-label="Saring status"><option value="aktif">Daftar tunggu dan terjadwal</option><option value="selesai">Selesai (1 tahun)</option><option value="dibatalkan">Dibatalkan</option><option value="">Semua</option></select>
@@ -250,5 +255,6 @@ const bolehBatal = (u) => ['menunggu', 'dijadwalkan'].includes(u.status) && (u.m
         </ul>
       </div>
     </LembarBawah>
+  </template>
   </div>
 </template>

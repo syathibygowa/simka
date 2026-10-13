@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.19 | Fase 12 – Tahap 1 Kelompok menu Penilaian | 13/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.20 | Fase 12 – Tahap 3 Menu Tahfizh untuk penguji UTAS | 13/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Penilaian, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -52,7 +52,7 @@ export const MENU = [
   { kode: 'ekskul', nama: 'Ekskul', ikon: PhMedal, warna: 'ekskul', ke: '/ekskul', grup: 'Santri',
     syarat: (c) => (c.jenisKelompok || []).includes('ekskul') || Number(c.fitur?.absensi_ekskul ?? 0) >= 1 },
   { kode: 'tahfizh',    nama: 'Tahfizh',         ikon: PhBookOpenText,   warna: 'tahfizh',    ke: '/tahfizh',           grup: 'Santri',
-    syarat: (c) => (c.jenisKelompok || []).includes('halaqah') || Number(c.fitur?.tahfizh ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 },
+    syarat: (c) => (c.jenisKelompok || []).includes('halaqah') || Number(c.fitur?.tahfizh ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 || !!c.pengujiUtas },
   // Penilaian (Fase 12): pengaturan, rekap, dan permintaan ubah nilai. Pengisian nilai tetap di menu kerja penilai
   // (Guru Mapel, Tahfizh, Ekskul, Wali Kelas). Tampil bagi pengatur penilaian (admin ber-izin atur_penilaian/kelola_nilai,
   // hak fitur Nilai tingkat 3) dan pimpinan bidang SMA/Wustha/Tahfizh.

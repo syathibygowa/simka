@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/sesi.js | v1.28 | Fase 12 – Tahap 1 Ciri menu Penilaian | 13/10/2026
+// SIMKA PRO | src/stores/sesi.js | v1.29 | Fase 12 – Tahap 3 Ciri menu Penilaian dan penguji UTAS | 13/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
 import { muatTemplatWA } from '@/lib/wa'
 import { defineStore } from 'pinia'
@@ -13,14 +13,14 @@ const simpan = (k, v) => { try { v == null ? localStorage.removeItem(k) : localS
 const baca = (k) => { try { return localStorage.getItem(k) } catch { return null } }
 
 export const useSesi = defineStore('sesi', {
-  state: () => ({ pengguna: null, fitur: {}, izinAdmin: [], siap: false, wajibGantiSandi: false, punyaShift: false, fotoUrl: '', kelompokSaya: [], tugas: {}, persuratan: false, gaji: false, gajiLihat: false, keuangan: false, penilaian: false }),
+  state: () => ({ pengguna: null, fitur: {}, izinAdmin: [], siap: false, wajibGantiSandi: false, punyaShift: false, fotoUrl: '', kelompokSaya: [], tugas: {}, persuratan: false, gaji: false, gajiLihat: false, keuangan: false, penilaian: false, pengujiUtas: false }),
   getters: {
     masuk: (s) => !!s.pengguna,
     peran: (s) => s.pengguna?.peran ?? 'pegawai',
     isSuperadmin: (s) => s.pengguna?.peran === 'superadmin',
     isAdmin: (s) => ['admin', 'superadmin'].includes(s.pengguna?.peran),
     /** Ciri pengguna untuk menyaring menu (lib/menu.js). */
-    ciriMenu: (s) => ({ penilaian: s.penilaian, gaji: s.gaji, gajiLihat: s.gajiLihat, keuangan: s.keuangan, persuratan: s.persuratan, struktural: !!s.pengguna?.jabatan_struktural, shift: s.punyaShift, izin: s.izinAdmin, fitur: s.fitur, kelompok: s.kelompokSaya.length > 0, jenisKelompok: [...new Set(s.kelompokSaya.map((k) => k.jenis))], mengajar: !!s.tugas?.mengajar, pimpinan: !!s.tugas?.pimpinan, luas: s.tugas?.luas || {} }),
+    ciriMenu: (s) => ({ penilaian: s.penilaian, pengujiUtas: s.pengujiUtas, gaji: s.gaji, gajiLihat: s.gajiLihat, keuangan: s.keuangan, persuratan: s.persuratan, struktural: !!s.pengguna?.jabatan_struktural, shift: s.punyaShift, izin: s.izinAdmin, fitur: s.fitur, kelompok: s.kelompokSaya.length > 0, jenisKelompok: [...new Set(s.kelompokSaya.map((k) => k.jenis))], mengajar: !!s.tugas?.mengajar, pimpinan: !!s.tugas?.pimpinan, luas: s.tugas?.luas || {} }),
     /** Pimpinan (Kepala Bidang, Direktur, Wadir, Yayasan, termasuk Plt): beranda berstatistik dan fungsi kontrol. */
     pimpinanTinggi: (s) => !!s.tugas?.pimpinan,
     namaPendek: (s) => (s.pengguna?.nama_lengkap ?? '').replace(/^(Ust\.|Ustzh\.)\s*/, '').split(',')[0],
@@ -79,6 +79,8 @@ export const useSesi = defineStore('sesi', {
       try { const { data: hk } = await supabase.rpc('hak_keuangan'); this.keuangan = !!hk?.lihat } catch { this.keuangan = false }
       // Penilaian: pengatur penilaian (per jenis rapor), pengelola nilai, dan pimpinan bidang SMA/Wustha/Tahfizh
       try { const { data: hn } = await supabase.rpc('hak_penilaian'); this.penilaian = !!hn?.menu } catch { this.penilaian = false }
+      // Penguji UTAS (bukan muhaffizh pun) melihat menu Tahfizh → Ujian → UTAS
+      try { const { data: hu } = await supabase.rpc('hak_utas'); this.pengujiUtas = !!hu?.penguji } catch { this.pengujiUtas = false }
       // Kelompok santri yang sedang diasuh (wali kelas, musyrif, muhaffizh, pembina)
       try {
         const { data: kel } = await supabase.from('v_kelompok').select('id, jenis, nama').eq('asuhan_saya', true)
