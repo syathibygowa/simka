@@ -1,11 +1,14 @@
-// SIMKA PRO | src/lib/slidePantauan.js | v1.1 | Fase 8 – Urutan kolom NIS > Nama | 10/10/2026
+// SIMKA PRO | src/lib/slidePantauan.js | v1.2 | Perbaikan: nama slide ringkas, hadir halaqah, pegawai bertugas/pulang, slide tambahan | 13/10/2026
 // Penyusun slide Layar Pantauan dari muatan pantauan_langsung(): setiap slide berisi kartu statistik (dengan daftar
 // nama untuk detail admin/superadmin) dan grafik (batang/lingkaran). Saringan: jenis kelamin, jenjang, bidang.
-// Urutan: Santri, Pegawai, Sekolah SMP, Sekolah SMA, Tahfizh, Hafalan, Musyrif, Kegiatan, Klinik, Security, Ekskul.
+// Urutan: Santri, Pegawai, SMP, SMA, Tahfizh, Hafalan, Asrama, Kegiatan Santri, Medis, Security, Ekskul, Perizinan, Laporan dan Agenda.
+// v1.2: Santri + hadir di halaqah; Pegawai + sementara bertugas, cepat pulang, sudah pulang (menggantikan tidak terjadwal);
+//       SMP/SMA + jam pelajaran terlaksana; Tahfizh + ujian hari itu; slide Perizinan dan Laporan dan Agenda; hari lalu → teks "hari itu".
 import {
   PhStudent, PhChalkboardTeacher, PhBookOpenText, PhBed, PhFirstAidKit, PhSignOut, PhSiren, PhUserCheck, PhClock, PhAirplaneTilt, PhUserMinus,
   PhHourglass, PhMoon, PhCalendarCheck, PhSignIn, PhProhibit, PhPackage, PhHandArrowDown, PhIdentificationBadge, PhUsersThree, PhGraduationCap,
   PhBooks, PhMedal, PhTrophy, PhTrendUp, PhWarningCircle, PhStethoscope, PhAmbulance, PhHeartbeat, PhShieldCheck, PhPersonSimpleRun, PhUsers, PhHouseLine,
+  PhBriefcase, PhHouse, PhTimer, PhEnvelopeSimpleOpen, PhCalendarStar, PhMegaphone, PhExam, PhNotebook,
 } from '@phosphor-icons/vue'
 import { formatJam, formatWaktu } from './tanggal'
 import { JENIS_TITIPAN, PENGAMBIL } from './security'
@@ -20,6 +23,9 @@ const rapiS = (s, tambah = {}) => ({ ...s, kelas: s.kelas || '–', kamar: s.kam
 const rapiP = (p, tambah = {}) => ({ ...p, jabatan: p.jabatan || '–', bidang: p.bidang || '–', ket: p.ket || STATUS_PEG[p.status] || '–', ...tambah })
 const STATUS_PEG = { hadir: 'Hadir', terlambat: 'Terlambat', dinas_luar: 'Dinas luar', izin: 'Izin', sakit: 'Sakit', cuti: 'Cuti', belum: 'Belum presensi',
   menunggu_verval: 'Menunggu verval', tanpa_keterangan: 'Tanpa keterangan', akan_datang: 'Sesi belum dibuka', libur: 'Tidak terjadwal' }
+const STATUS_JP = { terlaksana: 'Terlaksana', tidak_terlaksana: 'Tidak terlaksana', belum_diisi: 'Lewat, jurnal belum diisi', berlangsung: 'Berlangsung', akan_datang: 'Belum dimulai' }
+const daftarJp = (judul, x) => ({ judul, kolom: [['jam', 'Jam', 8], ['kelas', 'Kelas', 8], ['jp', 'Jam ke', 10], ['mapel', 'Mapel', 20], ['guru', 'Guru', 24], ['status', 'Status', 18]],
+  baris: [...x].sort((a, b) => (a.jam_mulai || '').localeCompare(b.jam_mulai || '') || (a.kelas || '').localeCompare(b.kelas || '', 'id', { numeric: true })).map((p) => ({ ...p, jam: (p.jam_mulai || '').slice(0, 5), status: STATUS_JP[p.status] || p.status })) })
 const STATUS_SESI = { terisi: 'Terlaksana', terbuka: 'Berlangsung', belum_buka: 'Belum dimulai', tidak_terisi: 'Lewat, belum diisi', lewat: 'Lewat batas' }
 const kartu = (j, v, i, w, ket, daftar) => ({ j, v, i, w, ket, daftar })
 const daftarS = (judul, baris, kolomTambah = []) => ({ judul, kolom: [...K_SANTRI, ...kolomTambah], baris })
@@ -46,19 +52,31 @@ const grafikStatusSesi = (judul, s) => ({ tipe: 'lingkaran', judul, satuan: 'ses
 const grafikPerKelompok = (judul, baris, sumbuY = 'Jumlah santri') => ({ tipe: 'batang', judul, sumbuY, label: baris.map((b) => b.n),
   seri: [{ n: 'Hadir', warna: W.hijau, nilai: baris.map((b) => b.h) }, { n: 'Tidak hadir', warna: W.merah, nilai: baris.map((b) => b.t) }] })
 
+/** Santri dengan sesi halaqah hari ini: hadir = hadir minimal satu sesi; tidak = tidak hadir minimal satu sesi. */
+function halaqahSantri(santri) {
+  const ada = santri.filter((s) => Object.keys(s.sesi || {}).some((k) => k.startsWith('halaqah:')))
+  const kode = (s) => Object.entries(s.sesi).filter(([k]) => k.startsWith('halaqah:')).map(([, v]) => v)
+  return { ada, hadir: ada.filter((s) => kode(s).some((v) => hadirKode(v.k))), tidak: ada.filter((s) => kode(s).some((v) => !hadirKode(v.k))) }
+}
+const ketHalaqah = (x) => Object.entries(x.sesi || {}).filter(([k, v]) => k.startsWith('halaqah:') && !hadirKode(v.k)).map(([, v]) => `${v.n}: ${KODE[v.k]}`).join('; ')
+const sudahPulang = (p) => p.status === 'libur' || (p.sudah_pulang && !p.bertugas && !['izin', 'sakit', 'cuti', 'dinas_luar'].includes(p.status))
+const ringkasSesi = (x) => { const h = {}; x.forEach((p) => { h[p.sesi_kini] = (h[p.sesi_kini] || 0) + 1 }); return Object.entries(h).map(([k, v]) => `${k} ${v}`).join(' · ') }
+
 // ---------- Slide sekolah (SMP/SMA) ----------
-function slideSekolah(k, judul, jenjang, bidangKode, santriAll, pegawaiAll, sesiAll) {
+function slideSekolah(k, judul, jenjang, bidangKode, santriAll, pegawaiAll, sesiAll, pelajaranAll = []) {
+  const jp = pelajaranAll.filter((x) => x.jenjang === jenjang); const jpOk = jp.filter((x) => x.status === 'terlaksana'); const jpLewat = jp.filter((x) => ['belum_diisi', 'tidak_terlaksana'].includes(x.status))
   const s = santriAll.filter((x) => x.jenjang === jenjang); const ks = kelasSantri(s)
   const sesi = sesiAll.filter((x) => x.jenis === 'kelas' && (!x.jenjang || x.jenjang === jenjang)); const ok = sesi.filter((x) => x.status === 'terisi')
   const guru = pegawaiAll.filter((p) => p.bidang_kode === bidangKode && p.status !== 'libur'); const guruHadir = guru.filter((p) => ['hadir', 'terlambat'].includes(p.status))
   const perKelas = {}; for (const x of ks.kelas) { const n = x.kelas || '–'; perKelas[n] = perKelas[n] || { n, h: 0, t: 0 }; x.kelas_tidak >= x.kelas_sesi ? perKelas[n].t++ : perKelas[n].h++ }
-  return { k, judul, ikon: PhGraduationCap, w: jenjang === 'sma' ? 'jadwal' : 'santri', sub: `Kelas ${jenjang === 'sma' ? '10–12' : '7–9'} · kehadiran kelas dan guru hari ini`,
+  return { k, judul, ikon: PhGraduationCap, w: jenjang === 'sma' ? 'jadwal' : 'santri', sub: `Kelas ${jenjang === 'sma' ? '10–12' : '7–9'} · kehadiran kelas, pelajaran, dan guru hari ini`,
     kartu: [
       kartu('Santri aktif', s.length, PhStudent, 'santri', `${s.filter((x) => x.jk === 'L').length} putra · ${s.filter((x) => x.jk === 'P').length} putri`, daftarS(`Santri ${judul}`, s.map((x) => rapiS(x)))),
       kartu('Hadir di kelas', `${ks.hadir}/${ks.kelas.length}`, PhChalkboardTeacher, 'presensi', `${persen(ks.hadir, ks.kelas.length)}% kehadiran`, daftarS('Santri hadir di kelas', ks.kelas.filter((x) => x.kelas_tidak < x.kelas_sesi).map((x) => rapiS(x)))),
       kartu('Tidak hadir (sebagian/seluruh)', ks.tidak.length, PhUserMinus, 'klinik', 'Izin, sakit, absen, atau bolos', daftarS('Santri tidak hadir di kelas', ks.tidak.map((x) => rapiS(x, { ket: `Tidak hadir ${x.kelas_tidak} dari ${x.kelas_sesi} sesi` })), [['ket', 'Keterangan', 20]])),
-      kartu('Sesi kelas terlaksana', `${ok.length}/${sesi.length}`, PhCalendarCheck, 'jadwal', `${sesi.filter((x) => x.status === 'tidak_terisi').length} lewat, belum diisi`, daftarSesi(`Sesi kelas ${judul} hari ini`, sesi)),
-      kartu('Guru hadir', `${guruHadir.length}/${guru.length}`, PhUserCheck, 'pegawai', `Pegawai bidang ${judul.replace('Sekolah ', '')} terjadwal`, daftarP(`Guru/pegawai ${judul}`, guru.map((p) => rapiP(p)))),
+      kartu('Absensi kelas terisi', `${ok.length}/${sesi.length}`, PhCalendarCheck, 'jadwal', `${sesi.filter((x) => x.status === 'tidak_terisi').length} lewat, belum diisi`, daftarSesi(`Absensi kelas ${judul} hari ini`, sesi)),
+      kartu('Jam pelajaran terlaksana', `${jpOk.length}/${jp.length}`, PhNotebook, 'gurumapel', `${jpLewat.length} tidak terlaksana/jurnal belum diisi`, daftarJp(`Jam pelajaran ${judul} hari ini`, jp)),
+      kartu('Guru hadir', `${guruHadir.length}/${guru.length}`, PhUserCheck, 'pegawai', `Pegawai bidang ${judul} terjadwal`, daftarP(`Guru/pegawai ${judul}`, guru.map((p) => rapiP(p)))),
       kartu('Sakit atau di luar', s.filter((x) => x.sakit || x.luar).length, PhFirstAidKit, 'klinik', `${s.filter((x) => x.sakit).length} sakit · ${s.filter((x) => x.luar).length} di luar`,
         daftarS('Santri sakit atau di luar pondok', s.filter((x) => x.sakit || x.luar).map((x) => rapiS(x, { ket: x.sakit || 'Di luar: ' + x.luar.alasan })), [['ket', 'Keterangan', 22]])),
     ],
@@ -79,10 +97,12 @@ export function susunSlide(d, f) {
   {
     const ks = kelasSantri(santri); const sakit = santri.filter((x) => x.sakit); const luar = santri.filter((x) => x.luar); const telat = luar.filter((x) => x.luar.terlambat)
     const asrama = sesiSantri(santri, 'asrama:'); const hq = sesiSantri(santri, 'halaqah:'); const akhirAsrama = asrama[asrama.length - 1]
+    const hs = halaqahSantri(santri)
     slide.push({ k: 'santri', judul: 'Santri', ikon: PhStudent, w: 'santri', sub: 'Kondisi seluruh santri hari ini',
       kartu: [
         kartu('Santri aktif', santri.length, PhStudent, 'santri', `${santri.filter((x) => x.jk === 'L').length} putra · ${santri.filter((x) => x.jk === 'P').length} putri`, daftarS('Santri aktif', santri.map((x) => rapiS(x)), [['halaqah', 'Halaqah', 18]])),
         kartu('Hadir di kelas', `${ks.hadir}/${ks.kelas.length}`, PhChalkboardTeacher, 'jadwal', `${ks.tidak.length} tidak hadir sebagian/seluruh`, daftarS('Santri tidak hadir di kelas', ks.tidak.map((x) => rapiS(x, { ket: `Tidak hadir ${x.kelas_tidak} dari ${x.kelas_sesi} sesi` })), [['ket', 'Keterangan', 20]])),
+        kartu('Hadir di halaqah', `${hs.hadir.length}/${hs.ada.length}`, PhBookOpenText, 'tahfizh', `${hs.tidak.length} tidak hadir sebagian/seluruh`, daftarS('Santri tidak hadir di halaqah', hs.tidak.map((x) => rapiS(x, { ket: ketHalaqah(x) })), [['halaqah', 'Halaqah', 16], ['ket', 'Keterangan', 22]])),
         akhirAsrama ? kartuSesiSantri(akhirAsrama, PhMoon, 'musyrif', 'tidak di asrama') : kartu('Di asrama', '–', PhMoon, 'musyrif', 'Sesi asrama belum diisi', daftarS('Asrama', [])),
         kartu('Sakit', sakit.length, PhFirstAidKit, 'klinik', `${sakit.filter((x) => /Dirawat/.test(x.sakit)).length} dirawat di klinik`, daftarS('Santri sakit', sakit.map((x) => rapiS(x, { ket: x.sakit })), [['ket', 'Keterangan', 20]])),
         kartu('Di luar pondok', luar.length, PhSignOut, 'security', 'Izin atau libur, belum kembali', daftarS('Santri di luar pondok', luar.map((x) => rapiS(x, { ket: x.luar.alasan, batas: formatWaktu(x.luar.batas) })), [['ket', 'Izin', 20], ['batas', 'Batas kembali', 14]])),
@@ -103,11 +123,15 @@ export function susunSlide(d, f) {
     slide.push({ k: 'pegawai', judul: 'Pegawai', ikon: PhUserCheck, w: 'pegawai', sub: 'Presensi seluruh pegawai hari ini',
       kartu: [
         kartu('Hadir', `${n(hadirPeg).length}/${terjadwal.length}`, PhUserCheck, 'presensi', `${persen(n(hadirPeg).length, terjadwal.length)}% dari pegawai terjadwal`, daftarP('Pegawai hadir', n(hadirPeg).map((p) => rapiP(p)))),
+        kartu('Sementara bertugas', n((p) => p.bertugas).length, PhBriefcase, 'walikelas', d.lalu ? 'Hanya untuk hari ini' : ringkasSesi(n((p) => p.bertugas)) || 'Tidak ada sesi berjalan saat ini',
+          daftarP('Pegawai sementara bertugas di pondok', n((p) => p.bertugas).map((p) => rapiP(p, { ket: `Sesi ${p.sesi_kini}` })))),
         kartu('Terlambat', n((p) => p.status === 'terlambat').length, PhClock, 'pengajuan', 'Datang lewat batas tepat waktu', daftarP('Pegawai terlambat', n((p) => p.status === 'terlambat').map((p) => rapiP(p)))),
+        kartu('Cepat pulang', n((p) => p.cepat_menit > 0).length, PhTimer, 'klinik', 'Absen pulang sebelum waktunya', daftarP('Pegawai cepat pulang', n((p) => p.cepat_menit > 0).map((p) => rapiP(p, { ket: `Cepat ${p.cepat_menit} menit, pulang ${formatJam(p.pulang_pada)}` })))),
         kartu('Dinas luar', n((p) => p.status === 'dinas_luar').length, PhAirplaneTilt, 'jadwal', 'Bertugas di luar pondok', daftarP('Pegawai dinas luar', n((p) => p.status === 'dinas_luar').map((p) => rapiP(p)))),
         kartu('Izin, sakit, cuti', n(isc).length, PhUserMinus, 'klinik', `${n((p) => p.status === 'izin').length} izin · ${n((p) => p.status === 'sakit').length} sakit · ${n((p) => p.status === 'cuti').length} cuti`, daftarP('Pegawai izin, sakit, cuti', n(isc).map((p) => rapiP(p)))),
         kartu('Belum presensi', n(belum).length, PhHourglass, 'agenda', `${n((p) => p.status === 'akan_datang').length} sesinya belum dibuka`, daftarP('Pegawai belum presensi', n(belum).map((p) => rapiP(p, { ket: STATUS_PEG[p.status] })))),
-        kartu('Tidak terjadwal', n((p) => p.status === 'libur').length, PhCalendarCheck, 'hakakses', 'Libur/tidak ada sesi hari ini', daftarP('Pegawai tidak terjadwal', n((p) => p.status === 'libur').map((p) => rapiP(p)))),
+        kartu('Sudah pulang', n(sudahPulang).length, PhHouse, 'hakakses', `${n((p) => p.status !== 'libur' && sudahPulang(p)).length} absen pulang · ${n((p) => p.status === 'libur').length} tidak terjadwal`,
+          daftarP('Pegawai sudah pulang atau tidak terjadwal', n(sudahPulang).map((p) => rapiP(p, { ket: p.status === 'libur' ? 'Tidak terjadwal' : `Sudah pulang${p.pulang_pada ? ' ' + formatJam(p.pulang_pada) : ''}` })))),
       ],
       grafik: [
         { tipe: 'lingkaran', judul: 'Status presensi pegawai', satuan: 'pegawai', data: [
@@ -119,12 +143,14 @@ export function susunSlide(d, f) {
   }
 
   // 3–4. Sekolah SMP dan SMA (jenjang tetap, saringan jenis kelamin berlaku)
-  slide.push(slideSekolah('smp', 'Sekolah SMP', 'wustha', 'WUSTHA', santriJk, pegawaiJk, sesiAll))
-  slide.push(slideSekolah('sma', 'Sekolah SMA', 'sma', 'SMA', santriJk, pegawaiJk, sesiAll))
+  const pelajaranJk = (d.pelajaran || []).filter((x) => !f.jk || !x.jk || x.jk === f.jk)
+  slide.push(slideSekolah('smp', 'SMP', 'wustha', 'WUSTHA', santriJk, pegawaiJk, sesiAll, pelajaranJk))
+  slide.push(slideSekolah('sma', 'SMA', 'sma', 'SMA', santriJk, pegawaiJk, sesiAll, pelajaranJk))
 
   // 5. Tahfizh (kehadiran halaqah)
   {
     const hq = sesiSantri(santri, 'halaqah:'); const sk = sesiKegiatan(sesi, 'halaqah')
+    const uj = (d.ujian || []).filter((x) => (!f.jk || x.jk === f.jk) && (!f.jenjang || x.jenjang === f.jenjang))
     const muh = pegawaiJk.filter((p) => (p.muhaffizh || p.bidang_kode === 'TAHFIZH') && p.status !== 'libur')
     const tidak = santri.filter((s) => Object.entries(s.sesi || {}).some(([k, v]) => k.startsWith('halaqah:') && !hadirKode(v.k)))
     slide.push({ k: 'tahfizh', judul: 'Tahfizh', ikon: PhBookOpenText, w: 'tahfizh', sub: 'Halaqah hari ini: kehadiran santri, sesi, dan muhaffizh',
@@ -132,6 +158,8 @@ export function susunSlide(d, f) {
         ...hq.map((h) => kartuSesiSantri(h, PhBookOpenText, 'tahfizh', 'tidak hadir')),
         kartu('Sesi halaqah terlaksana', `${sk.ok.length}/${sk.s.length}`, PhCalendarCheck, 'jadwal', `${sk.telat.length} lewat, belum diisi`, daftarSesi('Sesi halaqah hari ini', sk.s)),
         kartu('Muhaffizh hadir', `${muh.filter(hadirPeg).length}/${muh.length}`, PhUserCheck, 'pegawai', 'Muhaffizh terjadwal hari ini', daftarP('Muhaffizh hari ini', muh.map((p) => rapiP(p)))),
+        kartu('Ujian tahfizh hari ini', uj.length, PhExam, 'agenda', `${uj.filter((x) => x.hasil === 'tuntas').length} tuntas · ${uj.filter((x) => x.status === 'dijadwalkan').length} terjadwal`,
+          daftarS('Ujian tahfizh hari ini', uj.map((x) => rapiS(x, { ket: `${x.jenis === 'kenaikan' ? 'Kenaikan juz ' + (x.juz ?? '') : 'Sertifikasi ' + (x.jenjang_sertifikasi ?? '') + ' juz'}`, hasil: x.hasil === 'tuntas' ? `Tuntas (${x.nilai ?? '–'})` : x.hasil === 'remidi' ? `Remidi (${x.nilai ?? '–'})` : 'Terjadwal ' + formatJam(x.jadwal), penguji: x.penguji || '–' })), [['ket', 'Ujian', 18], ['hasil', 'Hasil', 14], ['penguji', 'Penguji', 18]])),
         kartu('Santri tidak hadir halaqah', tidak.length, PhUserMinus, 'klinik', 'Minimal satu sesi hari ini', daftarS('Santri tidak hadir halaqah', tidak.map((x) => rapiS(x, { ket: Object.entries(x.sesi).filter(([k, v]) => k.startsWith('halaqah:') && !hadirKode(v.k)).map(([, v]) => `${v.n}: ${KODE[v.k]}`).join('; ') })), [['halaqah', 'Halaqah', 16], ['ket', 'Keterangan', 22]])),
       ],
       grafik: [grafikPerKelompok('Kehadiran per sesi halaqah', hq.map((h) => ({ n: h.n, h: h.hadir.length, t: h.ada.length - h.hadir.length }))), grafikStatusSesi('Status sesi halaqah', sk.s)] })
@@ -147,7 +175,7 @@ export function susunSlide(d, f) {
     const ember = [['0', 0, 0], ['1–5', 1, 5], ['6–10', 6, 10], ['11–15', 11, 15], ['16–20', 16, 20], ['21–29', 21, 29], ['30', 30, 30]]
     const K_H = [['halaqah', 'Halaqah', 16], ['resmi', 'Juz resmi', 8], ['tambah', 'Tambah bulan ini (hal)', 10], ['target', 'Target (hal)', 8]]
     const bH = (x) => rapiS(x, { resmi: x.resmi ?? 0, tambah: x.tambah ?? 0, target: x.target ?? 0, hari_ini: x.hari_ini ?? 0 })
-    slide.push({ k: 'hafalan', judul: 'Hafalan Santri', ikon: PhBooks, w: 'tahfizh', sub: 'Capaian hafalan bulan berjalan dan setoran hari ini',
+    slide.push({ k: 'hafalan', judul: 'Hafalan', ikon: PhBooks, w: 'tahfizh', sub: 'Capaian hafalan bulan berjalan dan setoran hari ini',
       kartu: [
         kartu('Rata-rata hafalan resmi', `${rata} juz`, PhBooks, 'tahfizh', `${hf.length} santri terdata`, daftarS('Hafalan resmi santri', [...hf].sort((a, b) => (b.resmi || 0) - (a.resmi || 0)).map(bH), K_H)),
         kartu('Khatam 30 juz', khatam.length, PhTrophy, 'gaji', 'Juz resmi tervalidasi', daftarS('Santri khatam 30 juz', khatam.map(bH), K_H)),
@@ -169,7 +197,7 @@ export function susunSlide(d, f) {
     const asrama = sesiSantri(santri, 'asrama:'); const sk = sesiKegiatan(sesi, 'asrama'); const akhir = asrama[asrama.length - 1]
     const mus = pegawaiJk.filter((p) => p.musyrif && p.status !== 'libur'); const sakit = santri.filter((x) => x.sakit && !/Dirujuk/.test(x.sakit))
     const perKamar = {}; if (akhir) for (const x of akhir.ada) { const n = x.kamar || '–'; perKamar[n] = perKamar[n] || { n, h: 0, t: 0 }; hadirKode(x.sesi[akhir.k].k) ? perKamar[n].h++ : perKamar[n].t++ }
-    slide.push({ k: 'musyrif', judul: 'Asrama dan Musyrif', ikon: PhBed, w: 'musyrif', sub: 'Kehadiran asrama, sesi, dan musyrif hari ini',
+    slide.push({ k: 'musyrif', judul: 'Asrama', ikon: PhBed, w: 'musyrif', sub: 'Kehadiran asrama, sesi, dan musyrif hari ini',
       kartu: [
         kartu('Kamar aktif', d.kelompok?.kamar ?? 0, PhHouseLine, 'musyrif', `${santri.filter((x) => x.kamar).length} santri berkamar`, daftarS('Santri per kamar', [...santri].sort((a, b) => (a.kamar || '').localeCompare(b.kamar || '')).map((x) => rapiS(x)))),
         ...asrama.map((h) => kartuSesiSantri(h, PhMoon, 'musyrif', 'tidak di asrama')),
@@ -184,9 +212,11 @@ export function susunSlide(d, f) {
   {
     const J = [['kelas', 'Sesi kelas', PhChalkboardTeacher, 'jadwal'], ['halaqah', 'Sesi halaqah', PhBookOpenText, 'tahfizh'], ['asrama', 'Sesi asrama', PhBed, 'musyrif'], ['ekskul', 'Sesi ekskul', PhUsersThree, 'ekskul']]
     const telat = sesi.filter((x) => x.status === 'tidak_terisi')
-    slide.push({ k: 'kegiatan', judul: 'Kegiatan Santri dan Pengampu', ikon: PhCalendarCheck, w: 'jadwal', sub: 'Sesi yang sudah dan belum terlaksana beserta pengampunya',
+    const pel = pelajaranJk.filter((x) => !f.jenjang || x.jenjang === f.jenjang)
+    slide.push({ k: 'kegiatan', judul: 'Kegiatan Santri', ikon: PhCalendarCheck, w: 'jadwal', sub: 'Sesi yang sudah dan belum terlaksana beserta pengampunya',
       kartu: [
         ...J.map(([k, j, i, w]) => { const s = sesiKegiatan(sesi, k); return kartu(j, `${s.ok.length}/${s.s.length}`, i, w, s.telat.length ? `${s.telat.length} lewat, belum diisi` : `${s.s.length - s.ok.length} belum terlaksana`, daftarSesi(`${j} hari ini`, s.s)) }),
+        kartu('Jam pelajaran', `${pel.filter((x) => x.status === 'terlaksana').length}/${pel.length}`, PhNotebook, 'gurumapel', `${pel.filter((x) => x.status === 'belum_diisi').length} jurnal belum diisi`, daftarJp('Jam pelajaran hari ini', pel)),
         kartu('Lewat waktu, belum diisi', telat.length, PhWarningCircle, 'klinik', 'Perlu diingatkan ke pengampu', daftarSesi('Sesi lewat waktu, belum diisi', telat)),
         kartu('Sedang berlangsung', sesi.filter((x) => x.status === 'terbuka').length, PhHourglass, 'agenda', 'Sesi terbuka saat ini', daftarSesi('Sesi sedang berlangsung', sesi.filter((x) => x.status === 'terbuka'))),
       ],
@@ -206,7 +236,7 @@ export function susunSlide(d, f) {
     const TL = { kembali: 'Kembali beraktivitas', istirahat: 'Istirahat di kamar', rawat: 'Dirawat di klinik', rujuk: 'Dirujuk', pulang: 'Dipulangkan' }
     const bK = (c) => ({ ...c, kelas: c.kelas || '–', kamar: c.kamar || '–', ket: c.status === 'menunggu' ? 'Menunggu pemeriksaan' : c.status === 'selesai' ? 'Sembuh/selesai' : TL[c.tindak_lanjut] || 'Ditangani' })
     const dK = (judul, x) => ({ judul, kolom: K_K, baris: x.map(bK) })
-    slide.push({ k: 'klinik', judul: 'Medis dan Klinik', ikon: PhStethoscope, w: 'klinik', sub: 'Klinik putra dan putri hari ini (tanpa diagnosis)',
+    slide.push({ k: 'klinik', judul: 'Medis', ikon: PhStethoscope, w: 'klinik', sub: 'Klinik putra dan putri hari ini (tanpa diagnosis)',
       kartu: [
         kartu('Menunggu pemeriksaan', buka.filter((c) => c.status === 'menunggu').length, PhHourglass, 'pengajuan', 'Rujukan belum diperiksa', dK('Menunggu pemeriksaan', buka.filter((c) => c.status === 'menunggu'))),
         kartu('Dirawat di klinik', tl('rawat').length, PhHeartbeat, 'klinik', 'Rawat inap klinik', dK('Dirawat di klinik', tl('rawat'))),
@@ -273,6 +303,58 @@ export function susunSlide(d, f) {
         kartu('Belum terlaksana', sk.s.length - sk.ok.length, PhHourglass, 'agenda', 'Belum dimulai atau belum diisi', daftarSesi('Sesi ekskul belum terlaksana', sk.s.filter((x) => x.status !== 'terisi'))),
       ],
       grafik: [grafikPerKelompok('Kehadiran per ekskul (sesi terlaksana)', sk.ok.map((x) => ({ n: x.kelompok, h: x.hadir || 0, t: Math.max(0, (x.anggota || 0) - (x.hadir || 0)) }))), grafikStatusSesi('Status sesi ekskul', sk.s)] })
+  }
+  // 12. Perizinan santri dan pegawai
+  {
+    const iz = d.izin || { santri: [], pegawai: [] }; const sz = iz.santri.filter((x) => (!f.jk || x.jk === f.jk) && (!f.jenjang || x.jenjang === f.jenjang))
+    const pz = iz.pegawai.filter((x) => !f.jk || x.jk === f.jk)
+    const K_I = [['jenis', 'Jenis', 10], ['ket', 'Alasan', 22], ['waktu', 'Waktu', 16]]
+    const bI = (x, waktu) => rapiS(x, { jenis: x.jenis === 'pulang' ? 'Pulang' : x.jenis === 'keluar' ? 'Keluar' : x.jenis, ket: x.alasan, waktu })
+    const K_P = [['nama', 'Nama pegawai', 26], ['jenis', 'Jenis', 16], ['tgl', 'Tanggal', 22], ['ket', 'Alasan', 26]]
+    const bP = (x) => ({ ...x, tgl: x.mulai === x.selesai ? x.mulai : `${x.mulai} s.d. ${x.selesai}`, ket: x.alasan || '–' })
+    const menunggu = sz.filter((x) => x.menunggu); const keluar = sz.filter((x) => x.keluar_hari_ini); const kembali = sz.filter((x) => x.kembali_hari_ini); const telat = sz.filter((x) => x.terlambat)
+    const berlaku = pz.filter((x) => x.berlaku); const tunggu = pz.filter((x) => x.status === 'menunggu')
+    slide.push({ k: 'perizinan', judul: 'Perizinan', ikon: PhEnvelopeSimpleOpen, w: 'pengajuan', sub: 'Izin santri dan izin/cuti pegawai hari ini',
+      kartu: [
+        kartu('Izin santri menunggu', menunggu.length, PhHourglass, 'pengajuan', 'Belum diputuskan', daftarS('Izin santri menunggu keputusan', menunggu.map((x) => bI(x, formatWaktu(x.diajukan))), K_I)),
+        kartu('Santri keluar hari ini', keluar.length, PhSignOut, 'shift', 'Tercatat keluar', daftarS('Santri keluar hari ini', keluar.map((x) => bI(x, formatJam(x.keluar))), K_I)),
+        kartu('Santri kembali hari ini', kembali.length, PhSignIn, 'presensi', 'Tercatat kembali', daftarS('Santri kembali hari ini', kembali.map((x) => bI(x, formatJam(x.kembali))), K_I)),
+        kartu('Terlambat kembali', telat.length, PhSiren, 'klinik', 'Lewat batas kembali', daftarS('Santri terlambat kembali', telat.map((x) => bI(x, 'Batas ' + formatWaktu(x.batas))), K_I)),
+        kartu('Pegawai izin/cuti', berlaku.length, PhUserMinus, 'ekskul', 'Berlaku hari ini', { judul: 'Pegawai izin/cuti hari ini', kolom: K_P, baris: berlaku.map(bP) }),
+        kartu('Pengajuan pegawai menunggu', tunggu.length, PhHourglass, 'agenda', 'Izin/cuti belum diputuskan', { judul: 'Pengajuan izin/cuti pegawai menunggu', kolom: K_P, baris: tunggu.map(bP) }),
+      ],
+      grafik: [{ tipe: 'batang', judul: 'Perizinan santri hari ini', sumbuY: 'Jumlah santri', label: ['Menunggu', 'Keluar', 'Kembali', 'Terlambat'],
+        seri: [{ n: 'Santri', warna: W.jingga, nilai: [menunggu.length, keluar.length, kembali.length, telat.length] }] }] })
+  }
+
+  // 13. Laporan kejadian dan agenda
+  {
+    const lp = d.lapor || []; const hariIni = lp.filter((x) => x.hari_ini); const buka = lp.filter((x) => x.status !== 'selesai'); const desak = buka.filter((x) => x.mendesak)
+    const ag = d.agenda || []; const ST_L = { terkirim: 'Terkirim', diterima: 'Diterima', ditindaklanjuti: 'Ditindaklanjuti', selesai: 'Selesai' }
+    const K_L = [['jam', 'Waktu', 14], ['kategori', 'Kategori', 12], ['lokasi', 'Lokasi', 20], ['uraian', 'Uraian', 34], ['status', 'Status', 14]]
+    const bL = (x) => ({ ...x, jam: formatWaktu(x.waktu), lokasi: x.lokasi || '–', status: (ST_L[x.status] || x.status) + (x.mendesak ? ' · mendesak' : '') })
+    slide.push({ k: 'lapor', judul: 'Laporan dan Agenda', ikon: PhMegaphone, w: 'laporan', sub: 'Laporan kejadian (menu Lapor) dan agenda pondok hari ini',
+      kartu: [
+        kartu('Laporan masuk hari ini', hariIni.length, PhMegaphone, 'laporan', 'Dari menu Lapor', { judul: 'Laporan masuk hari ini', kolom: K_L, baris: hariIni.map(bL) }),
+        kartu('Laporan belum selesai', buka.length, PhHourglass, 'pengajuan', 'Terkirim, diterima, atau ditindaklanjuti', { judul: 'Laporan belum selesai', kolom: K_L, baris: buka.map(bL) }),
+        kartu('Laporan mendesak', desak.length, PhSiren, 'klinik', 'Belum selesai', { judul: 'Laporan mendesak belum selesai', kolom: K_L, baris: desak.map(bL) }),
+        kartu('Agenda hari ini', ag.length, PhCalendarStar, 'agenda', ag.slice(0, 2).map((x) => x.judul).join(' · ') || 'Tidak ada agenda',
+          { judul: 'Agenda hari ini', kolom: [['jam', 'Jam', 12], ['judul', 'Agenda', 36], ['lokasi', 'Tempat', 20], ['sasaran', 'Peserta', 22]],
+            baris: ag.map((x) => ({ ...x, jam: x.jam_mulai ? `${String(x.jam_mulai).slice(0, 5)}${x.jam_selesai ? '–' + String(x.jam_selesai).slice(0, 5) : ''}` : 'Sehari', lokasi: x.lokasi || '–', sasaran: x.sasaran || 'Semua' })) }),
+      ],
+      grafik: [{ tipe: 'lingkaran', judul: 'Status laporan', satuan: 'laporan', data: [{ n: 'Terkirim', nilai: lp.filter((x) => x.status === 'terkirim').length, warna: W.jingga },
+        { n: 'Diterima', nilai: lp.filter((x) => x.status === 'diterima').length, warna: W.biru }, { n: 'Ditindaklanjuti', nilai: lp.filter((x) => x.status === 'ditindaklanjuti').length, warna: W.ungu },
+        { n: 'Selesai', nilai: lp.filter((x) => x.status === 'selesai').length, warna: W.hijau }] }] })
+  }
+
+  // Hari sebelumnya: ungkapan "hari ini" menjadi "hari itu"
+  if (d.lalu) {
+    const ganti = (t) => (typeof t === 'string' ? t.replace(/hari ini/g, 'hari itu').replace(/Hari ini/g, 'Hari itu').replace(/saat ini/g, 'saat itu') : t)
+    for (const x of slide) {
+      x.sub = ganti(x.sub)
+      for (const k of x.kartu) { k.j = ganti(k.j); k.ket = ganti(k.ket); if (k.daftar) k.daftar.judul = ganti(k.daftar.judul) }
+      for (const g of x.grafik || []) g.judul = ganti(g.judul)
+    }
   }
   return slide
 }

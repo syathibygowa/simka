@@ -1,13 +1,14 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/DetailKelompok.vue | v1.2 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/DetailKelompok.vue | v1.3 | Perbaikan: tombol kembali ke posisi daftar, cetak absensi harian/pekanan | 13/10/2026 -->
 <script setup>
 // Satu kelompok santri: identitas, pengasuh (utama, pendamping, pengganti bertanggal), grup WA, anggota beserta
 // riwayat pindah, tambah/pindah/keluarkan anggota, naqib halaqah, ekspor Excel, dan cetak daftar F4.
+// v1.3: tombol Kembali (ke tab jenis dan posisi gulir terakhir di daftar), cetak absensi manual harian/pekanan.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
 import {
   PhPencilSimple, PhUserCirclePlus, PhUsersThree, PhWhatsappLogo, PhEye, PhDownloadSimple, PhTrash, PhCrown, PhSignOut,
-  PhMagnifyingGlass, PhPlus, PhX, PhClockCounterClockwise, PhCaretRight, PhArrowsLeftRight, PhLink,
+  PhMagnifyingGlass, PhPlus, PhX, PhClockCounterClockwise, PhCaretRight, PhArrowsLeftRight, PhLink, PhArrowLeft, PhPrinter,
 } from '@phosphor-icons/vue'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import { useSantri } from '@/stores/santri'
@@ -24,6 +25,7 @@ import InputTanggal from '@/components/InputTanggal.vue'
 import TombolWA from '@/components/TombolWA.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarKelompok from './LembarKelompok.vue'
+import CetakAbsensiKelompok from './CetakAbsensiKelompok.vue'
 
 const route = useRoute(); const router = useRouter()
 const kel = useKelompokSantri(); const san = useSantri(); const peg = usePegawai(); const org = useOrganisasi(); const sesi = useSesi(); const ui = useUI()
@@ -156,10 +158,18 @@ function ekspor() {
   XLSX.writeFile(wb, `Anggota-${judulKelompok(g.value).replace(/[^\w.-]+/g, '-')}.xlsx`)
 }
 const IKON_PERAN = { utama: 'tahfizh', pendamping: 'pegawai', pengganti: 'pengajuan' }
+// Kembali ke daftar pada tab jenis kelompok ini; bila datang dari daftar, riwayat dipakai agar posisi gulir pulih
+function kembali() {
+  const asal = window.history.state?.back
+  if (asal && String(asal).startsWith('/kelompok-santri') && !String(asal).startsWith('/kelompok-santri/k/')) router.back()
+  else router.push(`/kelompok-santri/${g.value?.jenis || 'kelas'}`)
+}
+const cetakAbs = ref(null)
 </script>
 <template>
   <div v-if="g" class="mx-auto max-w-5xl">
     <div class="layar-saja">
+      <button type="button" class="tombol-garis mb-3 min-h-[40px] px-3 text-sm" @click="kembali"><PhArrowLeft :size="18" weight="bold" /> Kembali ke {{ jk.jamak.toLowerCase() }}</button>
       <!-- Identitas kelompok -->
       <section :class="['kartu overflow-hidden', 'w-' + jk.warna]">
         <div class="kepala p-5">
@@ -178,6 +188,8 @@ const IKON_PERAN = { utama: 'tahfizh', pendamping: 'pegawai', pengganti: 'pengaj
           <button v-if="bolehAtur" class="tombol-garis min-h-[40px] px-3 text-sm" @click="lembarUbah = true"><PhPencilSimple :size="18" weight="duotone" /> Ubah</button>
           <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" weight="duotone" /> Excel</button>
           <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="pratinjau = true"><PhEye :size="18" weight="duotone" /> Cetak daftar</button>
+          <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="cetakAbs.buka(g, 'harian')"><PhPrinter :size="18" weight="duotone" /> Absensi harian</button>
+          <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="cetakAbs.buka(g, 'pekanan')"><PhPrinter :size="18" weight="duotone" /> Absensi pekanan</button>
           <button v-if="bolehAtur" class="tombol-garis min-h-[40px] px-3 text-sm" @click="hapus"><PhTrash :size="18" weight="duotone" /> {{ data.aktif.length + data.riwayat.length ? 'Nonaktifkan' : 'Hapus' }}</button>
         </div>
         <p v-if="!g.aktif" class="mx-4 mb-4 rounded-xl bg-permukaan2 p-3 text-sm text-teks2">Kelompok ini nonaktif. Aktifkan lagi lewat Ubah bila diperlukan.</p>
@@ -356,6 +368,7 @@ const IKON_PERAN = { utama: 'tahfizh', pendamping: 'pegawai', pengganti: 'pengaj
         <button class="tombol-utama w-full" :disabled="proses" @click="simpanPengasuh">{{ proses ? 'Menyimpan…' : 'Simpan pengasuh' }}</button>
       </div>
     </LembarBawah>
+    <CetakAbsensiKelompok ref="cetakAbs" />
   </div>
   <p v-else-if="!kel.memuat" class="py-16 text-center text-teks3">Kelompok tidak ditemukan atau di luar cakupan Anda.</p>
   <p v-else class="py-16 text-center text-teks3">Memuat kelompok…</p>

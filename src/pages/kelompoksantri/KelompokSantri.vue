@@ -1,14 +1,16 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/KelompokSantri.vue | v1.1 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/KelompokSantri.vue | v1.2 | Perbaikan: warna kartu, cetak rekap dan absensi, pemisahan putra/putri | 13/10/2026 -->
 <script setup>
 // Pengaturan kelompok santri: kelas, kamar, halaqah, ekskul, lainnya per tahun ajaran (tab berwarna).
 // Admin ber-izin kelompok_santri mengatur; pengasuh melihat kelompok asuhannya; pimpinan melihat semua.
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+// v1.2: warna kartu bervariasi; cetak rekap kelompok (pengasuh, jumlah L/P); cetak absensi manual harian/pekanan per kartu;
+//       pengaturan pemisahan putra/putri per jenis (superadmin/admin ber-izin); posisi gulir dipulihkan saat kembali.
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import BilahTab from '@/components/BilahTab.vue'
 import * as XLSX from 'xlsx'
 import {
   PhChalkboardTeacher, PhBed, PhBookOpenText, PhMedal, PhUsersThree, PhPlus, PhFileXls, PhDownloadSimple, PhCaretRight,
-  PhWarningCircle, PhStar, PhUserCircle, PhGenderMale, PhGenderFemale,
+  PhWarningCircle, PhStar, PhUserCircle, PhGenderMale, PhGenderFemale, PhPrinter, PhGenderIntersex, PhFloppyDisk,
 } from '@phosphor-icons/vue'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import { useSantri } from '@/stores/santri'
@@ -18,6 +20,12 @@ import { formatPendek } from '@/lib/tanggal'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarKelompok from './LembarKelompok.vue'
+import CetakAbsensiKelompok from './CetakAbsensiKelompok.vue'
+import LembarBawah from '@/components/LembarBawah.vue'
+import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
+import TandaTangan from '@/components/cetak/TandaTangan.vue'
+import { useUI } from '@/stores/ui'
+import { formatPanjang } from '@/lib/tanggal'
 
 const props = defineProps({ tab: { type: String, default: 'kelas' } })
 const router = useRouter(); const kel = useKelompokSantri(); const san = useSantri(); const sesi = useSesi()
@@ -30,7 +38,35 @@ watch(() => props.tab, (t) => { if (JENIS_KELOMPOK[t]) jenis.value = t })
 function pilih(j) { jenis.value = j; router.replace(`/kelompok-santri/${j}`) }
 const lembar = ref(false); const tampilNonaktif = ref(false); const bukaBelum = ref(false)
 
-onMounted(async () => { await Promise.all([kel.muat(), san.muat()]) })
+// Posisi gulir dipulihkan saat kembali dari halaman kelompok
+const KUNCI_GULIR = 'simka.kelompok.gulir'
+onBeforeRouteLeave((to) => { try { sessionStorage.setItem(KUNCI_GULIR, JSON.stringify({ jenis: jenis.value, y: window.scrollY, ke: to.path })) } catch { /* abaikan */ } })
+onMounted(async () => {
+  await Promise.all([kel.daftar.length ? null : kel.muat(), san.muat(), kel.muatPengaturan().catch(() => {})])
+  try {
+    const g = JSON.parse(sessionStorage.getItem(KUNCI_GULIR) || 'null')
+    if (g && g.jenis === jenis.value && g.ke?.startsWith('/kelompok-santri/k/')) { await nextTick(); requestAnimationFrame(() => window.scrollTo({ top: g.y })) }
+    sessionStorage.removeItem(KUNCI_GULIR)
+  } catch { /* abaikan */ }
+})
+const ui = useUI()
+// ---------- Warna kartu bervariasi ----------
+const WARNA = ['laporan', 'tahfizh', 'presensi', 'agenda', 'santri', 'gurumapel', 'ekskul', 'walikelas', 'musyrif', 'jadwal', 'pengajuan', 'penilaian', 'rapor', 'keuangan', 'kelompoksantri', 'pengumuman']
+const warnaKartu = (i) => WARNA[(i + Object.keys(JENIS_KELOMPOK).indexOf(jenis.value) * 3) % WARNA.length]
+// ---------- Cetak absensi dan rekap ----------
+const cetakAbs = ref(null)
+const pratinjauRekap = ref(false)
+const penandaRekap = { jabatan: 'Kepala Bidang Kesantrian', nama: '', niy: '' }
+const totalRekap = computed(() => dariJenis.value.filter((g) => g.aktif).reduce((t, g) => ({ l: t.l + (g.jumlah_l || 0), p: t.p + (g.jumlah_p || 0), n: t.n + (g.jumlah || 0) }), { l: 0, p: 0, n: 0 }))
+const JK_NAMA = { L: 'Putra', P: 'Putri' }
+// ---------- Pemisahan putra/putri (superadmin dan admin ber-izin) ----------
+const bolehPengaturan = computed(() => sesi.isSuperadmin || sesi.bolehAdmin('kelompok_santri'))
+const lembarPisah = ref(false); const pisah = ref({}); const prosesPisah = ref(false)
+function bukaPisah() { pisah.value = { ...(kel.pengaturan?.pisah_jk || {}) }; for (const j of Object.keys(JENIS_KELOMPOK)) pisah.value[j] = kel.pisahJk(j); lembarPisah.value = true }
+async function simpanPisah() {
+  prosesPisah.value = true
+  try { await kel.simpanPengaturan(pisah.value); lembarPisah.value = false; ui.toast('Pengaturan pemisahan putra/putri disimpan.') } catch (e) { ui.toast(e.message, 'galat') } finally { prosesPisah.value = false }
+}
 
 const kelompokTA = computed(() => kel.dariTA)
 const dariJenis = computed(() => kelompokTA.value.filter((g) => g.jenis === jenis.value && (tampilNonaktif.value || g.aktif)))
@@ -86,6 +122,8 @@ function eksporPembagian() {
     <div v-if="lihatSemua" class="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
       <router-link v-if="bolehAtur && !terkunci" to="/kelompok-santri/impor" class="w-gaji tombol-garis shrink-0 px-4 text-sm"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Impor pembagian</router-link>
       <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="eksporPembagian"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor pembagian</button>
+      <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjauRekap = true"><PhPrinter :size="20" weight="duotone" style="color: var(--c)" /> Cetak rekap {{ JENIS_KELOMPOK[jenis].jamak.toLowerCase() }}</button>
+      <button v-if="bolehPengaturan" class="w-penilaian tombol-garis shrink-0 px-4 text-sm" @click="bukaPisah"><PhGenderIntersex :size="20" weight="duotone" style="color: var(--c)" /> Pemisahan putra/putri</button>
       <label class="tombol-garis shrink-0 cursor-pointer px-4 text-sm"><input v-model="tampilNonaktif" type="checkbox" class="h-4 w-4 accent-[#0B7F81]" /> Tampilkan nonaktif</label>
     </div>
 
@@ -109,8 +147,8 @@ function eksporPembagian() {
 
     <!-- Daftar kelompok -->
     <ul class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      <li v-for="g in dariJenis" :key="g.id">
-        <router-link :to="`/kelompok-santri/k/${g.id}`" :class="['kartu flex h-full flex-col gap-3 p-4 transition hover:-translate-y-0.5 hover:shadow-apung', 'w-' + JENIS_KELOMPOK[g.jenis].warna, !g.aktif && 'opacity-70']">
+      <li v-for="(g, i) in dariJenis" :key="g.id" :class="['kartu kartu-kelompok flex h-full flex-col transition hover:-translate-y-0.5 hover:shadow-apung', 'w-' + warnaKartu(i), !g.aktif && 'opacity-70']">
+        <router-link :to="`/kelompok-santri/k/${g.id}`" class="flex flex-1 flex-col gap-3 p-4">
           <div class="flex items-start gap-3">
             <span class="chip-ikon h-11 w-11"><component :is="IKON[g.jenis]" :size="24" weight="duotone" /></span>
             <div class="min-w-0 flex-1">
@@ -133,6 +171,10 @@ function eksporPembagian() {
             <span v-else class="font-semibold text-merah">{{ JENIS_KELOMPOK[g.jenis].pengasuh }} belum ditetapkan</span>
           </div>
         </router-link>
+        <div class="flex gap-2 border-t border-garis px-4 py-2.5">
+          <button type="button" class="tombol-garis min-h-[36px] flex-1 px-2 text-xs" :aria-label="`Cetak absensi harian ${judulKelompok(g)}`" @click="cetakAbs.buka(g, 'harian')"><PhPrinter :size="16" style="color: var(--c)" /> Absensi harian</button>
+          <button type="button" class="tombol-garis min-h-[36px] flex-1 px-2 text-xs" :aria-label="`Cetak absensi pekanan ${judulKelompok(g)}`" @click="cetakAbs.buka(g, 'pekanan')"><PhPrinter :size="16" style="color: var(--c)" /> Pekanan</button>
+        </div>
       </li>
     </ul>
     <p v-if="!dariJenis.length && !kel.memuat" class="kartu mt-4 py-10 text-center text-sm text-teks3">
@@ -142,5 +184,35 @@ function eksporPembagian() {
 
     <TombolAksi v-if="bolehAtur && !terkunci" label="Tambah" :ikon="PhPlus" warna="kelompoksantri" @klik="lembar = true" />
     <LembarKelompok v-model="lembar" :jenis="jenis" @tersimpan="(id) => router.push(`/kelompok-santri/k/${id}`)" />
+    <CetakAbsensiKelompok ref="cetakAbs" />
+
+    <LembarBawah v-model="lembarPisah" judul="Pemisahan putra/putri">
+      <div class="space-y-3 pb-2">
+        <p class="text-sm text-teks2">Bila aktif, kelompok jenis itu wajib ditentukan putra atau putri, dan hanya santri berjenis kelamin sama yang dapat dimasukkan. Bila nonaktif, kelompok boleh campuran.</p>
+        <ul class="divide-y divide-garis rounded-xl border border-garis">
+          <li v-for="(j, k) in JENIS_KELOMPOK" :key="k" class="flex items-center gap-3 px-3 py-2.5">
+            <div class="min-w-0 flex-1"><p class="text-sm font-semibold">{{ j.jamak }}</p>
+              <p class="text-xs text-teks3">{{ pisah[k] ? 'Dipisah putra/putri' : 'Boleh campuran' }}{{ kel.pengaturan?.campuran?.[k] ? ` · ${kel.pengaturan.campuran[k]} kelompok campuran saat ini` : '' }}</p></div>
+            <button type="button" role="switch" :aria-checked="!!pisah[k]" :aria-label="`Pisahkan putra/putri: ${j.jamak}`" @click="pisah[k] = !pisah[k]"
+              :class="['relative h-8 w-14 shrink-0 rounded-full transition', pisah[k] ? 'bg-[#1E7D4F]' : 'bg-garis']"><span :class="['absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all', pisah[k] ? 'left-7' : 'left-1']" /></button>
+          </li>
+        </ul>
+        <p class="text-xs text-teks3">Kelompok campuran yang sudah ada tetap berjalan; saat diubah, putra/putri harus dipilih bila pemisahan diaktifkan.</p>
+        <button class="tombol-utama w-full" :disabled="prosesPisah" @click="simpanPisah"><PhFloppyDisk :size="20" weight="duotone" /> {{ prosesPisah ? 'Menyimpan…' : 'Simpan pengaturan' }}</button>
+      </div>
+    </LembarBawah>
+
+    <DokumenCetak kop="pondok" :judul="`Rekap ${JENIS_KELOMPOK[jenis].jamak}`" :subjudul="`Tahun ajaran ${kel.taSekarang?.nama || '–'} · keadaan ${formatPanjang(new Date())}`"
+      v-model:pratinjau="pratinjauRekap" :pencetak="sesi.pengguna?.nama_lengkap">
+      <table class="tabel kecil"><colgroup><col style="width:5%"><col style="width:20%"><col style="width:12%"><col style="width:33%"><col style="width:10%"><col style="width:10%"><col style="width:10%"></colgroup>
+        <thead><tr><th>No.</th><th>{{ JENIS_KELOMPOK[jenis].n }}</th><th>{{ jenis === 'kelas' ? 'Jenjang' : 'Putra/Putri' }}</th><th>{{ JENIS_KELOMPOK[jenis].pengasuh }}</th><th>L</th><th>P</th><th>Jumlah</th></tr></thead>
+        <tbody>
+          <tr v-for="(g, i) in dariJenis.filter((x) => x.aktif)" :key="g.id"><td class="tengah">{{ i + 1 }}</td><td>{{ judulKelompok(g) }}{{ g.keterangan ? ` (${g.keterangan})` : '' }}</td>
+            <td class="tengah">{{ jenis === 'kelas' ? `${JENJANG_PENDEK[g.jenjang] || ''} ${g.tingkat || ''}` : JK_NAMA[g.jenis_kelamin] || 'Campuran' }}</td>
+            <td>{{ utama(g).map((p) => p.nama).join(', ') || '–' }}</td><td class="tengah">{{ g.jumlah_l || 0 }}</td><td class="tengah">{{ g.jumlah_p || 0 }}</td><td class="tengah">{{ g.jumlah || 0 }}</td></tr>
+          <tr><td colspan="4" class="tengah" style="font-weight: 700">Jumlah</td><td class="tengah">{{ totalRekap.l }}</td><td class="tengah">{{ totalRekap.p }}</td><td class="tengah">{{ totalRekap.n }}</td></tr>
+        </tbody></table>
+      <template #ttd><TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: penandaRekap.jabatan, nama: '' }" :kanan="{ jabatan: sesi.pengguna?.jabatan || 'Pencetak', nama: sesi.pengguna?.nama_lengkap || '' }" /></template>
+    </DokumenCetak>
   </div>
 </template>

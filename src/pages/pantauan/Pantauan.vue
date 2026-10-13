@@ -1,20 +1,21 @@
-<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.0 | Fase 7 – Perbaikan uji coba: Layar Pantauan berbentuk slide | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.1 | Perbaikan: pindah hari, nama slide ringkas, slide tambahan | 13/10/2026 -->
 <script setup>
 // Layar Pantauan (Blueprint Bagian 28) berbentuk SLIDE layar penuh untuk presentasi dan SmartTV.
-//   Dibuka dari tombol "Layar Pantauan" di Beranda (bukan menu). Slide: Santri, Pegawai, Sekolah SMP, Sekolah SMA, Tahfizh,
-//   Hafalan Santri, Asrama dan Musyrif, Kegiatan dan Pengampu, Medis dan Klinik, Security, Ekskul.
+//   Dibuka dari tombol "Layar Pantauan" di Beranda (bukan menu). Slide: Santri, Pegawai, SMP, SMA, Tahfizh, Hafalan, Asrama,
+//   Kegiatan Santri, Medis, Security, Ekskul, Perizinan, Laporan dan Agenda.
+//   v2.1: pindah hari (‹ tanggal ›): hari sebelumnya menampilkan keadaan akhir hari itu (23.59 WITA), tanpa pembaruan langsung.
 //   Isi: kartu statistik berwarna + grafik. Diperbarui langsung (Realtime + tiap 60 detik); jam berjalan dan jam pembaruan.
 //   Pindah slide: geser samping atau atas-bawah, roda tetikus, tombol panah/penunjuk, papan ketik (← → ↑ ↓ Spasi), putar otomatis.
 //   Saringan: putra/putri, SMP/SMA, bidang (pegawai). Admin/superadmin: ketuk kartu → daftar nama → cetak F4/Excel.
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import * as XLSX from 'xlsx'
-import { PhFunnel, PhArrowLeft, PhCaretLeft, PhCaretRight, PhPlay, PhPause, PhArrowsOut, PhArrowsIn, PhArrowClockwise, PhEye, PhDownloadSimple, PhLock } from '@phosphor-icons/vue'
+import { PhFunnel, PhArrowLeft, PhCaretLeft, PhCaretRight, PhPlay, PhPause, PhArrowsOut, PhArrowsIn, PhArrowClockwise, PhEye, PhDownloadSimple, PhLock, PhCalendarBlank, PhClockCounterClockwise } from '@phosphor-icons/vue'
 import { usePantauan } from '@/stores/pantauan'
 import { useSesi } from '@/stores/sesi'
 import { susunSlide } from '@/lib/slidePantauan'
 import { JENJANG_PENDEK, penandaKelompok } from '@/lib/santri'
-import { formatJam, formatPanjang } from '@/lib/tanggal'
+import { formatJam, formatPanjang, formatPendek, hariIniISO, HARI } from '@/lib/tanggal'
 import LogoSimka from '@/components/LogoSimka.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import GrafikBatang from '@/components/grafik/GrafikBatang.vue'
@@ -85,8 +86,22 @@ function tombol(e) {
   else if (e.key === 'p' || e.key === 'P') putar.value = !putar.value
 }
 
+// ---------- Pindah hari ----------
+const tglPilih = computed(() => pt.tanggal || hariIniISO())
+const geserTgl = (iso, n) => { const d = new Date(`${iso}T12:00:00+08:00`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) }
+function keTanggal(t) {
+  if (!t || t > hariIniISO()) return
+  const v = t === hariIniISO() ? null : t
+  pt.muat(v); router.replace({ query: { ...route.query, tgl: v || undefined } })
+}
+// Tautan/riwayat peramban yang mengubah ?tgl= pada halaman yang sama
+watch(() => route.query.tgl, (t) => { const v = t && t < hariIniISO() ? t : null; if (v !== (pt.tanggal || null)) pt.muat(v) })
+const pemilih = ref(null)
+function bukaPemilih() { try { pemilih.value?.showPicker() } catch { pemilih.value?.click() } }
+const labelTgl = computed(() => { const d = new Date(`${tglPilih.value}T12:00:00+08:00`); return `${HARI[d.getUTCDay()]}, ${formatPendek(tglPilih.value)}` })
+
 onMounted(() => {
-  pt.mulai(); detak = setInterval(() => (kini.value = new Date()), 1000)
+  pt.mulai(route.query.tgl && route.query.tgl < hariIniISO() ? route.query.tgl : null); detak = setInterval(() => (kini.value = new Date()), 1000)
   window.addEventListener('keydown', tombol); document.addEventListener('fullscreenchange', cekPenuh)
 })
 onBeforeUnmount(() => {
@@ -117,13 +132,23 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
       <LogoSimka :size="34" class="hidden text-[#C7332F] sm:block dark:text-[#FF8070]" />
       <div class="min-w-0 flex-1">
         <p class="truncate text-base font-extrabold leading-tight lg:text-xl">Layar Pantauan<span v-if="aktif" class="font-semibold text-teks2"> · {{ aktif.judul }}</span></p>
-        <p class="flex items-center gap-1.5 text-xs text-teks2 lg:text-sm">
+        <p class="flex items-center gap-1.5 overflow-hidden whitespace-nowrap text-xs text-teks2 lg:text-sm">
+          <template v-if="pt.data?.lalu"><PhClockCounterClockwise :size="14" weight="bold" class="text-[#B7791F]" /><b>Riwayat</b><span class="truncate">· keadaan akhir hari, 23.59 WITA</span></template>
+          <template v-else>
           <span class="relative flex h-2.5 w-2.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1E7D4F] opacity-60" /><span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#1E7D4F]" /></span>
-          <b>Langsung</b><b class="tabular-nums sm:hidden"> {{ jam }}</b> · diperbarui {{ pt.data ? formatJam(pt.data.waktu) : '…' }} WITA<span v-if="pt.data" class="hidden sm:inline"> · {{ formatPanjang(pt.data.tanggal) }}</span></p>
+          <b>Langsung</b><b class="tabular-nums sm:hidden"> {{ jam }}</b><span class="truncate">· diperbarui {{ pt.data ? formatJam(pt.data.waktu) : '…' }} WITA</span></template></p>
+      </div>
+      <div class="flex items-center justify-between gap-1 rounded-2xl border border-garis bg-permukaan2 p-0.5 order-2 w-full sm:order-none sm:w-auto" role="group" aria-label="Pilih hari pantauan">
+        <button class="tombol-ikon h-9 w-9" aria-label="Hari sebelumnya" @click="keTanggal(geserTgl(tglPilih, -1))"><PhCaretLeft :size="18" weight="bold" /></button>
+        <button type="button" class="relative flex min-h-[36px] items-center gap-1.5 rounded-xl px-2 text-sm font-semibold tabular-nums" aria-label="Pilih tanggal" @click="bukaPemilih">
+          <PhCalendarBlank :size="16" /> {{ labelTgl }}
+          <input ref="pemilih" type="date" class="pointer-events-none absolute inset-0 opacity-0" :value="tglPilih" :max="hariIniISO()" tabindex="-1" aria-hidden="true" @change="keTanggal($event.target.value)" /></button>
+        <button class="tombol-ikon h-9 w-9" aria-label="Hari berikutnya" :disabled="!pt.tanggal" @click="keTanggal(geserTgl(tglPilih, 1))"><PhCaretRight :size="18" weight="bold" /></button>
+        <button v-if="pt.tanggal" class="min-h-[36px] rounded-xl px-2 text-xs font-bold text-[#1E7D4F] dark:text-[#6EE7B7]" @click="keTanggal(hariIniISO())">Hari ini</button>
       </div>
       <button class="tombol-ikon lg:hidden" :aria-expanded="kendali" aria-label="Saringan dan kendali" @click="kendali = !kendali"><PhFunnel :size="22" :weight="kendali ? 'fill' : 'regular'" /></button>
-      <p class="hidden text-2xl font-extrabold tabular-nums sm:block lg:text-3xl" aria-label="Jam sekarang">{{ jam }} <span class="text-sm font-bold text-teks2">WITA</span></p>
-      <div :class="['w-full flex-wrap items-center gap-1.5 lg:flex lg:w-auto', kendali ? 'flex' : 'hidden']">
+      <p v-if="!pt.data?.lalu" class="hidden text-2xl font-extrabold tabular-nums sm:block lg:text-3xl" aria-label="Jam sekarang">{{ jam }} <span class="text-sm font-bold text-teks2">WITA</span></p>
+      <div :class="['w-full flex-wrap items-center gap-1.5 order-3 sm:order-none lg:flex lg:w-auto', kendali ? 'flex' : 'hidden']">
         <select v-model="f.jk" class="isian min-h-[38px] w-auto py-1 text-sm" aria-label="Saring putra/putri"><option value="">Putra dan putri</option><option value="L">Putra</option><option value="P">Putri</option></select>
         <select v-model="f.jenjang" class="isian min-h-[38px] w-auto py-1 text-sm" aria-label="Saring jenjang"><option value="">SMP dan SMA</option><option value="wustha">SMP (Wustha)</option><option value="sma">SMA</option></select>
         <select v-model="f.bidang" class="isian min-h-[38px] w-auto py-1 text-sm" aria-label="Saring bidang pegawai"><option value="">Semua bidang</option><option v-for="b in pt.data?.bidang || []" :key="b.id" :value="b.id">{{ b.nama }}</option></select>
@@ -159,7 +184,7 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
             <div v-for="g in s.grafik" :key="g.judul" class="kartu grafik-slide flex items-center justify-center p-4 lg:p-5">
               <GrafikBatang v-if="g.tipe === 'batang' && g.label.length" class="w-full" :judul="g.judul" :label="g.label" :seri="g.seri" :sumbu-y="g.sumbuY" />
               <GrafikLingkaran v-else-if="g.tipe === 'lingkaran' && g.data.some((x) => x.nilai)" :judul="g.judul" :data="g.data" :satuan="g.satuan || 'santri'" />
-              <p v-else class="py-10 text-center text-sm text-teks3">{{ g.judul }}: belum ada data hari ini.</p>
+              <p v-else class="py-10 text-center text-sm text-teks3">{{ g.judul }}: belum ada data {{ pt.data.lalu ? 'pada hari itu' : 'hari ini' }}.</p>
             </div>
           </div>
         </section>

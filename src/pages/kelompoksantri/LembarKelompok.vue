@@ -1,5 +1,6 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/LembarKelompok.vue | v1.0 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/LembarKelompok.vue | v1.1 | Perbaikan: putra/putri wajib mengikuti pengaturan pemisahan | 13/10/2026 -->
 <script setup>
+// v1.1: putra/putri wajib bila pemisahan putra/putri aktif untuk jenis kelompok ini (pengaturan admin); selain itu boleh campuran.
 // Lembar tambah/ubah kelompok santri: nama, tingkat (kelas), putra/putri, keterangan, tautan grup WA, urutan, aktif.
 import { ref, watch, computed } from 'vue'
 import { PhFloppyDisk, PhWhatsappLogo } from '@phosphor-icons/vue'
@@ -16,16 +17,17 @@ const f = ref(null); const proses = ref(false)
 
 watch(buka, (v) => {
   if (!v) return
+  kel.muatPengaturan().catch(() => {})
   const g = props.kelompok
   f.value = g ? { id: g.id, jenis: g.jenis, nama: g.nama, tingkat: g.tingkat || '', jenis_kelamin: g.jenis_kelamin || '', keterangan: g.keterangan || '',
     wa_wali: g.wa_wali || '', wa_internal: g.wa_internal || '', urutan: g.urutan || 0, aktif: g.aktif, naqib_id: g.naqib_id || '' }
     : { jenis: props.jenis, nama: '', tingkat: props.jenis === 'kelas' ? 7 : '', jenis_kelamin: '', keterangan: '', wa_wali: '', wa_internal: '', urutan: 0, aktif: true }
 })
-const wajibJK = computed(() => ['kamar', 'halaqah'].includes(f.value?.jenis))
+const wajibJK = computed(() => !!f.value && kel.pisahJk(f.value.jenis))
 async function simpan() {
   const d = f.value
   if (!d.nama.trim()) return ui.toast('Nama kelompok wajib diisi.', 'galat')
-  if (wajibJK.value && !d.jenis_kelamin) return ui.toast('Kamar dan halaqah wajib ditentukan putra atau putri.', 'galat')
+  if (wajibJK.value && !d.jenis_kelamin) return ui.toast(`${JENIS_KELOMPOK[d.jenis].n} wajib ditentukan putra atau putri (pemisahan putra/putri aktif).`, 'galat')
   for (const t of [d.wa_wali, d.wa_internal]) if (t && !/^https?:\/\//i.test(t.trim())) return ui.toast('Tautan grup WA harus diawali https:// (salin dari "Undang via tautan" di WhatsApp).', 'galat')
   proses.value = true
   try {

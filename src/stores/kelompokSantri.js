@@ -1,4 +1,5 @@
-// SIMKA PRO | src/stores/kelompokSantri.js | v1.1 | Fase 4 – Tahap 4 Ekskul | 04/10/2026
+// SIMKA PRO | src/stores/kelompokSantri.js | v1.2 | Perbaikan: pemisahan putra/putri per jenis kelompok | 13/10/2026
+// v1.2: pengaturan pemisahan putra/putri (muatPengaturan, simpanPengaturan, pisahJk).
 // Kelompok santri (kelas, kamar, halaqah, ekskul, lainnya): daftar per tahun ajaran, anggota beserta riwayat,
 // pengasuh, impor pembagian. Penulisan lewat fungsi SQL (tabel tidak dapat ditulis langsung).
 import { defineStore } from 'pinia'
@@ -15,10 +16,12 @@ const urutKelompok = (a, b) => URUT.indexOf(a.jenis) - URUT.indexOf(b.jenis) || 
   || (a.urutan || 0) - (b.urutan || 0) || a.nama.localeCompare(b.nama, 'id', { numeric: true })
 
 export const useKelompokSantri = defineStore('kelompokSantri', {
-  state: () => ({ daftar: [], tahunAjaran: [], taDipilih: '', memuat: false, galat: '', anggota: {}, jadwal: {} }),
+  state: () => ({ daftar: [], tahunAjaran: [], taDipilih: '', memuat: false, galat: '', anggota: {}, jadwal: {}, pengaturan: null }),
   getters: {
     taAktif: (s) => s.tahunAjaran.find((t) => t.aktif) || null,
     taSekarang: (s) => s.tahunAjaran.find((t) => t.id === s.taDipilih) || s.tahunAjaran.find((t) => t.aktif) || null,
+    /** Pemisahan putra/putri aktif untuk jenis kelompok (bawaan: kamar dan halaqah). */
+    pisahJk: (s) => (j) => (s.pengaturan?.pisah_jk?.[j] ?? ['kamar', 'halaqah'].includes(j)),
     dariTA: (s) => s.daftar.filter((g) => g.academic_year_id === (s.taDipilih || s.tahunAjaran.find((t) => t.aktif)?.id)),
   },
   actions: {
@@ -55,6 +58,14 @@ export const useKelompokSantri = defineStore('kelompokSantri', {
       })
     },
     cari(id) { return this.daftar.find((g) => g.id === id) },
+    async muatPengaturan() {
+      if (MODE_DEMO) { this.pengaturan ||= { pisah_jk: { kelas: false, kamar: true, halaqah: true, ekskul: false, lainnya: false }, campuran: {} }; return this.pengaturan }
+      const { data, error } = await supabase.rpc('pengaturan_kelompok'); if (error) throw new Error(pesanGalat(error)); this.pengaturan = data; return data
+    },
+    async simpanPengaturan(pisah) {
+      if (MODE_DEMO) { this.pengaturan = { ...(this.pengaturan || {}), pisah_jk: { ...pisah } }; return }
+      const { error } = await supabase.rpc('simpan_pengaturan_kelompok', { p: { pisah_jk: pisah } }); if (error) throw new Error(pesanGalat(error)); await this.muatPengaturan()
+    },
 
     /** Anggota satu kelompok: { aktif: [...], riwayat: [...] } berisi baris group_members. */
     async muatAnggota(id) {
