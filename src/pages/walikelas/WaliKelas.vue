@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/WaliKelas.vue | v1.0 | Fase 4 – Menu Wali Kelas | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/WaliKelas.vue | v1.1 | Fase 12 – Tahap 4 Tab Rapor | 13/10/2026 -->
 <script setup>
 // Menu Wali Kelas. Wali kelas melihat kelasnya; admin, superadmin, dan pimpinan (pemegang hak Absensi Kelas/Jadwal
 // mengajar menurut jenjangnya) melihat semua kelas. Tab:
@@ -9,9 +9,10 @@
 //   Pelajaran              : keterlaksanaan jurnal mengajar per mapel/guru dan materi per tanggal; roster kelas
 //   Rekap                  : rekap absensi kelas (Excel, cetak F4, WA ke wali)
 //   Perizinan              : izin santri kelas (wali kelas sebagai pengusul)
+//   Rapor (v1.1)           : catatan wali kelas (disusun otomatis, dapat disunting) dan kokurikuler SMA
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhGauge, PhChartBar, PhChalkboard, PhLockSimple, PhWhatsappLogo, PhUsersThree, PhSignOut, PhSquaresFour, PhStudent, PhBookOpenText } from '@phosphor-icons/vue'
+import { PhGauge, PhChartBar, PhChalkboard, PhLockSimple, PhWhatsappLogo, PhUsersThree, PhSignOut, PhSquaresFour, PhStudent, PhBookOpenText, PhExam } from '@phosphor-icons/vue'
 import { useWaliKelas } from '@/stores/waliKelas'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
@@ -23,6 +24,7 @@ import TabSantriKelas from './TabSantriKelas.vue'
 import TabPelajaranKelas from './TabPelajaranKelas.vue'
 import TabRekapAbsensi from '@/pages/absensisantri/TabRekapAbsensi.vue'
 import TabIzin from '@/pages/izin/TabIzin.vue'
+import TabRaporKelas from './TabRaporKelas.vue'
 
 const props = defineProps({ tab: { type: String, default: '' } })
 const router = useRouter(); const wk = useWaliKelas(); const san = useSantri(); const sesi = useSesi(); const galat = ref('')
@@ -34,7 +36,7 @@ const TAB = computed(() => [
   ...(pemantau.value ? [{ k: 'ringkasan', n: 'Semua kelas', ikon: PhSquaresFour, w: 'walikelas' }] : []),
   { k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'walikelas' }, { k: 'santri', n: 'Santri', ikon: PhStudent, w: 'santri' },
   { k: 'pelajaran', n: 'Pelajaran', ikon: PhBookOpenText, w: 'gurumapel' }, { k: 'rekap', n: 'Rekap absensi', ikon: PhChartBar, w: 'rekap' },
-  { k: 'izin', n: 'Perizinan', ikon: PhSignOut, w: 'pengajuan' }])
+  { k: 'izin', n: 'Perizinan', ikon: PhSignOut, w: 'pengajuan' }, { k: 'rapor', n: 'Rapor', ikon: PhExam, w: 'rapor' }])
 const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : pemantau.value ? 'ringkasan' : 'dasbor'))
 const k = computed(() => wk.kelasPilih)
 const santriKelas = computed(() => san.daftar.filter((s) => s.status === 'aktif' && (s.kelompok || []).some((g) => g.id === wk.pilih)).map((s) => ({ id: s.id, nama: s.nama_lengkap, nis: s.nis })))
@@ -78,6 +80,7 @@ const pindah = (x) => router.replace(`/wali-kelas/${x}`)
       <TabSantriKelas v-else-if="aktif === 'santri'" :key="'s' + wk.pilih" />
       <TabPelajaranKelas v-else-if="aktif === 'pelajaran'" :key="'p' + wk.pilih" />
       <TabRekapAbsensi v-else-if="aktif === 'rekap'" :key="'r' + wk.pilih" :group="wk.pilih" />
+      <TabRaporKelas v-else-if="aktif === 'rapor'" :key="'rp' + wk.pilih" />
       <TabIzin v-else :key="'i' + wk.pilih" :group="wk.pilih" :calon="santriKelas" peran-utama="wali_kelas" />
     </template>
     <p v-else class="kartu p-8 text-center text-sm text-teks3">Memuat kelas…</p>

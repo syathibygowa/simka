@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/penilaian.js | v1.0 | Fase 12 – Tahap 1 Pengaturan penilaian | 13/10/2026
+// SIMKA PRO | src/stores/penilaian.js | v1.1 | Fase 12 – Tahap 5 Identitas sekolah per rapor | 13/10/2026
 // Penilaian dan rapor: pengaturan per tahun ajaran (ketentuan per jenis rapor, predikat, komponen dan bobot, periode,
 // mapel rapor beserta sumber nilainya, bank kalimat catatan) dan hak pengguna. Penulisan hanya lewat fungsi SQL.
 import { defineStore } from 'pinia'
@@ -45,6 +45,10 @@ export const usePenilaian = defineStore('penilaian', {
     async simpanKetentuan(jenis, isi) {
       if (MODE_DEMO) { Object.assign(dataPenilaianDemo().ketentuan[jenis], isi); return this.muat() }
       await rpc('simpan_ketentuan_rapor', { p_ta: this.taId, p_jenis: jenis, p: isi }); await this.muat(this.taId)
+    },
+    async simpanIdentitas(jenis, isi) {
+      if (MODE_DEMO) { dataPenilaianDemo().ketentuan[jenis].identitas = { ...isi }; return this.muat() }
+      await rpc('simpan_identitas_rapor', { p_ta: this.taId, p_jenis: jenis, p: isi }); await this.muat(this.taId)
     },
     async simpanPredikat(kelompok, daftar) {
       if (MODE_DEMO) {

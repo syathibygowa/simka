@@ -1,11 +1,11 @@
-<!-- SIMKA PRO | src/pages/tahfizh/Tahfizh.vue | v1.6 | Fase 12 – Tahap 3 Penguji UTAS | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/Tahfizh.vue | v1.7 | Fase 12 – Tahap 4 Tab Rapor (catatan muhaffizh) | 13/10/2026 -->
 <script setup>
-// Menu Tahfizh. Tahap 5: tab Laporan (15 laporan dan grafik). Tahap 4: tab Ujian (kenaikan juz, sertifikasi). Tahap 3: tab Capaian (status bulanan, usulan juz). Tahap 2: tab Setoran (sesi halaqah per tanggal). Tahap 1: tab Data hafalan (program, posisi, capaian juz resmi, data awal) dan
+// Menu Tahfizh. Fase 12: tab Rapor (catatan muhaffizh per halaqah); UTAS di tab Ujian. Tahap 5: tab Laporan (15 laporan dan grafik). Tahap 4: tab Ujian (kenaikan juz, sertifikasi). Tahap 3: tab Capaian (status bulanan, usulan juz). Tahap 2: tab Setoran (sesi halaqah per tanggal). Tahap 1: tab Data hafalan (program, posisi, capaian juz resmi, data awal) dan
 // Ketentuan (KKM, target, predikat, pekan efektif, penguji; diubah oleh pemegang izin atur_tahfizh).
 // Tab Setoran, Capaian, Ujian, dan Laporan ditambahkan pada tahap berikutnya.
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhBookOpenText, PhListChecks, PhLockSimple, PhNotebook, PhSealCheck, PhExam, PhChartPieSlice } from '@phosphor-icons/vue'
+import { PhBookOpenText, PhListChecks, PhLockSimple, PhNotebook, PhSealCheck, PhExam, PhChartPieSlice, PhNotePencil } from '@phosphor-icons/vue'
 import { useTahfizh } from '@/stores/tahfizh'
 import { useSesi } from '@/stores/sesi'
 import BilahTab from '@/components/BilahTab.vue'
@@ -14,6 +14,7 @@ import TabSantriTahfizh from './TabSantriTahfizh.vue'
 import TabCapaian from './TabCapaian.vue'
 import TabUjian from './TabUjian.vue'
 import TabLaporan from './TabLaporan.vue'
+import TabRaporTahfizh from './TabRaporTahfizh.vue'
 import TabKetentuanTahfizh from './TabKetentuanTahfizh.vue'
 
 const props = defineProps({ tab: { type: String, default: '' } })
@@ -26,6 +27,7 @@ const TAB = [
   { k: 'capaian', n: 'Capaian', ikon: PhSealCheck, w: 'pengajuan' },
   { k: 'ujian', n: 'Ujian', ikon: PhExam, w: 'agenda' },
   { k: 'laporan', n: 'Laporan', ikon: PhChartPieSlice, w: 'laporan' },
+  { k: 'rapor', n: 'Rapor', ikon: PhNotePencil, w: 'rapor' },
   { k: 'santri', n: 'Data hafalan', ikon: PhBookOpenText, w: 'tahfizh' },
   { k: 'ketentuan', n: 'Ketentuan', ikon: PhListChecks, w: 'pengaturan' },
 ]
@@ -44,6 +46,7 @@ const aktif = computed(() => (hanyaUtas.value ? 'ujian' : TAB.some((t) => t.k ==
       <TabCapaian v-else-if="aktif === 'capaian'" />
       <TabUjian v-else-if="aktif === 'ujian'" :hanya-utas="hanyaUtas" />
       <TabLaporan v-else-if="aktif === 'laporan'" />
+      <TabRaporTahfizh v-else-if="aktif === 'rapor'" />
       <TabSantriTahfizh v-else-if="aktif === 'santri'" />
       <TabKetentuanTahfizh v-else />
     </template>

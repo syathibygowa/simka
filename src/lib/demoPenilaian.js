@@ -1,4 +1,5 @@
-// SIMKA PRO | src/lib/demoPenilaian.js | v1.0 | Fase 12 – Tahap 1 Pengaturan penilaian | 13/10/2026
+// SIMKA PRO | src/lib/demoPenilaian.js | v1.1 | Fase 12 – Tahap 5 identitas sekolah per rapor | 13/10/2026
+// v1.1: identitas sekolah per jenis rapor (sampul dan halaman identitas sekolah).
 // Pengaturan penilaian contoh untuk MODE DEMO (mengikuti isi awal migrasi 8200). Semua data fiktif.
 import { dataJadwalDemo } from './demoJadwal'
 
@@ -30,11 +31,20 @@ function mapelRapor(jenis, tingkat, daftar) {
   })
 }
 
+const IDN_DASAR = { alamat: 'Jalan Poros Malino KM.04, Lingkungan Bontobaddo', kode_pos: '92119', kelurahan: 'Bontoramba', kecamatan: 'Somba Opu', kota: 'Gowa', provinsi: 'Sulawesi Selatan', email: 'syathiby.gowa@gmail.com' }
+const IDN = {
+  sma: { ...IDN_DASAR, nama_sekolah: "SMAS Tahfizhul Qur'an Imam Asy Syatiby W.I", jenjang: 'Sekolah Menengah Atas (SMA)', npsn: '69981456', nss: '', alamat: 'Jalan Poros Malino-Sungguminasa Km.04, Dusun Bontobaddo',
+    telepon: '085256006743', kementerian: 'Kementerian Pendidikan Dasar dan Menengah Republik Indonesia' },
+  wustha: { ...IDN_DASAR, nama_sekolah: "Kesetaraan Wustha PPS Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa", jenjang: 'Pendidikan Kesetaraan Wustha (setara SMP)', npsn: '70023617',
+    nss: '502373060054', telepon: '082194934531', kementerian: 'Kementerian Agama Kabupaten Gowa' },
+  tahfizh: { ...IDN_DASAR, nama_sekolah: "Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa", jenjang: "Program Tahfizhul Qur'an", npsn: '70023617', nss: '502373060054',
+    telepon: '085243324006', kementerian: 'Kementerian Agama Kabupaten Gowa' },
+}
 export function dataPenilaianDemo() {
   if (data) return data
   const k = (jenis, x) => ({ academic_year_id: TA.id, jenis, kop_kode: null, label_ambang: 'KKM', ambang_bawaan: 75, mode_nilai: 'rekomendasi', desimal: 0, pakai_keterampilan: false, keterampilan_ikut: true,
     sikap_di_rapor: false, pakai_kokurikuler: false, pakai_tp: false, tampil_rata: false, tampil_peringkat: false, bahasa_predikat: 'arab', signatory_id: null, jabatan_ttd: null, tempat: 'Gowa',
-    fase: {}, dimensi: [], utas_juz_sma: 5, utas_juz_wustha: 3, catatan: null, penanda: null, ...x })
+    fase: {}, dimensi: [], utas_juz_sma: 5, utas_juz_wustha: 3, catatan: null, penanda: null, identitas: IDN[jenis], ...x })
   const ketentuan = {
     sma: k('sma', { judul: 'Laporan Hasil Belajar', kop_kode: 'sma', label_ambang: 'KKTP', pakai_kokurikuler: true, pakai_tp: true, signatory_id: 's3', jabatan_ttd: 'Kepala Sekolah',
       penanda: { jabatan: 'Kepala SMA', nama: 'H. Afrianto, Lc, M.H.', niy: '1994042801202001' }, fase: { 10: 'E', 11: 'F', 12: 'F' }, dimensi: DIMENSI }),

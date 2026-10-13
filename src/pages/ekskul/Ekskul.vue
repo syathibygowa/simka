@@ -1,13 +1,14 @@
-<!-- SIMKA PRO | src/pages/ekskul/Ekskul.vue | v1.2 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/ekskul/Ekskul.vue | v1.3 | Fase 12 – Tahap 4 Nilai pengembangan diri | 13/10/2026 -->
 <script setup>
 // Ekskul: Pertemuan (absensi HISBAT + jurnal materi per pertemuan), Jadwal pertemuan (otomatis menjadi sesi
 // presensi pembina/pelatih), dan Rekap (kehadiran santri, jurnal materi; Excel dan cetak F4).
 // Ekskul adalah kegiatan eksternal: tidak memengaruhi persentase kehadiran program pokok santri.
+// v1.3: tab Nilai rapor — pembina mengisi nilai Pengembangan Diri (A–D) per santri untuk rapor.
 // v1.2: tab Dasbor — perkembangan semua ekskul (pertemuan, kehadiran, jurnal materi) untuk admin/pimpinan/pembina.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BilahTab from '@/components/BilahTab.vue'
-import { PhMedal, PhCalendarDots, PhChartBar, PhCaretRight, PhPencilSimple, PhPlus, PhX, PhFloppyDisk, PhMapPin, PhUserCircle, PhInfo, PhGauge } from '@phosphor-icons/vue'
+import { PhMedal, PhCalendarDots, PhChartBar, PhCaretRight, PhPencilSimple, PhPlus, PhX, PhFloppyDisk, PhMapPin, PhUserCircle, PhInfo, PhGauge, PhExam } from '@phosphor-icons/vue'
 import { useAbsensiSantri } from '@/stores/absensiSantri'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import { useSesi } from '@/stores/sesi'
@@ -18,10 +19,11 @@ import InputTanggal from '@/components/InputTanggal.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import TabRekapEkskul from './TabRekapEkskul.vue'
 import TabDasborEkskul from './TabDasborEkskul.vue'
+import TabNilaiEkskul from './TabNilaiEkskul.vue'
 
 const props = defineProps({ tab: { type: String, default: '' } })
 const router = useRouter(); const abs = useAbsensiSantri(); const kel = useKelompokSantri(); const sesi = useSesi(); const ui = useUI()
-const TAB = [{ k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'ekskul' }, { k: 'pertemuan', n: 'Pertemuan', ikon: PhMedal, w: 'ekskul' }, { k: 'jadwal', n: 'Jadwal', ikon: PhCalendarDots, w: 'agenda' }, { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' }]
+const TAB = [{ k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'ekskul' }, { k: 'pertemuan', n: 'Pertemuan', ikon: PhMedal, w: 'ekskul' }, { k: 'jadwal', n: 'Jadwal', ikon: PhCalendarDots, w: 'agenda' }, { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' }, { k: 'nilai', n: 'Nilai rapor', ikon: PhExam, w: 'rapor' }]
 const aktif = computed(() => (TAB.some((t) => t.k === props.tab) ? props.tab : lihatSemua.value ? 'dasbor' : 'pertemuan'))
 const lihatSemua = computed(() => sesi.isAdmin || sesi.tingkat('absensi_ekskul') >= 1 && sesi.tingkat('data_santri') >= 1)
 const bolehAtur = computed(() => sesi.bolehAdmin('kelompok_santri') || sesi.tingkat('kelompok_santri') >= 2)
@@ -104,6 +106,7 @@ const pembina = (g) => (g.pengasuh || []).filter((p) => p.berlaku !== false).map
       <p v-if="!ekskul.length && !kel.memuat" class="kartu py-10 text-center text-sm text-teks3">Belum ada ekskul aktif. Tambahkan di Kelompok Santri → Ekskul.</p>
     </template>
 
+    <TabNilaiEkskul v-else-if="aktif === 'nilai'" />
     <TabRekapEkskul v-else :semua="lihatSemua" />
 
     <LembarBawah v-model="lembar" :judul="`Jadwal ${gEdit?.nama || ''}`">

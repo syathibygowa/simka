@@ -1,22 +1,24 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabKetentuanNilai.vue | v1.0 | Fase 12 – Tahap 1 Pengaturan penilaian | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabKetentuanNilai.vue | v1.1 | Fase 12 – Tahap 5 Identitas sekolah per rapor | 13/10/2026 -->
 <script setup>
 // Ketentuan per jenis rapor: judul, kop (dari kop surat sistem), label ambang (KKM/KKTP) dan nilai bawaannya, pembulatan,
 // bagian rapor (keterampilan, sikap di rapor, kokurikuler, daftar TP, rata-rata, peringkat), fase per kelas (SMA),
 // dimensi profil lulusan (kokurikuler), penanda tangan kepala (tengah bawah; orang tua kiri, wali kelas/muhaffizh kanan),
 // tempat, jumlah juz UTAS per jenjang dan KKM UTAS (tahfizh).
+// v1.1: identitas sekolah per jenis rapor (dicetak pada sampul dan halaman identitas sekolah).
 import { ref, computed, watch, onMounted } from 'vue'
 import { PhFloppyDisk, PhPlus, PhX, PhSignature, PhInfo } from '@phosphor-icons/vue'
 import { usePenilaian } from '@/stores/penilaian'
 import { useLembaga } from '@/stores/lembaga'
 import { useUI } from '@/stores/ui'
 import { JENIS_RAPOR } from '@/lib/penilaian'
+import { IDENTITAS_SEKOLAH } from '@/lib/rapor'
 
 const pn = usePenilaian(); const lb = useLembaga(); const ui = useUI(); const proses = ref(false)
 onMounted(() => lb.muat().catch(() => {}))
 const jenis = ref('sma')
 const boleh = computed(() => pn.bolehAtur(jenis.value) && !pn.terkunci)
 const f = ref(null); const dimensiBaru = ref('')
-function salinForm() { const k = pn.ketentuan[jenis.value]; f.value = k ? { ...k, ambang_bawaan: Number(k.ambang_bawaan), fase: { ...(k.fase || {}) }, dimensi: [...(k.dimensi || [])] } : null }
+function salinForm() { const k = pn.ketentuan[jenis.value]; f.value = k ? { ...k, ambang_bawaan: Number(k.ambang_bawaan), fase: { ...(k.fase || {}) }, dimensi: [...(k.dimensi || [])], identitas: { ...(k.identitas || {}) } } : null }
 watch([jenis, () => pn.ketentuan], salinForm, { immediate: true })
 const sekolah = computed(() => jenis.value !== 'tahfizh')
 
@@ -41,7 +43,8 @@ async function simpan() {
       signatory_id: d.signatory_id || '', jabatan_ttd: d.jabatan_ttd || '', tempat: d.tempat, catatan: d.catatan || '' }
     if (sekolah.value) { for (const s of SAKELAR.value) isi[s.k] = !!d[s.k]; isi.fase = d.fase; isi.dimensi = d.dimensi }
     else Object.assign(isi, { utas_juz_sma: Number(d.utas_juz_sma), utas_juz_wustha: Number(d.utas_juz_wustha) })
-    await pn.simpanKetentuan(jenis.value, isi); ui.toast('Ketentuan rapor disimpan.')
+    const idn = { ...d.identitas }
+    await pn.simpanKetentuan(jenis.value, isi); await pn.simpanIdentitas(jenis.value, idn); ui.toast('Ketentuan rapor disimpan.')
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 const penanda = computed(() => lb.signatories.find((s) => s.id === f.value?.signatory_id) || null)
@@ -125,6 +128,16 @@ const penanda = computed(() => lb.signatories.find((s) => s.id === f.value?.sign
         <div v-if="boleh" class="mt-2 flex gap-2"><input v-model="dimensiBaru" class="isian min-h-[42px]" placeholder="Tambah dimensi" @keydown.enter.prevent="tambahDimensi" />
           <button type="button" class="tombol-garis min-h-[42px] px-3" @click="tambahDimensi"><PhPlus :size="18" weight="bold" /></button></div>
         <p class="mt-1 text-xs text-teks3">Wali kelas mengisi nilai 1–4 per dimensi; tema kokurikuler diisi per semester di tab Periode.</p>
+      </section>
+
+      <section class="kartu w-santri p-4 xl:col-span-2">
+        <p class="mb-1 font-bold">Identitas sekolah</p>
+        <p class="mb-3 text-xs text-teks3">Dicetak pada sampul rapor dan halaman identitas sekolah {{ JENIS_RAPOR[jenis].n }}.</p>
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div v-for="x in IDENTITAS_SEKOLAH" :key="x.k" :class="x.lebar ? 'sm:col-span-2' : ''">
+            <label class="label-isian" :for="`idn-${x.k}`">{{ x.k === 'nss' && jenis !== 'sma' ? 'NSPP' : x.n }}</label>
+            <input :id="`idn-${x.k}`" v-model="f.identitas[x.k]" class="isian" :disabled="!boleh" /></div>
+        </div>
       </section>
 
       <section class="kartu p-4 xl:col-span-2">
