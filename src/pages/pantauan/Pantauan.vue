@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.1 | Perbaikan: pindah hari, nama slide ringkas, slide tambahan | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.2 | Perbaikan: satu jam berjalan, 10 kartu per slide (5 kolom), baris jumlah dan penanda tangan per bidang pada rekap | 14/10/2026 -->
 <script setup>
 // Layar Pantauan (Blueprint Bagian 28) berbentuk SLIDE layar penuh untuk presentasi dan SmartTV.
 //   Dibuka dari tombol "Layar Pantauan" di Beranda (bukan menu). Slide: Santri, Pegawai, SMP, SMA, Tahfizh, Hafalan, Asrama,
@@ -113,11 +113,12 @@ onBeforeUnmount(() => {
 // ---------- Detail (admin/superadmin): daftar, cetak, Excel ----------
 const lembar = ref(false); const daftar = ref(null); const pratinjau = ref(false); const penanda = ref({ jabatan: 'Direktur', nama: '', niy: '' })
 function buka(k) { if (!admin.value || !k.daftar) return; daftar.value = k.daftar; lembar.value = true; jedaOtomatis() }
-async function cetak() { penanda.value = await penandaKelompok({ jenis: 'umum' }).catch(() => penanda.value); pratinjau.value = true }
+// Mengetahui: kepala bidang sesuai isi daftar (rekap kelas/kamar/halaqah/ekskul), selain itu Direktur
+async function cetak() { penanda.value = await penandaKelompok(daftar.value?.ttd || { jenis: 'umum' }).catch(() => penanda.value); pratinjau.value = true }
 function ekspor() {
   const x = daftar.value
   const ws = XLSX.utils.aoa_to_sheet([[x.judul], [`${formatPanjang(pt.data.tanggal)}, pukul ${formatJam(pt.data.waktu)} WITA${saringanTeks.value ? ' · ' + saringanTeks.value : ''}`], [],
-    ['No.', ...x.kolom.map((c) => c[1])], ...x.baris.map((b, i) => [i + 1, ...x.kolom.map((c) => b[c[0]] ?? '')])])
+    ['No.', ...x.kolom.map((c) => c[1])], ...x.baris.map((b, i) => [i + 1, ...x.kolom.map((c) => b[c[0]] ?? '')]), ...(x.total ? [['', ...x.kolom.map((c) => x.total[c[0]] ?? '')]] : [])])
   ws['!cols'] = [{ wch: 5 }, ...x.kolom.map((c) => ({ wch: c[2] + 6 }))]
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Pantauan'); XLSX.writeFile(wb, `Pantauan-${x.judul.replace(/[^\w]+/g, '-')}-${pt.data.tanggal}.xlsx`)
 }
@@ -136,7 +137,7 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
           <template v-if="pt.data?.lalu"><PhClockCounterClockwise :size="14" weight="bold" class="text-[#B7791F]" /><b>Riwayat</b><span class="truncate">· keadaan akhir hari, 23.59 WITA</span></template>
           <template v-else>
           <span class="relative flex h-2.5 w-2.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1E7D4F] opacity-60" /><span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#1E7D4F]" /></span>
-          <b>Langsung</b><b class="tabular-nums sm:hidden"> {{ jam }}</b><span class="truncate">· diperbarui {{ pt.data ? formatJam(pt.data.waktu) : '…' }} WITA</span></template></p>
+          <b>Langsung</b><b class="tabular-nums"> {{ jam }} WITA</b><span class="truncate">· diperbarui {{ pt.data ? formatJam(pt.data.waktu) : '…' }} WITA</span></template></p>
       </div>
       <div class="flex items-center justify-between gap-1 rounded-2xl border border-garis bg-permukaan2 p-0.5 order-2 w-full sm:order-none sm:w-auto" role="group" aria-label="Pilih hari pantauan">
         <button class="tombol-ikon h-9 w-9" aria-label="Hari sebelumnya" @click="keTanggal(geserTgl(tglPilih, -1))"><PhCaretLeft :size="18" weight="bold" /></button>
@@ -147,7 +148,6 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
         <button v-if="pt.tanggal" class="min-h-[36px] rounded-xl px-2 text-xs font-bold text-[#1E7D4F] dark:text-[#6EE7B7]" @click="keTanggal(hariIniISO())">Hari ini</button>
       </div>
       <button class="tombol-ikon lg:hidden" :aria-expanded="kendali" aria-label="Saringan dan kendali" @click="kendali = !kendali"><PhFunnel :size="22" :weight="kendali ? 'fill' : 'regular'" /></button>
-      <p v-if="!pt.data?.lalu" class="hidden text-2xl font-extrabold tabular-nums sm:block lg:text-3xl" aria-label="Jam sekarang">{{ jam }} <span class="text-sm font-bold text-teks2">WITA</span></p>
       <div :class="['w-full flex-wrap items-center gap-1.5 order-3 sm:order-none lg:flex lg:w-auto', kendali ? 'flex' : 'hidden']">
         <select v-model="f.jk" class="isian min-h-[38px] w-auto py-1 text-sm" aria-label="Saring putra/putri"><option value="">Putra dan putri</option><option value="L">Putra</option><option value="P">Putri</option></select>
         <select v-model="f.jenjang" class="isian min-h-[38px] w-auto py-1 text-sm" aria-label="Saring jenjang"><option value="">SMP dan SMA</option><option value="wustha">SMP (Wustha)</option><option value="sma">SMA</option></select>
@@ -172,7 +172,7 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
             <div class="min-w-0"><h1 class="text-2xl font-extrabold leading-tight lg:text-4xl">{{ s.judul }}</h1><p class="text-sm text-teks2 lg:text-lg">{{ s.sub }}<template v-if="saringanTeks"> · {{ saringanTeks }}</template></p></div>
             <span class="ml-auto hidden text-sm font-bold text-teks3 sm:block lg:text-lg">{{ i + 1 }}/{{ slide.length }}</span>
           </div>
-          <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:gap-5 xl:grid-cols-4">
+          <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:gap-4 xl:grid-cols-5">
             <component :is="admin ? 'button' : 'div'" v-for="k in s.kartu" :key="k.j" :type="admin ? 'button' : undefined" :class="['kartu-slide', 'w-' + k.w, admin && 'bisa']" :aria-label="admin ? `${k.j}: ${k.v}. Lihat daftar` : undefined" @click="buka(k)">
               <span class="ikon-slide"><component :is="k.i" :size="26" weight="duotone" /></span>
               <span class="angka">{{ k.v }}</span>
@@ -212,6 +212,7 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
             <thead class="sticky top-0 bg-permukaan2 text-teks2"><tr><th class="px-3 py-2 font-bold">No.</th><th v-for="c in daftar.kolom" :key="c[0]" class="px-3 py-2 font-bold">{{ c[1] }}</th></tr></thead>
             <tbody class="divide-y divide-garis">
               <tr v-for="(r, i) in daftar.baris" :key="i"><td class="px-3 py-2 tabular-nums text-teks3">{{ i + 1 }}</td><td v-for="c in daftar.kolom" :key="c[0]" class="px-3 py-2">{{ r[c[0]] ?? '–' }}</td></tr>
+              <tr v-if="daftar.total && daftar.baris.length" class="bg-permukaan2 font-bold"><td /><td v-for="c in daftar.kolom" :key="c[0]" class="px-3 py-2">{{ daftar.total[c[0]] }}</td></tr>
             </tbody>
           </table>
           <p v-if="!daftar.baris.length" class="py-6 text-center text-sm text-teks3">Tidak ada data.</p>
@@ -220,12 +221,13 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
     </LembarBawah>
 
     <DokumenCetak v-if="daftar" kop="pondok" :judul="daftar.judul" :subjudul="`${formatPanjang(pt.data.tanggal)}, pukul ${formatJam(pt.data.waktu)} WITA${saringanTeks ? ' · ' + saringanTeks : ''}`"
-      v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" :mendatar="daftar.kolom.length > 5">
+      v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" :mendatar="daftar.kolom.length > 5 && !daftar.tegak">
       <p style="margin: 0 0 6pt">Jumlah: {{ daftar.baris.length }}</p>
       <table class="tabel kecil">
         <thead><tr><th style="width:5%">No.</th><th v-for="c in daftar.kolom" :key="c[0]" :style="{ width: c[2] + '%' }">{{ c[1] }}</th></tr></thead>
         <tbody>
-          <tr v-for="(r, i) in daftar.baris" :key="i"><td class="tengah">{{ i + 1 }}</td><td v-for="c in daftar.kolom" :key="c[0]">{{ r[c[0]] ?? '–' }}</td></tr>
+          <tr v-for="(r, i) in daftar.baris" :key="i"><td class="tengah">{{ i + 1 }}</td><td v-for="c in daftar.kolom" :key="c[0]" :class="typeof r[c[0]] === 'number' && 'tengah'">{{ r[c[0]] ?? '–' }}</td></tr>
+          <tr v-if="daftar.total && daftar.baris.length"><td /><td v-for="c in daftar.kolom" :key="c[0]" :class="typeof daftar.total[c[0]] === 'number' && 'tengah'">{{ daftar.total[c[0]] }}</td></tr>
           <tr v-if="!daftar.baris.length"><td :colspan="daftar.kolom.length + 1" class="tengah">Tidak ada data.</td></tr>
         </tbody>
       </table>

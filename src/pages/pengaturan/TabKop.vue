@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengaturan/TabKop.vue | v1.0 | Fase 1 – Pengaturan | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/TabKop.vue | v1.1 | Perbaikan: sakelar catatan "Dicetak melalui SIMKA PRO" di kaki dokumen | 14/10/2026 -->
 <script setup>
 // Empat kop surat: pratinjau langsung saat diketik dan cetak uji F4.
 import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
@@ -28,6 +28,17 @@ async function ubah(k) {
   await nextTick(); if (wadah.value) { pengamat.observe(wadah.value); ukur() }
 }
 function tutup() { pengamat?.disconnect(); draf.value = null }
+
+// Catatan "Dicetak melalui SIMKA PRO pada … oleh …" di kaki setiap dokumen cetak
+const simpanCatatan = ref(false)
+async function alihCatatan() {
+  simpanCatatan.value = true
+  try {
+    const v = !lembaga.catatanCetak
+    await lembaga.simpanPengaturan('identitas', { ...lembaga.identitas, catatan_cetak: v })
+    ui.toast(v ? 'Catatan cetak ditampilkan di kaki dokumen.' : 'Catatan cetak tidak ditampilkan.')
+  } catch (e) { ui.toast(e.message, 'galat') } finally { simpanCatatan.value = false }
+}
 
 async function unggah(e, kolom) {
   const berkas = e.target.files?.[0]; e.target.value = ''
@@ -69,6 +80,16 @@ async function cetakUji(k) {
 </script>
 <template>
   <div>
+    <!-- Catatan cetak -->
+    <div v-if="!draf" class="kartu mb-4 flex items-center gap-3 p-4">
+      <div class="min-w-0 flex-1">
+        <p class="font-bold">Catatan cetak di kaki dokumen</p>
+        <p class="text-sm text-teks3">Baris "Dicetak melalui SIMKA PRO pada … pukul … WITA oleh …" di bagian paling bawah setiap halaman dokumen cetak.</p>
+      </div>
+      <button type="button" role="switch" :aria-checked="lembaga.catatanCetak" aria-label="Tampilkan catatan cetak" :disabled="simpanCatatan" @click="alihCatatan"
+        :class="['relative h-8 w-14 shrink-0 rounded-full transition', lembaga.catatanCetak ? 'bg-[#1E7D4F]' : 'bg-garis']">
+        <span :class="['absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all', lembaga.catatanCetak ? 'left-7' : 'left-1']" /></button>
+    </div>
     <!-- Daftar kop -->
     <div v-if="!draf" class="grid gap-4 xl:grid-cols-2">
       <article v-for="k in lembaga.letterheads" :key="k.id" class="kartu overflow-hidden">

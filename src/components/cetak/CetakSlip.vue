@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/CetakSlip.vue | v1.0 | Fase 11 – Tahap 4 Cetak slip gaji F4 (satu atau banyak, satu slip per halaman) | 11/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/CetakSlip.vue | v1.1 | Perbaikan: catatan cetak dapat dinonaktifkan di Pengaturan | 14/10/2026 -->
 <script setup>
 // Slip gaji F4 tegak: kop, judul SLIP GAJI, periode dan nomor; identitas (NIY, nama, jabatan, unit, status, masa kerja,
 // pendidikan, rekening); pendapatan dan potongan dengan subtotal; jumlah diterima beserta terbilang; tanda tangan
@@ -115,7 +115,7 @@ const keterangan = (i) => (i.kategori === 'honor' && i.jumlah != null ? `${Numbe
               <p class="nama">{{ s.data.nama }}</p><p v-if="s.data.niy">NIY. {{ s.data.niy }}</p>
             </div>
           </section>
-          <p class="catatan-cetak">{{ dicetak }}</p>
+          <p v-if="lembaga.catatanCetak" class="catatan-cetak">{{ dicetak }}</p>
           <p v-if="s.kode_validasi" class="catatan-slip">Slip ini ditandatangani secara elektronik melalui SIMKA PRO. Keaslian dapat diperiksa dengan memindai QR
             atau membuka halaman Cek Keabsahan Dokumen dan memasukkan kode validasi <b>{{ s.kode_validasi }}</b>. Dokumen bersifat rahasia.</p>
           <p v-else class="catatan-slip">DRAF – slip belum diterbitkan dan belum ditandatangani.</p>

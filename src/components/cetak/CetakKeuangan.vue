@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/CetakKeuangan.vue | v1.0 | Fase 13 – Cetak kuitansi dan surat tagihan santri F4 (satu dokumen per halaman) | 11/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/CetakKeuangan.vue | v1.1 | Perbaikan: catatan cetak dapat dinonaktifkan di Pengaturan | 14/10/2026 -->
 <script setup>
 // Dokumen keuangan santri, kertas F4 tegak, satu dokumen per halaman (dapat banyak sekaligus):
 //   • KUITANSI      : kop, nomor; telah terima dari, untuk santri, tanggal, cara bayar; rincian per tagihan (tagihan,
@@ -159,7 +159,7 @@ const batal = (d) => d.status === 'batal' || d.status === 'dicabut'
             </section>
           </template>
 
-          <p class="catatan-cetak">{{ dicetak }}</p>
+          <p v-if="lembaga.catatanCetak" class="catatan-cetak">{{ dicetak }}</p>
           <p v-if="d.kode_validasi" class="catatan-keu">{{ kuitansi ? 'Kuitansi' : 'Surat tagihan' }} ini ditandatangani secara elektronik melalui SIMKA PRO. Keaslian dapat diperiksa dengan memindai QR
             atau membuka halaman Cek Keabsahan Dokumen dan memasukkan kode validasi <b>{{ d.kode_validasi }}</b>.</p>
         </article>

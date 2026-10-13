@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/santri.js | v1.6 | Fase 12 – Tahap 1 Biodata rapor santri | 13/10/2026
+// SIMKA PRO | src/lib/santri.js | v1.7 | Perbaikan: penanda tangan kelompok sesuai bidang (ekskul → Kesantrian, rekap lintas jenjang → Direktur) | 14/10/2026
 // Label baku, pembacaan NIS pondok, normalisasi isian, dan kolom templat Excel data santri.
 import { normalJK, normalHP } from './kepegawaian'
 import { supabase, MODE_DEMO } from './supabase'
@@ -159,11 +159,14 @@ const BIDANG_DEMO = {
   kamar: { jabatan: 'Kepala Bidang Kesantrian', nama: 'Ust. Muhammad Ikhsan, S.Pd.I.', niy: '2018010303' },
   halaqah: { jabatan: 'Kepala Bidang Tahfizh', nama: '', niy: '' },
 }
+/** Penanda tangan "Mengetahui" sesuai bidang kelompok: kelas → kepala sekolah jenjangnya; kamar dan ekskul → Kepala Bidang
+ *  Kesantrian; halaqah → Kepala Bidang Tahfizh; lainnya → Direktur. Rekap semua kelas lintas jenjang → Direktur. */
 export async function penandaKelompok(g) {
-  if (g.jenis === 'kelas') return penandaJenjang(g.jenjang)
-  const pola = g.jenis === 'kamar' ? '%Kesantrian%' : g.jenis === 'halaqah' ? '%Tahfizh%' : 'Direktur'
-  const cadang = g.jenis === 'kamar' ? 'Kepala Bidang Kesantrian' : g.jenis === 'halaqah' ? 'Kepala Bidang Tahfizh' : 'Direktur'
-  if (MODE_DEMO) return BIDANG_DEMO[g.jenis] || { jabatan: 'Direktur', nama: 'Siswandi Safari, S.Pd.I., Lc., S.H., M.Ag.', niy: '1983020910201401' }
+  if (g.jenis === 'kelas' && g.jenjang) return penandaJenjang(g.jenjang)
+  const j = g.jenis === 'kelas' ? 'lainnya' : g.jenis
+  const pola = ['kamar', 'ekskul'].includes(j) ? '%Kesantrian%' : j === 'halaqah' ? '%Tahfizh%' : 'Direktur%'
+  const cadang = ['kamar', 'ekskul'].includes(j) ? 'Kepala Bidang Kesantrian' : j === 'halaqah' ? 'Kepala Bidang Tahfizh' : 'Direktur'
+  if (MODE_DEMO) return BIDANG_DEMO[j === 'ekskul' ? 'kamar' : j] || { jabatan: 'Direktur', nama: 'Siswandi Safari, S.Pd.I., Lc., S.H., M.Ag.', niy: '1983020910201401' }
   const { data } = await supabase.from('signatories').select('jabatan_tertulis, nama, niy').eq('aktif', true)
     .ilike('jabatan_tertulis', pola).order('urutan').limit(1).maybeSingle()
   return data ? { jabatan: data.jabatan_tertulis, nama: data.nama, niy: data.niy } : { jabatan: cadang, nama: '', niy: '' }

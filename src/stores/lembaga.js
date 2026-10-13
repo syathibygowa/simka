@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/lembaga.js | v1.1 | Fase 1 – Perbaikan | 03/10/2026
+// SIMKA PRO | src/stores/lembaga.js | v1.2 | Perbaikan: getter catatanCetak (tampil/sembunyi catatan cetak) | 14/10/2026
 // Pengaturan lembaga: identitas, kalender, kop surat, penanda tangan, penomoran, integrasi.
 // Dibaca semua pengguna masuk (kop dan penanda tangan dipakai saat mencetak);
 // diubah hanya oleh superadmin (dijaga RLS di server).
@@ -31,6 +31,8 @@ export const useLembaga = defineStore('lembaga', {
     kop: (s) => (kode) => s.letterheads.find((k) => k.kode === kode),
     penandaTangan: (s) => (id) => s.signatories.find((x) => x.id === id),
     tahunAktif: (s) => s.academic_years.find((t) => t.aktif),
+    /** Catatan "Dicetak melalui SIMKA PRO …" di kaki dokumen cetak (bawaan: tampil). */
+    catatanCetak: (s) => s.identitas?.catatan_cetak !== false,
   },
   actions: {
     async muat(paksa = false) {

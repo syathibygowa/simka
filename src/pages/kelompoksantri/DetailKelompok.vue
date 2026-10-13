@@ -1,14 +1,16 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/DetailKelompok.vue | v1.3 | Perbaikan: tombol kembali ke posisi daftar, cetak absensi harian/pekanan | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/DetailKelompok.vue | v1.4 | Perbaikan: pindah ke kelompok sebelumnya/berikutnya, daftar tanda tangan, calon anggota hanya santri aktif | 14/10/2026 -->
 <script setup>
 // Satu kelompok santri: identitas, pengasuh (utama, pendamping, pengganti bertanggal), grup WA, anggota beserta
 // riwayat pindah, tambah/pindah/keluarkan anggota, naqib halaqah, ekspor Excel, dan cetak daftar F4.
 // v1.3: tombol Kembali (ke tab jenis dan posisi gulir terakhir di daftar), cetak absensi manual harian/pekanan.
+// v1.4: tombol kelompok sebelumnya/berikutnya (jenis sama), cetak daftar hadir tanda tangan; santri nonaktif tidak lagi
+//       muncul sebagai calon anggota.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
 import {
   PhPencilSimple, PhUserCirclePlus, PhUsersThree, PhWhatsappLogo, PhEye, PhDownloadSimple, PhTrash, PhCrown, PhSignOut,
-  PhMagnifyingGlass, PhPlus, PhX, PhClockCounterClockwise, PhCaretRight, PhArrowsLeftRight, PhLink, PhArrowLeft, PhPrinter,
+  PhMagnifyingGlass, PhPlus, PhX, PhClockCounterClockwise, PhCaretRight, PhArrowsLeftRight, PhLink, PhArrowLeft, PhPrinter, PhCaretLeft, PhSignature,
 } from '@phosphor-icons/vue'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import { useSantri } from '@/stores/santri'
@@ -62,7 +64,7 @@ const calon = computed(() => {
   if (!g.value) return []
   const q = cariCalon.value.toLowerCase().trim()
   const sudah = new Set(data.value.aktif.map((a) => a.student_id))
-  return san.daftar.filter((s) => ['aktif', 'nonaktif'].includes(s.status) && !sudah.has(s.id)
+  return san.daftar.filter((s) => s.status === 'aktif' && !sudah.has(s.id)
     && (!g.value.jenis_kelamin || s.jenis_kelamin === g.value.jenis_kelamin)
     && (g.value.jenis !== 'kelas' || (s.tingkat === g.value.tingkat && s.jenjang === g.value.jenjang))
     && (!hanyaBelum.value || !['kelas', 'kamar', 'halaqah'].includes(g.value.jenis) || !kelompokDari(s, g.value.jenis))
@@ -165,11 +167,26 @@ function kembali() {
   else router.push(`/kelompok-santri/${g.value?.jenis || 'kelas'}`)
 }
 const cetakAbs = ref(null)
+// Kelompok sebelumnya/berikutnya dengan jenis sama (urutan seperti di daftar); riwayat diganti agar Kembali tetap ke daftar
+const saudara = computed(() => (g.value ? kel.dariTA.filter((x) => x.jenis === g.value.jenis && (x.aktif || x.id === g.value.id)) : []))
+const posisi = computed(() => saudara.value.findIndex((x) => x.id === id.value))
+const sebelum = computed(() => (posisi.value > 0 ? saudara.value[posisi.value - 1] : null))
+const sesudah = computed(() => (posisi.value >= 0 && posisi.value < saudara.value.length - 1 ? saudara.value[posisi.value + 1] : null))
+const keKelompok = (x) => x && router.replace({ path: `/kelompok-santri/k/${x.id}`, state: { back: window.history.state?.back } })
 </script>
 <template>
   <div v-if="g" class="mx-auto max-w-5xl">
     <div class="layar-saja">
-      <button type="button" class="tombol-garis mb-3 min-h-[40px] px-3 text-sm" @click="kembali"><PhArrowLeft :size="18" weight="bold" /> Kembali ke {{ jk.jamak.toLowerCase() }}</button>
+      <div class="mb-3 flex flex-wrap items-center gap-2">
+        <button type="button" class="tombol-garis min-h-[40px] px-3 text-sm" @click="kembali"><PhArrowLeft :size="18" weight="bold" /> Kembali ke {{ jk.jamak.toLowerCase() }}</button>
+        <div v-if="saudara.length > 1" class="ml-auto flex items-center gap-1 rounded-2xl border border-garis bg-permukaan p-0.5" role="group" :aria-label="`Pindah ${jk.n.toLowerCase()}`">
+          <button type="button" class="flex min-h-[38px] max-w-[42vw] items-center gap-1 rounded-xl px-2 text-sm font-semibold disabled:opacity-40" :disabled="!sebelum" :title="sebelum ? judulKelompok(sebelum) : ''"
+            :aria-label="sebelum ? `${jk.n} sebelumnya: ${judulKelompok(sebelum)}` : `Tidak ada ${jk.n.toLowerCase()} sebelumnya`" @click="keKelompok(sebelum)"><PhCaretLeft :size="16" weight="bold" class="shrink-0" /><span class="truncate">{{ sebelum ? judulKelompok(sebelum) : 'Sebelumnya' }}</span></button>
+          <span class="px-1 text-xs tabular-nums text-teks3">{{ posisi + 1 }}/{{ saudara.length }}</span>
+          <button type="button" class="flex min-h-[38px] max-w-[42vw] items-center gap-1 rounded-xl px-2 text-sm font-semibold disabled:opacity-40" :disabled="!sesudah" :title="sesudah ? judulKelompok(sesudah) : ''"
+            :aria-label="sesudah ? `${jk.n} berikutnya: ${judulKelompok(sesudah)}` : `Tidak ada ${jk.n.toLowerCase()} berikutnya`" @click="keKelompok(sesudah)"><span class="truncate">{{ sesudah ? judulKelompok(sesudah) : 'Berikutnya' }}</span><PhCaretRight :size="16" weight="bold" class="shrink-0" /></button>
+        </div>
+      </div>
       <!-- Identitas kelompok -->
       <section :class="['kartu overflow-hidden', 'w-' + jk.warna]">
         <div class="kepala p-5">
@@ -190,6 +207,7 @@ const cetakAbs = ref(null)
           <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="pratinjau = true"><PhEye :size="18" weight="duotone" /> Cetak daftar</button>
           <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="cetakAbs.buka(g, 'harian')"><PhPrinter :size="18" weight="duotone" /> Absensi harian</button>
           <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="cetakAbs.buka(g, 'pekanan')"><PhPrinter :size="18" weight="duotone" /> Absensi pekanan</button>
+          <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="cetakAbs.buka(g, 'ttd')"><PhSignature :size="18" weight="duotone" /> Daftar tanda tangan</button>
           <button v-if="bolehAtur" class="tombol-garis min-h-[40px] px-3 text-sm" @click="hapus"><PhTrash :size="18" weight="duotone" /> {{ data.aktif.length + data.riwayat.length ? 'Nonaktifkan' : 'Hapus' }}</button>
         </div>
         <p v-if="!g.aktif" class="mx-4 mb-4 rounded-xl bg-permukaan2 p-3 text-sm text-teks2">Kelompok ini nonaktif. Aktifkan lagi lewat Ubah bila diperlukan.</p>

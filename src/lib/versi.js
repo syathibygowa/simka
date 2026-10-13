@@ -1,8 +1,8 @@
-// SIMKA PRO | src/lib/versi.js | v12.6.0 | Perbaikan kelompok santri dan Layar Pantauan | 13/10/2026
+// SIMKA PRO | src/lib/versi.js | v12.7.0 | Perbaikan cetak, kelompok santri, dan Layar Pantauan (10 kartu) | 14/10/2026
 // Nomor versi aplikasi yang tampil di halaman Profil. Naikkan setiap kali kode diunggah ke GitHub.
 // Keterangan versi tampil kepada pengguna, jadi ditulis tanpa kata "Fase".
-export const VERSI_APLIKASI = '12.6.0'
-export const KETERANGAN_VERSI = 'Kelompok santri: warna kartu beragam, cetak rekap kelompok, cetak absensi manual harian/pekanan, tombol kembali, pengaturan pemisahan putra/putri; Layar Pantauan: pindah hari (riwayat akhir hari), slide Perizinan serta Laporan dan Agenda, data pegawai sementara bertugas/cepat pulang/sudah pulang'
+export const VERSI_APLIKASI = '12.7.0'
+export const KETERANGAN_VERSI = 'Catatan cetak di kaki halaman dan dapat dinonaktifkan; kelompok santri: absensi tanggal manual, jam ke, asrama 7 hari, daftar tanda tangan, pindah kelompok sebelumnya/berikutnya; Layar Pantauan: 10 kartu per slide dengan persentase, rekap jumlah kelas/kamar/halaqah, musyrif hadir pagi dan malam'
 
 // Waktu kode dibangun oleh GitHub Actions; dipakai untuk memastikan versi yang tayang adalah yang terbaru.
 /* global __WAKTU_BUILD__ */

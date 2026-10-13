@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/cetak.css | v1.8 | Fase 11 – Tahap 5 Baris jumlah rata kanan pada laporan gaji | 11/10/2026 */
+/* SIMKA PRO | src/styles/cetak.css | v1.9 | Perbaikan: catatan cetak di kaki halaman | 14/10/2026 */
 /* =====================================================================
    SIMKA PRO · Standar cetak dokumen
    Kertas F4 215 × 330 mm, margin 2 cm, garis tabel ½ pt,
@@ -107,6 +107,20 @@
 }
 @media print {
   .dok .catatan-validasi { position: fixed; left: 0; right: 0; bottom: 0; margin: 0; background: #fff; }
+}
+/* Perbaikan v12.7: catatan "Dicetak melalui SIMKA PRO …" sebagai kaki halaman paling bawah (berulang di setiap halaman cetak).
+   Bila ada catatan validasi, catatan validasi tepat di atasnya. */
+.dok:has(.kaki-cetak) .ruang-kaki { height: 7mm; }
+.dok:has(.kaki-cetak):has(.catatan-validasi) .ruang-kaki { height: 21mm; }
+@media screen {
+  .dok .kaki-cetak { position: absolute; left: 20mm; right: 20mm; bottom: 10mm; margin: 0; }
+  .lembar-f4:has(.kaki-cetak) { padding-bottom: 26mm; }
+  .dok:has(.kaki-cetak) .catatan-validasi { bottom: 16mm; }
+  .lembar-f4:has(.kaki-cetak):has(.catatan-validasi) { padding-bottom: 40mm; }
+}
+@media print {
+  .dok .kaki-cetak { position: fixed; left: 0; right: 0; bottom: 0; margin: 0; padding-top: 2pt; background: #fff; }
+  .dok:has(.kaki-cetak) .catatan-validasi { bottom: 6mm; }
 }
 /* Fase 8: rekap matriks kehadiran (nama × tanggal) pada F4 mendatar */
 .dok table.tabel.matriks-cetak { font-size: 6.5pt; }

@@ -1,4 +1,5 @@
-// SIMKA PRO | src/stores/pantauan.js | v1.2 | Perbaikan: pantauan per tanggal, data pegawai pulang/bertugas, slide tambahan | 13/10/2026
+// SIMKA PRO | src/stores/pantauan.js | v1.3 | Perbaikan: data contoh sesi pegawai, rekap kelompok, asrama pagi | 14/10/2026
+// v1.3: muatan memuat pegawai_sesi (kehadiran pegawai per sesi kerja) dan grup (rekap kelompok aktif L/P dan pengasuh).
 // v1.2: muat(tanggal) — hari sebelumnya = keadaan pada akhir hari itu (23.59 WITA); Realtime/berkala hanya untuk hari ini.
 // Pantauan Langsung (Blueprint Bagian 28): satu muatan kondisi hari ini (santri, pegawai, sesi kegiatan, Security),
 // diperbarui langsung lewat Realtime (ditunda 4 detik agar tidak beruntun) dan disegarkan berkala tiap 60 detik.
@@ -16,7 +17,7 @@ async function demo(tanggal) {
   const nama = (id, j) => kel.anggota.filter((a) => a.student_id === id && !a.selesai).map((a) => kel.kelompok.find((g) => g.id === a.group_id)).filter((g) => g?.jenis === j).map((g) => g.nama).join(', ') || null
   const santri = san.daftar.filter((s) => s.status === 'aktif').map((s, i) => ({ id: s.id, nama: s.nama_lengkap, nis: s.nis, jk: s.jenis_kelamin, jenjang: s.jenjang,
     kelas: nama(s.id, 'kelas'), kamar: nama(s.id, 'kamar'), halaqah: nama(s.id, 'halaqah'), ekskul: nama(s.id, 'ekskul'), kelas_sesi: 4, kelas_tidak: i % 9 === 0 ? 4 : i % 7 === 0 ? 1 : 0,
-    sesi: { 'halaqah:subuh': { n: 'Halaqah subuh', k: i % 8 === 0 ? 'I' : 'H' }, 'halaqah:sore': { n: 'Halaqah sore', k: i % 6 === 0 ? 'A' : 'H' }, 'asrama:malam': { n: 'Asrama malam', k: i % 9 === 0 ? 'S' : 'H' } },
+    sesi: { 'halaqah:subuh': { n: 'Halaqah subuh', k: i % 8 === 0 ? 'I' : 'H' }, 'halaqah:sore': { n: 'Halaqah sore', k: i % 6 === 0 ? 'A' : 'H' }, 'asrama:pagi': { n: 'Asrama pagi', k: i % 11 === 0 ? 'A' : 'H' }, 'asrama:malam': { n: 'Asrama malam', k: i % 9 === 0 ? 'S' : 'H' } },
     sakit: i % 9 === 0 ? (i % 2 ? 'Dirawat di klinik' : 'Istirahat (sakit)') : null,
     luar: i === 3 ? { jenis: 'pulang', alasan: 'Keluarga sakit', keluar: new Date(Date.now() - 86400000).toISOString(), batas: new Date(Date.now() - 3600000).toISOString(), terlambat: true }
       : i === 5 ? { jenis: 'keluar', alasan: 'Mengurus KTP', keluar: new Date(Date.now() - 7200000).toISOString(), batas: new Date(Date.now() + 7200000).toISOString(), terlambat: false } : null }))
@@ -34,7 +35,7 @@ async function demo(tanggal) {
     cepat_menit: i === 6 ? 25 : null, sudah_pulang: ST[i] === 'libur' || (['hadir', 'terlambat'].includes(ST[i]) && (lalu || i % 3 === 0)) }))
   const sesi = kel.kelompok.filter((g) => ['kelas', 'halaqah', 'kamar', 'ekskul'].includes(g.jenis)).flatMap((g, i) => {
     const j = g.jenis === 'kamar' ? 'asrama' : g.jenis
-    const daftar = j === 'halaqah' ? [['Halaqah subuh', '04:45'], ['Halaqah sore', '16:00']] : j === 'asrama' ? [['Asrama malam', '21:00']] : j === 'kelas' ? [['Jam 1–4', '07:30'], ['Jam 5–8', '10:30']] : [['Ekskul', '15:30']]
+    const daftar = j === 'halaqah' ? [['Halaqah subuh', '04:45'], ['Halaqah sore', '16:00']] : j === 'asrama' ? [['Asrama pagi', '05:30'], ['Asrama malam', '21:00']] : j === 'kelas' ? [['Jam 1–4', '07:30'], ['Jam 5–8', '10:30']] : [['Ekskul', '15:30']]
     return daftar.map(([s, jam], k) => ({ group_id: g.id, jenis: j, kelompok: g.nama, jk: g.jenis_kelamin, jenjang: g.jenjang, sesi: s, jam_mulai: jam,
       status: (i + k) % 5 === 0 ? 'tidak_terisi' : (i + k) % 4 === 0 ? 'belum_buka' : 'terisi', hadir: 18, anggota: 20, pengampu: NAMA[(i + k) % NAMA.length] }))
   })
@@ -66,7 +67,16 @@ async function demo(tanggal) {
   const agenda = [{ id: 'ag1', judul: 'Rapat koordinasi wali kelas', jenis: 'rapat', jam_mulai: '13:30', jam_selesai: '15:00', lokasi: 'Aula', sasaran: 'Wali kelas' }]
   const ujian = [{ id: 'uj1', jenis: 'kenaikan', juz: 5, nama: sx(2).nama, nis: sx(2).nis, jk: sx(2).jk, jenjang: sx(2).jenjang, kelas: sx(2).kelas, halaqah: sx(2).halaqah, status: 'selesai', hasil: 'tuntas', nilai: 86, jadwal: iso(4), penguji: NAMA[1] },
     { id: 'uj2', jenis: 'sertifikasi', juz: null, jenjang_sertifikasi: 5, nama: sx(4).nama, nis: sx(4).nis, jk: sx(4).jk, jenjang: sx(4).jenjang, kelas: sx(4).kelas, halaqah: sx(4).halaqah, status: 'dijadwalkan', hasil: null, nilai: null, jadwal: iso(-2), penguji: NAMA[5] }]
-  return { tanggal: tgl, waktu: lalu ? `${tgl}T23:59:59+08:00` : new Date().toISOString(), lalu, santri, pegawai, sesi, bidang: BID, klinik, hafalan, kelompok, pelajaran, izin, lapor, agenda, ujian,
+  const stSesi = (st, k) => (['izin', 'sakit', 'cuti', 'dinas_luar'].includes(st) ? st : st === 'libur' ? null : st === 'belum' ? (k ? 'akan_datang' : 'belum') : k && st === 'terlambat' ? 'hadir' : st)
+  const pegawai_sesi = Object.fromEntries(pegawai.filter((p) => p.status !== 'libur').map((p, i) => [p.id, p.musyrif
+    ? [{ n: 'Asrama pagi', mulai: '05:00', st: stSesi(p.status, 0) }, { n: 'Asrama malam', mulai: '20:00', st: lalu ? (i % 3 ? 'hadir' : 'tanpa_keterangan') : stSesi(p.status, 1) }]
+    : [{ n: 'Sekolah', mulai: '07:00', st: stSesi(p.status, 0) }]]))
+  const grup = kel.kelompok.filter((g) => g.aktif !== false && ['kelas', 'kamar', 'halaqah', 'ekskul'].includes(g.jenis)).map((g) => {
+    const ang = kel.anggota.filter((a) => a.group_id === g.id && !a.selesai).map((a) => santri.find((x) => x.id === a.student_id)).filter(Boolean)
+    return { id: g.id, jenis: g.jenis, nama: g.nama, jk: g.jenis_kelamin, jenjang: g.jenjang, tingkat: g.tingkat, pengasuh: (g.pengasuh || []).map((x) => x.nama).join(', ') || null,
+      l: ang.filter((x) => x.jk === 'L').length, p: ang.filter((x) => x.jk === 'P').length }
+  })
+  return { tanggal: tgl, waktu: lalu ? `${tgl}T23:59:59+08:00` : new Date().toISOString(), lalu, santri, pegawai, pegawai_sesi, grup, sesi, bidang: BID, klinik, hafalan, kelompok, pelajaran, izin, lapor, agenda, ujian,
     security: { gerbang: d.log_hari_ini.map((l) => ({ ...l, jk: 'L', jenjang: 'wustha' })), titipan: await sc.daftarTitipan('semua', '2000-01-01', '2100-01-01'),
       tamu: await sc.daftarTamu('semua', '2000-01-01', '2100-01-01'), kunjungan: await sc.daftarKunjungan('semua', '2000-01-01', '2100-01-01') } }
 }

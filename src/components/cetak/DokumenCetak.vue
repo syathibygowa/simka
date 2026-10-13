@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/DokumenCetak.vue | v1.5 | Fase 10 – Perbaikan: catatan tanda tangan elektronik di kaki halaman | 11/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/DokumenCetak.vue | v1.6 | Perbaikan: catatan "Dicetak melalui SIMKA PRO" di kaki halaman, dapat dinonaktifkan | 14/10/2026 -->
 <script setup>
 // Kerangka dokumen cetak F4: kop surat, judul, isi (slot), tanda tangan, catatan cetak.
 // Pratinjau tampil sebagai jendela munculan (pop-up) dengan tombol Cetak dan Tutup.
@@ -57,7 +57,7 @@ const cetak = () => window.print()
             <p v-if="subjudul" class="subjudul-dok">{{ subjudul }}</p>
             <slot />
             <slot name="ttd" />
-            <p v-if="!tanpaCatatan" class="catatan-cetak">{{ dicetak }}</p>
+            <p v-if="!tanpaCatatan && lembaga.catatanCetak" class="catatan-cetak kaki-cetak">{{ dicetak }}</p>
           </td></tr></tbody><tfoot><tr><td><div class="ruang-kaki" /></td></tr></tfoot></table>
         </article>
       </div>

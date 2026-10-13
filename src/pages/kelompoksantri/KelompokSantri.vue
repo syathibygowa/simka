@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/KelompokSantri.vue | v1.2 | Perbaikan: warna kartu, cetak rekap dan absensi, pemisahan putra/putri | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/KelompokSantri.vue | v1.3 | Perbaikan: absensi hanya di rincian kelompok, penanda tangan rekap sesuai bidang | 14/10/2026 -->
 <script setup>
 // Pengaturan kelompok santri: kelas, kamar, halaqah, ekskul, lainnya per tahun ajaran (tab berwarna).
 // Admin ber-izin kelompok_santri mengatur; pengasuh melihat kelompok asuhannya; pimpinan melihat semua.
@@ -15,12 +15,11 @@ import {
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
-import { JENIS_KELOMPOK, PERAN_PENGASUH, subjudulKelompok, namaKelompok, kelompokDari, JENJANG_PENDEK, judulKelompok } from '@/lib/santri'
+import { JENIS_KELOMPOK, PERAN_PENGASUH, subjudulKelompok, namaKelompok, kelompokDari, JENJANG_PENDEK, judulKelompok, penandaKelompok } from '@/lib/santri'
 import { formatPendek } from '@/lib/tanggal'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarKelompok from './LembarKelompok.vue'
-import CetakAbsensiKelompok from './CetakAbsensiKelompok.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -54,9 +53,14 @@ const ui = useUI()
 const WARNA = ['laporan', 'tahfizh', 'presensi', 'agenda', 'santri', 'gurumapel', 'ekskul', 'walikelas', 'musyrif', 'jadwal', 'pengajuan', 'penilaian', 'rapor', 'keuangan', 'kelompoksantri', 'pengumuman']
 const warnaKartu = (i) => WARNA[(i + Object.keys(JENIS_KELOMPOK).indexOf(jenis.value) * 3) % WARNA.length]
 // ---------- Cetak absensi dan rekap ----------
-const cetakAbs = ref(null)
 const pratinjauRekap = ref(false)
-const penandaRekap = { jabatan: 'Kepala Bidang Kesantrian', nama: '', niy: '' }
+const penandaRekap = ref({ jabatan: '', nama: '', niy: '' })
+// Mengetahui: kepala bidang sesuai jenis (kelas satu jenjang → kepala sekolahnya; kelas lintas jenjang → Direktur)
+async function bukaRekap() {
+  const jenjang = [...new Set(dariJenis.value.filter((g) => g.aktif).map((g) => g.jenjang))]
+  penandaRekap.value = await penandaKelompok({ jenis: jenis.value, jenjang: jenis.value === 'kelas' && jenjang.length === 1 ? jenjang[0] : null }).catch(() => ({ jabatan: 'Pimpinan', nama: '', niy: '' }))
+  pratinjauRekap.value = true
+}
 const totalRekap = computed(() => dariJenis.value.filter((g) => g.aktif).reduce((t, g) => ({ l: t.l + (g.jumlah_l || 0), p: t.p + (g.jumlah_p || 0), n: t.n + (g.jumlah || 0) }), { l: 0, p: 0, n: 0 }))
 const JK_NAMA = { L: 'Putra', P: 'Putri' }
 // ---------- Pemisahan putra/putri (superadmin dan admin ber-izin) ----------
@@ -122,7 +126,7 @@ function eksporPembagian() {
     <div v-if="lihatSemua" class="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
       <router-link v-if="bolehAtur && !terkunci" to="/kelompok-santri/impor" class="w-gaji tombol-garis shrink-0 px-4 text-sm"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Impor pembagian</router-link>
       <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="eksporPembagian"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor pembagian</button>
-      <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjauRekap = true"><PhPrinter :size="20" weight="duotone" style="color: var(--c)" /> Cetak rekap {{ JENIS_KELOMPOK[jenis].jamak.toLowerCase() }}</button>
+      <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="bukaRekap"><PhPrinter :size="20" weight="duotone" style="color: var(--c)" /> Cetak rekap {{ JENIS_KELOMPOK[jenis].jamak.toLowerCase() }}</button>
       <button v-if="bolehPengaturan" class="w-penilaian tombol-garis shrink-0 px-4 text-sm" @click="bukaPisah"><PhGenderIntersex :size="20" weight="duotone" style="color: var(--c)" /> Pemisahan putra/putri</button>
       <label class="tombol-garis shrink-0 cursor-pointer px-4 text-sm"><input v-model="tampilNonaktif" type="checkbox" class="h-4 w-4 accent-[#0B7F81]" /> Tampilkan nonaktif</label>
     </div>
@@ -171,10 +175,6 @@ function eksporPembagian() {
             <span v-else class="font-semibold text-merah">{{ JENIS_KELOMPOK[g.jenis].pengasuh }} belum ditetapkan</span>
           </div>
         </router-link>
-        <div class="flex gap-2 border-t border-garis px-4 py-2.5">
-          <button type="button" class="tombol-garis min-h-[36px] flex-1 px-2 text-xs" :aria-label="`Cetak absensi harian ${judulKelompok(g)}`" @click="cetakAbs.buka(g, 'harian')"><PhPrinter :size="16" style="color: var(--c)" /> Absensi harian</button>
-          <button type="button" class="tombol-garis min-h-[36px] flex-1 px-2 text-xs" :aria-label="`Cetak absensi pekanan ${judulKelompok(g)}`" @click="cetakAbs.buka(g, 'pekanan')"><PhPrinter :size="16" style="color: var(--c)" /> Pekanan</button>
-        </div>
       </li>
     </ul>
     <p v-if="!dariJenis.length && !kel.memuat" class="kartu mt-4 py-10 text-center text-sm text-teks3">
@@ -184,7 +184,6 @@ function eksporPembagian() {
 
     <TombolAksi v-if="bolehAtur && !terkunci" label="Tambah" :ikon="PhPlus" warna="kelompoksantri" @klik="lembar = true" />
     <LembarKelompok v-model="lembar" :jenis="jenis" @tersimpan="(id) => router.push(`/kelompok-santri/k/${id}`)" />
-    <CetakAbsensiKelompok ref="cetakAbs" />
 
     <LembarBawah v-model="lembarPisah" judul="Pemisahan putra/putri">
       <div class="space-y-3 pb-2">
@@ -212,7 +211,7 @@ function eksporPembagian() {
             <td>{{ utama(g).map((p) => p.nama).join(', ') || '–' }}</td><td class="tengah">{{ g.jumlah_l || 0 }}</td><td class="tengah">{{ g.jumlah_p || 0 }}</td><td class="tengah">{{ g.jumlah || 0 }}</td></tr>
           <tr><td colspan="4" class="tengah" style="font-weight: 700">Jumlah</td><td class="tengah">{{ totalRekap.l }}</td><td class="tengah">{{ totalRekap.p }}</td><td class="tengah">{{ totalRekap.n }}</td></tr>
         </tbody></table>
-      <template #ttd><TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: penandaRekap.jabatan, nama: '' }" :kanan="{ jabatan: sesi.pengguna?.jabatan || 'Pencetak', nama: sesi.pengguna?.nama_lengkap || '' }" /></template>
+      <template #ttd><TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: penandaRekap.jabatan, nama: penandaRekap.nama, niy: penandaRekap.niy }" :kanan="{ jabatan: sesi.pengguna?.jabatan || 'Pencetak', nama: sesi.pengguna?.nama_lengkap || '' }" /></template>
     </DokumenCetak>
   </div>
 </template>

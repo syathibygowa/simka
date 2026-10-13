@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/TandaTangan.vue | v1.4 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/TandaTangan.vue | v1.5 | Perbaikan: tanggal kosong untuk ditulis tangan | 14/10/2026 -->
 <script setup>
 // Kolom tanda tangan sejajar: kiri pimpinan/atasan, kanan pegawai terkait.
 // Kolom kanan memuat tempat dan tanggal dokumen.
@@ -14,6 +14,7 @@ const props = defineProps({
   kanan: { type: Object, required: true },  // { jabatan, nama, niy, elektronik, kode, waktu }
   kota: { type: String, default: '' },  // bawaan: kota surat dari Setelan → Identitas
   tanggal: String,                           // yyyy-mm-dd; bawaan hari ini
+  tanggalManual: Boolean,                    // tanggal dikosongkan (titik-titik) untuk ditulis tangan
 })
 const kotaSurat = computed(() => props.kota || lembaga.identitas?.kota_surat || 'Gowa')
 const qr = (s) => (s?.kode ? svgQR(alamatCek(s.kode)) : '')
@@ -23,7 +24,7 @@ const waktuEl = (s) => (s?.waktu ? `${formatPendek(s.waktu)} ${formatJam(s.waktu
   <section class="ttd">
     <div v-for="(s, i) in [kiri, kanan]" :key="i">
       <p v-if="i === 0">{{ s.pengantar || 'Mengetahui,' }}</p>
-      <p v-else>{{ kotaSurat }}, {{ formatPanjang(tanggal || new Date()) }}</p>
+      <p v-else>{{ kotaSurat }}, {{ tanggalManual ? '..................................' : formatPanjang(tanggal || new Date()) }}</p>
       <p>{{ s.jabatan }}</p>
       <div class="ruang">
         <div v-if="s.kode" class="ttd-qr">
