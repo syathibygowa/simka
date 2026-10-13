@@ -175,7 +175,7 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
           <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:gap-4 xl:grid-cols-5">
             <component :is="admin ? 'button' : 'div'" v-for="k in s.kartu" :key="k.j" :type="admin ? 'button' : undefined" :class="['kartu-slide', 'w-' + k.w, admin && 'bisa']" :aria-label="admin ? `${k.j}: ${k.v}. Lihat daftar` : undefined" @click="buka(k)">
               <span class="ikon-slide"><component :is="k.i" :size="26" weight="duotone" /></span>
-              <span class="angka">{{ k.v }}</span>
+              <span :class="['angka', String(k.v).length > 7 && 'panjang']">{{ k.v }}</span>
               <span class="judul">{{ k.j }}</span>
               <span class="ket">{{ k.ket }}</span>
             </component>
@@ -252,7 +252,8 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
 .kartu-slide.bisa:hover { transform: translateY(-2px); box-shadow: inset 4px 0 0 var(--c), 0 10px 24px -14px var(--c); }
 .ikon-slide { display: grid; place-items: center; height: 2.75rem; width: 2.75rem; border-radius: .9rem; color: #fff; margin-bottom: .5rem;
   background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 65%, #000)); }
-.angka { font-size: clamp(1.8rem, 3.6vw, 3.6rem); font-weight: 800; line-height: 1.05; color: var(--c); font-variant-numeric: tabular-nums; }
+.angka { font-size: clamp(1.8rem, 3.6vw, 3.6rem); font-weight: 800; line-height: 1.05; color: var(--c); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.angka.panjang { font-size: clamp(1.5rem, 2.6vw, 2.7rem); }
 .judul { font-size: clamp(.9rem, 1.25vw, 1.35rem); font-weight: 700; line-height: 1.25; }
 .ket { font-size: clamp(.72rem, .95vw, 1rem); color: rgb(var(--teks-2)); line-height: 1.3; }
 .panah { position: absolute; top: 50%; transform: translateY(-50%); display: none; height: 3rem; width: 3rem; place-items: center; border-radius: 999px;

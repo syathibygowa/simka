@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jurnal/Jurnal.vue | v1.1 | Fase 4 – Tahap 5 Jadwal pelajaran dan jurnal mengajar | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/Jurnal.vue | v1.2 | Perbaikan: tab Jurnal mengajar tampil untuk setiap guru yang mengajar | 14/10/2026 -->
 <script setup>
 // Jurnal harian pegawai. Tab: Jurnal saya (semua pegawai), Verval (admin ber-izin verval_jurnal),
 // Rekap (pegawai: dirinya; pimpinan: anggota unit; admin: semua), Template ceklist (admin ber-izin atur_jurnal).
@@ -16,7 +16,7 @@ const props = defineProps({ tab: { type: String, default: 'harian' } })
 const router = useRouter(); const route = useRoute(); const sesi = useSesi()
 const TAB = computed(() => [
   { k: 'harian', n: 'Jurnal saya', ikon: PhNotebook, w: 'tatausaha' },
-  (sesi.tingkat('jadwal_mengajar') >= 2 || sesi.isAdmin) && { k: 'mengajar', n: 'Jurnal mengajar', ikon: PhChalkboardTeacher, w: 'jadwal' },
+  (sesi.tugas?.mengajar || sesi.tingkat('jadwal_mengajar') >= 2 || sesi.isAdmin) && { k: 'mengajar', n: 'Jurnal mengajar', ikon: PhChalkboardTeacher, w: 'jadwal' },
   sesi.bolehAdmin('verval_jurnal') && { k: 'verval', n: 'Verval kegiatan', ikon: PhSealCheck, w: 'verval' },
   { k: 'rekap', n: 'Rekap dan laporan', ikon: PhChartBar, w: 'rekap' },
   sesi.bolehAdmin('atur_jurnal') && { k: 'template', n: 'Template ceklist', ikon: PhListChecks, w: 'pengaturan' },

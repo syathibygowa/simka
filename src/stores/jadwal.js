@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/jadwal.js | v1.1 | Fase 4 – Slot mengajar untuk menu Guru Mapel dan Wali Kelas | 12/10/2026
+// SIMKA PRO | src/stores/jadwal.js | v1.2 | Jurnal mengajar rinci: jadwal sepekan, peserta pelajaran, pengaturan jurnal | 14/10/2026
 // Mata pelajaran, jam pelajaran, penugasan mengajar, jadwal pelajaran per kelas/guru, jurnal mengajar, dan rekap.
 // Penulisan lewat fungsi SQL (hak atur_jadwal; guru menulis jurnal dan rencana materinya sendiri).
 import { defineStore } from 'pinia'
@@ -8,13 +8,18 @@ import { dataKelompokDemo } from '@/lib/demoKelompok'
 import { pesanGalat } from './lembaga'
 import { useSesi } from './sesi'
 import { useKelompokSantri } from './kelompokSantri'
+import { useSantri } from './santri'
 
 const rpc = async (nama, arg) => { const { data, error } = await supabase.rpc(nama, arg); if (error) throw new Error(pesanGalat(error)); return data }
 const j5 = (t) => String(t || '').slice(0, 5)
 const idSaya = () => (MODE_DEMO ? 'p1' : useSesi().pengguna?.id)
 
+export const ATUR_JURNAL_DEMO = { batas_hari: 1, absen_santri: true,
+  metode: ['Ceramah', 'Tanya jawab', 'Diskusi', 'Demonstrasi', 'Praktik', 'Penugasan', 'Presentasi', 'Talaqqi/hafalan', 'Proyek', 'Permainan'],
+  media: ['Papan tulis', 'Buku paket', 'Kitab', 'Lembar kerja', 'Proyektor/LCD', 'Video', 'Alat peraga', 'Lingkungan sekitar'] }
+
 export const useJadwal = defineStore('jadwal', {
-  state: () => ({ mapel: [], jam: [], penugasan: [], jadwal: [], memuat: false, dimuat: false }),
+  state: () => ({ mapel: [], jam: [], penugasan: [], jadwal: [], memuat: false, dimuat: false, aturJurnal: null }),
   getters: {
     jamUntuk: (s) => (jenjang, jenisHari) => s.jam.filter((p) => p.jenjang === jenjang && p.jenis_hari === jenisHari).sort((a, b) => a.urutan - b.urutan),
     cariMapel: (s) => (id) => s.mapel.find((m) => m.id === id),
@@ -88,7 +93,7 @@ export const useJadwal = defineStore('jadwal', {
         const d = dataJadwalDemo(); const kel = useKelompokSantri(); await kel.muat()
         const dow = new Date(`${tanggal}T12:00:00+08:00`).getUTCDay(); if (dow === 0) return []
         return d.jadwal.filter((s) => s.employee_id === idSaya() && s.hari === dow).map((s) => {
-          const t = d.penugasan.find((x) => x.id === s.assignment_id); const p = d.jam.find((x) => x.id === s.period_id); const g = kel.cari(t.group_id)
+          const t = d.penugasan.find((x) => x.id === s.assignment_id); const p = d.jam.find((x) => x.id === s.period_id); const g = kel.cari(t.group_id) || dataKelompokDemo([]).kelompok.find((x) => x.id === t.group_id)
           const jr = d.jurnal.find((x) => x.assignment_id === t.id && x.tanggal === tanggal && x.period_id === p.id)
           const pakai = new Set(d.jurnal.filter((x) => x.tanggal !== tanggal).map((x) => x.plan_id))
           return { assignment_id: t.id, period_id: p.id, jam_ke: p.nama, jam_mulai: p.jam_mulai, jam_selesai: p.jam_selesai, group_id: t.group_id, kelas: g?.nama, jenjang: g?.jenjang,
@@ -97,6 +102,38 @@ export const useJadwal = defineStore('jadwal', {
         }).sort((a, b) => a.jam_mulai.localeCompare(b.jam_mulai))
       }
       return (await rpc('jadwal_mengajar', { p_tanggal: tanggal })) || []
+    },
+    /** Jadwal mengajar Senin–Sabtu pekan yang memuat tanggal: [{ tanggal, libur, terbuka, slot: [...] }]. */
+    async jadwalPekan(tanggal) {
+      if (MODE_DEMO) {
+        const d0 = new Date(`${tanggal}T12:00:00+08:00`); d0.setUTCDate(d0.getUTCDate() - ((d0.getUTCDay() + 6) % 7))
+        const batas = this.aturJurnal?.batas_hari ?? 1; const hari = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10); const hasil = []
+        for (let i = 0; i < 6; i++) {
+          const t = new Date(d0.getTime() + i * 864e5).toISOString().slice(0, 10)
+          const sel = Math.round((new Date(`${hari}T12:00:00Z`) - new Date(`${t}T12:00:00Z`)) / 864e5); const terbuka = sel >= 0 && sel <= batas
+          hasil.push({ tanggal: t, libur: false, terbuka, slot: (await this.jadwalMengajar(t)).map((x) => ({ ...x, tanggal: t, terbuka })) })
+        }
+        return hasil
+      }
+      return (await rpc('jadwal_mengajar_pekan', { p_tanggal: tanggal, p_emp: null })) || []
+    },
+    /** Santri kelas pada tanggal itu; kode_kelas = sudah tercatat tidak hadir di absensi kelas harian. */
+    async peserta(assignment, tanggal) {
+      if (MODE_DEMO) {
+        const d = dataJadwalDemo(); const t = d.penugasan.find((x) => x.id === assignment); const san = useSantri(); await san.muat(); const kel = dataKelompokDemo(san.daftar)
+        return kel.anggota.filter((a) => a.group_id === t?.group_id && !a.selesai).map((a) => san.cari(a.student_id)).filter(Boolean)
+          .map((s, i) => ({ id: s.id, nis: s.nis, nama: s.nama_lengkap, jk: s.jenis_kelamin, kode_kelas: i === 1 ? 'S' : null, sakit: i === 1, izin: false }))
+          .sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
+      }
+      return (await rpc('peserta_pelajaran', { p_assignment: assignment, p_tanggal: tanggal })) || []
+    },
+    async muatAturJurnal() {
+      if (MODE_DEMO) { this.aturJurnal = this.aturJurnal || { ...ATUR_JURNAL_DEMO }; return this.aturJurnal }
+      this.aturJurnal = await rpc('pengaturan_jurnal_mengajar'); return this.aturJurnal
+    },
+    async simpanAturJurnal(p) {
+      if (MODE_DEMO) { this.aturJurnal = { ...this.aturJurnal, ...p }; return this.aturJurnal }
+      this.aturJurnal = await rpc('simpan_pengaturan_jurnal_mengajar', { p }); return this.aturJurnal
     },
     async simpanJurnal(tanggal, entri) {
       if (MODE_DEMO) { const d = dataJadwalDemo(); for (const e of entri) { d.jurnal = d.jurnal.filter((x) => !(x.assignment_id === e.assignment_id && x.tanggal === tanggal && x.period_id === e.period_id)); d.jurnal.push({ ...e, id: 'j' + Math.random(), tanggal }) } return entri.length }

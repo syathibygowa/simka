@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/pantauan.js | v1.3 | Perbaikan: data contoh sesi pegawai, rekap kelompok, asrama pagi | 14/10/2026
+// SIMKA PRO | src/stores/pantauan.js | v1.4 | Data contoh slide unit kerja (wali kelas, guru mapel, dokumen, persuratan, keuangan, administrasi pegawai) | 14/10/2026
 // v1.3: muatan memuat pegawai_sesi (kehadiran pegawai per sesi kerja) dan grup (rekap kelompok aktif L/P dan pengasuh).
 // v1.2: muat(tanggal) — hari sebelumnya = keadaan pada akhir hari itu (23.59 WITA); Realtime/berkala hanya untuk hari ini.
 // Pantauan Langsung (Blueprint Bagian 28): satu muatan kondisi hari ini (santri, pegawai, sesi kegiatan, Security),
@@ -8,6 +8,7 @@ import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { pesanGalat } from './lembaga'
 import { useSantri } from './santri'
 import { useSecurity } from './security'
+import { useSesi } from './sesi'
 import { dataKelompokDemo } from '@/lib/demoKelompok'
 
 const TABEL = ['teaching_journals', 'incident_reports', 'leave_requests', 'tahfizh_exams', 'memorization_logs', 'attendances', 'student_attendance_sessions', 'student_attendance_exceptions', 'clinic_cases', 'student_permits', 'gate_logs', 'parcels', 'guest_logs', 'parent_visits']
@@ -74,9 +75,38 @@ async function demo(tanggal) {
   const grup = kel.kelompok.filter((g) => g.aktif !== false && ['kelas', 'kamar', 'halaqah', 'ekskul'].includes(g.jenis)).map((g) => {
     const ang = kel.anggota.filter((a) => a.group_id === g.id && !a.selesai).map((a) => santri.find((x) => x.id === a.student_id)).filter(Boolean)
     return { id: g.id, jenis: g.jenis, nama: g.nama, jk: g.jenis_kelamin, jenjang: g.jenjang, tingkat: g.tingkat, pengasuh: (g.pengasuh || []).map((x) => x.nama).join(', ') || null,
+      pengasuh_ids: (g.pengasuh || []).map((x, i) => 'p' + ((g.nama.length + i) % 14)),
       l: ang.filter((x) => x.jk === 'L').length, p: ang.filter((x) => x.jk === 'P').length }
   })
-  return { tanggal: tgl, waktu: lalu ? `${tgl}T23:59:59+08:00` : new Date().toISOString(), lalu, santri, pegawai, pegawai_sesi, grup, sesi, bidang: BID, klinik, hafalan, kelompok, pelajaran, izin, lapor, agenda, ujian,
+  // ---------- Slide unit kerja ----------
+  const kelasAbsen = santri.filter((x) => x.kelas_tidak > 0).map((x, i) => ({ id: x.id, kode: ['S', 'I', 'A', 'B'][i % 4], sesi: 'Kelas pagi', ket: null }))
+  const mapel = { guru: pegawai.filter((p, i) => i % 2 === 0 && p.status !== 'libur').map((p) => p.id),
+    absen: santri.slice(0, 3).map((x, i) => ({ id: x.id, kode: ['B', 'S', 'T'][i], mapel: MAPEL[i], kelas: x.kelas, jp: `Jam ke-${i + 2}`, guru: NAMA[i] })), diabsen: 9,
+    bulan: { total: 184, terlaksana: 171, tidak: 5, rinci: 120 } }
+  const dokumen = { sah: 342, draf: 4, dicabut_bulan: 2, dicek_hari: 7,
+    terbit: [['Surat Keputusan', 'SK/012/PPTQ-IAS/X/2026', 'Pengangkatan wali kelas'], ['Slip Gaji', null, 'September 2026'], ['Kuitansi', 'KW/0915/X/2026', 'SPP Oktober'], ['Surat Keterangan', 'SKet/044/X/2026', 'Aktif mengajar']]
+      .map(([jenis, nomor, perihal], i) => ({ id: 'd' + i, jenis, nomor, perihal, subjek: null, status: 'sah', waktu: iso(i * 20 + 1), hari_ini: i < 2 })),
+    menunggu_ttd: [{ jenis: 'Surat Tugas', nomor: null, perihal: 'Pendamping lomba MTQ', penanda: 'Siswandi Safari, S.Pd.I., Lc., S.H., M.Ag.', jabatan: 'Direktur' }],
+    berkas: [{ judul: 'SK Pembagian Tugas 2026/2027', kategori: 'sk', sasaran: 'Semua pegawai', berlaku_sampai: null, target: 14, dibuka: 11 },
+      { judul: 'Formulir Cuti Tahunan', kategori: 'formulir', sasaran: 'Semua pegawai', berlaku_sampai: tgl, target: 14, dibuka: 6 }] }
+  const surat = { masuk: [{ agenda: 'SM/101/X/2026', tanggal: tgl, pengirim: 'Kemenag Kab. Gowa', perihal: 'Undangan rapat koordinasi', sifat: 'penting', status: 'didisposisi', hari_ini: true, bulan_ini: true },
+      { agenda: 'SM/098/X/2026', tanggal: tgl, pengirim: 'Dinas Pendidikan Sulsel', perihal: 'Pendataan Dapodik', sifat: 'segera', status: 'diteruskan', hari_ini: true, bulan_ini: true },
+      { agenda: 'SM/090/X/2026', tanggal: `${tgl.slice(0, 8)}05`, pengirim: 'Wahdah Islamiyah Pusat', perihal: 'Edaran Muktamar', sifat: 'biasa', status: 'selesai', hari_ini: false, bulan_ini: true }],
+    disposisi: [{ perihal: 'Undangan rapat koordinasi', dari: 'Direktur', kepada: NAMA[1], status: 'baru', batas: tgl, lewat: false },
+      { perihal: 'Pendataan Dapodik', dari: 'Direktur', kepada: NAMA[4], status: 'dibaca', batas: `${tgl.slice(0, 8)}01`, lewat: true }],
+    keluar: [{ jenis: 'Surat Tugas', nomor: '045/ST/PPTQ-IAS/X/2026', perihal: 'Pendamping lomba', kepada: 'Ust. Hasan Basri', status: 'terbit', terbit_hari: true, terbit_bulan: true },
+      { jenis: 'Surat Undangan', nomor: null, perihal: 'Rapat wali santri', kepada: 'Wali santri', status: 'menunggu_ttd', terbit_hari: false, terbit_bulan: false },
+      { jenis: 'Surat Keterangan', nomor: null, perihal: 'Keterangan aktif', kepada: 'Wali santri', status: 'draf', terbit_hari: false, terbit_bulan: false }] }
+  const keuangan = useSesi().peran === 'superadmin' ? { boleh: true,
+    bayar: santri.slice(0, 9).map((x, i) => ({ nomor: `KW/09${10 + i}/X/2026`, nama: x.nama, nis: x.nis, kelas: x.kelas, jumlah: [750000, 500000, 1250000][i % 3], cara: i % 2 ? 'transfer' : 'tunai',
+      status: i === 8 ? 'batal' : 'sah', tanggal: i < 3 ? tgl : `${tgl.slice(0, 8)}0${(i % 9) + 1}`, waktu: iso(i * 7) })),
+    tagih_bulan: { n: 22, nominal: 16500000, dibayar: 11250000, lunas: 14 }, tempo7: { n: 6, sisa: 3750000 },
+    tunggak: santri.slice(10, 14).map((x, i) => ({ nama: x.nama, nis: x.nis, jk: x.jk, kelas: x.kelas, n: i + 1, sisa: 750000 * (i + 1), tertua: `${tgl.slice(0, 5)}0${8 - i}-10` })) } : { boleh: false }
+  const adminpeg = { cuti: [{ nama: NAMA[3], jenis: 'Izin', mulai: tgl, selesai: tgl, alasan: 'Mengantar anak berobat' }], koreksi: [{ nama: NAMA[6], status_baru: 'hadir', alasan: 'Lupa presensi pulang', waktu: iso(5) }],
+    data: [{ nama: NAMA[10], alasan: 'Perubahan nomor HP', waktu: iso(20) }], jurnal_menunggu: 5, jurnal_hari: pegawai.filter((p, i) => i % 3 !== 0).map((p) => p.id), curiga: [{ nama: NAMA[7], jenis: 'perangkat_bersama', waktu: iso(30) }],
+    slip: 1, ultah: [{ id: 'p2', nama: NAMA[2], tanggal: `1990-${tgl.slice(5, 10)}`, hari_ini: true }, { id: 'p5', nama: NAMA[5], tanggal: '1988-10-27', hari_ini: false }], belum_verifikasi: [{ nama: NAMA[13], niy: null }] }
+  const umum = { pengumuman: [{ judul: 'Libur Maulid Nabi', penting: true, sasaran: 'Semua', sampai: tgl }, { judul: 'Pengumpulan nilai PTS', penting: false, sasaran: 'Guru', sampai: null }], libur: false }
+  return { tanggal: tgl, waktu: lalu ? `${tgl}T23:59:59+08:00` : new Date().toISOString(), lalu, santri, pegawai, pegawai_sesi, grup, kelas_harian: { absen: kelasAbsen, alfa_bulan: kelasAbsen.slice(0, 2).map((x) => ({ id: x.id, n: 3 })), catatan_wali: 9, semester: 1 }, mapel, dokumen, surat, keuangan, adminpeg, umum, sesi, bidang: BID, klinik, hafalan, kelompok, pelajaran, izin, lapor, agenda, ujian,
     security: { gerbang: d.log_hari_ini.map((l) => ({ ...l, jk: 'L', jenjang: 'wustha' })), titipan: await sc.daftarTitipan('semua', '2000-01-01', '2100-01-01'),
       tamu: await sc.daftarTamu('semua', '2000-01-01', '2100-01-01'), kunjungan: await sc.daftarKunjungan('semua', '2000-01-01', '2100-01-01') } }
 }

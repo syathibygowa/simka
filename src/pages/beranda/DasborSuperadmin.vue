@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.12 | Fase 12 – Tahap 6 Kelompok statistik Penilaian | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.13 | Perbaikan: panel Tugas saya hari ini bila juga memegang tupoksi | 14/10/2026 -->
 <script setup>
 import KartuPersuratanBeranda from '@/components/KartuPersuratanBeranda.vue'
 import { ref, computed } from 'vue'
@@ -21,6 +21,7 @@ import { useBeranda } from '@/stores/beranda'
 import IndikatorLangsung from './IndikatorLangsung.vue'
 import StatistikPresensi from './StatistikPresensi.vue'
 import SebaranBidang from './SebaranBidang.vue'
+import TugasHariIni from '@/components/TugasHariIni.vue'
 import AksiCepat from './AksiCepat.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
@@ -62,6 +63,7 @@ const AKSI = [
   <div class="space-y-5 lg:space-y-6">
     <Sapaan keterangan="Anda memegang kendali penuh atas data dan pengaturan sistem SIMKA PRO." />
     <TombolPantauan />
+    <TugasHariIni />
 
     <!-- Untuk Anda: tetap tersusun di atas (akses cepat), tidak masuk slider -->
     <section v-if="br.data?.pribadi" class="space-y-3" aria-labelledby="judul-untuk-anda">
