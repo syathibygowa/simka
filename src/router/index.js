@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.21 | Fase 4 – Rute menu Wali Kelas dan Guru Mapel | 12/10/2026
+// SIMKA PRO | src/router/index.js | v3.22 | Fase 12 – Tahap 1 Rute menu Penilaian | 13/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -43,6 +43,7 @@ const routes = [
       { path: 'tahfizh/:tab?', component: () => import('@/pages/tahfizh/Tahfizh.vue'), props: true, meta: { judul: 'Tahfizh', kembali: '/tugas' } },
       { path: 'wali-kelas/:tab?', component: () => import('@/pages/walikelas/WaliKelas.vue'), props: true, meta: { judul: 'Wali Kelas', kembali: '/tugas' } },
       { path: 'guru-mapel/:tab?', component: () => import('@/pages/gurumapel/GuruMapel.vue'), props: true, meta: { judul: 'Guru Mapel', kembali: '/tugas' } },
+      { path: 'penilaian/:tab?', component: () => import('@/pages/penilaian/Penilaian.vue'), props: true, meta: { judul: 'Penilaian', kembali: '/tugas' } },
       { path: 'musyrif/:tab?', component: () => import('@/pages/musyrif/Musyrif.vue'), props: true, meta: { judul: 'Musyrif', kembali: '/tugas' } },
       { path: 'izin-santri/:tab?', component: () => import('@/pages/izin/IzinSantri.vue'), props: true, meta: { judul: 'Perizinan', kembali: '/tugas' } },
       { path: 'persuratan/:tab?', component: () => import('@/pages/persuratan/Persuratan.vue'), props: true, meta: { judul: 'Persuratan', kembali: '/tugas' } },

@@ -1,13 +1,14 @@
-<!-- SIMKA PRO | src/pages/santri/FormSantri.vue | v1.2 | Fase 4 – Perbaikan P1 (data santri lengkap) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/FormSantri.vue | v1.3 | Fase 12 – Tahap 1 Biodata rapor santri | 13/10/2026 -->
 <script setup>
 // Tambah dan ubah data santri: identitas, pendidikan dan masuk (baru/pindahan), kontak ayah/ibu/wali.
+// Fase 12: biodata rapor (agama, status dalam keluarga, telepon rumah, diterima di kelas, alamat orang tua dan wali).
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { PhFloppyDisk, PhIdentificationCard, PhGraduationCap, PhUsersThree, PhInfo, PhMagicWand, PhWhatsappLogo } from '@phosphor-icons/vue'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
-import { TINGKAT, JENJANG, HUBUNGAN, uraiNIS, nisBerikutnya, normalHP } from '@/lib/santri'
+import { TINGKAT, JENJANG, HUBUNGAN, STATUS_KELUARGA, uraiNIS, nisBerikutnya, normalHP } from '@/lib/santri'
 import InputTanggal from '@/components/InputTanggal.vue'
 
 const route = useRoute(); const router = useRouter()
@@ -15,7 +16,7 @@ const san = useSantri(); const sesi = useSesi(); const ui = useUI()
 const baru = computed(() => !route.params.id)
 const f = ref(null); const proses = ref(false); const kontakAwal = ref([])
 
-const kosongKontak = (h) => ({ hubungan: h, nama: '', no_hp: '', pekerjaan: '' })
+const kosongKontak = (h) => ({ hubungan: h, nama: '', no_hp: '', pekerjaan: '', alamat: '' })
 onMounted(async () => {
   await san.muat()
   // Wali kelas boleh memperbarui data santri kelasnya (tidak menambah santri baru)
@@ -26,6 +27,7 @@ onMounted(async () => {
   if (baru.value) {
     f.value = { nis: '', nisn: '', nik: '', nama_lengkap: '', nama_panggilan: '', jenis_kelamin: '', tempat_lahir: '', tanggal_lahir: '', jenjang: 'wustha', tingkat: 7,
       tanggal_masuk: '', jalur_masuk: 'baru', asal_sekolah: '', hafalan_awal_juz: '', anak_ke: '', alamat: '', catatan: '', no_kk: '', rt: '', rw: '', kelurahan: '', kecamatan: '', kota_kab: '', provinsi: '',
+      agama: 'Islam', status_keluarga: 'Anak Kandung', telepon_rumah: '', diterima_tingkat: '', alamat_ortu: '',
       kontak: ['ayah', 'ibu', 'wali'].map(kosongKontak), utama: 'ayah' }
   } else {
     const s = san.cari(route.params.id)
@@ -36,7 +38,8 @@ onMounted(async () => {
       tempat_lahir: s.tempat_lahir || '', tanggal_lahir: s.tanggal_lahir || '', jenjang: s.jenjang, tingkat: s.tingkat, tanggal_masuk: s.tanggal_masuk || '',
       jalur_masuk: s.jalur_masuk, asal_sekolah: s.asal_sekolah || '', hafalan_awal_juz: s.hafalan_awal_juz ?? '', anak_ke: s.anak_ke || '', alamat: s.alamat || '', catatan: s.catatan || '',
       no_kk: s.no_kk || '', rt: s.rt || '', rw: s.rw || '', kelurahan: s.kelurahan || '', kecamatan: s.kecamatan || '', kota_kab: s.kota_kab || '', provinsi: s.provinsi || '',
-      kontak: ['ayah', 'ibu', 'wali'].map((h) => { const k = (s.kontak || []).find((x) => x.hubungan === h); return k ? { hubungan: h, nama: k.nama || '', no_hp: k.no_hp || '', pekerjaan: k.pekerjaan || '' } : kosongKontak(h) }),
+      agama: s.agama || 'Islam', status_keluarga: s.status_keluarga || '', telepon_rumah: s.telepon_rumah || '', diterima_tingkat: s.diterima_tingkat || '', alamat_ortu: s.alamat_ortu || '',
+      kontak: ['ayah', 'ibu', 'wali'].map((h) => { const k = (s.kontak || []).find((x) => x.hubungan === h); return k ? { hubungan: h, nama: k.nama || '', no_hp: k.no_hp || '', pekerjaan: k.pekerjaan || '', alamat: k.alamat || '' } : kosongKontak(h) }),
       utama: (s.kontak || []).find((k) => k.utama)?.hubungan || 'ayah',
     }
   }
@@ -69,7 +72,7 @@ async function simpan() {
     if (k.no_hp && !/^[0-9+]{9,16}$/.test(hp)) return ui.toast(`Nomor HP ${HUBUNGAN[k.hubungan].toLowerCase()} harus 9–16 angka.`, 'galat')
     const kosong = !k.nama.trim() && !hp
     if (kosong) { if (kontakAwal.value.includes(k.hubungan)) kontak.push({ hubungan: k.hubungan, hapus: true }); continue }
-    kontak.push({ hubungan: k.hubungan, nama: k.nama.trim(), no_hp: hp, pekerjaan: k.pekerjaan.trim(), utama: d.utama === k.hubungan })
+    kontak.push({ hubungan: k.hubungan, nama: k.nama.trim(), no_hp: hp, pekerjaan: k.pekerjaan.trim(), alamat: (k.alamat || '').trim(), utama: d.utama === k.hubungan })
   }
   if (!kontak.some((k) => !k.hapus)) return ui.toast('Isi sedikitnya satu kontak orang tua atau wali.', 'galat')
   if (!kontak.some((k) => k.utama && k.no_hp)) {
@@ -77,7 +80,9 @@ async function simpan() {
     if (ada) { ada.utama = true; d.utama = ada.hubungan }
   }
   const { utama, ...isi } = d
-  Object.assign(isi, { nis: d.nis.trim(), nisn: d.nisn.trim(), nik: d.nik.trim(), no_kk: d.no_kk.trim(), tingkat: Number(d.tingkat), kontak })
+  if (d.telepon_rumah && !/^[0-9+()\-\s]{5,20}$/.test(d.telepon_rumah.trim())) return ui.toast('Telepon rumah hanya berisi angka (5–20 karakter).', 'galat')
+  Object.assign(isi, { nis: d.nis.trim(), nisn: d.nisn.trim(), nik: d.nik.trim(), no_kk: d.no_kk.trim(), tingkat: Number(d.tingkat), kontak,
+    diterima_tingkat: d.diterima_tingkat === '' ? '' : Number(d.diterima_tingkat) })
   proses.value = true
   try {
     const id = await san.simpan(isi)
@@ -116,6 +121,11 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
         <InputTanggal v-model="f.tanggal_lahir" label="Tanggal lahir" bawaan-kosong wajib />
         <div><label class="label-isian" for="s-nik">NIK (16 digit)</label><input id="s-nik" v-model="f.nik" class="isian tabular-nums" inputmode="numeric" maxlength="16" /></div>
         <div><label class="label-isian" for="s-anak">Anak ke-</label><input id="s-anak" v-model="f.anak_ke" class="isian" type="number" min="1" max="30" /></div>
+        <div><label class="label-isian" for="s-agama">Agama</label><input id="s-agama" v-model="f.agama" class="isian" /></div>
+        <div><label class="label-isian" for="s-skel">Status dalam keluarga</label>
+          <input id="s-skel" v-model="f.status_keluarga" class="isian" list="daftar-status-keluarga" placeholder="Contoh: Anak Kandung" />
+          <datalist id="daftar-status-keluarga"><option v-for="x in STATUS_KELUARGA" :key="x" :value="x" /></datalist></div>
+        <div><label class="label-isian" for="s-telp">Telepon rumah</label><input id="s-telp" v-model="f.telepon_rumah" class="isian tabular-nums" inputmode="tel" placeholder="Opsional" /></div>
         <div><label class="label-isian" for="s-kk">Nomor KK (16 digit)</label><input id="s-kk" v-model="f.no_kk" class="isian tabular-nums" inputmode="numeric" maxlength="16" /></div>
         <div class="sm:col-span-2"><label class="label-isian" for="s-almt">Alamat (jalan/dusun)</label><input id="s-almt" v-model="f.alamat" class="isian" placeholder="Contoh: Jl. Poros Malino No. 4 / Dusun Bontobaddo" /></div>
         <div class="grid grid-cols-2 gap-4"><div><label class="label-isian" for="s-rt">RT</label><input id="s-rt" v-model="f.rt" class="isian tabular-nums" inputmode="numeric" maxlength="3" placeholder="002" /></div>
@@ -148,6 +158,10 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
               :class="['min-h-[44px] rounded-xl text-sm font-semibold', f.jalur_masuk === j.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ j.n }}</button>
           </div></div>
         <InputTanggal v-model="f.tanggal_masuk" label="Tanggal masuk pondok" :bawaan-kosong="!baru" />
+        <div><label class="label-isian" for="s-diterima">Diterima di kelas</label>
+          <select id="s-diterima" v-model="f.diterima_tingkat" class="isian"><option value="">{{ baru ? 'Sama dengan kelas sekarang' : '–' }}</option>
+            <option v-for="t in [7, 8, 9, 10, 11, 12]" :key="t" :value="t">Kelas {{ t }}</option></select>
+          <p class="mt-1 text-xs text-teks3">Dicetak di halaman identitas rapor (kelas saat pertama diterima di jenjang ini).</p></div>
         <div><label class="label-isian" for="s-asal">Asal sekolah <span v-if="f.jalur_masuk === 'pindahan'" class="text-merah">*</span></label>
           <input id="s-asal" v-model="f.asal_sekolah" class="isian" :placeholder="f.jalur_masuk === 'pindahan' ? 'Sekolah/pondok sebelumnya' : 'SD/MI atau SMP/MTs asal'" /></div>
         <div><label class="label-isian" for="s-hfz">Hafalan awal (juz)</label>
@@ -168,12 +182,16 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
             <div><label class="label-isian" :for="`k-n-${k.hubungan}`">Nama</label><input :id="`k-n-${k.hubungan}`" v-model="k.nama" class="isian" /></div>
             <div><label class="label-isian" :for="`k-h-${k.hubungan}`">Nomor HP/WA</label><input :id="`k-h-${k.hubungan}`" v-model="k.no_hp" class="isian tabular-nums" inputmode="tel" placeholder="08xxxxxxxxxx" /></div>
             <div><label class="label-isian" :for="`k-p-${k.hubungan}`">Pekerjaan</label><input :id="`k-p-${k.hubungan}`" v-model="k.pekerjaan" class="isian" /></div>
+            <div v-if="k.hubungan === 'wali'"><label class="label-isian" for="k-a-wali">Alamat wali</label><input id="k-a-wali" v-model="k.alamat" class="isian" /></div>
             <label class="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm font-semibold">
               <input v-model="f.utama" type="radio" name="utama" :value="k.hubungan" class="h-5 w-5 accent-[#1E7D4F]" />
               <PhWhatsappLogo :size="18" weight="duotone" style="color: var(--c)" /> Penerima WA utama</label>
           </div>
         </div>
       </div>
+      <div class="mt-4"><label class="label-isian" for="s-almt-ortu">Alamat orang tua</label>
+        <input id="s-almt-ortu" v-model="f.alamat_ortu" class="isian" placeholder="Kosongkan bila sama dengan alamat santri" />
+        <p class="mt-1 text-xs text-teks3">Dicetak di halaman identitas rapor.</p></div>
     </section>
 
     <section class="kartu p-5">

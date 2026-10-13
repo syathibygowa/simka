@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.5 | Fase 7 – Tahap 5 Penutup fase | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.6 | Fase 12 – Tahap 1 Biodata rapor santri | 13/10/2026 -->
 <script setup>
 // Biodata santri: identitas, kontak orang tua/wali (tombol WA), riwayat status dan mutasi;
 // ubah status, mutasi keluar beserta surat keterangan pindah; cetak biodata F4. Fase 5: bagian Hafalan. Fase 6: bagian Kesehatan, perizinan, dan laporan.
@@ -102,13 +102,15 @@ const kopJenjang = computed(() => (s.value?.jenjang === 'sma' ? 'sma' : 'wustha'
 const orangTua = computed(() => (s.value?.kontak || []).filter((k) => k.hubungan !== 'wali').map((k) => k.nama).filter(Boolean).join(' / ') || kontakUtama(s.value)?.nama || '–')
 const baris = computed(() => !s.value ? [] : [
   ['Nama lengkap', s.value.nama_lengkap], ['Nama panggilan', s.value.nama_panggilan || '–'], ['NIS', s.value.nis], ['NISN', s.value.nisn || '–'], ['NIK', s.value.nik || '–'], ['Nomor KK', s.value.no_kk || '–'],
-  ['Jenis kelamin', s.value.jenis_kelamin === 'P' ? 'Perempuan' : 'Laki-laki'], ['Tempat, tanggal lahir', ttl.value], ['Anak ke-', s.value.anak_ke || '–'],
+  ['Jenis kelamin', s.value.jenis_kelamin === 'P' ? 'Perempuan' : 'Laki-laki'], ['Tempat, tanggal lahir', ttl.value], ['Agama', s.value.agama || '–'], ['Status dalam keluarga', s.value.status_keluarga || '–'], ['Anak ke-', s.value.anak_ke || '–'],
+  ['Telepon rumah', s.value.telepon_rumah || '–'],
   ['Alamat', alamatLengkap(s.value) || '–'], ['Jenjang', JENJANG[s.value.jenjang]], ['Kelas', labelRombel(s.value)],
   ['Kamar / halaqah', [(s.value.kelompok || []).find((k) => k.jenis === 'kamar')?.nama, (s.value.kelompok || []).find((k) => k.jenis === 'halaqah')?.nama].filter(Boolean).join(' / ') || '–'],
-  ['Tahun masuk / angkatan', `${s.value.tahun_masuk} / angkatan ${s.value.angkatan}`], ['Tanggal masuk', s.value.tanggal_masuk ? formatPanjang(s.value.tanggal_masuk) : '–'],
+  ['Tahun masuk / angkatan', `${s.value.tahun_masuk} / angkatan ${s.value.angkatan}`], ['Tanggal masuk', s.value.tanggal_masuk ? formatPanjang(s.value.tanggal_masuk) : '–'], ['Diterima di kelas', s.value.diterima_tingkat ? `Kelas ${s.value.diterima_tingkat}` : '–'],
   ['Jalur masuk', s.value.jalur_masuk === 'pindahan' ? 'Pindahan (mutasi masuk)' : 'Santri baru'], ['Asal sekolah', s.value.asal_sekolah || '–'],
   ['Hafalan awal', s.value.hafalan_awal_juz != null && s.value.hafalan_awal_juz !== '' ? `${String(s.value.hafalan_awal_juz).replace('.', ',')} juz` : '–'],
-  ...['ayah', 'ibu', 'wali'].map((h) => { const k = (s.value.kontak || []).find((x) => x.hubungan === h); return [`Nama ${HUBUNGAN[h].toLowerCase()}`, k ? [k.nama, k.no_hp && `HP ${k.no_hp}`, k.pekerjaan].filter(Boolean).join(', ') : '–'] }),
+  ...['ayah', 'ibu', 'wali'].map((h) => { const k = (s.value.kontak || []).find((x) => x.hubungan === h); return [`Nama ${HUBUNGAN[h].toLowerCase()}`, k ? [k.nama, k.no_hp && `HP ${k.no_hp}`, k.pekerjaan, k.alamat].filter(Boolean).join(', ') : '–'] }),
+  ['Alamat orang tua', s.value.alamat_ortu || (alamatLengkap(s.value) ? 'Sama dengan alamat santri' : '–')],
   ['Status', `${STATUS_SANTRI[s.value.status]?.n} sejak ${formatPanjang(s.value.status_sejak)}`],
 ])
 

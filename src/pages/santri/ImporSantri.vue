@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/ImporSantri.vue | v1.1 | Fase 4 – Perbaikan P1 (data santri lengkap) | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/ImporSantri.vue | v1.2 | Fase 12 – Tahap 1 Biodata rapor santri | 13/10/2026 -->
 <script setup>
 // Impor data santri dari Excel: unduh templat → pilih berkas → periksa → impor.
 // Judul kolom ekspor aplikasi SPMB/daftar lama juga dikenali (KOLOM_IMPOR.alias). NIS sama = perbarui.
@@ -134,6 +134,11 @@ function periksa(o, nomorBaris) {
   set('jalur_masuk', o.jalur_masuk, normalJalur, 'Jalur masuk harus Baru atau Pindahan.')
   set('asal_sekolah', o.asal_sekolah)
   set('hafalan_awal_juz', o.hafalan_awal_juz, (v) => { const n = Number(s(v).replace(',', '.').replace(/\s*juz$/i, '')); return n >= 0 && n <= 30 ? n : null }, 'Hafalan awal harus 0–30 juz.')
+  set('diterima_tingkat', o.diterima_tingkat, (v) => { const n = Number(s(v).replace(/\D/g, '')); return n >= 7 && n <= 12 ? n : null }, 'Diterima di kelas harus 7–12.')
+  set('agama', o.agama)
+  set('status_keluarga', o.status_keluarga)
+  set('telepon_rumah', o.telepon_rumah)
+  set('alamat_ortu', o.alamat_ortu)
   set('catatan', o.catatan)
   if (!ada) {
     if (!isi.nisn) galat.push('NISN wajib untuk santri baru.')
@@ -148,6 +153,7 @@ function periksa(o, nomorBaris) {
     if (s(o['nama_' + h])) k.nama = s(o['nama_' + h])
     if (s(o['hp_' + h])) { const hp = normalHP(o['hp_' + h]); if (/^[0-9+]{9,16}$/.test(hp)) k.no_hp = hp; else galat.push(`HP ${h === 'wali' ? 'wali' : h} harus 9–16 angka.`) }
     if (s(o['pekerjaan_' + h])) k.pekerjaan = s(o['pekerjaan_' + h])
+    if (h === 'wali' && s(o.alamat_wali)) k.alamat = s(o.alamat_wali)
     if (Object.keys(k).length > 1) kontak.push(k)
   }
   if (kontak.length) isi.kontak = kontak

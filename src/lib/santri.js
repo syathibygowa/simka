@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/santri.js | v1.5 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026
+// SIMKA PRO | src/lib/santri.js | v1.6 | Fase 12 – Tahap 1 Biodata rapor santri | 13/10/2026
 // Label baku, pembacaan NIS pondok, normalisasi isian, dan kolom templat Excel data santri.
 import { normalJK, normalHP } from './kepegawaian'
 import { supabase, MODE_DEMO } from './supabase'
@@ -108,6 +108,11 @@ export const KOLOM_IMPOR = [
   { k: 'jalur_masuk', j: 'Jalur masuk (Baru/Pindahan)', alias: ['jalur masuk', 'jalur', 'status masuk', 'jenis pendaftaran'] },
   { k: 'asal_sekolah', j: 'Asal sekolah', alias: ['asal sekolah', 'sekolah asal'] },
   { k: 'hafalan_awal_juz', j: 'Hafalan awal (juz)', alias: ['hafalan awal', 'hafalan', 'jumlah hafalan', 'hafalan (juz)'] },
+  { k: 'diterima_tingkat', j: 'Diterima di kelas (7–12)', alias: ['diterima di kelas', 'diterima kelas', 'kelas diterima'] },
+  { k: 'agama', j: 'Agama', alias: ['agama'] },
+  { k: 'status_keluarga', j: 'Status dalam keluarga', alias: ['status dalam keluarga', 'status keluarga', 'status anak'] },
+  { k: 'telepon_rumah', j: 'Telepon rumah', alias: ['telepon rumah', 'no telp rumah', 'nomor telepon rumah', 'telp rumah'] },
+  { k: 'alamat_ortu', j: 'Alamat orang tua', alias: ['alamat orang tua', 'alamat ortu', 'alamat orangtua'] },
   { k: 'nama_ayah', j: 'Nama ayah', alias: ['nama ayah', 'ayah', 'nama ayah kandung'] },
   { k: 'hp_ayah', j: 'HP ayah', alias: ['hp ayah', 'no hp ayah', 'nomor hp ayah', 'wa ayah'] },
   { k: 'pekerjaan_ayah', j: 'Pekerjaan ayah', alias: ['pekerjaan ayah'] },
@@ -117,6 +122,7 @@ export const KOLOM_IMPOR = [
   { k: 'nama_wali', j: 'Nama wali/darurat', alias: ['nama wali', 'wali', 'kontak darurat'] },
   { k: 'hp_wali', j: 'HP wali/darurat', alias: ['hp wali', 'no hp wali', 'nomor hp wali', 'hp darurat', 'no hp orang tua', 'hp orang tua', 'no. hp orang tua/wali'] },
   { k: 'pekerjaan_wali', j: 'Pekerjaan wali', alias: ['pekerjaan wali'] },
+  { k: 'alamat_wali', j: 'Alamat wali', alias: ['alamat wali'] },
   { k: 'catatan', j: 'Catatan', alias: ['catatan', 'keterangan'] },
 ]
 // v1.4: tanda * (kolom wajib) dibuang LEBIH DULU, baru keterangan dalam kurung. Sebelumnya "NIS (7 digit) *"
@@ -169,6 +175,8 @@ export const judulKelompok = (g) => (g?.jenis === 'kelas' && !/^kelas/i.test(g.n
 /** Data wajib: NIS, NISN, nama, tempat lahir, tanggal lahir. */
 export const kurangWajib = (s) => [!s.nisn && 'NISN', !s.tempat_lahir && 'Tempat lahir', !s.tanggal_lahir && 'Tanggal lahir'].filter(Boolean)
 /** Alamat lengkap satu baris: jalan/dusun, RT/RW, kelurahan, kecamatan, kabupaten/kota, provinsi. */
+/** Status dalam keluarga yang lazim (isian tetap bebas). */
+export const STATUS_KELUARGA = ['Anak Kandung', 'Anak Tiri', 'Anak Angkat', 'Anak Asuh']
 export const alamatLengkap = (s) => [s?.alamat, (s?.rt || s?.rw) && `RT ${s.rt || '–'}/RW ${s.rw || '–'}`, s?.kelurahan && `Kel./Desa ${s.kelurahan}`,
   s?.kecamatan && `Kec. ${s.kecamatan}`, s?.kota_kab, s?.provinsi].filter(Boolean).join(', ')
 /** Nilai sel ekspor untuk satu kolom impor (ekspor dapat diimpor kembali tanpa diubah). */
@@ -189,6 +197,7 @@ export function nilaiEkspor(s, k, formatTanggal) {
     case 'nama_wali': return kontak('wali').nama || ''
     case 'hp_wali': return kontak('wali').no_hp || ''
     case 'pekerjaan_wali': return kontak('wali').pekerjaan || ''
+    case 'alamat_wali': return kontak('wali').alamat || ''
     default: return s[k] == null ? '' : String(s[k])
   }
 }
