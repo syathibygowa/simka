@@ -1,3 +1,4 @@
+/* SIMKA PRO | src/styles/main.css | v1.1 | Perbaikan: tampilan HP tidak meluber (anak grid boleh menyusut, isi utama dipangkas mendatar) | 14/10/2026 */
 @import './token.css';
 @import './cetak.css';
 @tailwind base;
@@ -15,6 +16,11 @@
   h1, h2, h3 { @apply text-teks; letter-spacing: -0.012em; }
   :focus-visible { outline: 2px solid rgb(var(--merah)); outline-offset: 2px; border-radius: 6px; }
   ::selection { background: rgb(var(--merah) / .22); }
+  /* Anak grid bawaan min-width:auto → nama panjang, teks truncate, atau baris chip melebarkan kolom melebihi layar HP.
+     Dengan min-width:0 setiap kartu/daftar menyusut mengikuti lebar layar (teks terpotong rapi atau turun baris). */
+  .grid > * { min-width: 0; }
+  /* Jaring pengaman: isi halaman tidak pernah menggeser layar ke samping (baris gulir mendatar tetap berfungsi) */
+  .isi-utama { overflow-x: clip; }
 }
 
 @layer components {
