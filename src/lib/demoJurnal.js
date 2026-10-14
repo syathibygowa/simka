@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoJurnal.js | v1.0 | Fase 3 – Tahap 3 Jurnal harian | 04/10/2026
+// SIMKA PRO | src/lib/demoJurnal.js | v1.1 | Tabel ceklist jurnal bulanan (contoh) | 15/10/2026
 // Data contoh jurnal harian untuk MODE DEMO.
 const hariIni = () => new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10)
 const geser = (iso, n) => new Date(Date.parse(iso + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10)
@@ -53,4 +53,15 @@ export function individu(mulai, akhir) {
 }
 export function template() {
   return BUTIR.flatMap(([k, , d]) => d.map((u, i) => ({ id: `${k}-${i}`, functional_position_id: { 'f-MUHAFFIZH': 'f2', 'f-WALI_KELAS': 'f1' }[k], structural_position_id: null, org_unit_id: null, uraian: u, urutan: i + 1, aktif: true })))
+}
+
+/** Tabel ceklist: butir × tanggal (contoh). */
+export function matriks(mulai, akhir) {
+  const butir = BUTIR.flatMap(([k, kel, d]) => d.map((u, i) => ({ item_id: `${k}-${i}`, kelompok: kel, uraian: u })))
+  const hari = []; const cek = []
+  for (let d = mulai; d <= akhir; d = geser(d, 1)) {
+    const wajib = new Date(d + 'T00:00:00Z').getUTCDay() !== 0; hari.push({ tanggal: d, wajib })
+    if (wajib && d <= hariIni()) butir.forEach((b, i) => { if ((Number(d.slice(8)) + i) % 4 !== 0) cek.push({ item_id: b.item_id, tanggal: d }) })
+  }
+  return { butir, hari, cek, kegiatan: [] }
 }

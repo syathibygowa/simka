@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/AbsensiSantri.vue | v1.3 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/AbsensiSantri.vue | v1.4 | Tab Perlu perhatian: santri sakit/izin/alfa/bolos/terlambat berulang | 15/10/2026 -->
 <script setup>
 // Absensi santri HISBAT. Tab: Sesi saya (pengasuh), Pantauan (admin/pimpinan: semua kelompok, langsung),
 // Rekap (per kelompok dan periode; Excel, cetak F4, WA ke wali).
@@ -14,6 +14,7 @@ import { hariIniISO, formatHari, formatJam } from '@/lib/tanggal'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import TabRekapAbsensi from './TabRekapAbsensi.vue'
+import TabBerulang from './TabBerulang.vue'
 
 const props = defineProps({ tab: { type: String, default: '' } })
 const router = useRouter(); const abs = useAbsensiSantri(); const sesi = useSesi()
@@ -23,13 +24,14 @@ const TAB = computed(() => [
   ...(punyaAsuhan.value || !bolehPantau.value ? [{ k: 'sesi', n: 'Sesi saya', ikon: PhListChecks, w: 'absensi' }] : []),
   ...(bolehPantau.value ? [{ k: 'pantauan', n: 'Pantauan', ikon: PhBroadcast, w: 'shift' }] : []),
   { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' },
+  { k: 'perhatian', n: 'Perlu perhatian', ikon: PhWarningCircle, w: 'klinik' },
 ])
 const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : TAB.value[0].k))
 const tanggal = ref(hariIniISO()); const saringJenis = ref(''); const saringStatus = ref('')
 const semua = computed(() => aktif.value === 'pantauan')
-async function muat() { if (aktif.value !== 'rekap') await abs.muatSesi(tanggal.value, semua.value) }
+async function muat() { if (!['rekap', 'perhatian'].includes(aktif.value)) await abs.muatSesi(tanggal.value, semua.value) }
 let jeda = null
-onMounted(() => { muat(); abs.dengarkan(() => muat()); jeda = setInterval(() => { if (aktif.value !== 'rekap') muat() }, 60000) })
+onMounted(() => { muat(); abs.dengarkan(() => muat()); jeda = setInterval(() => { if (!['rekap', 'perhatian'].includes(aktif.value)) muat() }, 60000) })
 onBeforeUnmount(() => { clearInterval(jeda); abs.berhenti() })
 watch([aktif, tanggal], muat)
 
@@ -55,6 +57,7 @@ const pilihTab = (k) => router.replace(`/absensi-santri/${k}`)
     <BilahTab class="mb-4" :tab="TAB" :model-value="aktif" label="Bagian absensi santri" @update:model-value="pilihTab" />
 
     <TabRekapAbsensi v-if="aktif === 'rekap'" :semua="bolehPantau" />
+    <TabBerulang v-else-if="aktif === 'perhatian'" />
 
     <template v-else>
       <div class="mb-4 flex flex-wrap items-end gap-3">

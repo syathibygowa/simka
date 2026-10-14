@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/jurnal.js | v1.0 | Fase 3 – Tahap 3 Jurnal harian | 04/10/2026
+// SIMKA PRO | src/stores/jurnal.js | v1.1 | Tabel ceklist jurnal bulanan (butir × tanggal) | 15/10/2026
 // Jurnal harian pegawai: ceklist dari template jabatan, kegiatan tulis sendiri (diverval), rekap, dan template.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -51,6 +51,11 @@ export const useJurnal = defineStore('jurnal', {
     async rekap(mulai, akhir) {
       if (MODE_DEMO) return demo.rekap(useSesi())
       return (await rpc('rekap_jurnal', { p_mulai: mulai, p_akhir: akhir })) || []
+    },
+    /** Tabel ceklist: { butir, hari, cek, kegiatan } untuk rentang ≤ 31 hari. */
+    async matriks(emp, mulai, akhir) {
+      if (MODE_DEMO) return demo.matriks(mulai, akhir)
+      return rpc('matriks_jurnal', { p_emp: emp, p_mulai: mulai, p_akhir: akhir })
     },
     async individu(emp, mulai, akhir) {
       if (MODE_DEMO) return demo.individu(mulai, akhir)

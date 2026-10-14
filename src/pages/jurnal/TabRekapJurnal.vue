@@ -1,11 +1,11 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabRekapJurnal.vue | v1.1 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabRekapJurnal.vue | v1.2 | Laporan tabel ceklist harian (butir template × tanggal, centang bila dikerjakan) | 15/10/2026 -->
 <script setup>
 // Rekap jurnal per periode: persentase pengisian (hari terisi ÷ hari wajib), butir ceklist, dan kegiatan per status.
 // Pegawai melihat dirinya sendiri; pimpinan melihat anggota unitnya; admin ber-izin verval_jurnal melihat semua.
 // Laporan individu (per hari) dan rekap kolektif dapat dicetak F4 dan diekspor ke Excel.
 import { ref, computed, onMounted, watch } from 'vue'
 import * as XLSX from 'xlsx'
-import { PhMagnifyingGlass, PhEye, PhFileXls, PhPrinter, PhInfo } from '@phosphor-icons/vue'
+import { PhMagnifyingGlass, PhEye, PhFileXls, PhPrinter, PhInfo, PhTable } from '@phosphor-icons/vue'
 import { useJurnal } from '@/stores/jurnal'
 import { useOrganisasi } from '@/stores/organisasi'
 import { useLembaga } from '@/stores/lembaga'
@@ -53,6 +53,20 @@ function ekspor() {
 async function laporanIndividu(r) {
   try { individu.value = { r, hari: await jr.individu(r.employee_id, mulai.value, akhir.value) }; pratinjauInd.value = true } catch (e) { ui.toast(e.message, 'galat') }
 }
+// ---------- Tabel ceklist: No., butir template, tanggal 1–31 (✓ bila dikerjakan), jumlah ----------
+const matriks = ref(null); const pratinjauM = ref(false)
+async function tabelCeklist(r) {
+  const hari = (Date.parse(akhir.value) - Date.parse(mulai.value)) / 864e5 + 1
+  if (hari > 31) return ui.toast('Tabel ceklist paling panjang 31 hari. Pilih Bulan ini atau Bulan lalu.', 'galat')
+  try {
+    const m = await jr.matriks(r.employee_id, mulai.value, akhir.value)
+    const cek = new Set((m.cek || []).map((c) => `${c.item_id}|${c.tanggal}`))
+    const butir = (m.butir || []).map((b) => ({ ...b, hari: (m.hari || []).map((h) => cek.has(`${b.item_id}|${h.tanggal}`)), n: (m.hari || []).filter((h) => cek.has(`${b.item_id}|${h.tanggal}`)).length }))
+    matriks.value = { r, hari: m.hari || [], butir, wajib: (m.hari || []).filter((h) => h.wajib).length }
+    pratinjauM.value = true
+  } catch (e) { ui.toast(e.message, 'galat') }
+}
+const lebarTgl = computed(() => (matriks.value ? `${(58 / Math.max(1, matriks.value.hari.length)).toFixed(2)}%` : '2%'))
 const jam = (v) => String(v || '').slice(0, 5).replace(':', '.')
 const STATUS = { menunggu: 'menunggu verval', disetujui: 'disetujui', dikembalikan: 'dikembalikan' }
 const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan === 'DIREKTUR' || /^direktur/i.test(s.jabatan_tertulis)) || lembaga.signatories[0] || {})
@@ -95,7 +109,8 @@ const namaUnit = computed(() => (unit.value ? org.cariUnit(unit.value)?.nama : '
               <td class="p-2 tabular-nums">{{ r.hari_wajib }}</td><td class="p-2 tabular-nums">{{ r.hari_terisi }}</td><td class="p-2 tabular-nums">{{ r.hari_kosong }}</td>
               <td class="p-2 tabular-nums">{{ r.butir }}</td><td class="p-2 tabular-nums">{{ r.kegiatan_disetujui }}</td><td class="p-2 tabular-nums">{{ r.kegiatan_menunggu }}</td>
               <td class="p-2"><span :class="['lencana', 'w-' + warna(r.persen)]">{{ persen(r.persen) }}</span></td>
-              <td class="p-2"><button class="tombol-teks text-sm" @click="laporanIndividu(r)"><PhPrinter :size="18" weight="duotone" /> Laporan</button></td>
+              <td class="p-2"><button class="tombol-teks text-sm" @click="laporanIndividu(r)"><PhPrinter :size="18" weight="duotone" /> Laporan</button>
+                <button class="tombol-teks text-sm" @click="tabelCeklist(r)"><PhTable :size="18" weight="duotone" /> Tabel ceklist</button></td>
             </tr>
           </tbody>
         </table>
@@ -105,7 +120,8 @@ const namaUnit = computed(() => (unit.value ? org.cariUnit(unit.value)?.nama : '
           <div class="flex items-start gap-2"><p class="min-w-0 flex-1 font-semibold">{{ r.nama }}</p><span class="lencana">{{ persen(r.persen) }}</span></div>
           <p class="text-xs text-teks3">{{ r.unit }}</p>
           <p class="mt-1 text-sm text-teks2">{{ r.hari_terisi }} dari {{ r.hari_wajib }} hari terisi · {{ r.hari_kosong }} tidak diisi · {{ r.kegiatan_disetujui }} kegiatan disetujui</p>
-          <button class="tombol-garis mt-2 min-h-[40px] text-sm" @click="laporanIndividu(r)"><PhPrinter :size="18" weight="duotone" /> Laporan jurnal</button>
+          <div class="mt-2 flex flex-wrap gap-2"><button class="tombol-garis min-h-[40px] text-sm" @click="laporanIndividu(r)"><PhPrinter :size="18" weight="duotone" /> Laporan jurnal</button>
+            <button class="tombol-garis min-h-[40px] text-sm" @click="tabelCeklist(r)"><PhTable :size="18" weight="duotone" /> Tabel ceklist</button></div>
         </li>
       </ul>
       <p v-if="!tampil.length" class="py-8 text-center text-teks3">Tidak ada data yang sesuai.</p>
@@ -148,6 +164,32 @@ const namaUnit = computed(() => (unit.value ? org.cariUnit(unit.value)?.nama : '
       </table>
       <template #ttd>
         <TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: 'Atasan Langsung', nama: '.....................................' }" :kanan="{ jabatan: 'Pegawai', nama: individu.r.nama, niy: individu.r.niy }" />
+      </template>
+    </DokumenCetak>
+
+    <!-- Tabel ceklist bulanan (F4 mendatar) -->
+    <DokumenCetak v-if="matriks" v-model:pratinjau="pratinjauM" mendatar judul="Tabel Ceklist Jurnal Harian Pegawai" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)}`" :pencetak="sesi.pengguna?.nama_lengkap">
+      <table class="data" style="margin-bottom: 6pt">
+        <tbody>
+          <tr><td style="width: 30mm">Nama</td><td style="width: 4mm">:</td><td>{{ matriks.r.nama }}</td><td style="width: 30mm">Bidang/Unit</td><td style="width: 4mm">:</td><td>{{ matriks.r.unit || '–' }}</td></tr>
+          <tr><td>NIY</td><td>:</td><td>{{ matriks.r.niy || '–' }}</td><td>Hari wajib</td><td>:</td><td>{{ matriks.wajib }} hari</td></tr>
+        </tbody>
+      </table>
+      <table class="tabel kecil matriks-cetak">
+        <colgroup><col style="width:3%"><col style="width:33%"><col v-for="h in matriks.hari" :key="h.tanggal" :style="{ width: lebarTgl }"><col style="width:6%"></colgroup>
+        <thead><tr><th>No.</th><th>Kegiatan/butir ceklist</th><th v-for="h in matriks.hari" :key="h.tanggal" :style="!h.wajib ? 'background:#e6e6e6' : ''">{{ Number(h.tanggal.slice(8)) }}</th><th>Jml.</th></tr></thead>
+        <tbody>
+          <template v-for="(b, i) in matriks.butir" :key="b.item_id">
+            <tr v-if="i === 0 || matriks.butir[i - 1].kelompok !== b.kelompok"><td :colspan="matriks.hari.length + 3" style="font-style: italic">{{ b.kelompok }}</td></tr>
+            <tr><td class="tengah">{{ i + 1 }}</td><td>{{ b.uraian }}</td>
+              <td v-for="(v, j) in b.hari" :key="j" class="tengah" :style="!matriks.hari[j].wajib ? 'background:#f0f0f0' : ''">{{ v ? '✓' : '' }}</td><td class="tengah">{{ b.n }}</td></tr>
+          </template>
+          <tr v-if="!matriks.butir.length"><td :colspan="matriks.hari.length + 3" class="tengah">Belum ada butir ceklist template untuk pegawai ini.</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top: 4pt; font-size: 8.5pt">✓ = butir dikerjakan (dicentang) pada tanggal itu. Kolom berarsir = bukan hari wajib (libur atau izin/sakit/cuti yang disetujui).</p>
+      <template #ttd>
+        <TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: 'Atasan Langsung', nama: '.....................................' }" :kanan="{ jabatan: 'Pegawai', nama: matriks.r.nama, niy: matriks.r.niy }" />
       </template>
     </DokumenCetak>
   </div>

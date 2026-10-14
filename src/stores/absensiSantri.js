@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/absensiSantri.js | v1.3 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026
+// SIMKA PRO | src/stores/absensiSantri.js | v1.4 | Santri perlu perhatian: sakit, izin, alfa, bolos, terlambat berulang | 15/10/2026
 // Absensi santri HISBAT: sesi hari ini (pengasuh) atau semua kelompok (pantauan), detail sesi, simpan
 // (hanya pengecualian), rekap per santri, dan riwayat ketidakhadiran. Penulisan lewat fungsi SQL.
 // v1.2: detail() menyertakan "otomatis" — santri yang sedang sakit (Klinik → S) atau izin (Perizinan → I).
@@ -137,6 +137,21 @@ export const useAbsensiSantri = defineStore('absensiSantri', {
       return data || []
     },
 
+    /** Santri dengan ketidakhadiran berulang: [{ id, absen: { kelas: { S, I, A, B, T }, … }, klinik, klinik_terakhir, keluhan, izin, telat_kembali }] */
+    async berulang(mulai, selesai) {
+      if (MODE_DEMO) {
+        const san = useSantri(); await san.muat()
+        const J = ['kelas', 'halaqah', 'asrama', 'pelajaran']; const K = ['S', 'I', 'A', 'B', 'T']
+        return san.daftar.filter((x) => x.status === 'aktif').map((x, i) => {
+          const absen = {}; J.forEach((j, a) => K.forEach((k, b) => { const n = (i * 7 + a * 3 + b * 5) % 9 - 4; if (n > 0) (absen[j] ||= {})[k] = n }))
+          return { id: x.id, absen, klinik: i % 4 === 0 ? 2 + (i % 3) : 0, klinik_terakhir: i % 4 === 0 ? new Date(Date.now() - i * 864e5).toISOString() : null,
+            keluhan: i % 4 === 0 ? ['Demam', 'Sakit perut; Pusing', 'Batuk pilek'][i % 3] : null, izin: i % 5 === 0 ? 3 : i % 3, telat_kembali: i % 6 === 0 ? 2 : 0 }
+        })
+      }
+      const { data, error } = await supabase.rpc('riwayat_berulang_santri', { p_mulai: mulai, p_selesai: selesai })
+      if (error) throw new Error(pesanGalat(error))
+      return data || []
+    },
     async riwayat(santri, mulai, selesai) {
       if (MODE_DEMO) {
         await useSantri().muat()
