@@ -1,6 +1,6 @@
-// SIMKA PRO | src/lib/menu.js | v3.20 | Fase 12 – Tahap 3 Menu Tahfizh untuk penguji UTAS | 13/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.21 | Perbaikan: kelompok menu Fungsional; Penilaian ke kelompok Santri; Tim Kerja jadi tab Data Pegawai | 14/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
-// Kepegawaian (pengelolaan data), Santri, Penilaian, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
+// Kepegawaian (pengelolaan data), Santri, Fungsional, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
 // pada fase berikutnya; menu tersebut tampil dengan lencana fase.
 import {
@@ -29,7 +29,6 @@ export const MENU = [
   { kode: 'bebankerja', nama: 'Beban Kerja',     ikon: PhClockCountdown, warna: 'gaji',       ke: '/beban-kerja',       grup: 'Layanan Pegawai' },
   // Kepegawaian (pengelolaan data pegawai)
   { kode: 'pegawai',    nama: 'Data Pegawai',    ikon: PhUsersThree,     warna: 'pegawai',    ke: '/pegawai',           grup: 'Kepegawaian', peran: ADMIN },
-  { kode: 'kelompok',   nama: 'Tim Kerja', ikon: PhUsersFour,     warna: 'pegawai',    ke: '/kelompok-pegawai',  grup: 'Kepegawaian', peran: ADMIN, izin: 'kelola_kelompok' },
   { kode: 'verifikasi', nama: 'Verifikasi Akun', ikon: PhUserCheck,      warna: 'verifikasi', ke: '/verifikasi',        grup: 'Kepegawaian', peran: ADMIN, izin: 'verval_akun' },
   // Fase berikutnya
   { kode: 'santri',     nama: 'Data Santri',     ikon: PhStudent,        warna: 'santri',     ke: '/santri',            grup: 'Santri', fitur: 'data_santri' },
@@ -42,27 +41,27 @@ export const MENU = [
   { kode: 'jadwalpelajaran', nama: 'Roster', ikon: PhCalendarDots, warna: 'jadwal', ke: '/jadwal-pelajaran', grup: 'Santri',
     syarat: (c) => c.kelompok || Number(c.fitur?.jadwal_mengajar ?? 0) >= 1 },
   // Wali Kelas: wali kelas yang ditetapkan pada kelas, pimpinan/pemegang hak Absensi Kelas atau Jadwal mengajar, admin
-  { kode: 'walikelas', nama: 'Wali Kelas', ikon: PhChalkboard, warna: 'walikelas', ke: '/wali-kelas', grup: 'Santri',
+  { kode: 'walikelas', nama: 'Wali Kelas', ikon: PhChalkboard, warna: 'walikelas', ke: '/wali-kelas', grup: 'Fungsional',
     syarat: (c) => (c.jenisKelompok || []).includes('kelas') || Number(c.fitur?.absensi_kelas ?? 0) >= 1 || !!c.luas?.jadwal_mengajar },
   // Guru Mapel: guru yang memiliki penugasan mengajar, pimpinan (pantauan), pemegang hak Jadwal mengajar, admin
-  { kode: 'gurumapel', nama: 'Guru Mapel', ikon: PhPresentationChart, warna: 'gurumapel', ke: '/guru-mapel', grup: 'Santri',
+  { kode: 'gurumapel', nama: 'Guru Mapel', ikon: PhPresentationChart, warna: 'gurumapel', ke: '/guru-mapel', grup: 'Fungsional',
     syarat: (c) => !!c.mengajar || !!c.pimpinan || Number(c.fitur?.jadwal_mengajar ?? 0) >= 3 || !!c.luas?.jadwal_mengajar },
-  { kode: 'musyrif', nama: 'Musyrif', ikon: PhBuildings, warna: 'musyrif', ke: '/musyrif', grup: 'Santri',
+  { kode: 'musyrif', nama: 'Musyrif', ikon: PhBuildings, warna: 'musyrif', ke: '/musyrif', grup: 'Fungsional',
     syarat: (c) => (c.jenisKelompok || []).includes('kamar') || Number(c.fitur?.absensi_asrama ?? 0) >= 1 },
-  { kode: 'ekskul', nama: 'Ekskul', ikon: PhMedal, warna: 'ekskul', ke: '/ekskul', grup: 'Santri',
+  { kode: 'ekskul', nama: 'Ekskul', ikon: PhMedal, warna: 'ekskul', ke: '/ekskul', grup: 'Fungsional',
     syarat: (c) => (c.jenisKelompok || []).includes('ekskul') || Number(c.fitur?.absensi_ekskul ?? 0) >= 1 },
-  { kode: 'tahfizh',    nama: 'Tahfizh',         ikon: PhBookOpenText,   warna: 'tahfizh',    ke: '/tahfizh',           grup: 'Santri',
+  { kode: 'tahfizh',    nama: 'Tahfizh',         ikon: PhBookOpenText,   warna: 'tahfizh',    ke: '/tahfizh',           grup: 'Fungsional',
     syarat: (c) => (c.jenisKelompok || []).includes('halaqah') || Number(c.fitur?.tahfizh ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 || !!c.pengujiUtas },
   // Penilaian (Fase 12): pengaturan, rekap, dan permintaan ubah nilai. Pengisian nilai tetap di menu kerja penilai
   // (Guru Mapel, Tahfizh, Ekskul, Wali Kelas). Tampil bagi pengatur penilaian (admin ber-izin atur_penilaian/kelola_nilai,
   // hak fitur Nilai tingkat 3) dan pimpinan bidang SMA/Wustha/Tahfizh.
-  { kode: 'penilaian',  nama: 'Penilaian',       ikon: PhExam,           warna: 'penilaian',  ke: '/penilaian',         grup: 'Penilaian', hak: (c) => !!c.penilaian },
-  { kode: 'klinik',     nama: 'Klinik',          ikon: PhFirstAidKit,    warna: 'klinik',     ke: '/klinik',            grup: 'Layanan',
+  { kode: 'penilaian',  nama: 'Penilaian',       ikon: PhExam,           warna: 'penilaian',  ke: '/penilaian',         grup: 'Santri', hak: (c) => !!c.penilaian },
+  { kode: 'klinik',     nama: 'Klinik',          ikon: PhFirstAidKit,    warna: 'klinik',     ke: '/klinik',            grup: 'Fungsional',
     syarat: (c) => c.kelompok || Number(c.fitur?.klinik ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 },
   { kode: 'izinsantri', nama: 'Perizinan', ikon: PhSignOut, warna: 'pengajuan', ke: '/izin-santri', grup: 'Layanan',
     syarat: (c) => c.kelompok || Number(c.fitur?.perizinan_santri ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 || (c.izin || []).includes('kelola_izin_santri') },
   { kode: 'lapor', nama: 'Laporan', ikon: PhMegaphone, warna: 'laporan', ke: '/lapor', grup: 'Layanan' },
-  { kode: 'security',   nama: 'Security',        ikon: PhShieldCheck,    warna: 'security',   ke: '/security',          grup: 'Layanan',
+  { kode: 'security',   nama: 'Security',        ikon: PhShieldCheck,    warna: 'security',   ke: '/security',          grup: 'Fungsional',
     syarat: (c) => Number(c.fitur?.gerbang ?? 0) >= 1 || Number(c.fitur?.pantauan ?? 0) >= 1 || (c.izin || []).includes('kelola_security')
       || (c.jenisKelompok || []).some((j) => ['kamar', 'kelas', 'halaqah'].includes(j)) },
   // Dokumen: rekap presensi, laporan kehadiran, dan dokumen resmi dalam satu menu bertab (hemat menu)
@@ -94,7 +93,7 @@ export const NAV_BAWAH = [
   { kode: 'profil',   nama: 'Profil',   ikon: PhUserCircle,  warna: 'profil',    ke: '/profil' },
 ]
 
-export const GRUP = ['Utama', 'Presensi', 'Layanan Pegawai', 'Kepegawaian', 'Santri', 'Penilaian', 'Layanan', 'Administrasi', 'Sistem']
+export const GRUP = ['Utama', 'Presensi', 'Layanan Pegawai', 'Kepegawaian', 'Santri', 'Fungsional', 'Layanan', 'Administrasi', 'Sistem']
 /** Menu sesuai peran. ciri.shift = pegawai memegang pola shift (menu Jadwal Shift tampil juga untuk admin). */
 /** ciri.izin = izin admin yang dimiliki; menu ber-"izin" hanya tampil bagi superadmin atau admin yang memiliki izin itu. */
 /** ciri.fitur = hak fitur pegawai; menu ber-"fitur" tampil bagi admin/superadmin atau pegawai dengan tingkat ≥ 1. */

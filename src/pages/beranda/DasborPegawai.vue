@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.18 | Perbaikan: panel Tugas saya hari ini (akses cepat tupoksi) | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.19 | Perbaikan: tombol cepat wajib Laporan, Perizinan, Rujuk | 14/10/2026 -->
 <script setup>
 import KartuPersuratanBeranda from '@/components/KartuPersuratanBeranda.vue'
 import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
@@ -26,6 +26,7 @@ import IndikatorLangsung from './IndikatorLangsung.vue'
 import { useBeranda } from '@/stores/beranda'
 import ItemNotifikasi from '@/components/ItemNotifikasi.vue'
 import TugasHariIni from '@/components/TugasHariIni.vue'
+import AksiWajib from '@/components/AksiWajib.vue'
 
 const PANEL = panelBeranda(['pimpinan', 'santri', 'tahfizh', 'penilaian', 'layanan', 'surat', 'security'])
 const notif = useNotifikasi(); const sesi = useSesi(); const router = useRouter(); const dp = useDataPresensi(); const br = useBeranda()
@@ -54,6 +55,7 @@ const menu = computed(() => menuUntuk(sesi.peran, sesi.ciriMenu).filter((m) => !
     </Sapaan>
     <TombolPantauan />
 
+    <AksiWajib />
     <TugasHariIni />
     <!-- Untuk Anda: tetap tersusun di atas (akses cepat), tidak masuk slider -->
     <section v-if="br.data?.pribadi" class="space-y-3" aria-labelledby="judul-untuk-anda">

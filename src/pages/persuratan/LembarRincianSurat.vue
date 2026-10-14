@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/LembarRincianSurat.vue | v1.0 | Fase 10 – Tahap 1 Surat masuk dan disposisi | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/LembarRincianSurat.vue | v1.1 | Perbaikan: hapus surat salah catat dan rapikan nomor agenda | 14/10/2026 -->
 <script setup>
 // Rincian surat masuk: data surat, pindaian, alur disposisi berjenjang, dan tindakan sesuai peran:
 //   pimpinan penerima : Disposisikan, Cukup diketahui (tutup tanpa disposisi)
@@ -8,7 +8,7 @@
 //   Cetak lembar disposisi F4.
 // Membuka rincian otomatis menandai disposisi saya "dibaca".
 import { ref, watch, computed } from 'vue'
-import { PhStamp, PhPrinter, PhPencilSimple, PhProhibit, PhCheckCircle, PhArrowBendDownRight, PhShareFat, PhArrowUUpLeft, PhPaperclip,
+import { PhStamp, PhPrinter, PhPencilSimple, PhProhibit, PhTrash, PhCheckCircle, PhArrowBendDownRight, PhShareFat, PhArrowUUpLeft, PhPaperclip,
   PhClock, PhEyeSlash, PhArrowLeft, PhCheck } from '@phosphor-icons/vue'
 import { usePersuratan } from '@/stores/persuratan'
 import { useUI } from '@/stores/ui'
@@ -25,7 +25,8 @@ const props = defineProps({ id: { type: String, default: '' }, versi: { type: Nu
 const emit = defineEmits(['berubah', 'ubah'])
 const ps = usePersuratan(); const ui = useUI()
 const s = ref(null); const memuat = ref(false); const mode = ref('rincian'); const induk = ref(null); const pilihD = ref(null)
-const teks = ref(''); const proses = ref(false); const cetak = ref(false)
+const teks = ref(''); const proses = ref(false); const cetak = ref(false); const rapikan = ref(true)
+const bolehHapus = computed(() => !!(ps.hak.kelola || ps.hak.superadmin))
 async function muat() {
   if (!props.id) return
   memuat.value = true
@@ -57,9 +58,17 @@ function kirimTeks() {
     if (t.length < 5) return ui.toast('Tuliskan alasan pembatalan (minimal 5 huruf).', 'galat')
     return jalankan(() => ps.batal(s.value.id, t), 'Pencatatan surat dibatalkan.')
   }
+  if (mode.value === 'hapus') return hapus(t)
+}
+async function hapus(t) {
+  if (t.length < 5) return ui.toast('Tuliskan alasan penghapusan (minimal 5 huruf).', 'galat')
+  if (!(await ui.konfirmasi({ judul: 'Hapus surat ini?', pesan: `Surat ${s.value.nomor_agenda} beserta disposisinya dihapus permanen dari buku agenda.${rapikan.value ? ' Nomor agenda sesudahnya digeser naik.' : ''}`, ya: 'Hapus', bahaya: true }))) return
+  proses.value = true
+  try { const h = await ps.hapusMasuk(s.value.id, t, rapikan.value); ui.toast(`Surat dihapus${h?.digeser ? `; ${h.digeser} nomor agenda sesudahnya dirapikan` : ''}.`); emit('berubah'); buka.value = false }
+  catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 const tarik = (d) => jalankan(() => ps.tarik(d.id), `Disposisi kepada ${d.kepada} ditarik kembali.`)
-const JUDUL_TEKS = { selesai: 'Tandai disposisi selesai', tutup: 'Cukup diketahui', batal: 'Batalkan pencatatan surat' }
+const JUDUL_TEKS = { selesai: 'Tandai disposisi selesai', tutup: 'Cukup diketahui', batal: 'Batalkan pencatatan surat', hapus: 'Hapus surat salah catat' }
 </script>
 <template>
   <LembarBawah v-model="buka" :judul="s ? `Surat ${s.nomor_agenda}` : 'Rincian surat'" lebar>
@@ -128,6 +137,7 @@ const JUDUL_TEKS = { selesai: 'Tandai disposisi selesai', tutup: 'Cukup diketahu
         <button v-if="s.boleh.cetak" class="tombol-garis w-rekap" @click="cetak = true"><PhPrinter :size="20" style="color: var(--c)" /> Lembar disposisi</button>
         <button v-if="s.boleh.ubah" class="tombol-garis" @click="emit('ubah', s)"><PhPencilSimple :size="20" /> Ubah</button>
         <button v-if="s.boleh.batal" class="tombol-teks" @click="keTeks('batal')"><PhProhibit :size="20" /> Batalkan pencatatan</button>
+        <button v-if="bolehHapus" class="tombol-teks text-merah" @click="rapikan = true; keTeks('hapus')"><PhTrash :size="20" /> Hapus (salah catat)</button>
       </div>
       <p v-if="dispSaya.length" class="text-xs text-teks3">Tandai selesai setelah tindak lanjut dilakukan; pemberi disposisi mendapat notifikasi.</p>
       <CetakDisposisi v-model:pratinjau="cetak" :surat="s" />
@@ -140,10 +150,15 @@ const JUDUL_TEKS = { selesai: 'Tandai disposisi selesai', tutup: 'Cukup diketahu
       <h3 class="judul-bagian">{{ JUDUL_TEKS[mode] }}</h3>
       <p class="text-sm text-teks2">{{ s.perihal }}</p>
       <p v-if="mode === 'selesai'" class="rounded-xl bg-permukaan2 px-3 py-2 text-xs text-teks2">Disposisi dari {{ pilihD.dari }}: {{ [...(pilihD.instruksi || []), pilihD.catatan].filter(Boolean).join(' · ') }}</p>
+      <template v-if="mode === 'hapus'">
+        <p class="rounded-xl bg-[#C7332F]/10 p-3 text-sm text-teks2">Gunakan hanya untuk surat yang salah dicatat (mis. tercatat dua kali). Surat dan disposisinya terhapus permanen; penghapusan tercatat di Audit Log.</p>
+        <label class="flex min-h-[44px] items-center gap-3 rounded-xl border border-garis px-3 text-sm"><input v-model="rapikan" type="checkbox" class="h-5 w-5 shrink-0" />
+          <span><b>Rapikan nomor agenda</b><span class="block text-xs text-teks3">Nomor agenda surat sesudahnya pada tahun yang sama digeser naik agar buku agenda kembali berurutan.</span></span></label>
+      </template>
       <textarea v-model="teks" rows="3" class="isian py-2.5" aria-label="Isian"
-        :placeholder="mode === 'selesai' ? 'Laporan tindak lanjut (wajib), mis. rapat sudah dihadiri' : mode === 'tutup' ? 'Catatan (opsional)' : 'Alasan pembatalan (wajib), mis. surat tercatat dua kali'" />
-      <button :class="[mode === 'batal' ? 'tombol-garis' : 'tombol-utama', 'w-full']" :disabled="proses" @click="kirimTeks">
-        <component :is="mode === 'batal' ? PhProhibit : PhCheckCircle" :size="20" weight="duotone" /> {{ proses ? 'Menyimpan…' : JUDUL_TEKS[mode] }}</button>
+        :placeholder="mode === 'hapus' ? 'Alasan penghapusan (wajib), mis. tercatat dua kali' : mode === 'selesai' ? 'Laporan tindak lanjut (wajib), mis. rapat sudah dihadiri' : mode === 'tutup' ? 'Catatan (opsional)' : 'Alasan pembatalan (wajib), mis. surat tercatat dua kali'" />
+      <button :class="[['batal', 'hapus'].includes(mode) ? 'tombol-garis' : 'tombol-utama', 'w-full', mode === 'hapus' && 'text-merah']" :disabled="proses" @click="kirimTeks">
+        <component :is="mode === 'hapus' ? PhTrash : mode === 'batal' ? PhProhibit : PhCheckCircle" :size="20" weight="duotone" /> {{ proses ? 'Menyimpan…' : JUDUL_TEKS[mode] }}</button>
     </div>
   </LembarBawah>
 </template>

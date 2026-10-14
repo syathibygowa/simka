@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- SIMKA PRO | index.html | v1.1 | Perbaikan: layar pembuka beranimasi (gradasi merah–oranye) | 14/10/2026 -->
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
@@ -16,8 +17,41 @@
         if (gelap) document.documentElement.classList.add('dark');
       })();
     </script>
+    <style>
+      /* Layar pembuka (PWA): gradasi merah–oranye, logo beranimasi, lalu memudar masuk ke aplikasi/halaman masuk */
+      #pembuka { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+        background: radial-gradient(120% 90% at 30% 15%, #E8743B 0%, #D04A2E 45%, #A9241F 100%); color: #fff; font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        transition: opacity .55s ease, transform .55s ease; }
+      #pembuka.keluar { opacity: 0; transform: scale(1.06); pointer-events: none; }
+      #pembuka .logo { position: relative; width: 116px; height: 116px; }
+      #pembuka .logo svg { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 10px 24px rgba(80, 10, 5, .35)); }
+      #pembuka .bintang { transform-origin: 50% 50%; animation: pb-putar 1.4s cubic-bezier(.2, .8, .2, 1) both, pb-napas 2.4s ease-in-out 1.4s infinite; }
+      #pembuka .cincin { position: absolute; inset: -14px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .45); animation: pb-gelombang 2s ease-out .6s infinite; }
+      #pembuka .cincin.b { animation-delay: 1.6s; }
+      #pembuka h1 { color: #fff !important; margin: 6px 0 0; font-size: 28px; font-weight: 800; letter-spacing: .06em; animation: pb-naik .7s ease .45s both; }
+      #pembuka p { color: #fff; margin: 0; font-size: 14px; opacity: .9; animation: pb-naik .7s ease .65s both; }
+      #pembuka .titik { display: flex; gap: 7px; margin-top: 14px; animation: pb-naik .5s ease .9s both; }
+      #pembuka .titik i { width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: pb-loncat 1s ease-in-out infinite; }
+      #pembuka .titik i:nth-child(2) { animation-delay: .15s; } #pembuka .titik i:nth-child(3) { animation-delay: .3s; }
+      @keyframes pb-putar { from { transform: scale(.2) rotate(-200deg); opacity: 0 } to { transform: scale(1) rotate(0); opacity: 1 } }
+      @keyframes pb-napas { 50% { transform: scale(1.06) } }
+      @keyframes pb-gelombang { from { transform: scale(.75); opacity: .9 } to { transform: scale(1.45); opacity: 0 } }
+      @keyframes pb-naik { from { transform: translateY(14px); opacity: 0 } to { transform: none; opacity: 1 } }
+      @keyframes pb-loncat { 0%, 80%, 100% { transform: translateY(0); opacity: .5 } 40% { transform: translateY(-7px); opacity: 1 } }
+      @media (prefers-reduced-motion: reduce) { #pembuka *, #pembuka { animation: none !important; transition: opacity .2s !important; } }
+    </style>
   </head>
   <body>
+    <div id="pembuka" role="status" aria-label="Memuat SIMKA PRO">
+      <div class="logo" aria-hidden="true">
+        <span class="cincin"></span><span class="cincin b"></span>
+        <svg viewBox="0 0 48 48"><g class="bintang"><rect x="10" y="10" width="28" height="28" rx="4" fill="#fff"/><rect x="10" y="10" width="28" height="28" rx="4" fill="#fff" transform="rotate(45 24 24)"/>
+          <circle cx="24" cy="24" r="8.5" fill="none" stroke="#C7332F" stroke-width="2.4"/><circle cx="24" cy="24" r="3" fill="#C7332F"/></g></svg>
+      </div>
+      <h1>SIMKA PRO</h1>
+      <p>Imam Asy-Syathiby Wahdah Islamiyah Gowa</p>
+      <div class="titik" aria-hidden="true"><i></i><i></i><i></i></div>
+    </div>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
   </body>

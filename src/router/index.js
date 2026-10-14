@@ -78,7 +78,7 @@ const routes = [
       { path: 'berkas/:id?', component: () => import('@/pages/berkas/Berkas.vue'), props: true, meta: { judul: 'Berkas Saya', kembali: '/tugas' } },
       { path: 'kartu', component: () => import('@/pages/kartu/Kartu.vue'), meta: { judul: 'Kartu Pegawai', kembali: '/profil' } },
       { path: 'agenda/:id?', component: () => import('@/pages/agenda/Agenda.vue'), props: true, meta: { judul: 'Agenda', kembali: '/' } },
-      { path: 'kelompok-pegawai', component: () => import('@/pages/kelompok/KelompokPegawai.vue'), meta: { judul: 'Tim Kerja', peran: ADMIN, kembali: '/tugas' } },
+      { path: 'kelompok-pegawai', redirect: { path: '/pegawai', query: { tab: 'tim' } } },   // Tim Kerja kini tab di Data Pegawai
       { path: 'beban-kerja/:tab?', component: () => import('@/pages/beban/BebanKerja.vue'), props: true, meta: { judul: 'Ekuivalensi Jam Beban Kerja', kembali: '/tugas' } },
       { path: 'audit-log', component: () => import('@/pages/audit/AuditLog.vue'), meta: { judul: 'Audit Log', kembali: '/tugas' } },
       { path: 'rekap/:tab?', component: () => import('@/pages/laporan/Laporan.vue'), props: true, meta: { judul: 'Dokumen', cetak: true, kembali: '/tugas' } },

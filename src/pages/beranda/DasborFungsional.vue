@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborFungsional.vue | v1.5 | Perbaikan: panel Tugas saya hari ini (akses cepat tupoksi) | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborFungsional.vue | v1.6 | Perbaikan: tombol cepat wajib Laporan, Perizinan, Rujuk | 14/10/2026 -->
 <script setup>
 // Beranda pegawai fungsional (wali kelas, guru mapel, musyrif, muhaffizh, pembina, medis, security, staf, dll.),
 // yaitu semua pegawai di luar pimpinan tinggi, admin, dan superadmin. Tanpa kartu statistik (hasil evaluasi pondok):
@@ -15,6 +15,7 @@ import Sapaan from './Sapaan.vue'
 import RingkasanPribadi from './RingkasanPribadi.vue'
 import TugasPenilaianBeranda from '@/components/TugasPenilaianBeranda.vue'
 import TugasHariIni from '@/components/TugasHariIni.vue'
+import AksiWajib from '@/components/AksiWajib.vue'
 
 const sesi = useSesi(); const br = useBeranda(); const dp = useDataPresensi()
 onMounted(() => dp.muatHarian())
@@ -40,6 +41,7 @@ const menu = computed(() => menuCepat(sesi.tugas, { shift: sesi.punyaShift, pers
       </router-link>
     </Sapaan>
 
+    <AksiWajib />
     <TugasHariIni />
     <!-- Menu cepat sesuai tupoksi -->
     <section class="kartu p-4 sm:p-5" aria-labelledby="judul-menu-cepat">

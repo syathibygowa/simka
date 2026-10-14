@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/persuratan.js | v1.3 | Fase 10 – Penutup: revisi surat keluar, inventaris semua surat | 11/10/2026
+// SIMKA PRO | src/stores/persuratan.js | v1.4 | Perbaikan: hapus surat masuk/keluar salah catat dan rapikan nomor | 14/10/2026
 // Persuratan: hak, ketentuan, surat masuk (catat, ubah, batal), disposisi berantai (beri, tarik, selesai), ringkasan, buku agenda;
 // template surat (simpan, hapus) dan surat keluar (simpan draf, kirim ke TU, ajukan tanda tangan, batalkan, arsip, revisi);
 // buku agenda surat keluar = inventaris semua surat (Persuratan + surat dari modul lain).
@@ -174,6 +174,11 @@ export const usePersuratan = defineStore('persuratan', {
       if (!MODE_DEMO) return rpc('batalkan_surat_masuk', { p_id: id, p_alasan: alasan })
       Object.assign(demo().surat.find((x) => x.id === id), { status: 'batal', catatan_selesai: alasan })
     },
+    /** Hapus surat masuk salah catat; rapikan = nomor agenda sesudahnya digeser naik. */
+    async hapusMasuk(id, alasan, rapikan = true) {
+      if (!MODE_DEMO) return rpc('hapus_surat_masuk', { p_id: id, p_alasan: alasan, p_rapikan: rapikan })
+      const D = demo(); D.surat = D.surat.filter((x) => x.id !== id); return { digeser: 0 }
+    },
     async tutup(id, catatan) {
       if (!MODE_DEMO) return rpc('selesaikan_surat_masuk', { p_id: id, p_catatan: catatan || null })
       Object.assign(demo().surat.find((x) => x.id === id), { status: 'selesai', catatan_selesai: catatan || 'Cukup diketahui', selesai_pada: new Date().toISOString() })
@@ -327,6 +332,11 @@ export const usePersuratan = defineStore('persuratan', {
     async batalKeluar(id, alasan) {
       if (!MODE_DEMO) return rpc('batalkan_surat_keluar', { p_id: id, p_alasan: alasan })
       Object.assign(demo().keluar.find((x) => x.id === id), { status: 'dibatalkan', catatan: alasan })
+    },
+    /** Hapus surat keluar salah catat; rapikan = nomor surat sesudahnya ikut bergeser. */
+    async hapusKeluar(id, alasan, rapikan = true) {
+      if (!MODE_DEMO) return rpc('hapus_surat_keluar', { p_id: id, p_alasan: alasan, p_rapikan: rapikan })
+      const D = demo(); D.keluar = D.keluar.filter((x) => x.id !== id); return { digeser: 0 }
     },
     async arsipKeluar(id, berkasId) {
       if (!MODE_DEMO) return rpc('simpan_arsip_surat_keluar', { p_id: id, p_berkas: berkasId })

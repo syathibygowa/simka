@@ -1,4 +1,4 @@
-// SIMKA PRO | src/main.js | v1.2 | Fase 3 – Tahap 1 Pengumuman, audit log, notifikasi HP | 04/10/2026
+// SIMKA PRO | src/main.js | v1.3 | Perbaikan: layar pembuka PWA beranimasi memudar masuk ke aplikasi | 14/10/2026
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import '@fontsource/plus-jakarta-sans/400.css'
@@ -16,6 +16,15 @@ app.use(createPinia())
 useTema().pasang()
 app.use(router)
 app.mount('#app')
+
+// Layar pembuka (index.html): tampil sedikitnya 1,2 detik bila dibuka sebagai aplikasi terpasang (PWA), lalu memudar.
+{
+  const awal = performance.now(); const pwa = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone
+  router.isReady().then(() => {
+    const el = document.getElementById('pembuka'); if (!el) return
+    setTimeout(() => { el.classList.add('keluar'); setTimeout(() => el.remove(), 600) }, Math.max(0, (pwa ? 1200 : 300) - (performance.now() - awal)))
+  })
+}
 
 // Pembaruan otomatis: saat versi baru terpasang di GitHub Pages, aplikasi memuat ulang dengan sendirinya
 // (dan memeriksa pembaruan setiap 30 menit selama aplikasi terbuka).

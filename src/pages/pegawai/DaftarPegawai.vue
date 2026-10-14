@@ -1,12 +1,15 @@
-<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.4 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.5 | Perbaikan: tab Tim kerja, saringan jenis kelamin dan bidang (juga untuk cetak/Excel) | 14/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { PhCards, PhMagnifyingGlass, PhPrinter, PhEye, PhCaretRight, PhUsersThree, PhSlidersHorizontal, PhUserPlus, PhFileXls, PhChartBar, PhDownloadSimple } from '@phosphor-icons/vue'
+import { useRoute } from 'vue-router'
+import { PhCards, PhMagnifyingGlass, PhPrinter, PhEye, PhCaretRight, PhUsersThree, PhSlidersHorizontal, PhUserPlus, PhFileXls, PhChartBar, PhDownloadSimple, PhUsersFour } from '@phosphor-icons/vue'
 import { useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
 import { KEAKTIFAN, STATUS_KELUARGA, PENDIDIKAN, LEVEL_MUHAFFIZH } from '@/lib/kepegawaian'
 import { usePegawai } from '@/stores/pegawai'
 import { useSesi } from '@/stores/sesi'
+import { useOrganisasi } from '@/stores/organisasi'
+import KelompokPegawai from '@/pages/kelompok/KelompokPegawai.vue'
 import { formatPanjang, formatPendek, hariIniISO } from '@/lib/tanggal'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
@@ -16,18 +19,23 @@ import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
-// Tab Cetak kartu (pindahan dari menu Kartu Pegawai) untuk admin ber-izin cetak_kartu
-const sesiK = useSesi(); const bolehKartu = computed(() => sesiK.bolehAdmin('cetak_kartu'))
-const TAB_PEG = [{ k: 'data', n: 'Data pegawai', ikon: PhUsersThree, w: 'pegawai' }, { k: 'kartu', n: 'Cetak kartu', ikon: PhCards, w: 'profil' }]
-const tabPeg = ref('data')
+// Tab Tim kerja (pindahan dari menu Tim Kerja, admin ber-izin kelola_kelompok) dan Cetak kartu (admin ber-izin cetak_kartu)
+const sesiK = useSesi(); const route = useRoute(); const bolehKartu = computed(() => sesiK.bolehAdmin('cetak_kartu')); const bolehTim = computed(() => sesiK.bolehAdmin('kelola_kelompok'))
+const TAB_PEG = computed(() => [{ k: 'data', n: 'Data pegawai', ikon: PhUsersThree, w: 'pegawai' },
+  ...(bolehTim.value ? [{ k: 'tim', n: 'Tim kerja', ikon: PhUsersFour, w: 'presensi' }] : []),
+  ...(bolehKartu.value ? [{ k: 'kartu', n: 'Cetak kartu', ikon: PhCards, w: 'profil' }] : [])])
+const tabPeg = ref(['tim', 'kartu'].includes(route.query.tab) ? route.query.tab : 'data')
 
 const peg = usePegawai(); const sesi = useSesi(); const router = useRouter()
 const keaktifan = ref('aktif')
-const cari = ref(''); const saring = ref('semua')
+const cari = ref(''); const saring = ref('semua'); const jk = ref(''); const bidang = ref('')
+const org = useOrganisasi()
+const daftarBidang = computed(() => org.units.filter((u) => u.jenis === 'bidang' && u.aktif !== false).sort((a, b) => (a.urutan || 0) - (b.urutan || 0)))
+const unitBidang = computed(() => (bidang.value ? org.turunan(bidang.value) : null))
 const pratinjau = ref(false); const opsiCetak = ref(false)
 const tglDok = ref(hariIniISO()); const kop = ref('pondok')
 const pimpinan = ref({ jabatan: 'Direktur', nama: '', niy: '' })
-onMounted(async () => { if (!peg.daftar.length) peg.muat(); pimpinan.value = await ambilPenandaTangan('Direktur') })
+onMounted(async () => { if (!peg.daftar.length) peg.muat(); org.muat().catch(() => {}); pimpinan.value = await ambilPenandaTangan('Direktur') })
 
 const STATUS_AKUN = { // label status akun
  
@@ -41,6 +49,7 @@ const tampil = computed(() => {
   const q = cari.value.toLowerCase().trim()
   return peg.daftar.filter((p) => (saring.value === 'semua' || p.status_akun === saring.value) &&
     (keaktifan.value === 'semua' || (p.status_keaktifan || 'aktif') === keaktifan.value) &&
+    (!jk.value || p.jenis_kelamin === jk.value) && (!unitBidang.value || unitBidang.value.has(p.org_unit_id)) &&
     (!q || [p.nama_lengkap, p.niy, p.nama_unit, jabatan(p)].join(' ').toLowerCase().includes(q)))
 })
 function eksporExcel() {
@@ -53,15 +62,17 @@ function eksporExcel() {
   const ws = XLSX.utils.aoa_to_sheet([kolom, ...data])
   ws['!cols'] = kolom.map((k, i) => ({ wch: Math.min(40, Math.max(k.length, ...data.map((r) => String(r[i]).length)) + 2) }))
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Data pegawai')
-  XLSX.writeFile(wb, `Data-Pegawai-${formatPendek(new Date()).replace(/\//g, '-')}.xlsx`)
+  XLSX.writeFile(wb, `Data-Pegawai${saringanTeks.value ? '-' + saringanTeks.value.replace(/[^\w]+/g, '-') : ''}-${formatPendek(new Date()).replace(/\//g, '-')}.xlsx`)
 }
 function cetakSekarang() { opsiCetak.value = false; setTimeout(() => window.print(), 300) }
 const judulCetak = computed(() => saring.value === 'semua' ? 'Daftar Pegawai' : `Daftar Pegawai (${SARING.find((s) => s.k === saring.value).n})`)
+const saringanTeks = computed(() => [jk.value === 'L' ? 'Laki-laki' : jk.value === 'P' ? 'Perempuan' : '', bidang.value ? org.cariUnit(bidang.value)?.nama : ''].filter(Boolean).join(' · '))
 </script>
 <template>
   <div>
-    <BilahTab v-if="bolehKartu" class="layar-saja mb-4" :tab="TAB_PEG" v-model="tabPeg" label="Bagian data pegawai" />
+    <BilahTab v-if="TAB_PEG.length > 1" class="layar-saja mb-4" :tab="TAB_PEG" v-model="tabPeg" label="Bagian data pegawai" />
     <Kartu v-if="tabPeg === 'kartu'" bagian="massal" />
+    <KelompokPegawai v-else-if="tabPeg === 'tim'" />
     <template v-else>
     <div class="layar-saja">
       <!-- Kepala halaman desktop -->
@@ -88,6 +99,8 @@ const judulCetak = computed(() => saring.value === 'semua' ? 'Daftar Pegawai' : 
         <PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIY, bidang, atau jabatan" aria-label="Cari pegawai" />
       </div>
+      <select v-model="jk" class="isian w-auto" aria-label="Saring jenis kelamin"><option value="">L dan P</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select>
+      <select v-model="bidang" class="isian w-auto max-w-full" aria-label="Saring bidang"><option value="">Semua bidang</option><option v-for="b in daftarBidang" :key="b.id" :value="b.id">{{ b.nama }}</option></select>
       <select v-model="keaktifan" class="isian w-auto" aria-label="Saring status keaktifan">
         <option value="semua">Semua keaktifan</option><option v-for="(n, k) in KEAKTIFAN" :key="k" :value="k">{{ n }}</option>
       </select>
@@ -144,7 +157,7 @@ const judulCetak = computed(() => saring.value === 'semua' ? 'Daftar Pegawai' : 
 
     <!-- Dokumen cetak -->
     <div>
-      <DokumenCetak :kop="kop" :judul="judulCetak" :subjudul="`Keadaan per ${formatPanjang(tglDok)}`"  v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+      <DokumenCetak :kop="kop" :judul="judulCetak" :subjudul="`${saringanTeks ? saringanTeks + ' · ' : ''}Keadaan per ${formatPanjang(tglDok)}`"  v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
         <table class="tabel">
           <colgroup><col style="width:6%"><col style="width:14%"><col style="width:24%"><col style="width:6%"><col style="width:22%"><col style="width:16%"><col style="width:12%"></colgroup>
           <thead><tr><th>No.</th><th>NIY</th><th>Nama</th><th>L/P</th><th>Jabatan</th><th>Bidang/Unit</th><th>Status</th></tr></thead>
@@ -173,7 +186,13 @@ const judulCetak = computed(() => saring.value === 'semua' ? 'Daftar Pegawai' : 
             <option value="sma">Kop SMA</option><option value="yayasan">Kop Yayasan</option>
           </select>
         </div>
-        <p class="text-sm text-teks3">{{ tampil.length }} pegawai akan dicetak sesuai saringan saat ini.</p>
+        <div class="grid grid-cols-2 gap-2">
+          <div><label class="label-isian" for="c-jk">Jenis kelamin</label>
+            <select id="c-jk" v-model="jk" class="isian"><option value="">Laki-laki dan perempuan</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
+          <div><label class="label-isian" for="c-bd">Bidang</label>
+            <select id="c-bd" v-model="bidang" class="isian"><option value="">Semua bidang</option><option v-for="b in daftarBidang" :key="b.id" :value="b.id">{{ b.nama }}</option></select></div>
+        </div>
+        <p class="text-sm text-teks3">{{ tampil.length }} pegawai akan dicetak sesuai saringan{{ saringanTeks ? ` (${saringanTeks})` : '' }}.</p>
         <div class="grid grid-cols-2 gap-2">
           <button class="tombol-garis" @click="pratinjau = true; opsiCetak = false"><PhEye :size="20" weight="duotone" /> Pratinjau</button>
           <button class="tombol-utama" @click="cetakSekarang"><PhPrinter :size="20" weight="duotone" /> Cetak</button>

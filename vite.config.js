@@ -1,4 +1,4 @@
-// SIMKA PRO | vite.config.js | v1.3 | Perbaikan darurat: pemasangan di HP Xiaomi/Redmi | 06/10/2026
+// SIMKA PRO | vite.config.js | v1.4 | Perbaikan: warna latar layar pembuka PWA merah | 14/10/2026
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => {
               description: 'Sistem Manajemen Kepegawaian Terintegrasi Pondok Pesantren Imam Asy-Syathiby',
               lang: 'id',
               theme_color: '#C7332F',
-              background_color: '#FAF6F3',
+              background_color: '#C7332F',   // layar pembuka bawaan HP menyatu dengan layar pembuka beranimasi
               display: 'standalone',
               orientation: 'portrait',
               id: './',               // identitas aplikasi tetap (tidak berubah antarversi)

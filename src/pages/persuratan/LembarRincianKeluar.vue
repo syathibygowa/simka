@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/LembarRincianKeluar.vue | v1.2 | Fase 10 – Penutup: revisi surat terbit | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/LembarRincianKeluar.vue | v1.3 | Perbaikan: hapus surat salah catat dan rapikan nomor | 14/10/2026 -->
 <script setup>
 // Rincian surat keluar: status, nomor, penanda tangan, dan tindakan sesuai peran:
 //   penyusun (Kepala Bidang) : Ubah, Kirim ke Tata Usaha, Batalkan
@@ -7,7 +7,7 @@
 //   semua yang berhak        : Pratinjau/Cetak F4 (draf bertanda DRAF; surat sah dengan QR dan kode validasi)
 // Surat yang sudah diajukan dicetak dari salinan beku di registri dokumen.
 import { ref, watch, computed } from 'vue'
-import { PhPrinter, PhPencilSimple, PhPaperPlaneTilt, PhSignature, PhProhibit, PhPenNib, PhXCircle, PhUploadSimple, PhPaperclip, PhArrowLeft, PhSealCheck, PhInfo, PhArrowsClockwise } from '@phosphor-icons/vue'
+import { PhPrinter, PhPencilSimple, PhPaperPlaneTilt, PhSignature, PhProhibit, PhPenNib, PhXCircle, PhUploadSimple, PhPaperclip, PhArrowLeft, PhSealCheck, PhInfo, PhArrowsClockwise, PhTrash } from '@phosphor-icons/vue'
 import { usePersuratan } from '@/stores/persuratan'
 import { useUI } from '@/stores/ui'
 import { STATUS_KELUAR, isianKosong } from '@/lib/suratKeluar'
@@ -22,6 +22,7 @@ const buka = defineModel({ type: Boolean, default: false })
 const props = defineProps({ id: { type: String, default: '' }, doc: { type: String, default: '' }, versi: { type: Number, default: 0 } })
 const emit = defineEmits(['berubah', 'ubah', 'revisi'])
 const ps = usePersuratan(); const ui = useUI()
+const rapikan = ref(true); const bolehHapus = computed(() => !!(ps.hak.kelola || ps.hak.superadmin))
 const s = ref(null); const memuat = ref(false); const mode = ref('rincian'); const teks = ref(''); const ttdMode = ref('elektronik'); const proses = ref(false); const cetak = ref(false); const nomorBaru = ref(false)
 async function muat() {
   if (!props.id && !props.doc) return
@@ -62,7 +63,14 @@ function kirimTeks() {
   if (t.length < 5) return ui.toast('Tuliskan alasan (minimal 5 huruf).', 'galat')
   if (mode.value === 'tolak') return jalankan(() => ps.tandatanganiKeluar(s.value.dokumen.id, false, t), 'Surat ditolak. Tata Usaha dan penyusun mendapat pemberitahuan.')
   if (mode.value === 'revisi') return revisi(t)
+  if (mode.value === 'hapus') return hapus(t)
   return jalankan(() => ps.batalKeluar(s.value.id, t), 'Surat dibatalkan.')
+}
+async function hapus(t) {
+  if (!(await ui.konfirmasi({ judul: 'Hapus surat ini?', pesan: `${s.value.nomor ? 'Surat ' + s.value.nomor : 'Draf surat'} dihapus permanen.${s.value.nomor && rapikan.value ? ' Nomor surat keluar sesudahnya ikut bergeser.' : ''}`, ya: 'Hapus', bahaya: true }))) return
+  proses.value = true
+  try { const h = await ps.hapusKeluar(s.value.id, t, rapikan.value); ui.toast(`Surat dihapus${h?.digeser ? `; ${h.digeser} nomor surat sesudahnya dirapikan — cetak ulang surat yang nomornya berubah` : ''}.`); emit('berubah'); buka.value = false }
+  catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 // Revisi: draf salinan dibuka; surat lama tetap berlaku sampai revisinya sah, lalu berstatus Direvisi
 async function revisi(alasan) {
@@ -72,7 +80,7 @@ async function revisi(alasan) {
     ui.toast('Draf revisi dibuat. Ubah isinya, lalu ajukan tanda tangan kembali.'); emit('berubah'); emit('revisi', id)
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
-const JUDUL_TEKS = { tolak: 'Tolak menandatangani', batal: 'Batalkan surat', revisi: 'Revisi surat' }
+const JUDUL_TEKS = { tolak: 'Tolak menandatangani', batal: 'Batalkan surat', revisi: 'Revisi surat', hapus: 'Hapus surat salah catat' }
 async function unggahArsip(e) {
   const f = e.target.files?.[0]; e.target.value = ''; if (!f) return
   if (!/^image\//.test(f.type) && f.type !== 'application/pdf') return ui.toast('Pilih foto atau PDF.', 'galat')
@@ -160,6 +168,7 @@ async function lihatArsip() {
         <button v-if="s.berkas_arsip_id" class="tombol-garis" @click="lihatArsip"><PhPaperclip :size="20" /> Arsip pindaian</button>
         <button v-if="s.boleh.revisi && !s.pengganti" class="tombol-garis w-pengajuan" @click="teks = ''; nomorBaru = false; mode = 'revisi'"><PhArrowsClockwise :size="20" style="color: var(--c)" /> Revisi surat</button>
         <button v-if="s.boleh.batal" class="tombol-teks" @click="teks = ''; mode = 'batal'"><PhProhibit :size="20" /> Batalkan</button>
+        <button v-if="bolehHapus" class="tombol-teks text-merah" @click="teks = ''; rapikan = true; mode = 'hapus'"><PhTrash :size="20" /> Hapus (salah catat)</button>
       </div>
       <p v-if="s.status === 'terbit' && s.mode_ttd === 'basah' && !s.berkas_arsip_id" class="flex items-start gap-2 text-xs text-teks3"><PhInfo :size="15" class="mt-0.5 shrink-0" />
         Setelah dicetak dan ditandatangani, unggah pindaiannya sebagai arsip.</p>
@@ -180,10 +189,16 @@ async function lihatArsip() {
           <input v-model="nomorBaru" type="checkbox" class="h-5 w-5" />
           <span><b>Pakai nomor baru</b><span class="block text-xs text-teks3">Bila tidak dicentang, nomor dan tanggal surat lama tetap dipakai.</span></span></label>
       </template>
+      <template v-if="mode === 'hapus'">
+        <p class="rounded-xl bg-[#C7332F]/10 p-3 text-sm text-teks2">Gunakan hanya untuk surat yang salah dicatat. Surat dihapus permanen beserta registri keabsahannya; penghapusan tercatat di Audit Log.
+          Untuk surat yang sudah dikirim dan berlaku, gunakan <b>Revisi</b> atau <b>Batalkan</b>.</p>
+        <label v-if="s.nomor" class="flex min-h-[44px] items-center gap-3 rounded-xl border border-garis px-3 text-sm"><input v-model="rapikan" type="checkbox" class="h-5 w-5 shrink-0" />
+          <span><b>Rapikan nomor surat</b><span class="block text-xs text-teks3">Nomor surat keluar sesudahnya (periode yang sama) bergeser naik; surat yang sudah dicetak perlu dicetak ulang.</span></span></label>
+      </template>
       <textarea v-model="teks" rows="3" class="isian py-2.5" aria-label="Alasan"
-        :placeholder="mode === 'tolak' ? 'Alasan penolakan (wajib), mis. tanggal acara keliru' : mode === 'revisi' ? 'Alasan revisi (wajib), mis. perbaikan tempat acara' : 'Alasan pembatalan (wajib)'" />
-      <button class="tombol-utama w-full" :disabled="proses" @click="kirimTeks"><component :is="mode === 'tolak' ? PhXCircle : mode === 'revisi' ? PhArrowsClockwise : PhProhibit" :size="20" />
-        {{ mode === 'tolak' ? 'Tolak surat' : mode === 'revisi' ? 'Buat draf revisi' : 'Batalkan surat' }}</button>
+        :placeholder="mode === 'hapus' ? 'Alasan penghapusan (wajib), mis. salah ketik tujuan' : mode === 'tolak' ? 'Alasan penolakan (wajib), mis. tanggal acara keliru' : mode === 'revisi' ? 'Alasan revisi (wajib), mis. perbaikan tempat acara' : 'Alasan pembatalan (wajib)'" />
+      <button class="tombol-utama w-full" :disabled="proses" @click="kirimTeks"><component :is="mode === 'tolak' ? PhXCircle : mode === 'revisi' ? PhArrowsClockwise : mode === 'hapus' ? PhTrash : PhProhibit" :size="20" />
+        {{ mode === 'tolak' ? 'Tolak surat' : mode === 'revisi' ? 'Buat draf revisi' : mode === 'hapus' ? 'Hapus surat' : 'Batalkan surat' }}</button>
     </div>
   </LembarBawah>
 </template>

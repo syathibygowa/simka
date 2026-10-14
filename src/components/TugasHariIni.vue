@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/TugasHariIni.vue | v1.0 | Perbaikan: akses cepat tupoksi (musyrif, muhaffizh, wali kelas, guru mapel, medis, security) | 14/10/2026 -->
+<!-- SIMKA PRO | src/components/TugasHariIni.vue | v1.1 | Perbaikan: Gerbang tidak tampil bagi superadmin/admin/pimpinan yang bukan Security | 14/10/2026 -->
 <script setup>
 // Panel "Tugas saya hari ini" di beranda: satu ketukan langsung ke pekerjaan tupoksi.
 //   Musyrif/muhaffizh/wali kelas/pembina : setiap sesi absensi kelompok asuhan hari ini (status dan tombol langsung absen)
@@ -24,7 +24,9 @@ const fungsi = computed(() => new Set(t.value.fungsional || []))
 const kel = computed(() => new Set([...(t.value.kelompok || []), ...sesi.kelompokSaya.map((k) => k.jenis)]))
 const peran = computed(() => ({
   wali: kel.value.has('kelas'), muhaffizh: kel.value.has('halaqah'), musyrif: kel.value.has('kamar'), pembina: kel.value.has('ekskul'),
-  guru: !!t.value.mengajar, medis: fungsi.value.has('MEDIS') || (t.value.klinik || []).length > 0, security: fungsi.value.has('SECURITY') || !!t.value.gerbang,
+  guru: !!t.value.mengajar, medis: fungsi.value.has('MEDIS') || (t.value.klinik || []).length > 0, // Security hanya untuk jabatan fungsional Security (atau petugas jaga yang diberi hak gerbang tanpa jabatan pimpinan/admin);
+  // hak gerbang superadmin/admin/pimpinan adalah hak kelola, bukan tupoksi jaga.
+  security: fungsi.value.has('SECURITY') || (!!t.value.gerbang && !sesi.isAdmin && !t.value.pimpinan && !(t.value.struktural || []).length),
 }))
 const ada = computed(() => Object.values(peran.value).some(Boolean))
 const LABEL = { wali: 'Wali kelas', muhaffizh: 'Muhaffizh', musyrif: 'Musyrif', pembina: 'Pembina ekskul', guru: 'Guru mapel', medis: 'Medis', security: 'Security' }
