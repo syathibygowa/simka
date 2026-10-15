@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/IsianSurat.vue | v1.0 | Fase 10 – Tahap 2 Template surat dan surat keluar | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/IsianSurat.vue | v1.1 | Tahap C: data santri surat ditambah orang tua, hafalan, tanggal masuk, prestasi | 16/10/2026 -->
 <script setup>
 // Satu isian surat sesuai jenisnya: teks, teks panjang (tebal/miring), tanggal, hari-tanggal, jam, angka, pilih pegawai,
 // pilih santri (data diambil dari Data Santri), daftar butir, atau daftar pegawai.
@@ -31,7 +31,8 @@ watch(cari, (q) => {
 })
 function pilihOrang(p) {
   const x = jenisOrang.value === 'santri' ? { id: p.id, nama: p.nama, nis: p.nis, nisn: p.nisn, jk: p.jk, tempat_lahir: p.tempat_lahir, tanggal_lahir: p.tanggal_lahir,
-    jenjang: p.jenjang, tingkat: p.tingkat, kelas: p.kelas, wali: p.wali, alamat: p.alamat } : { id: p.id, nama: p.nama, niy: p.niy || '', jabatan: p.jabatan || '', unit: p.unit || '' }
+    jenjang: p.jenjang, tingkat: p.tingkat, kelas: p.kelas, wali: p.wali, alamat: p.alamat,
+    ayah: p.ayah || '', ibu: p.ibu || '', hafalan: p.hafalan ?? null, tanggal_masuk: p.tanggal_masuk || null, prestasi: p.prestasi || [] } : { id: p.id, nama: p.nama, niy: p.niy || '', jabatan: p.jabatan || '', unit: p.unit || '' }
   if (props.isian.jenis === 'daftar_pegawai') { const a = Array.isArray(nilai.value) ? nilai.value : []; if (!a.some((y) => y.id === x.id)) nilai.value = [...a, x] }
   else nilai.value = x
   cari.value = ''; hasil.value = []; buka.value = false

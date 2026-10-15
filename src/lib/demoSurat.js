@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoSurat.js | v1.1 | Fase 10 – Perbaikan: istilah bahasa Arab dicetak miring | 11/10/2026
+// SIMKA PRO | src/lib/demoSurat.js | v1.2 | Tahap C: template rekomendasi sekolah, SKL, keterangan prestasi | 16/10/2026
 // Data contoh mode demo: sebagian template isi awal (salinan dari migrasi 6800) dan konteks lembaga.
 export const KONTEKS_DEMO = {
   lembaga: "Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa",
@@ -73,8 +73,71 @@ Surat keterangan ini diberikan untuk keperluan {keperluan}.
 
 Demikian surat keterangan ini dibuat dengan sebenarnya untuk dipergunakan sebagaimana mestinya.`,
     isian: [{ kunci: 'santri', label: 'Santri', jenis: 'santri', wajib: true }, { kunci: 'keperluan', label: 'Keperluan', jenis: 'teks', wajib: true }] }),
+  T({ kode: 'rekomendasi_sekolah', nama: 'Surat Rekomendasi Sekolah', kategori: 'santri', perihal_kode: 'IL', dk: 'K', bentuk: 'tengah', judul: 'SURAT REKOMENDASI', hal_bawaan: 'Rekomendasi Santri', urutan: 14,
+    isi: `Yang bertanda tangan di bawah ini, {penanda.jabatan} {lembaga}, dengan ini memberikan rekomendasi kepada:
+
+Nama : {santri.nama}
+NIS/NISN : {santri.nis} / {santri.nisn}
+Tempat, tanggal lahir : {santri.ttl}
+Jenis kelamin : {santri.jk}
+Kelas : {santri.kelas} ({santri.jenjang})
+Nama orang tua/wali : {santri.wali}
+Jumlah hafalan : {santri.hafalan}
+
+untuk {tujuan}.
+
+Selama menjadi santri di {lembaga}, yang bersangkutan berakhlak baik, aktif mengikuti kegiatan pendidikan dan pembinaan, serta memiliki capaian sebagai berikut:
+
+{prestasi}
+
+Berdasarkan hal tersebut, kami merekomendasikan yang bersangkutan untuk dapat diterima dan mengikuti pendidikan di lembaga yang dituju.
+
+Demikian surat rekomendasi ini dibuat dengan sebenarnya untuk dipergunakan sebagaimana mestinya.`,
+    isian: [{ kunci: 'santri', label: 'Santri', jenis: 'santri', wajib: true }, { kunci: 'tujuan', label: 'Tujuan rekomendasi', jenis: 'teks', wajib: true, bawaan: 'melanjutkan pendidikan di ' },
+      { kunci: 'prestasi', label: 'Capaian dan prestasi', jenis: 'daftar', gaya: 'angka', wajib: false }] }),
+  T({ kode: 'keterangan_lulus', nama: 'Surat Keterangan Lulus (SKL)', kategori: 'santri', perihal_kode: 'IL', dk: 'K', bentuk: 'tengah', judul: 'SURAT KETERANGAN LULUS', hal_bawaan: 'Keterangan Lulus', urutan: 15,
+    opsi: { pas_foto: true },
+    isi: `Yang bertanda tangan di bawah ini, {penanda.jabatan} {lembaga}, berdasarkan hasil rapat dewan guru tentang penetapan kelulusan santri Tahun Ajaran {tahun_ajaran} pada tanggal {tanggal_rapat}, menerangkan bahwa:
+
+Nama : {santri.nama}
+NIS/NISN : {santri.nis} / {santri.nisn}
+Tempat, tanggal lahir : {santri.ttl}
+Jenis kelamin : {santri.jk}
+Nama orang tua : {santri.orang_tua}
+Jenjang : {santri.jenjang}
+Jumlah hafalan : {santri.hafalan}
+
+dinyatakan:
+
+== *LULUS*
+
+dari {santri.jenjang} {lembaga} Tahun Ajaran {tahun_ajaran}.
+
+Surat keterangan ini berlaku sementara sampai dengan diterbitkannya ijazah dan diberikan untuk keperluan {keperluan}.
+
+Demikian surat keterangan ini dibuat dengan sebenarnya untuk dipergunakan sebagaimana mestinya.`,
+    isian: [{ kunci: 'santri', label: 'Santri', jenis: 'santri', wajib: true }, { kunci: 'tanggal_rapat', label: 'Tanggal rapat penetapan kelulusan', jenis: 'tanggal', wajib: true },
+      { kunci: 'keperluan', label: 'Keperluan', jenis: 'teks', wajib: true, bawaan: 'pendaftaran ke jenjang pendidikan berikutnya' }] }),
+  T({ kode: 'keterangan_prestasi', nama: 'Surat Keterangan Prestasi', kategori: 'santri', perihal_kode: 'IL', dk: 'K', bentuk: 'tengah', judul: 'SURAT KETERANGAN PRESTASI', hal_bawaan: 'Keterangan Prestasi Santri', urutan: 16,
+    isi: `Yang bertanda tangan di bawah ini, {penanda.jabatan} {lembaga}, menerangkan bahwa:
+
+Nama : {santri.nama}
+NIS/NISN : {santri.nis} / {santri.nisn}
+Tempat, tanggal lahir : {santri.ttl}
+Kelas : {santri.kelas} ({santri.jenjang})
+Nama orang tua/wali : {santri.wali}
+
+adalah benar santri {lembaga} yang telah meraih prestasi sebagai berikut:
+
+{prestasi}
+
+Surat keterangan ini diberikan sebagai bentuk penghargaan atas prestasi tersebut dan untuk keperluan {keperluan}.
+
+Demikian surat keterangan ini dibuat dengan sebenarnya untuk dipergunakan sebagaimana mestinya.`,
+    isian: [{ kunci: 'santri', label: 'Santri', jenis: 'santri', wajib: true }, { kunci: 'prestasi', label: 'Prestasi', jenis: 'daftar', gaya: 'angka', wajib: true },
+      { kunci: 'keperluan', label: 'Keperluan', jenis: 'teks', wajib: true }] }),
 ]
 export const SANTRI_SURAT_DEMO = [
-  { id: 's-1', nama: 'Muhammad Fathir Al-Ghifari', nis: '2411001', nisn: '0112233445', jk: 'L', tempat_lahir: 'Makassar', tanggal_lahir: '2012-03-14', jenjang: 'wustha', tingkat: 8, kelas: '8A', wali: 'Ahmad Syarifuddin', alamat: 'Jl. Malino No. 12, Gowa' },
-  { id: 's-2', nama: 'Aisyah Nur Rahmah', nis: '2311015', nisn: '0098877665', jk: 'P', tempat_lahir: 'Gowa', tanggal_lahir: '2010-07-02', jenjang: 'sma', tingkat: 10, kelas: '10B', wali: 'Hasanuddin', alamat: 'Sungguminasa, Gowa' },
+  { id: 's-1', nama: 'Muhammad Fathir Al-Ghifari', nis: '2411001', nisn: '0112233445', jk: 'L', tempat_lahir: 'Makassar', tanggal_lahir: '2012-03-14', jenjang: 'wustha', tingkat: 8, kelas: '8A', wali: 'Ahmad Syarifuddin', alamat: 'Jl. Malino No. 12, Gowa', ayah: 'Ahmad Syarifuddin', ibu: 'Nurhayati', hafalan: 6, tanggal_masuk: '2024-07-15', prestasi: ['Juara 1 MTQ Cabang Tahfizh 5 Juz tingkat Kabupaten/Kota (LPTQ Kabupaten Gowa, 2026)'] },
+  { id: 's-2', nama: 'Aisyah Nur Rahmah', nis: '2311015', nisn: '0098877665', jk: 'P', tempat_lahir: 'Gowa', tanggal_lahir: '2010-07-02', jenjang: 'sma', tingkat: 10, kelas: '10B', wali: 'Hasanuddin', alamat: 'Sungguminasa, Gowa', ayah: 'Hasanuddin', ibu: 'Rosmini', hafalan: 12, tanggal_masuk: '2023-07-17', prestasi: [] },
 ]

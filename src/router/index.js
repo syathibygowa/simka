@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.23 | Fase 12 – Tahap 2 Rute lembar nilai guru mapel | 13/10/2026
+// SIMKA PRO | src/router/index.js | v3.24 | Tahap C: rute Prestasi Santri | 16/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -35,6 +35,7 @@ const routes = [
       { path: 'santri/:id/ubah', component: () => import('@/pages/santri/FormSantri.vue'), meta: { judul: 'Ubah Data Santri', kembali: '/santri' } },
       { path: 'santri/:id', component: () => import('@/pages/santri/DetailSantri.vue'), meta: { judul: 'Biodata Santri', cetak: true, kembali: '/santri' } },
       { path: 'absensi-santri/isi/:group/:tanggal/:sesi', component: () => import('@/pages/absensisantri/IsiAbsensi.vue'), meta: { judul: 'Isi Absensi Santri', kembali: '/absensi-santri' } },
+      { path: 'prestasi-santri', component: () => import('@/pages/prestasi/PrestasiSantri.vue'), meta: { judul: 'Prestasi Santri', cetak: true, kembali: '/tugas' } },
       { path: 'absensi-santri/:tab?', component: () => import('@/pages/absensisantri/AbsensiSantri.vue'), props: true, meta: { judul: 'Absensi Santri', kembali: '/tugas' } },
       { path: 'statistik-santri', component: () => import('@/pages/santri/StatistikSantri.vue'), meta: { judul: 'Statistik Santri', cetak: true, kembali: '/tugas' } },
       { path: 'tahun-ajaran-baru', component: () => import('@/pages/santri/PergantianTA.vue'), meta: { judul: 'Naik Kelas', peran: ADMIN, kembali: '/tugas' } },

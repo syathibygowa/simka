@@ -1,6 +1,6 @@
-<!-- SIMKA PRO | src/pages/kartu/VerifikasiKartu.vue | v1.0 | Fase 3 – Tahap 4 Berkas Saya dan kartu pegawai | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/kartu/VerifikasiKartu.vue | v1.1 | Tahap C: juga memeriksa kartu pelajar santri | 16/10/2026 -->
 <script setup>
-// Halaman publik hasil pindai QR kartu pegawai: menampilkan keabsahan kartu dengan data minimal.
+// Halaman publik hasil pindai QR kartu pegawai atau kartu pelajar santri: menampilkan keabsahan kartu dengan data minimal.
 // Dapat dibuka tanpa masuk. Kartu dengan kode lama (diganti) atau pegawai nonaktif dinyatakan tidak berlaku.
 import { ref, onMounted } from 'vue'
 import { PhSealCheck, PhSealWarning, PhXCircle, PhMagnifyingGlass } from '@phosphor-icons/vue'
@@ -18,20 +18,29 @@ async function periksa(k) {
 onMounted(() => (props.kode ? periksa(props.kode) : (memuat.value = false)))
 </script>
 <template>
-  <TataLetakAuth judul="Verifikasi Kartu Pegawai" keterangan="Pemeriksaan keabsahan kartu pegawai SIMKA PRO.">
+  <TataLetakAuth judul="Verifikasi Kartu" keterangan="Pemeriksaan keabsahan kartu pegawai dan kartu pelajar SIMKA PRO.">
     <p v-if="memuat" class="py-6 text-center text-teks3">Memeriksa kartu…</p>
     <template v-else-if="hasil">
       <div v-if="hasil.ditemukan" :class="['rounded-2xl p-4', hasil.berlaku ? 'w-presensi' : 'w-beranda']" style="background: color-mix(in srgb, var(--c) 10%, rgb(var(--permukaan)))">
         <p class="flex items-center gap-2 text-lg font-extrabold" style="color: var(--c)">
           <component :is="hasil.berlaku ? PhSealCheck : PhSealWarning" :size="30" weight="duotone" />{{ hasil.berlaku ? 'Kartu sah dan berlaku' : 'Kartu tidak berlaku' }}</p>
-        <dl class="mt-3 grid grid-cols-[6.5rem_1fr] gap-x-2 gap-y-1 text-sm">
+        <dl v-if="hasil.jenis === 'santri'" class="mt-3 grid grid-cols-[6.5rem_1fr] gap-x-2 gap-y-1 text-sm">
+          <dt class="text-teks3">Jenis kartu</dt><dd class="font-semibold">Kartu pelajar</dd>
+          <dt class="text-teks3">Nama</dt><dd class="font-bold">{{ hasil.nama }}</dd>
+          <dt class="text-teks3">NIS</dt><dd>{{ hasil.nis || '–' }}</dd>
+          <dt class="text-teks3">Jenjang</dt><dd>{{ hasil.jenjang || '–' }}</dd>
+          <dt class="text-teks3">Kelas</dt><dd>{{ hasil.kelas || '–' }}</dd>
+          <dt class="text-teks3">Lembaga</dt><dd>{{ hasil.lembaga }}</dd>
+        </dl>
+        <dl v-else class="mt-3 grid grid-cols-[6.5rem_1fr] gap-x-2 gap-y-1 text-sm">
+          <dt class="text-teks3">Jenis kartu</dt><dd class="font-semibold">Kartu pegawai</dd>
           <dt class="text-teks3">Nama</dt><dd class="font-bold">{{ hasil.nama }}</dd>
           <dt class="text-teks3">NIY</dt><dd>{{ hasil.niy || '–' }}</dd>
           <dt class="text-teks3">Jabatan</dt><dd>{{ hasil.jabatan || '–' }}</dd>
           <dt class="text-teks3">Bidang/Unit</dt><dd>{{ hasil.unit || '–' }}</dd>
           <dt class="text-teks3">Lembaga</dt><dd>{{ hasil.lembaga }}</dd>
         </dl>
-        <p v-if="!hasil.berlaku" class="mt-3 text-sm font-semibold text-teks">Pemegang kartu tidak lagi tercatat sebagai pegawai aktif.</p>
+        <p v-if="!hasil.berlaku" class="mt-3 text-sm font-semibold text-teks">Pemegang kartu tidak lagi tercatat sebagai {{ hasil.jenis === 'santri' ? 'santri' : 'pegawai' }} aktif.</p>
       </div>
       <div v-else class="w-beranda rounded-2xl p-4" style="background: color-mix(in srgb, var(--c) 10%, rgb(var(--permukaan)))">
         <p class="flex items-center gap-2 text-lg font-extrabold" style="color: var(--c)"><PhXCircle :size="30" weight="duotone" /> {{ hasil.galat ? 'Pemeriksaan gagal' : 'Kartu tidak dikenal' }}</p>

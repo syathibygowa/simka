@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/IkonDinamis.vue | v1.6 | Fase 13 – Ikon gaji dan keuangan (TrendUp, Wallet, Coins, CashRegister, HandCoins) | 11/10/2026 -->
+<!-- SIMKA PRO | src/components/IkonDinamis.vue | v1.7 | Tahap C: ikon Trophy (prestasi santri) | 16/10/2026 -->
 <script setup>
 // Ikon berdasarkan nama (dipakai notifikasi dari database, kolom "ikon").
 import {
@@ -7,7 +7,7 @@ import {
   PhPushPin, PhCalendarStar, PhNotebook, PhFolderOpen, PhIdentificationCard, PhSealCheck, PhXCircle,
   PhClipboardText, PhEnvelopeSimple, PhStamp, PhFile, PhCertificate, PhFolder, PhBooks, PhReceipt, PhScroll, PhGraduationCap, PhImage, PhHandshake,
   PhSignOut, PhSignIn, PhSiren, PhFirstAidKit, PhPackage, PhUsers, PhDoorOpen, PhProhibit, PhBuildings, PhChatCircleText, PhTray, PhNotePencil, PhSignature,
-  PhTrendUp, PhWallet, PhCoins, PhCashRegister, PhHandCoins,
+  PhTrendUp, PhWallet, PhCoins, PhCashRegister, PhHandCoins, PhTrophy,
 } from '@phosphor-icons/vue'
 const PETA = {
   Bell: PhBell, UserPlus: PhUserPlus, CheckCircle: PhCheckCircle, WarningCircle: PhWarningCircle,
@@ -20,7 +20,7 @@ const PETA = {
   Books: PhBooks, Receipt: PhReceipt, Scroll: PhScroll, GraduationCap: PhGraduationCap, Image: PhImage, Handshake: PhHandshake,
   SignOut: PhSignOut, SignIn: PhSignIn, Siren: PhSiren, FirstAidKit: PhFirstAidKit, Package: PhPackage, Users: PhUsers, DoorOpen: PhDoorOpen,
   NotePencil: PhNotePencil, Prohibit: PhProhibit, Buildings: PhBuildings, ChatCircleText: PhChatCircleText, Tray: PhTray, Signature: PhSignature,
-  TrendUp: PhTrendUp, Wallet: PhWallet, Coins: PhCoins, CashRegister: PhCashRegister, HandCoins: PhHandCoins,
+  TrendUp: PhTrendUp, Wallet: PhWallet, Coins: PhCoins, CashRegister: PhCashRegister, HandCoins: PhHandCoins, Trophy: PhTrophy,
 }
 defineProps({ nama: { type: String, default: 'Bell' }, size: { type: Number, default: 22 } })
 </script>

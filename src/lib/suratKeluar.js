@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/suratKeluar.js | v1.2 | Fase 10 – Penutup: status Direvisi | 11/10/2026
+// SIMKA PRO | src/lib/suratKeluar.js | v1.3 | Tahap C: isian santri orang tua, hafalan, tanggal masuk; opsi kotak pas foto | 16/10/2026
 // Mesin template surat keluar (template sistem, bukan Word). Isi template ditulis sebagai teks biasa:
 //   {kunci}, {kunci.bagian}   isian (lihat ISIAN_GLOBAL dan isian template), mis. {santri.nama}, {pegawai.jabatan}, {lembaga}
 //   *tebal*  _miring_          gaya teks (seperti WhatsApp)
@@ -23,7 +23,7 @@ export const LAFAZ = {
 export const OPSI_SURAT = [
   { k: 'basmalah', n: 'Basmalah di atas surat' }, { k: 'salam', n: 'Salam pembuka' }, { k: 'hamdalah', n: 'Hamdalah sesudah salam' },
   { k: 'doa', n: 'Doa jazakumullahu khairan' }, { k: 'salam_penutup', n: 'Salam penutup' }, { k: 'tembusan', n: 'Tembusan' },
-  { k: 'narahubung', n: 'Narahubung' }, { k: 'ditetapkan', n: '"Ditetapkan di … pada tanggal …" (SK)' },
+  { k: 'narahubung', n: 'Narahubung' }, { k: 'ditetapkan', n: '"Ditetapkan di … pada tanggal …" (SK)' }, { k: 'pas_foto', n: 'Kotak pas foto 3 × 4 di samping tanda tangan' },
 ]
 export const JENIS_ISIAN = [
   { k: 'teks', n: 'Teks singkat' }, { k: 'panjang', n: 'Teks panjang' }, { k: 'tanggal', n: 'Tanggal' }, { k: 'hari_tanggal', n: 'Hari dan tanggal' },
@@ -45,7 +45,7 @@ export const ISIAN_GLOBAL = [
   { k: 'penanda.nama', n: 'Nama penanda tangan pertama' }, { k: 'penanda.jabatan', n: 'Jabatan penanda tangan pertama' }, { k: 'penanda.niy', n: 'NIY penanda tangan pertama' },
 ]
 export const BAGIAN_PEGAWAI = ['nama', 'niy', 'jabatan', 'unit']
-export const BAGIAN_SANTRI = ['nama', 'nis', 'nisn', 'ttl', 'jk', 'kelas', 'jenjang', 'wali', 'alamat']
+export const BAGIAN_SANTRI = ['nama', 'nis', 'nisn', 'ttl', 'jk', 'kelas', 'jenjang', 'wali', 'alamat', 'orang_tua', 'ayah', 'ibu', 'hafalan', 'tanggal_masuk']
 
 const escape = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 const JENJANG = { wustha: 'Kesetaraan Wustha', sma: 'SMA' }
@@ -89,7 +89,10 @@ export function susunKonteks(k) {
         t[i.kunci] = v?.nama || ''
         Object.assign(t, { [`${i.kunci}.nama`]: v?.nama, [`${i.kunci}.nis`]: v?.nis, [`${i.kunci}.nisn`]: v?.nisn, [`${i.kunci}.ttl`]: v ? ttlSantri(v) : '',
           [`${i.kunci}.jk`]: v ? (v.jk === 'P' ? 'Perempuan' : 'Laki-laki') : '', [`${i.kunci}.kelas`]: v?.kelas, [`${i.kunci}.jenjang`]: JENJANG[v?.jenjang] || '',
-          [`${i.kunci}.wali`]: v?.wali, [`${i.kunci}.alamat`]: v?.alamat })
+          [`${i.kunci}.wali`]: v?.wali, [`${i.kunci}.alamat`]: v?.alamat, [`${i.kunci}.ayah`]: v?.ayah, [`${i.kunci}.ibu`]: v?.ibu,
+          [`${i.kunci}.orang_tua`]: v ? ([v.ayah, v.ibu].filter(Boolean).join(' / ') || v.wali) : '',
+          [`${i.kunci}.hafalan`]: v && v.hafalan != null ? `${String(v.hafalan).replace('.', ',')} juz` : '',
+          [`${i.kunci}.tanggal_masuk`]: v?.tanggal_masuk ? formatPanjang(v.tanggal_masuk) : '' })
         break
       case 'daftar': {
         const butir = (Array.isArray(v) ? v : String(v || '').split('\n')).map((x) => String(x).trim()).filter(Boolean)

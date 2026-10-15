@@ -1,13 +1,13 @@
-<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.3 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.4 | Tahap C: cetak kartu pelajar massal | 16/10/2026 -->
 <script setup>
 // Daftar santri sesuai cakupan pengguna (RLS): kartu statistik langsung, cari dan saring,
-// ekspor Excel, cetak daftar F4 berkop jenjang.
+// ekspor Excel, cetak daftar F4 berkop jenjang. v1.4: cetak kartu pelajar massal (santri aktif yang tampil, per rombel).
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
 import {
   PhMagnifyingGlass, PhStudent, PhUserPlus, PhFileXls, PhDownloadSimple, PhEye, PhSlidersHorizontal, PhPrinter, PhCaretRight,
-  PhGenderMale, PhGenderFemale, PhBooks, PhGraduationCap, PhUserMinus,
+  PhGenderMale, PhGenderFemale, PhBooks, PhGraduationCap, PhUserMinus, PhCards,
 } from '@phosphor-icons/vue'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
@@ -20,6 +20,9 @@ import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import LembarKartu from '@/components/cetak/LembarKartu.vue'
+import { useLembaga } from '@/stores/lembaga'
+import { useUI } from '@/stores/ui'
 
 const san = useSantri(); const sesi = useSesi(); const router = useRouter()
 const bolehUbah = computed(() => sesi.bolehAdmin('kelola_santri') || sesi.tingkat('data_santri') >= 2)
@@ -85,6 +88,26 @@ async function siapkanCetak() {
   pimpinan.value = jenjang.value === 'semua' ? await ambilPenandaTangan('Direktur') : await penandaJenjang(jenjang.value)
 }
 async function bukaPratinjau() { await siapkanCetak(); opsiCetak.value = false; pratinjau.value = true }
+// ---------- Kartu pelajar massal ----------
+const lembaga = useLembaga(); const ui = useUI()
+const lembarKartu = ref(false); const rombel = ref(''); const modeKartu = ref('bolak_balik'); const prosesKartu = ref(false)
+const kartuData = ref([]); const fotoKartu = ref({}); const pratinjauKartu = ref(false)
+const calonKartu = computed(() => tampil.value.filter((s) => s.status === 'aktif' && (!rombel.value || namaKelompok(s, 'kelas') === rombel.value)))
+const daftarRombel = computed(() => [...new Set(tampil.value.filter((s) => s.status === 'aktif').map((s) => namaKelompok(s, 'kelas')).filter((x) => x && x !== '–'))].sort((a, b) => a.localeCompare(b, 'id', { numeric: true })))
+const direkturKartu = computed(() => lembaga.signatories.find((g) => g.sumber_jabatan === 'DIREKTUR' || /^direktur/i.test(g.jabatan_tertulis)) || {})
+async function siapkanKartu() {
+  if (!calonKartu.value.length) return ui.toast('Tidak ada santri aktif yang sesuai saringan.', 'galat')
+  prosesKartu.value = true
+  try {
+    await lembaga.muat()
+    const d = await san.kartu(calonKartu.value.map((s) => s.id))
+    const peta = {}
+    for (let i = 0; i < d.length; i += 8) await Promise.all(d.slice(i, i + 8).map(async (k) => { peta[k.student_id] = await san.urlFoto({ id: k.student_id, foto_id: k.foto_id }) }))
+    fotoKartu.value = peta; kartuData.value = d; lembarKartu.value = false; pratinjauKartu.value = true
+    const tanpa = d.filter((k) => !peta[k.student_id]).length
+    if (tanpa) ui.toast(`${tanpa} santri belum memiliki foto. Unggah foto di biodata santri sebelum mencetak final.`, 'info')
+  } catch (e) { ui.toast(e.message, 'galat') } finally { prosesKartu.value = false }
+}
 async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; setTimeout(() => window.print(), 300) }
 </script>
 <template>
@@ -112,6 +135,7 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
         <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="eksporExcel"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor Excel</button>
         <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="bukaPratinjau"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau cetak</button>
         <button class="w-tatausaha tombol-garis shrink-0 px-4 text-sm" @click="opsiCetak = true"><PhSlidersHorizontal :size="20" weight="duotone" style="color: var(--c)" /> Atur dan cetak</button>
+        <button v-if="bolehUbah" class="w-presensi tombol-garis shrink-0 px-4 text-sm" @click="lembarKartu = true"><PhCards :size="20" weight="duotone" style="color: var(--c)" /> Cetak kartu pelajar</button>
       </div>
 
       <!-- Pencarian dan saringan -->
@@ -217,5 +241,20 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
         </div>
       </div>
     </LembarBawah>
+    <LembarBawah v-model="lembarKartu" judul="Cetak kartu pelajar">
+      <div class="space-y-4 pb-2">
+        <p class="text-sm text-teks2">Kartu dicetak untuk santri <b>aktif</b> yang tampil sesuai saringan halaman (jenjang, kelas, jenis kelamin, pencarian). Foto diambil dari biodata santri.</p>
+        <div><label class="label-isian" for="kp-rombel">Rombel</label>
+          <select id="kp-rombel" v-model="rombel" class="isian"><option value="">Semua rombel yang tampil</option><option v-for="r in daftarRombel" :key="r" :value="r">{{ r }}</option></select></div>
+        <fieldset><legend class="label-isian">Tata letak cetak</legend>
+          <div class="grid gap-2">
+            <label v-for="m in [{ k: 'bolak_balik', n: 'Bolak-balik (9 kartu per lembar, printer dua sisi)' }, { k: 'berdampingan', n: 'Depan–belakang berdampingan (3 santri per lembar)' }]" :key="m.k"
+              class="flex min-h-[44px] items-center gap-2 rounded-xl border border-garis px-3 text-sm font-semibold"><input v-model="modeKartu" type="radio" :value="m.k" class="h-5 w-5 accent-[#0B6B57]" />{{ m.n }}</label>
+          </div></fieldset>
+        <p class="rounded-xl bg-permukaan2 p-3 text-sm"><b>{{ calonKartu.length }}</b> kartu akan disiapkan.</p>
+        <button class="tombol-utama w-full" :disabled="prosesKartu || !calonKartu.length" @click="siapkanKartu"><PhCards :size="20" weight="duotone" /> {{ prosesKartu ? 'Menyiapkan…' : 'Pratinjau cetak kartu' }}</button>
+      </div>
+    </LembarBawah>
+    <LembarKartu v-model:pratinjau="pratinjauKartu" jenis="santri" :kartu="kartuData" :foto="fotoKartu" :identitas="lembaga.identitas" :direktur="direkturKartu" :mode="modeKartu" />
   </div>
 </template>

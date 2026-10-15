@@ -1,12 +1,15 @@
-<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.6 | Fase 12 – Tahap 1 Biodata rapor santri | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.7 | Tahap C: foto santri, kartu pelajar, prestasi, dan surat santri (rekomendasi, SKL, keterangan) | 16/10/2026 -->
 <script setup>
 // Biodata santri: identitas, kontak orang tua/wali (tombol WA), riwayat status dan mutasi;
 // ubah status, mutasi keluar beserta surat keterangan pindah; cetak biodata F4. Fase 5: bagian Hafalan. Fase 6: bagian Kesehatan, perizinan, dan laporan.
+// v1.7: foto santri (dipakai di kartu pelajar dan rapor), kartu pelajar berkode QR, bagian Prestasi, dan tombol Buat surat
+//       (Keterangan Aktif, Rekomendasi Sekolah, SKL, Keterangan Prestasi) yang membuka Persuratan dengan santri terpilih.
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   PhPencilSimple, PhTrash, PhEye, PhPrinter, PhClockCounterClockwise, PhArrowsLeftRight, PhSignOut, PhGraduationCap,
   PhCalendarBlank, PhIdentificationCard, PhUsersThree, PhArrowRight, PhFileText, PhToggleLeft, PhChalkboardTeacher, PhBed, PhBookOpenText, PhMedal, PhCheckSquareOffset, PhWarningCircle,
+  PhCamera, PhCards, PhEnvelopeSimple, PhArrowsClockwise, PhCaretRight, PhCertificate, PhSealCheck, PhStudent,
 } from '@phosphor-icons/vue'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
@@ -26,6 +29,12 @@ import TombolWA from '@/components/TombolWA.vue'
 import SeksiHafalan from './SeksiHafalan.vue'
 import SeksiLayananSantri from './SeksiLayananSantri.vue'
 import SeksiSecuritySantri from './SeksiSecuritySantri.vue'
+import SeksiPrestasi from './SeksiPrestasi.vue'
+import KartuSantri from '@/components/KartuSantri.vue'
+import LembarKartu from '@/components/cetak/LembarKartu.vue'
+import { useLembaga } from '@/stores/lembaga'
+import { usePersuratan } from '@/stores/persuratan'
+import { MODE_DEMO } from '@/lib/supabase'
 
 const route = useRoute(); const router = useRouter(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
 const s = computed(() => san.cari(route.params.id))
@@ -53,8 +62,43 @@ async function muatKehadiran() {
     hadir.value = susunRekap(r)[route.params.id] || null; tidakHadir.value = x
   } catch { hadir.value = null; tidakHadir.value = [] }
 }
-onMounted(async () => { await san.muat(); san.muatRiwayat(route.params.id); muatPenanda(); muatKehadiran() })
-watch(() => route.params.id, (id) => { if (id) { san.muatRiwayat(id); muatPenanda(); muatKehadiran() } })
+onMounted(async () => { await san.muat(); san.muatRiwayat(route.params.id); muatPenanda(); muatKehadiran(); muatFoto(); ps.muatHak().catch(() => {}) })
+watch(() => route.params.id, (id) => { if (id) { san.muatRiwayat(id); muatPenanda(); muatKehadiran(); muatFoto() } })
+
+// ---------- Foto santri ----------
+const foto = ref(null); const prosesFoto = ref(false)
+async function muatFoto() { foto.value = s.value ? await san.urlFoto(s.value) : null }
+watch(() => s.value?.foto_id, () => muatFoto())
+async function gantiFoto(e) {
+  const b = e.target.files?.[0]; e.target.value = ''
+  if (!b) return
+  if (!/^image\//.test(b.type)) return ui.toast('Pilih berkas foto.', 'galat')
+  prosesFoto.value = true
+  try { await san.pasangFoto(s.value.id, b); await muatFoto(); ui.toast(MODE_DEMO ? 'Mode demo: foto hanya tampil sementara.' : 'Foto santri diperbarui (dipotong 3:4). Foto juga dipakai di kartu pelajar dan rapor.') }
+  catch (er) { ui.toast(er.message, 'galat') } finally { prosesFoto.value = false }
+}
+
+// ---------- Kartu pelajar ----------
+const lembaga = useLembaga(); const lembarKartu = ref(false); const kartu = ref(null); const cetakKartu = ref(false)
+const direkturKartu = computed(() => lembaga.signatories.find((g) => g.sumber_jabatan === 'DIREKTUR' || /^direktur/i.test(g.jabatan_tertulis)) || {})
+async function bukaKartu() {
+  try { await lembaga.muat(); kartu.value = (await san.kartu([s.value.id]))[0] || null; lembarKartu.value = !!kartu.value } catch (e) { ui.toast(e.message, 'galat') }
+}
+async function gantiKodeKartu() {
+  if (!(await ui.konfirmasi({ judul: 'Ganti kode kartu pelajar?', pesan: 'Gunakan bila kartu hilang. Kartu lama langsung tidak dapat diverifikasi dan kartu baru perlu dicetak.', ya: 'Ganti kode', bahaya: true }))) return
+  try { kartu.value.kode = await san.gantiKodeKartu(s.value.id); ui.toast('Kode kartu diganti. Cetak ulang kartu pelajar.') } catch (e) { ui.toast(e.message, 'galat') }
+}
+
+// ---------- Surat santri (melalui Persuratan) ----------
+const ps = usePersuratan(); const lembarSurat = ref(false)
+const SURAT = computed(() => [
+  { kode: 'keterangan_aktif_santri', n: 'Surat Keterangan Aktif', ket: 'Untuk beasiswa, administrasi, dan lainnya', ikon: PhSealCheck, w: 'presensi' },
+  { kode: 'rekomendasi_sekolah', n: 'Surat Rekomendasi Sekolah', ket: 'Melanjutkan pendidikan atau mendaftar lembaga lain', ikon: PhEnvelopeSimple, w: 'tatausaha' },
+  { kode: 'keterangan_lulus', n: 'Surat Keterangan Lulus (SKL)', ket: [9, 12].includes(Number(s.value?.tingkat)) || s.value?.status === 'lulus' ? 'Berlaku sampai ijazah terbit' : 'Untuk santri kelas 9/12 atau berstatus lulus', ikon: PhCertificate, w: 'laporan' },
+  { kode: 'keterangan_prestasi', n: 'Surat Keterangan Prestasi', ket: 'Prestasi santri terisi otomatis', ikon: PhStudent, w: 'ekskul' },
+  { kode: 'kelakuan_baik', n: 'Surat Keterangan Berkelakuan Baik', ket: 'Untuk pendaftaran dan administrasi', ikon: PhSealCheck, w: 'santri' },
+])
+const buatSurat = (k) => router.push({ path: '/persuratan/keluar', query: { templat: k, santri: s.value.id, nis: s.value.nis } })
 
 const umur = computed(() => {
   if (!s.value?.tanggal_lahir) return null
@@ -125,13 +169,19 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
     <div class="layar-saja">
       <section class="kartu w-santri overflow-hidden">
         <div class="kepala h-20 sm:h-24" />
-        <div class="-mt-10 flex flex-wrap items-end gap-4 px-5 pb-5">
-          <span :class="['grid h-20 w-20 place-items-center rounded-2xl border-4 border-permukaan text-2xl font-extrabold text-white', s.jenis_kelamin === 'P' ? 'bg-[#B42A5E]' : 'bg-[#0B7F81]']">{{ inisial(s.nama_lengkap) }}</span>
+        <div class="-mt-10 flex flex-wrap items-start gap-x-4 gap-y-2 px-5 pb-5">
+          <div class="relative shrink-0">
+            <img v-if="foto" :src="foto" :alt="`Foto ${s.nama_lengkap}`" class="h-24 w-[72px] rounded-2xl border-4 border-permukaan bg-permukaan object-cover shadow-kartu" />
+            <span v-else :class="['grid h-24 w-[72px] place-items-center rounded-2xl border-4 border-permukaan text-2xl font-extrabold text-white', s.jenis_kelamin === 'P' ? 'bg-[#B42A5E]' : 'bg-[#0B7F81]']">{{ inisial(s.nama_lengkap) }}</span>
+            <label v-if="bolehUbah" class="absolute -bottom-1.5 -right-2 grid h-9 w-9 cursor-pointer place-items-center rounded-full border border-garis bg-permukaan text-teks shadow-kartu" :class="prosesFoto && 'opacity-60'" :title="foto ? 'Ganti foto santri' : 'Unggah foto santri'">
+              <PhCamera :size="18" weight="duotone" /><span class="sr-only">{{ foto ? 'Ganti foto santri' : 'Unggah foto santri' }}</span>
+              <input type="file" accept="image/*" class="sr-only" :disabled="prosesFoto" @change="gantiFoto" /></label>
+          </div>
           <div class="min-w-0 flex-1 pt-11">
             <h2 class="text-xl font-extrabold leading-tight">{{ s.nama_lengkap }}</h2>
             <p class="text-sm text-teks3 tabular-nums">NIS {{ s.nis }}{{ s.nisn ? ' · NISN ' + s.nisn : '' }}</p>
           </div>
-          <span :class="['lencana', 'w-' + STATUS_SANTRI[s.status]?.w]">{{ STATUS_SANTRI[s.status]?.n }}</span>
+          <span :class="['lencana sm:mt-11', 'w-' + STATUS_SANTRI[s.status]?.w]">{{ STATUS_SANTRI[s.status]?.n }}</span>
         </div>
         <div class="grid gap-3 border-t border-garis p-5 sm:grid-cols-2">
           <div class="w-laporan flex items-center gap-3"><span class="chip-ikon h-10 w-10"><PhGraduationCap :size="20" weight="duotone" /></span>
@@ -150,6 +200,8 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
         <button v-if="bolehKelola" class="tombol-garis w-pengajuan" @click="bukaStatus"><PhArrowsLeftRight :size="20" weight="duotone" style="color: var(--c)" /> Ubah status</button>
         <button v-if="bolehKelola && ['aktif', 'nonaktif'].includes(s.status)" class="tombol-garis w-klinik" @click="bukaMutasi"><PhSignOut :size="20" weight="duotone" style="color: var(--c)" /> Mutasi keluar</button>
         <button class="tombol-garis" @click="pratinjauBio = true"><PhEye :size="20" weight="duotone" /> Pratinjau biodata</button>
+        <button class="tombol-garis w-santri" @click="bukaKartu"><PhCards :size="20" weight="duotone" style="color: var(--c)" /> Kartu pelajar</button>
+        <button v-if="ps.hak.susun" class="tombol-garis w-tatausaha" @click="lembarSurat = true"><PhEnvelopeSimple :size="20" weight="duotone" style="color: var(--c)" /> Buat surat</button>
         <button v-if="mutasiKeluar" class="tombol-garis w-tatausaha" @click="bukaSuratPindah(mutasiKeluar)"><PhFileText :size="20" weight="duotone" style="color: var(--c)" /> Surat keterangan pindah</button>
         <button v-if="sesi.isSuperadmin" class="tombol-garis" @click="hapus"><PhTrash :size="20" weight="duotone" /> Hapus</button>
       </div>
@@ -185,6 +237,8 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
       <!-- Kesehatan, perizinan, laporan (Fase 6) -->
       <SeksiLayananSantri :santri="s" />
       <SeksiSecuritySantri :santri="s" />
+      <!-- Prestasi (Tahap C) -->
+      <SeksiPrestasi :santri="s" :boleh-surat="!!ps.hak.susun" />
 
       <!-- Kelompok tahun ajaran berjalan -->
       <section class="kartu w-kelompoksantri mt-4 p-5">
@@ -287,6 +341,37 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
       </template>
     </DokumenCetak>
 
+    <!-- Kartu pelajar -->
+    <LembarBawah v-model="lembarKartu" judul="Kartu pelajar" lebar>
+      <div v-if="kartu" class="grid gap-4 pb-2 lg:grid-cols-[auto_1fr]">
+        <div class="pratinjau-kartu flex justify-center gap-3">
+          <div class="text-center"><div class="bayang"><KartuSantri :d="kartu" sisi="depan" :foto="foto" :identitas="lembaga.identitas" :direktur="direkturKartu" /></div><p class="mt-1 text-xs text-teks3">Depan</p></div>
+          <div class="text-center"><div class="bayang"><KartuSantri :d="kartu" sisi="belakang" :foto="foto" :identitas="lembaga.identitas" :direktur="direkturKartu" /></div><p class="mt-1 text-xs text-teks3">Belakang</p></div>
+        </div>
+        <div class="space-y-3">
+          <p :class="['rounded-2xl p-3 text-sm', kartu.aktif ? 'w-presensi' : 'w-klinik']" style="background: color-mix(in srgb, var(--c) 10%, transparent)">
+            <b style="color: var(--c)">{{ kartu.aktif ? 'Kartu berlaku' : 'Kartu tidak berlaku' }}</b><br>Berlaku selama santri berstatus aktif. Kode QR dapat dipindai siapa pun untuk memeriksa keabsahannya.</p>
+          <p v-if="!foto" class="flex gap-2 rounded-xl bg-permukaan2 p-3 text-sm text-teks2"><PhCamera :size="18" class="mt-0.5 shrink-0" />Foto santri belum ada. Unggah lewat tombol kamera pada foto di biodata.</p>
+          <button class="tombol-utama w-full" @click="cetakKartu = true"><PhPrinter :size="20" weight="duotone" /> Cetak kartu (F4)</button>
+          <button v-if="bolehUbah" class="tombol-garis w-full" @click="gantiKodeKartu"><PhArrowsClockwise :size="20" /> Kartu hilang? Ganti kode</button>
+          <p class="text-xs text-teks3">Cetak massal untuk satu kelas tersedia di Data Santri → Cetak kartu pelajar.</p>
+        </div>
+      </div>
+    </LembarBawah>
+    <LembarKartu v-if="kartu" v-model:pratinjau="cetakKartu" jenis="santri" :kartu="[kartu]" :foto="{ [kartu.student_id]: foto }" :identitas="lembaga.identitas" :direktur="direkturKartu" mode="berdampingan" />
+
+    <!-- Buat surat santri -->
+    <LembarBawah v-model="lembarSurat" judul="Buat surat santri">
+      <div class="space-y-2 pb-2">
+        <p class="text-sm text-teks2">Surat disusun di Persuratan dengan data {{ s.nama_lengkap }} terisi otomatis; nomor dan tanda tangan elektronik mengikuti alur persuratan.</p>
+        <button v-for="x in SURAT" :key="x.kode" type="button" :class="['flex min-h-[60px] w-full items-center gap-3 rounded-2xl border border-garis p-3 text-left hover:bg-permukaan2', 'w-' + x.w]" @click="buatSurat(x.kode)">
+          <span class="chip-ikon h-10 w-10 shrink-0"><component :is="x.ikon" :size="22" weight="duotone" /></span>
+          <span class="min-w-0 flex-1"><b class="block">{{ x.n }}</b><span class="text-xs text-teks3">{{ x.ket }}</span></span>
+          <PhCaretRight :size="18" class="shrink-0 text-teks3" />
+        </button>
+      </div>
+    </LembarBawah>
+
     <!-- Lembar ubah status -->
     <LembarBawah v-model="lembarStatus" judul="Ubah status santri">
       <div class="space-y-4 pb-2">
@@ -322,4 +407,8 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
 </template>
 <style scoped>
 .kepala { background: linear-gradient(135deg, #075F61 0%, #0B7F81 55%, #2F5FA8 100%); }
+.bayang { border-radius: 3.2mm; box-shadow: 0 12px 30px -12px rgba(0,0,0,.5); }
+.pratinjau-kartu { zoom: .8; }
+@media (min-width: 400px) { .pratinjau-kartu { zoom: .9; } }
+@media (min-width: 1024px) { .pratinjau-kartu { zoom: 1.05; } }
 </style>

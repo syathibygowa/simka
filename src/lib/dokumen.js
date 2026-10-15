@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/dokumen.js | v1.3 | Fase 13 – Jenis dokumen slip gaji, kuitansi, surat tagihan | 11/10/2026
+// SIMKA PRO | src/lib/dokumen.js | v1.4 | Tahap D: jenis dokumen tahfizh | 16/10/2026
 // Kode validasi dokumen bertanda tangan elektronik: alamat halaman Cek Keabsahan (dibuka dengan memindai QR),
 // penyeragaman kode ketikan, label status, dan QR (SVG, tanpa layanan luar).
 import { svgQR } from './kartu'
@@ -31,4 +31,7 @@ export const JENIS_DOKUMEN = {
   slip_gaji: 'Slip gaji',
   kuitansi: 'Kuitansi pembayaran santri',
   tagihan_santri: 'Surat tagihan santri',
+  suket_juz: 'Surat keterangan ujian kenaikan juz',
+  sertifikat_hafalan: 'Sertifikat hafalan',
+  sertifikat_tahfizh: 'Sertifikat Tahfizhul Quran',
 }

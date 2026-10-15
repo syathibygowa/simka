@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/persuratan.js | v1.4 | Perbaikan: hapus surat masuk/keluar salah catat dan rapikan nomor | 14/10/2026
+// SIMKA PRO | src/stores/persuratan.js | v1.5 | Tahap C: santri demo untuk surat diambil juga dari Data Santri | 16/10/2026
 // Persuratan: hak, ketentuan, surat masuk (catat, ubah, batal), disposisi berantai (beri, tarik, selesai), ringkasan, buku agenda;
 // template surat (simpan, hapus) dan surat keluar (simpan draf, kirim ke TU, ajukan tanda tangan, batalkan, arsip, revisi);
 // buku agenda surat keluar = inventaris semua surat (Persuratan + surat dari modul lain).
@@ -6,6 +6,7 @@ import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { pesanGalat } from './lembaga'
 import { useSesi } from './sesi'
+import { useSantri } from './santri'
 import { hariIniISO } from '@/lib/tanggal'
 import { tambahHari } from '@/lib/persuratan'
 import { TEMPLATE_DEMO, KONTEKS_DEMO, PENANDA_DEMO, SANTRI_SURAT_DEMO } from '@/lib/demoSurat'
@@ -259,7 +260,14 @@ export const usePersuratan = defineStore('persuratan', {
     },
     async cariSantri(q) {
       if (!MODE_DEMO) return (await rpc('santri_untuk_surat', { p_cari: q })) || []
-      const t = q.toLowerCase().trim(); return SANTRI_SURAT_DEMO.filter((s) => `${s.nama} ${s.nis}`.toLowerCase().includes(t))
+      const t = q.toLowerCase().trim()
+      // Demo: santri contoh persuratan ditambah santri di Data Santri demo
+      await useSantri().muat()
+      const dariData = useSantri().daftar.map((s) => ({ id: s.id, nama: s.nama_lengkap, nis: s.nis, nisn: s.nisn, jk: s.jenis_kelamin, tempat_lahir: s.tempat_lahir, tanggal_lahir: s.tanggal_lahir,
+        jenjang: s.jenjang, tingkat: s.tingkat, kelas: (s.kelompok || []).find((k) => k.jenis === 'kelas')?.nama || '', wali: (s.kontak || [])[0]?.nama || '', alamat: s.alamat,
+        ayah: (s.kontak || []).find((k) => k.hubungan === 'ayah')?.nama, ibu: (s.kontak || []).find((k) => k.hubungan === 'ibu')?.nama, hafalan: 5, tanggal_masuk: s.tanggal_masuk,
+        prestasi: ['Juara 1 MTQ Cabang Tahfizh 5 Juz tingkat Kabupaten/Kota (LPTQ Kabupaten Gowa, 2026)'] }))
+      return [...SANTRI_SURAT_DEMO, ...dariData].filter((s) => `${s.nama} ${s.nis}`.toLowerCase().includes(t)).slice(0, 30)
     },
     async daftarKeluar(mulai = null, selesai = null) {
       if (!MODE_DEMO) return (await rpc('daftar_surat_keluar', { p_mulai: mulai, p_selesai: selesai })) || []

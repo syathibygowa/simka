@@ -1,18 +1,24 @@
-<!-- SIMKA PRO | src/components/cetak/LembarKartu.vue | v2.0 | Fase 3 – Perbaikan P4 (kartu pegawai portrait) | 04/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/LembarKartu.vue | v2.1 | Tahap C: juga untuk kartu pelajar santri (jenis="santri") | 16/10/2026 -->
 <script setup>
 // Lembar cetak kartu pegawai TEGAK (54 × 85,6 mm) di kertas F4 (215 × 330 mm, margin 2 cm).
 // Mode bolak-balik: 9 kartu per halaman (3 kolom × 3 baris); halaman belakang dicerminkan per baris (balik tepi panjang).
 // Mode berdampingan: depan dan belakang satu pegawai bersebelahan, 3 pegawai per halaman (dilipat atau ditempel).
+// v2.1: jenis="santri" mencetak kartu pelajar (foto berdasarkan student_id).
 import { computed, ref, watch, onBeforeUnmount } from 'vue'
 import { PhPrinter, PhX } from '@phosphor-icons/vue'
 import KartuPegawai from '@/components/KartuPegawai.vue'
+import KartuSantri from '@/components/KartuSantri.vue'
 
 const pratinjau = defineModel('pratinjau', { type: Boolean, default: false })
 const props = defineProps({
   kartu: { type: Array, default: () => [] }, foto: { type: Object, default: () => ({}) },
   identitas: Object, direktur: Object, mode: { type: String, default: 'berdampingan' }, // 'berdampingan' | 'bolak_balik'
+  jenis: { type: String, default: 'pegawai' }, // 'pegawai' | 'santri'
 })
 const PER = 9; const KOLOM = 3
+const santri = computed(() => props.jenis === 'santri')
+const nama = computed(() => (santri.value ? 'kartu pelajar' : 'kartu pegawai'))
+const idOf = (d) => (santri.value ? d.student_id : d.employee_id)
 const halaman = computed(() => {
   const k = props.kartu; const out = []
   if (props.mode === 'berdampingan') {
@@ -40,19 +46,19 @@ onBeforeUnmount(() => { document.body.style.overflow = ''; removeEventListener('
 </script>
 <template>
   <Teleport to="body">
-    <div :class="['cetak-saja', pratinjau && 'tampil munculan']" :role="pratinjau ? 'dialog' : undefined" :aria-modal="pratinjau || undefined" :aria-label="pratinjau ? 'Pratinjau cetak kartu pegawai' : undefined">
+    <div :class="['cetak-saja', pratinjau && 'tampil munculan']" :role="pratinjau ? 'dialog' : undefined" :aria-modal="pratinjau || undefined" :aria-label="pratinjau ? 'Pratinjau cetak ' + nama : undefined">
       <div v-if="pratinjau" class="bilah-munculan layar-saja">
-        <div class="min-w-0 flex-1"><p class="truncate font-bold">Pratinjau cetak kartu pegawai ({{ kartu.length }})</p>
-          <p class="text-xs opacity-80">F4 215 × 330 mm, margin 2 cm · {{ mode === 'bolak_balik' ? '9 kartu per lembar, cetak bolak-balik' : '3 pegawai per lembar, depan dan belakang berdampingan' }}</p></div>
+        <div class="min-w-0 flex-1"><p class="truncate font-bold">Pratinjau cetak {{ nama }} ({{ kartu.length }})</p>
+          <p class="text-xs opacity-80">F4 215 × 330 mm, margin 2 cm · {{ mode === 'bolak_balik' ? '9 kartu per lembar, cetak bolak-balik' : `3 ${santri ? 'santri' : 'pegawai'} per lembar, depan dan belakang berdampingan` }}</p></div>
         <button type="button" class="tombol-cetak" @click="cetak"><PhPrinter :size="20" weight="duotone" /> Cetak</button>
         <button type="button" class="tombol-tutup" aria-label="Tutup pratinjau" @click="pratinjau = false"><PhX :size="22" /></button>
       </div>
       <div :class="pratinjau && 'gulir-munculan'">
         <section v-for="(h, i) in halaman" :key="i" class="lembar-f4 halaman-kartu" :style="pratinjau ? { zoom: skala } : null">
-          <p class="judul-lembar">Kartu Pegawai · {{ h.judul }} · potong mengikuti garis tepi kartu</p>
+          <p class="judul-lembar">{{ santri ? 'Kartu Pelajar' : 'Kartu Pegawai' }} · {{ h.judul }} · potong mengikuti garis tepi kartu</p>
           <div :class="['kisi', h.dua && 'dua']">
             <div v-for="(s, j) in h.sel" :key="j" class="sel">
-              <KartuPegawai v-if="s" :d="s.d" :sisi="s.sisi" :foto="foto[s.d.employee_id]" :identitas="identitas" :direktur="direktur" />
+              <component :is="santri ? KartuSantri : KartuPegawai" v-if="s" :d="s.d" :sisi="s.sisi" :foto="foto[idOf(s.d)]" :identitas="identitas" :direktur="direktur" />
             </div>
           </div>
         </section>

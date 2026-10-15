@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/kartu.js | v1.1 | Fase 3 – Perbaikan P4 (kartu pegawai portrait) | 04/10/2026
+// SIMKA PRO | src/stores/kartu.js | v1.2 | Tahap C: verifikasi demo kartu pelajar | 16/10/2026
 // Kartu pegawai: data kartu (kode QR dibuat otomatis), ganti kode, pas foto, dan verifikasi publik.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -31,6 +31,7 @@ export const useKartu = defineStore('kartu', {
       return id
     },
     async cek(kode) {
+      if (MODE_DEMO && /^S/i.test(kode || '') && kode.replace(/-/g, '').toUpperCase() !== 'SALAH') return { ditemukan: true, jenis: 'santri', nama: 'Ahmad Fauzan', nis: '2615001', jenjang: 'Kesetaraan Wustha', kelas: '7A', berlaku: true, lembaga: "Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa" }
       if (MODE_DEMO) return kode?.replace(/-/g, '') === 'SALAH' ? { ditemukan: false } : { ditemukan: true, nama: 'Ust. Hasan Basri, Lc.', niy: '2019070101', jabatan: 'Muhaffizh/Muhaffizhah, Wali kelas', unit: 'Bidang Tahfizh', berlaku: true, lembaga: "Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa" }
       return await rpc('cek_kartu', { p_kode: kode })
     },

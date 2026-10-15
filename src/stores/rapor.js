@@ -1,5 +1,6 @@
-// SIMKA PRO | src/stores/rapor.js | v1.1 | Fase 12 – Tahap 5 Data cetak rapor, nilai diisi wali kelas, keputusan akhir tahun | 13/10/2026
+// SIMKA PRO | src/stores/rapor.js | v1.2 | Tahap C: rapor dilengkapi foto santri dan prestasi semester | 16/10/2026
 // v1.1: dataRapor (rapor SMA/Wustha, leger, sampul), dataRaporTahfizh, simpanNilaiManual, simpanKeputusan.
+// v1.2: dataRapor menambah foto_id dan prestasi (bertanda masuk rapor, dalam rentang semester) per santri (pelengkap_rapor).
 // Isian pelengkap rapor oleh pengasuh kelompok:
 //   Pengembangan diri (ekskul)  : pembina mengisi predikat A–D per santri (+ deskripsi khusus); acuan kehadiran ekskul
 //   Rapor kelas (wali kelas)    : catatan wali kelas, kokurikuler SMA (dimensi 1–4) — bahan dari nilai, kehadiran, hafalan
@@ -13,6 +14,7 @@ import { dataTahfizhDemo, isiSantriDemo } from '@/lib/demoTahfizh'
 import { pesanGalat } from './lembaga'
 import { useSesi } from './sesi'
 import { useSantri } from './santri'
+import { usePrestasi } from './prestasi'
 
 const rpc = async (nama, arg) => { const { data, error } = await supabase.rpc(nama, arg); if (error) throw new Error(pesanGalat(error)); return data }
 
@@ -175,7 +177,22 @@ export const useRapor = defineStore('rapor', {
       return rpc('bahan_rapor_halaqah', { p_group: groupId, p_semester: smt })
     },
     // ---------- Cetak rapor ----------
+    /** Data rapor kelas + pelengkap (foto santri, prestasi semester). Pelengkap gagal → rapor tetap tampil tanpanya. */
     async dataRapor(groupId, smt) {
+      const D = await this.dataRaporDasar(groupId, smt)
+      try {
+        let p
+        if (MODE_DEMO) {
+          const r = D.rentang || {}; const semua = await usePrestasi().daftar({ mulai: r.mulai || null, selesai: r.selesai || null })
+          p = (D.santri || []).map((s) => ({ id: s.id, foto_id: useSantri().cari(s.id)?.foto_id || null,
+            prestasi: semua.filter((x) => x.student_id === s.id && x.masuk_rapor) }))
+        } else p = (await rpc('pelengkap_rapor', { p_group: groupId, p_semester: smt })) || []
+        const peta = new Map(p.map((x) => [x.id, x]))
+        for (const s of D.santri || []) { const x = peta.get(s.id); s.foto_id = x?.foto_id || null; s.prestasi = x?.prestasi || [] }
+      } catch { /* rapor tetap dapat dicetak tanpa foto dan prestasi */ }
+      return D
+    },
+    async dataRaporDasar(groupId, smt) {
       if (MODE_DEMO) {
         await useSantri().muat()
         const b = await this.bahanKelas(groupId, smt); const { san, kel, pn } = siapDemo(); const g = kel.kelompok.find((x) => x.id === groupId)

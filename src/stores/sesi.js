@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/sesi.js | v1.29 | Fase 12 – Tahap 3 Ciri menu Penilaian dan penguji UTAS | 13/10/2026
+// SIMKA PRO | src/stores/sesi.js | v1.30 | Tahap D: ciri menu penguji ujian tahfizh | 16/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
 import { muatTemplatWA } from '@/lib/wa'
 import { defineStore } from 'pinia'
@@ -20,7 +20,7 @@ export const useSesi = defineStore('sesi', {
     isSuperadmin: (s) => s.pengguna?.peran === 'superadmin',
     isAdmin: (s) => ['admin', 'superadmin'].includes(s.pengguna?.peran),
     /** Ciri pengguna untuk menyaring menu (lib/menu.js). */
-    ciriMenu: (s) => ({ penilaian: s.penilaian, pengujiUtas: s.pengujiUtas, gaji: s.gaji, gajiLihat: s.gajiLihat, keuangan: s.keuangan, persuratan: s.persuratan, struktural: !!s.pengguna?.jabatan_struktural, shift: s.punyaShift, izin: s.izinAdmin, fitur: s.fitur, kelompok: s.kelompokSaya.length > 0, jenisKelompok: [...new Set(s.kelompokSaya.map((k) => k.jenis))], mengajar: !!s.tugas?.mengajar, pimpinan: !!s.tugas?.pimpinan, luas: s.tugas?.luas || {} }),
+    ciriMenu: (s) => ({ penilaian: s.penilaian, pengujiUtas: s.pengujiUtas, gaji: s.gaji, gajiLihat: s.gajiLihat, keuangan: s.keuangan, persuratan: s.persuratan, struktural: !!s.pengguna?.jabatan_struktural, shift: s.punyaShift, izin: s.izinAdmin, fitur: s.fitur, kelompok: s.kelompokSaya.length > 0, jenisKelompok: [...new Set(s.kelompokSaya.map((k) => k.jenis))], mengajar: !!s.tugas?.mengajar, pimpinan: !!s.tugas?.pimpinan, penguji: !!s.tugas?.penguji, luas: s.tugas?.luas || {} }),
     /** Pimpinan (Kepala Bidang, Direktur, Wadir, Yayasan, termasuk Plt): beranda berstatistik dan fungsi kontrol. */
     pimpinanTinggi: (s) => !!s.tugas?.pimpinan,
     namaPendek: (s) => (s.pengguna?.nama_lengkap ?? '').replace(/^(Ust\.|Ustzh\.)\s*/, '').split(',')[0],

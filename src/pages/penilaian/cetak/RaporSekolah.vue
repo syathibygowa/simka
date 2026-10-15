@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/cetak/RaporSekolah.vue | v1.0 | Fase 12 – Tahap 5 Cetak rapor SMA dan Wustha | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/cetak/RaporSekolah.vue | v1.1 | Tahap C: tabel Prestasi (dari catatan prestasi santri bertanda rapor) | 16/10/2026 -->
 <script setup>
 // Rapor sekolah per santri (data_rapor):
 //   SMA (Kurikulum Merdeka) : Nilai + Capaian Kompetensi per mapel (berkelompok), Kokurikuler, Ekstrakurikuler,
@@ -6,6 +6,7 @@
 //   Wustha (K13 disesuaikan): KKM, Pengetahuan & Keterampilan (angka, predikat, deskripsi), Sikap, rata-rata;
 //                             Pengembangan Diri, Pencapaian Program Tahfizhul Qur'an, Ketidakhadiran, Catatan, Kenaikan kelas
 // Tanda tangan: orang tua kiri, wali kelas kanan, kepala tengah bawah. Kepala rapor (kop + identitas) berulang per halaman.
+// v1.1: tabel Prestasi tampil bila santri memiliki prestasi bertanda rapor dalam rentang semester (menu Prestasi Santri).
 import { computed } from 'vue'
 import HalRapor from '@/components/cetak/rapor/HalRapor.vue'
 import TtdRapor from '@/components/cetak/rapor/TtdRapor.vue'
@@ -15,6 +16,7 @@ import { predikatDari, sebutanPredikat } from '@/lib/penilaian'
 import { ringkasJuz } from '@/lib/tahfizh'
 import { formatPanjang } from '@/lib/tanggal'
 import { htmlMiring } from '@/lib/catatanRapor'
+import { TINGKAT_PRESTASI } from '@/lib/prestasi'
 
 const props = defineProps({ D: { type: Object, required: true }, pilih: { type: Array, default: null } })
 const ket = computed(() => props.D.ketentuan || {})
@@ -101,6 +103,11 @@ const rataKelas = (b, f) => { const v = b.n.map((x) => x[f]).filter((x) => x != 
     </template>
 
     <!-- ================= Bersama ================= -->
+    <table v-if="b.s.prestasi?.length" class="tabel" style="margin-top: 10pt"><colgroup><col style="width:6%"><col style="width:44%"><col style="width:50%"></colgroup>
+      <thead><tr><th>No.</th><th>{{ sma ? 'Prestasi' : 'PRESTASI' }}</th><th>{{ sma ? 'Keterangan' : 'KETERANGAN' }}</th></tr></thead>
+      <tbody><tr v-for="(x, i) in b.s.prestasi" :key="i"><td class="tengah">{{ i + 1 }}{{ sma ? '' : '.' }}</td><td>{{ x.capaian }} {{ x.nama_kegiatan }}</td>
+        <td>{{ ['Tingkat ' + (TINGKAT_PRESTASI[x.tingkat] || x.tingkat), x.penyelenggara, formatPanjang(x.tanggal)].filter(Boolean).join(', ') }}</td></tr></tbody></table>
+
     <table class="tabel" style="margin-top: 10pt"><colgroup><col style="width:5%"><col style="width:22%"><col style="width:13%"><col style="width:15%"><col style="width:45%"></colgroup>
       <thead><tr><th colspan="3">Ketidakhadiran</th><th>Persentase Kehadiran</th><th>Catatan/Keterangan</th></tr></thead>
       <tbody>

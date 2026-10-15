@@ -1,6 +1,7 @@
-// SIMKA PRO | src/stores/santri.js | v1.1 | Fase 4 – Tahap 2 Kelompok santri | 04/10/2026
+// SIMKA PRO | src/stores/santri.js | v1.2 | Tahap C: foto santri dan kartu pelajar | 16/10/2026
 // Data santri: daftar (sesuai cakupan RLS), simpan beserta kontak, impor Excel, status, mutasi keluar,
 // riwayat, dan hapus (superadmin). Semua penulisan lewat fungsi SQL (tabel santri tidak dapat ditulis langsung).
+// v1.2: foto santri (bucket profil, santri/{id}/…; dipotong 3:4) dan data kartu pelajar berkode QR.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { SANTRI_DEMO, RIWAYAT_SANTRI_DEMO } from '@/lib/demoSantri'
@@ -8,11 +9,15 @@ import { dataKelompokDemo, kelompokSantriDemo, ID_PEGAWAI_DEMO } from '@/lib/dem
 import { useSesi } from './sesi'
 import { pesanGalat } from './lembaga'
 import { hariIniISO } from '@/lib/tanggal'
+import { unggahSupabase, kompresGambar, alamatBerkas } from '@/lib/penyimpanan'
+
+const KODE_DEMO = {}
+const kodeDemo = () => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let k = ''; for (let i = 0; i < 10; i++) k += a[Math.floor(Math.random() * a.length)]; return k }
 
 const urutNama = (a, b) => a.nama_lengkap.localeCompare(b.nama_lengkap, 'id')
 
 export const useSantri = defineStore('santri', {
-  state: () => ({ daftar: [], memuat: false, galat: '', riwayat: {}, dimuat: false, saluran: null }),
+  state: () => ({ daftar: [], memuat: false, galat: '', riwayat: {}, dimuat: false, saluran: null, foto: {} }),
   getters: {
     aktif: (s) => s.daftar.filter((x) => x.status === 'aktif'),
   },
@@ -150,6 +155,43 @@ export const useSantri = defineStore('santri', {
       const { data, error } = await supabase.rpc('mutasi_keluar_santri', { p_id: id, p_tanggal: tanggal, p_tujuan: tujuan, p_alasan: alasan })
       if (error) throw new Error(pesanGalat(error))
       await this.segarkan(id); await this.muatRiwayat(id)
+      return data
+    },
+
+    /** Alamat foto santri (disimpan selama sesi); null bila belum ada foto. */
+    async urlFoto(s) {
+      if (!s) return null
+      if (this.foto[s.id] !== undefined) return this.foto[s.id]
+      if (MODE_DEMO || !s.foto_id) return null
+      try { this.foto[s.id] = await alamatBerkas(s.foto_id) } catch { this.foto[s.id] = null }
+      return this.foto[s.id]
+    },
+    /** Unggah dan pasang foto santri (dipotong 3:4, maks. 600 px). */
+    async pasangFoto(id, file) {
+      if (MODE_DEMO) { this.foto[id] = URL.createObjectURL(file); const s = this.cari(id); if (s) s.foto_id = 'demo'; return }
+      const blob = await kompresGambar(file, { maks: 600, kualitas: 0.8, rasio: [3, 4] })
+      const { id: obj } = await unggahSupabase(blob, { bucket: 'profil', path: `santri/${id}/foto-${Date.now()}.jpg`, kategori: 'foto_santri' })
+      const { error } = await supabase.rpc('pasang_foto_santri', { p_santri: id, p_obj: obj })
+      if (error) throw new Error(pesanGalat(error))
+      delete this.foto[id]; await this.segarkan(id)
+    },
+    /** Data kartu pelajar (kode QR dibuat otomatis bila belum ada). */
+    async kartu(ids) {
+      if (MODE_DEMO) {
+        return ids.map((id) => this.cari(id)).filter(Boolean).map((s) => ({ student_id: s.id, nama: s.nama_lengkap, nis: s.nis, nisn: s.nisn, jenis_kelamin: s.jenis_kelamin,
+          tempat_lahir: s.tempat_lahir, tanggal_lahir: s.tanggal_lahir, jenjang: s.jenjang, tingkat: s.tingkat,
+          kelas: (s.kelompok || []).find((k) => k.jenis === 'kelas')?.nama || '', kamar: (s.kelompok || []).find((k) => k.jenis === 'kamar')?.nama || '',
+          alamat: s.alamat, tahun_masuk: s.tahun_masuk, foto_id: s.foto_id || null, kode: (KODE_DEMO[s.id] ||= kodeDemo()), aktif: s.status === 'aktif',
+          wali: (s.kontak || []).find((k) => k.hubungan === 'ayah')?.nama || (s.kontak || [])[0]?.nama || '' }))
+      }
+      const { data, error } = await supabase.rpc('data_kartu_santri', { p_ids: ids })
+      if (error) throw new Error(pesanGalat(error))
+      return data || []
+    },
+    async gantiKodeKartu(id) {
+      if (MODE_DEMO) { KODE_DEMO[id] = kodeDemo(); return KODE_DEMO[id] }
+      const { data, error } = await supabase.rpc('ganti_kode_kartu_santri', { p_santri: id })
+      if (error) throw new Error(pesanGalat(error))
       return data
     },
 

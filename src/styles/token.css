@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/token.css | v2.7 | Fase 12 – Warna menu Penilaian dan Rapor | 13/10/2026 */
+/* SIMKA PRO | src/styles/token.css | v2.8 | Tahap C: warna menu Prestasi Santri (emas) | 16/10/2026 */
 /* =====================================================================
    SIMKA PRO · Token warna dan tema
    Semua warna teks sudah diuji kontrasnya (WCAG AA, ≥ 4,5:1) terhadap
@@ -75,6 +75,7 @@
 .w-kelompoksantri { --c: #9A3412; --c2: #0B7F81; }
 .w-absensi    { --c: #4338CA; --c2: #0B7F81; }
 .w-ekskul     { --c: #9D174D; --c2: #B5501A; }
+.w-prestasi   { --c: #8C5A00; --c2: #0B6B57; }   /* emas tua — prestasi santri, 5,9:1 */
 .w-jadwal     { --c: #0F5E8C; --c2: #6D44B8; }
 .w-musyrif    { --c: #245E3F; --c2: #8C6200; }   /* hijau daun tua — kepengasuhan asrama, 7,5:1 */
 
@@ -113,6 +114,7 @@
 .dark .w-kelompoksantri { --c: #FDBA74; --c2: #4FD1D3; }
 .dark .w-absensi    { --c: #A5B4FC; --c2: #4FD1D3; }
 .dark .w-ekskul     { --c: #F9A8D4; --c2: #FFB074; }
+.dark .w-prestasi   { --c: #F2C24B; --c2: #5BD6A9; }
 .dark .w-jadwal     { --c: #7DD3FC; --c2: #C3A6FF; }
 .dark .w-musyrif    { --c: #7EDCA6; --c2: #F2C24B; }
 

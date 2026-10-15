@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/Persuratan.vue | v1.2 | Fase 10 – Penutup: buka revisi surat, buku agenda inventaris semua surat | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/Persuratan.vue | v1.3 | Tahap C: ?templat=…&santri=…&nis=… membuka susun surat santri | 16/10/2026 -->
 <script setup>
 // Persuratan (Blueprint Bagian 35), satu menu bertab:
 //   Untuk saya  : surat yang perlu saya disposisikan dan disposisi yang ditujukan kepada saya
@@ -8,7 +8,8 @@
 //   Template    : template surat (isi awal pedoman Wahdah Islamiyah; TU menyunting, menyalin, menambah)
 //   Ketentuan   : pilihan instruksi disposisi dan batas waktu bawaan
 // ?surat=<id> membuka rincian surat (dipakai notifikasi); pada tab Surat keluar ?resmi=<id dokumen> dari kotak Tanda tangan.
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+// ?templat=<kode>&santri=<id>&nis=<nis>[&prestasi=<teks>] membuka susun surat dengan template dan santri terpilih (dari biodata santri).
+import { computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { PhTray, PhEnvelopeOpen, PhBookBookmark, PhListChecks, PhHandPointing, PhPaperPlaneTilt, PhStamp, PhWarningCircle, PhCheckCircle, PhCalendarBlank, PhPaperPlaneRight, PhFileText, PhSignature, PhNotePencil, PhSealCheck } from '@phosphor-icons/vue'
 import { usePersuratan } from '@/stores/persuratan'
@@ -44,7 +45,21 @@ let jeda
 onMounted(async () => {
   try { if (!ps.hakDimuat) await ps.muatHak() } catch (e) { ui.toast(e.message, 'galat') }
   muatRingkas(); ps.dengarkan(segarkan); jeda = setInterval(muatRingkas, 60000)
+  bukaDariQuery()
 })
+// Susun surat santri dari biodata/prestasi (?templat=…&santri=…&nis=…&prestasi=…)
+const awal = ref(null)
+async function bukaDariQuery() {
+  const q = route.query
+  if (typeof q.templat !== 'string' || !ps.hakDimuat) return
+  if (ps.hak.susun) {
+    awal.value = { templat: q.templat, santri: q.santri ? { id: String(q.santri), nis: String(q.nis || '') } : null, prestasi: q.prestasi ? [String(q.prestasi)] : null }
+    if (lembarSusun.value) { lembarSusun.value = false; await nextTick() }
+    susun()
+  } else ui.toast('Penyusunan surat dilakukan oleh Tata Usaha. Hubungi Tata Usaha untuk menerbitkan surat ini.', 'galat')
+  router.replace({ path: '/persuratan/keluar', query: {} })
+}
+watch(() => route.query.templat, (v) => { if (v) bukaDariQuery() })
 onBeforeUnmount(() => { ps.berhenti(); clearInterval(jeda) })
 const kartu = computed(() => {
   const r = ringkas.value; const muat = r.menunggu_disposisi === undefined ? '…' : null
@@ -77,7 +92,7 @@ const bukaRincian = computed({ get: () => !diKeluar.value && !!suratId.value, se
 const bukaKeluar = computed({ get: () => diKeluar.value && !!(suratId.value || resmiId.value), set: (v) => { if (!v) router.replace({ query: { ...route.query, surat: undefined, resmi: undefined } }) } })
 // Susun/ubah surat keluar
 const lembarSusun = ref(false); const suratSusun = ref(null)
-function susun(s = null) { suratSusun.value = s; if (s) bukaKeluar.value = false; lembarSusun.value = true }
+function susun(s = null, dariTab = false) { if (dariTab) awal.value = null; suratSusun.value = s; if (s) bukaKeluar.value = false; lembarSusun.value = true }
 const pilih = (id) => router.replace({ query: { ...route.query, surat: id } })
 // Ubah surat (TU): rincian ditutup, formulir dibuka; setelah tersimpan rincian dibuka kembali
 const suratUbah = ref(null); const lembarUbah = ref(false)
@@ -91,14 +106,14 @@ function ubah(s) { suratUbah.value = s; bukaRincian.value = false; lembarUbah.va
       <KartuStatistik v-for="k in kartu" :key="k.judul" class="w-[44%] shrink-0 snap-start sm:w-auto" :judul="k.judul" :nilai="k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket" />
     </div>
     <TabSuratMasuk v-if="aktif === 'untuk-saya' || aktif === 'masuk'" :key="aktif" :cakupan="aktif === 'masuk' ? 'masuk' : 'untuk_saya'" :versi="versi" @pilih="pilih" @berubah="segarkan" />
-    <TabSuratKeluar v-else-if="aktif === 'keluar'" :versi="versi" @pilih="pilih" @susun="susun()" />
+    <TabSuratKeluar v-else-if="aktif === 'keluar'" :versi="versi" @pilih="pilih" @susun="susun(null, true)" />
     <TabBukuAgenda v-else-if="aktif === 'agenda'" />
     <TabTemplateSurat v-else-if="aktif === 'template'" />
     <TabKetentuanSurat v-else />
     <LembarRincianSurat v-model="bukaRincian" :id="suratId" :versi="versi" @berubah="segarkan" @ubah="ubah" />
     <LembarCatatSurat v-model="lembarUbah" :surat="suratUbah" @selesai="(id) => { segarkan(); pilih(id) }" />
     <LembarRincianKeluar v-model="bukaKeluar" :id="suratId" :doc="suratId ? '' : resmiId" :versi="versi" @berubah="segarkan" @ubah="susun" @revisi="(id) => router.replace({ path: '/persuratan/keluar', query: { surat: id } })" />
-    <LembarSusunSurat v-model="lembarSusun" :surat="suratSusun" @selesai="(id) => { segarkan(); router.replace({ path: '/persuratan/keluar', query: { surat: id } }) }" />
+    <LembarSusunSurat v-model="lembarSusun" :surat="suratSusun" :awal="suratSusun ? null : awal" @selesai="(id) => { segarkan(); router.replace({ path: '/persuratan/keluar', query: { surat: id } }) }" />
   </div>
   <p v-else class="kartu p-8 text-center text-sm text-teks3">Memuat…</p>
 </template>

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.21 | Perbaikan: kelompok menu Fungsional; Penilaian ke kelompok Santri; Tim Kerja jadi tab Data Pegawai | 14/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.23 | Tahap D: menu Tahfizh tampil juga bagi penguji ujian | 16/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Fungsional, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -6,7 +6,7 @@
 import {
   PhHouse, PhFingerprint, PhUsersThree, PhStudent, PhBookOpenText, PhFileText, PhFirstAidKit,
   PhShieldCheck, PhChartBar, PhEnvelopeSimple, PhWallet, PhMegaphone, PhKey, PhGearSix, PhBell,
-  PhFiles, PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhCashRegister, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut, PhListMagnifyingGlass, PhChalkboard, PhPresentationChart, PhExam,
+  PhFiles, PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhCashRegister, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut, PhListMagnifyingGlass, PhChalkboard, PhPresentationChart, PhExam, PhTrophy,
 } from '@phosphor-icons/vue'
 
 const ADMIN = ['admin', 'superadmin']
@@ -51,10 +51,12 @@ export const MENU = [
   { kode: 'ekskul', nama: 'Ekskul', ikon: PhMedal, warna: 'ekskul', ke: '/ekskul', grup: 'Fungsional',
     syarat: (c) => (c.jenisKelompok || []).includes('ekskul') || Number(c.fitur?.absensi_ekskul ?? 0) >= 1 },
   { kode: 'tahfizh',    nama: 'Tahfizh',         ikon: PhBookOpenText,   warna: 'tahfizh',    ke: '/tahfizh',           grup: 'Fungsional',
-    syarat: (c) => (c.jenisKelompok || []).includes('halaqah') || Number(c.fitur?.tahfizh ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 || !!c.pengujiUtas },
+    syarat: (c) => (c.jenisKelompok || []).includes('halaqah') || Number(c.fitur?.tahfizh ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 || !!c.pengujiUtas || !!c.penguji },
   // Penilaian (Fase 12): pengaturan, rekap, dan permintaan ubah nilai. Pengisian nilai tetap di menu kerja penilai
   // (Guru Mapel, Tahfizh, Ekskul, Wali Kelas). Tampil bagi pengatur penilaian (admin ber-izin atur_penilaian/kelola_nilai,
   // hak fitur Nilai tingkat 3) dan pimpinan bidang SMA/Wustha/Tahfizh.
+  { kode: 'prestasi',   nama: 'Prestasi Santri', ikon: PhTrophy,         warna: 'prestasi',   ke: '/prestasi-santri',   grup: 'Santri',
+    syarat: (c) => c.kelompok || !!c.pimpinan || Number(c.fitur?.data_santri ?? 0) >= 1 },
   { kode: 'penilaian',  nama: 'Penilaian',       ikon: PhExam,           warna: 'penilaian',  ke: '/penilaian',         grup: 'Santri', hak: (c) => !!c.penilaian },
   { kode: 'klinik',     nama: 'Klinik',          ikon: PhFirstAidKit,    warna: 'klinik',     ke: '/klinik',            grup: 'Fungsional',
     syarat: (c) => c.kelompok || Number(c.fitur?.klinik ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 },

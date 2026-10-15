@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/SuratResmi.vue | v1.2 | Fase 10 – Penutup: tanggal Hijriah bergaris bawah, Masehi di bawahnya | 11/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/SuratResmi.vue | v1.3 | Tahap C: opsi kotak pas foto 3 × 4 di samping tanda tangan (SKL) | 16/10/2026 -->
 <script setup>
 // Isi surat keluar resmi di dalam DokumenCetak (kop dari DokumenCetak): kepala surat (judul di tengah, atau nomor/lampiran/hal
 // di kiri dengan tempat-tanggal di kanan dan alamat tujuan), basmalah/salam/hamdalah/doa (Latin, miring), isi dari template,
@@ -75,7 +75,8 @@ const waktuEl = (p) => (p.waktu ? `${formatPendek(p.waktu)} ${formatJam(p.waktu)
         <tr><td>Pada tanggal</td><td class="tt">:</td><td><span class="tg-ganda"><span class="tg-h">{{ hijri || masehi }}</span><span v-if="hijri && masehi" class="tg-m">{{ masehi }}</span></span></td></tr>
       </table>
       <p v-else-if="t.bentuk === 'tengah'" class="tgl-ttd">{{ kota }}, <span class="tg-ganda"><span class="tg-h">{{ hijri || masehi }}</span><span v-if="hijri && masehi" class="tg-m">{{ masehi }}</span></span></p>
-      <div :class="['blok-ttd', penanda.length > 1 ? 'dua' : 'satu']">
+      <div :class="['blok-ttd', penanda.length > 1 || opsi.pas_foto ? 'dua' : 'satu']">
+        <div v-if="opsi.pas_foto" class="pas-foto">Pas foto<br>3 × 4</div>
         <div v-for="(p, i) in penanda" :key="i" class="ttd-surat">
           <p v-if="p.pengantar">{{ p.pengantar }}</p>
           <p v-if="p.an">a.n. {{ p.an }}</p>
@@ -138,6 +139,7 @@ const waktuEl = (p) => (p.waktu ? `${formatPendek(p.waktu)} ${formatJam(p.waktu)
 .blok-ttd { display: flex; gap: 8mm; }
 .blok-ttd.satu { justify-content: flex-end; }
 .blok-ttd.dua { justify-content: space-between; }
+.pas-foto { width: 30mm; height: 40mm; flex-shrink: 0; align-self: flex-end; margin-left: 10mm; border: 0.5pt solid #000; display: grid; place-items: center; text-align: center; font-size: 9pt; line-height: 1.3; }
 .ttd-surat { width: 46%; text-align: center; }
 .ruang-ttd { height: 18mm; display: flex; align-items: center; justify-content: center; }
 .nama-ttd { text-decoration: underline; }

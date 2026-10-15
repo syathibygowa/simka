@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/CetakRaporKelas.vue | v1.0 | Fase 12 – Tahap 5 Cetak rapor dan leger | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/CetakRaporKelas.vue | v1.1 | Tahap C: identitas santri memuat pas foto dari biodata | 16/10/2026 -->
 <script setup>
 // Panel cetak rapor satu kelas (Wali Kelas → Rapor → Cetak): pemeriksaan kelengkapan, pilihan santri, dan dokumen:
 //   sampul, identitas sekolah, identitas santri, rapor SMA/Wustha, rapor tahfizh, leger (cetak dan Excel),
@@ -9,6 +9,7 @@ import {
 } from '@phosphor-icons/vue'
 import { useRapor } from '@/stores/rapor'
 import { useUI } from '@/stores/ui'
+import { useSantri } from '@/stores/santri'
 import { penandaTahfizh } from '@/lib/tahfizh'
 import { hitungLeger, namaKelasRapor, kelasAkhir } from '@/lib/rapor'
 import { LABEL_SEMESTER } from '@/lib/nilai'
@@ -70,8 +71,16 @@ async function cetak(d) {
     catch (e) { proses.value = ''; return ui.toast(e.message, 'galat') }
     proses.value = ''
   }
+  if (d.k === 'santri') {
+    // Pas foto santri dari biodata (dimuat bertahap agar ringan)
+    proses.value = 'santri'; const san = useSantri(); const peta = {}
+    const daftar = props.D.santri.filter((s) => s.foto_id && (!pilih.value || pilih.value.includes(s.id)))
+    for (let i = 0; i < daftar.length; i += 8) await Promise.all(daftar.slice(i, i + 8).map(async (s) => { peta[s.id] = await san.urlFoto({ id: s.id, foto_id: s.foto_id }) }))
+    foto.value = peta; proses.value = ''
+  }
   jenis.value = d.k; pratinjau.value = true
 }
+const foto = ref({})
 function excel() {
   const D = props.D; const L = leger.value
   const kolom = [{ judul: 'No', kunci: 'no' }, { judul: 'NIS', kunci: 'nis' }, { judul: 'Nama', kunci: 'nama' }, { judul: 'JK', kunci: 'jk' },
@@ -130,7 +139,7 @@ function excel() {
 
     <LembarRapor v-model:pratinjau="pratinjau" :judul="`${judul} · ${namaKelasRapor(D.kelas)}`" :keterangan="LABEL_SEMESTER[D.semester]" :mendatar="jenis === 'leger'">
       <RaporSekolah v-if="jenis === 'rapor'" :D="D" :pilih="pilih" />
-      <SampulRapor v-else-if="['sampul', 'sekolah', 'santri'].includes(jenis)" :D="D" :mode="jenis" :pilih="pilih" />
+      <SampulRapor v-else-if="['sampul', 'sekolah', 'santri'].includes(jenis)" :D="D" :mode="jenis" :pilih="pilih" :foto="foto" />
       <LegerRapor v-else-if="['leger', 'ketercapaian'].includes(jenis)" :D="D" :mode="jenis" />
       <LembarKelasRapor v-else-if="['remidi', 'terima'].includes(jenis)" :D="D" :mode="jenis" :pilih="pilih" />
       <RaporTahfizh v-else-if="jenis === 'tahfizh' && T" :D="T" :pilih="pilih" :penanda="kepalaTz" />

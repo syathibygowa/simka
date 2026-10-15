@@ -1,9 +1,10 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.2 | Fase 12 – Tahap 3 Jenis ujian UTAS | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.3 | Tahap D: penguji menerbitkan suket kenaikan juz dan sertifikat hafalan | 16/10/2026 -->
 <script setup>
 // Ujian tahfizh: kenaikan juz, sertifikasi berjenjang (5, 10, 15 … juz), dan UTAS (Fase 12, TabUtas.vue).
 // Muhaffizh merekomendasikan → penguji aktif menerima notifikasi (dan dapat dikabari WA) → penguji mengambil/menjadwalkan
 // atau admin menetapkan penguji → penguji menilai Tajwid & Itqan → Tuntas/Remidi. Kenaikan juz Tuntas otomatis menjadi
 // usulan capaian juz di tab Capaian. Muhaffizh tidak menguji santri halaqahnya sendiri. Daftar diperbarui langsung.
+// Tahap D: ujian Tuntas → penguji (atau pimpinan tahfizh/Tata Usaha) menerbitkan Suket Ujian Kenaikan Juz / Sertifikat Hafalan bernomor.
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import {
   PhExam, PhCertificate, PhPaperPlaneTilt, PhHandGrabbing, PhPencilLine, PhX, PhWhatsappLogo, PhUserGear, PhCalendarBlank, PhMagnifyingGlass,
@@ -22,6 +23,8 @@ import GridJuz from '@/components/GridJuz.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import InputJam from '@/components/InputJam.vue'
 import TabUtas from './TabUtas.vue'
+import LembarTerbitTahfizh from './LembarTerbitTahfizh.vue'
+import CetakDokumenTahfizh from './CetakDokumenTahfizh.vue'
 
 const props = defineProps({ hanyaUtas: Boolean })
 const tz = useTahfizh(); const sesi = useSesi(); const ui = useUI()
@@ -29,8 +32,18 @@ const jenis = ref(props.hanyaUtas ? 'utas' : 'kenaikan'); const status = ref('ak
 const pengelola = computed(() => tz.hak.atur || tz.hak.validasi)
 async function muat() {
   memuat.value = true
-  try { daftar.value = await tz.daftarUjian(jenis.value, status.value || null) } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false }
+  try { daftar.value = await tz.daftarUjian(jenis.value, status.value || null); muatDokumen() } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false }
 }
+// ---------- Dokumen ujian (Tahap D) ----------
+const dokUjian = ref({}); const lembarTerbit = ref(false); const ujianTerbit = ref(null); const dokCetak = ref(null); const pratinjauDok = ref(false)
+async function muatDokumen() {
+  if (!daftar.value.some((u) => u.hasil === 'tuntas')) return
+  try { const d = await tz.daftarDokumen({}); dokUjian.value = Object.fromEntries(d.filter((x) => x.exam_id && x.status === 'terbit').map((x) => [x.exam_id, x])) } catch { dokUjian.value = {} }
+}
+const bolehTerbit = (u) => u.hasil === 'tuntas' && (u.penguji_saya || tz.hak.dokumen)
+function bukaTerbit(u) { ujianTerbit.value = u; lembarTerbit.value = true }
+async function sesudahTerbit(h) { await muatDokumen(); const d = Object.values(dokUjian.value).find((x) => x.id === h.id) || (await tz.daftarDokumen({ id: h.id }))[0]; if (d) { dokCetak.value = d; pratinjauDok.value = true } }
+function cetakDok(d) { dokCetak.value = d; pratinjauDok.value = true }
 watch([jenis, status], () => { if (jenis.value !== 'utas') muat() })
 onMounted(async () => {
   if (props.hanyaUtas) return
@@ -164,6 +177,13 @@ const bolehBatal = (u) => ['menunggu', 'dijadwalkan'].includes(u.status) && (u.m
             </div>
             <p v-if="u.catatan_penguji" class="mt-1 text-xs text-teks3">Catatan penguji: {{ u.catatan_penguji }}</p>
             <p v-if="u.alasan_batal" class="mt-1 text-xs text-teks3">Dibatalkan: {{ u.alasan_batal }}</p>
+            <div v-if="u.hasil === 'tuntas' && (dokUjian[u.id] || bolehTerbit(u))" class="mt-3 flex flex-wrap items-center gap-2">
+              <template v-if="dokUjian[u.id]">
+                <button class="tombol-garis w-prestasi min-h-[38px] px-3 text-sm" @click="cetakDok(dokUjian[u.id])"><PhCertificate :size="18" weight="duotone" style="color: var(--c)" /> Cetak {{ u.jenis === 'kenaikan' ? 'suket' : 'sertifikat' }}</button>
+                <span class="text-xs text-teks3 tabular-nums">{{ dokUjian[u.id].nomor }}{{ dokUjian[u.id].status_dokumen === 'draf' ? ' · menunggu tanda tangan' : '' }}</span>
+              </template>
+              <button v-else class="tombol-utama min-h-[38px] px-3 text-sm" @click="bukaTerbit(u)"><PhCertificate :size="18" weight="duotone" /> {{ u.jenis === 'kenaikan' ? 'Terbitkan suket kenaikan juz' : 'Terbitkan sertifikat hafalan' }}</button>
+            </div>
             <div v-if="u.status === 'menunggu' || u.status === 'dijadwalkan'" class="mt-3 flex flex-wrap gap-2">
               <button v-if="u.boleh_nilai && u.status === 'menunggu'" class="tombol-garis min-h-[38px] px-3 text-sm" @click="bukaAmbil(u)"><PhHandGrabbing :size="18" /> Ambil & jadwalkan</button>
               <button v-else-if="pengelola && u.status === 'menunggu'" class="tombol-garis min-h-[38px] px-3 text-sm" @click="bukaAmbil(u)"><PhUserGear :size="18" /> Tetapkan penguji</button>
@@ -256,5 +276,7 @@ const bolehBatal = (u) => ['menunggu', 'dijadwalkan'].includes(u.status) && (u.m
       </div>
     </LembarBawah>
   </template>
+    <LembarTerbitTahfizh v-model="lembarTerbit" :ujian="ujianTerbit" @terbit="sesudahTerbit" />
+    <CetakDokumenTahfizh v-if="dokCetak" :key="dokCetak.id" v-model:pratinjau="pratinjauDok" :dok="dokCetak" />
   </div>
 </template>

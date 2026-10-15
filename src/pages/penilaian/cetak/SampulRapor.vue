@@ -1,17 +1,18 @@
-<!-- SIMKA PRO | src/pages/penilaian/cetak/SampulRapor.vue | v1.0 | Fase 12 – Tahap 5 Sampul dan identitas rapor | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/cetak/SampulRapor.vue | v1.1 | Tahap C: pas foto santri tampil di halaman identitas peserta didik | 16/10/2026 -->
 <script setup>
 // Halaman depan rapor:
 //   sampul   : logo, judul laporan, nama sekolah dan alamat, nama dan NIS/NISN santri, kementerian
 //   sekolah  : identitas sekolah (nama, NPSN, NSS, alamat, kode pos, kelurahan, kecamatan, kota, provinsi, e-mail)
 //   santri   : identitas peserta didik (biodata, orang tua, wali) dengan kolom pas foto dan tanda tangan kepala
 // Identitas sekolah diatur di Penilaian → Ketentuan; biodata dari Data Santri.
+// v1.1: prop foto { student_id: url } — pas foto santri (dari biodata) mengisi kotak 3 × 4; kosong bila belum ada foto.
 import { computed } from 'vue'
 import HalRapor from '@/components/cetak/rapor/HalRapor.vue'
 import { useLembaga } from '@/stores/lembaga'
 import { nisNisn, ttl, JK_PANJANG, ROMAWI } from '@/lib/rapor'
 import { formatPanjang } from '@/lib/tanggal'
 
-const props = defineProps({ D: { type: Object, required: true }, mode: { type: String, default: 'sampul' }, pilih: { type: Array, default: null } })
+const props = defineProps({ D: { type: Object, required: true }, mode: { type: String, default: 'sampul' }, pilih: { type: Array, default: null }, foto: { type: Object, default: () => ({}) } })
 const lembaga = useLembaga()
 const ket = computed(() => props.D.ketentuan || {})
 const idn = computed(() => ket.value.identitas || {})
@@ -95,7 +96,8 @@ const ortu = (s, k) => s[k]?.nama || '-'
         <tr><td></td><td>c. Pekerjaan</td><td>:</td><td>{{ s.wali?.pekerjaan || '-' }}</td></tr>
       </tbody></table>
       <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 16mm; margin-top: 16pt; break-inside: avoid">
-        <div style="display: flex; justify-content: center"><div style="width: 30mm; height: 40mm; border: .5pt solid #000; display: grid; place-items: center; font-size: 9pt">Pas foto<br>3 × 4</div></div>
+        <div style="display: flex; justify-content: center"><div style="width: 30mm; height: 40mm; border: .5pt solid #000; display: grid; place-items: center; font-size: 9pt; text-align: center; overflow: hidden">
+          <img v-if="foto[s.id]" :src="foto[s.id]" alt="" style="width: 100%; height: 100%; object-fit: cover" /><span v-else>Pas foto<br>3 × 4</span></div></div>
         <div style="text-align: center; font-size: 11pt"><p>{{ ket.tempat || 'Gowa' }}, {{ formatPanjang(s.tanggal_masuk || new Date()) }}</p><p>{{ kepala.jabatan || ket.jabatan_ttd || 'Kepala Sekolah' }}</p>
           <div style="height: 22mm" /><p style="font-weight: 700; text-decoration: underline">{{ kepala.nama || '..................................' }}</p><p v-if="kepala.niy">NIY. {{ kepala.niy }}</p></div>
       </div>

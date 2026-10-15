@@ -1,10 +1,12 @@
-<!-- SIMKA PRO | src/pages/persuratan/LembarSusunSurat.vue | v1.1 | Fase 10 – Perbaikan: pemohon surat (semua surat melalui Tata Usaha) | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/LembarSusunSurat.vue | v1.2 | Tahap C: dibuka langsung dengan template dan santri (dari biodata/prestasi); prestasi santri terisi otomatis | 16/10/2026 -->
 <script setup>
 // Susun surat keluar dari template: pilih template → isi data surat (tanggal, kop, D/K, perihal, tujuan, lampiran), isian
 // template (teks, tanggal, pegawai, santri, daftar), penanda tangan (dari Setelan → Penanda tangan atau pegawai lain; a.n.),
 // tembusan dan narahubung. Naskah surat ini boleh disunting tanpa mengubah templatenya. Pratinjau F4 berkop kapan saja.
 // Disimpan sebagai draf; pengajuan tanda tangan dilakukan Tata Usaha dari rincian surat. TU dapat mencatat pemohon surat
 // (pegawai/pimpinan yang meminta) agar pemohon ikut menerima kabar saat surat terbit.
+// v1.2: prop awal = { templat: kode, santri: {id, nis}, prestasi: [teks] } membuka template itu dengan santri terpilih;
+//       isian "prestasi" (daftar) terisi dari prestasi santri yang tercatat bila masih kosong.
 import { ref, computed, watch } from 'vue'
 import { PhMagnifyingGlass, PhArrowLeft, PhEye, PhFloppyDisk, PhPencilSimpleLine, PhPlus, PhTrash, PhWarningCircle, PhInfo } from '@phosphor-icons/vue'
 import { usePersuratan } from '@/stores/persuratan'
@@ -19,7 +21,7 @@ import SuratResmi from '@/components/cetak/SuratResmi.vue'
 import IsianSurat from './IsianSurat.vue'
 
 const buka = defineModel({ type: Boolean, default: false })
-const props = defineProps({ surat: { type: Object, default: null } })
+const props = defineProps({ surat: { type: Object, default: null }, awal: { type: Object, default: null } })
 const emit = defineEmits(['selesai'])
 const ps = usePersuratan(); const lembaga = useLembaga(); const ui = useUI()
 const langkah = ref('pilih'); const cariT = ref(''); const t = ref(null); const f = ref({}); const nilai = ref({}); const slot = ref([])
@@ -40,7 +42,30 @@ watch(buka, async (v) => {
     slot.value = (s.penanda || []).map((p, i) => ({ sumber: p.signatory_id ? 'ttd' : 'pegawai', signatory_id: p.signatory_id || '', pegawai: p.signatory_id ? null : { id: p.employee_id, nama: p.nama, niy: p.niy },
       jabatan: p.jabatan, pengantar: p.pengantar || (t.value.penanda?.[i]?.pengantar || ''), an: p.an || '' }))
     langkah.value = 'isi'
-  } else { t.value = null; langkah.value = 'pilih'; cariT.value = '' }
+  } else {
+    t.value = null; langkah.value = 'pilih'; cariT.value = ''
+    const a = props.awal; const x = a?.templat ? ps.templat.find((y) => y.kode === a.templat && y.aktif) : null
+    if (a?.templat && !x) ui.toast('Template surat tersebut belum tersedia atau nonaktif.', 'galat')
+    if (x) {
+      pilihTemplat(x)
+      const kS = (x.isian || []).find((i) => i.jenis === 'santri')?.kunci
+      if (kS && a.santri?.nis) {
+        try {
+          const p = (await ps.cariSantri(a.santri.nis)).find((y) => y.id === a.santri.id)
+          if (p) nilai.value[kS] = { id: p.id, nama: p.nama, nis: p.nis, nisn: p.nisn, jk: p.jk, tempat_lahir: p.tempat_lahir, tanggal_lahir: p.tanggal_lahir, jenjang: p.jenjang,
+            tingkat: p.tingkat, kelas: p.kelas, wali: p.wali, alamat: p.alamat, ayah: p.ayah || '', ibu: p.ibu || '', hafalan: p.hafalan ?? null, tanggal_masuk: p.tanggal_masuk || null, prestasi: p.prestasi || [] }
+        } catch (e) { ui.toast(e.message, 'galat') }
+      }
+      if (a.prestasi?.length && (x.isian || []).some((i) => i.kunci === 'prestasi')) nilai.value.prestasi = [...a.prestasi]
+    }
+  }
+})
+// Isian "prestasi" terisi dari prestasi santri terpilih bila masih kosong
+const kunciSantri = computed(() => (t.value?.isian || []).find((i) => i.jenis === 'santri')?.kunci)
+watch(() => (kunciSantri.value ? nilai.value[kunciSantri.value]?.id : null), () => {
+  if (!(t.value?.isian || []).some((i) => i.kunci === 'prestasi' && i.jenis === 'daftar')) return
+  const sumber = nilai.value[kunciSantri.value]?.prestasi || []
+  if (sumber.length && !(nilai.value.prestasi || []).some((x) => String(x).trim())) nilai.value.prestasi = [...sumber]
 })
 const daftarT = computed(() => {
   const q = cariT.value.toLowerCase().trim()
