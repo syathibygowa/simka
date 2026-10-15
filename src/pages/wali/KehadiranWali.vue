@@ -1,9 +1,10 @@
-<!-- SIMKA PRO | src/pages/wali/KehadiranWali.vue | v1.0 | Fase 9 – Tahap 13.1.0 Kehadiran di Portal Wali | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/KehadiranWali.vue | v1.1 | Fase 9 – Tahap 13.4.0 Unduh PDF rekap kehadiran | 15/10/2026 -->
 <script setup>
 // Kehadiran anak: persentase program pokok (kelas + halaqah + asrama; Terlambat dan Bolos dihitung hadir),
 // rekap per kegiatan termasuk ekskul, jumlah HISBAT, dan catatan per tanggal. Periode bawaan bulan ini, paling panjang satu semester.
 import { computed, ref, watch } from 'vue'
-import { PhCalendarCheck } from '@phosphor-icons/vue'
+import { PhCalendarCheck, PhFilePdf } from '@phosphor-icons/vue'
+import CetakWali from './CetakWali.vue'
 import { usePortalWali } from '@/stores/portalWali'
 import { KODE, JENIS_ABSENSI, teksPersen } from '@/lib/absensi'
 import { formatHari } from '@/lib/tanggal'
@@ -12,7 +13,7 @@ import PilihPeriode from './PilihPeriode.vue'
 defineOptions({ inheritAttrs: false })
 const pw = usePortalWali()
 const periode = ref({}); const d = ref(null); const memuat = ref(false); const galat = ref('')
-const hanyaCatatan = ref(false)
+const hanyaCatatan = ref(false); const cetak = ref(false)
 
 async function muat() {
   if (!periode.value.mulai) return
@@ -45,7 +46,7 @@ const hari = computed(() => {
 
 <template>
   <div class="space-y-4">
-    <PilihPeriode v-model="periode" />
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-start"><PilihPeriode v-model="periode" class="min-w-0 flex-1" /><button v-if="d && !d.nonaktif" type="button" class="tombol-garis min-h-[40px] self-start px-3.5 text-sm" @click="cetak = true"><PhFilePdf :size="18" weight="duotone" /> Unduh PDF</button></div>
     <p v-if="galat" class="kartu p-4 text-sm font-semibold text-merah" role="alert">{{ galat }}</p>
     <div v-if="memuat && !d" class="kartu h-40 animate-pulse" aria-busy="true" />
 
@@ -106,6 +107,7 @@ const hari = computed(() => {
         </ul>
       </section>
     </template>
+    <CetakWali v-if="d && !d.nonaktif" :jenis="'kehadiran'" :data="d" v-model:pratinjau="cetak" />
   </div>
 </template>
 <style scoped>

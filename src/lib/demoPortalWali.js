@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoPortalWali.js | v1.3 | Fase 9 – Tahap 13.3.0 Pengumuman untuk wali | 15/10/2026
+// SIMKA PRO | src/lib/demoPortalWali.js | v1.4 | Fase 9 – Tahap 13.4.0 Dokumen santri | 15/10/2026
 // Data contoh Portal Wali untuk MODE DEMO (dibangun dari santri dan kelompok contoh). Semua nama fiktif.
 import { SANTRI_DEMO } from './demoSantri'
 import { dataKelompokDemo } from './demoKelompok'
@@ -122,6 +122,10 @@ export function dataDemo(nis, bagian, p = {}) {
     pembayaran: [{ tanggal: '2026-09-08', nomor: 'KW.0012/X/1448', jumlah: 500000, cara: 'transfer', riwayat: false }],
     rekening: [{ bank: 'BSI', nomor: '7123456789', atas_nama: 'PPS Imam Asy-Syathiby' }] }
   if (bagian === 'pengumuman') return { pengumuman: PENGUMUMAN_DEMO }
+  if (bagian === 'dokumen') return { dokumen: [
+    { sumber: 'surat', id: 'ds1', nama: 'Surat Keterangan Aktif Santri', nomor: 'D.012/KTR/IAS-SM/IV/1448', tanggal: '2026-10-08', perihal: 'Keterangan aktif santri', mode_ttd: 'elektronik', kode: '7KQ2-M9XA', unduh: true },
+    { sumber: 'tahfizh', id: 'dt1', nama: 'Surat Keterangan Ujian Kenaikan Juz', nomor: 'K.004/SKJ/IAS-TH/III/1448', tanggal: '2026-09-21', mode_ttd: 'basah', kode: null, unduh: false }] }
+  if (bagian === 'dokumen_buka') return { galat: 'Mode demo: pratinjau dokumen resmi tidak tersedia. Pada aplikasi tersambung, dokumen dibuka dari salinan resminya.' }
   if (bagian !== 'beranda') return { galat: 'Bagian ini belum tersedia pada mode demo.' }
   const kel = dataKelompok(s)
   const nama = (j) => kel.filter((g) => g.jenis === j).map((g) => g.nama).join(', ') || null

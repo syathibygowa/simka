@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/KelolaPortalWali.vue | v1.1 | Fase 9 – Menu Portal Wali tersendiri (#/portal-wali/:tab), tautan pengumuman wali | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/KelolaPortalWali.vue | v1.2 | Fase 9 – Tahap 13.4.0 Pilihan jenis dokumen santri di portal | 15/10/2026 -->
 <script setup>
 // Menu Portal Wali (superadmin; admin ber-izin Kelola santri). v1.1: menu tersendiri, tab di alamat #/portal-wali/:tab.
 // Tab: Ringkasan (kesiapan, tautan portal), Data belum lengkap, Sesi aktif (cabut), Percobaan gagal (buka kunci),
@@ -96,6 +96,10 @@ const f = ref(null)
 watch(() => kp.pengaturan, (p) => { if (p) f.value = JSON.parse(JSON.stringify(p)) }, { immediate: true })
 const bolehUbah = computed(() => !!kp.pengaturan?.boleh_ubah)
 const prosesSimpan = ref(false)
+function alihDok(j, kode) {
+  const d = (f.value.dokumen ||= { surat: [], tahfizh: [] }); const a = (d[j] ||= [])
+  const i = a.indexOf(kode); i >= 0 ? a.splice(i, 1) : a.push(kode)
+}
 async function simpan() {
   if (f.value.aktif && !kp.pengaturan.aktif && !(await ui.konfirmasi({
     judul: 'Buka Portal Wali', ya: 'Buka portal',
@@ -281,6 +285,22 @@ const berubah = computed(() => f.value && kp.pengaturan && JSON.stringify({ ...f
                 :class="['relative h-8 w-14 shrink-0 rounded-full transition', f.butir[b.k] ? 'bg-[#1E7D4F]' : 'bg-garis']"><span :class="['absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all', f.butir[b.k] ? 'left-7' : 'left-1']" /></button>
             </li>
           </ul>
+        </div>
+
+        <div class="kartu w-laporan p-4 sm:p-5">
+          <p class="font-bold">Dokumen santri yang dapat diunduh wali</p>
+          <p class="text-sm text-teks3">Hanya dokumen yang sudah sah dan bertanda tangan elektronik yang dapat diunduh; dokumen bertanda tangan basah hanya tercantum. Berlaku bila butir "Dokumen santri" menyala.</p>
+          <p class="mt-3 label-isian">Surat dari Persuratan</p>
+          <div class="grid gap-1.5 sm:grid-cols-2">
+            <label v-for="t in kp.pilihanDokumen?.surat || []" :key="t.kode" class="flex min-h-[40px] items-center gap-2.5 rounded-xl border border-garis px-3 text-sm">
+              <input type="checkbox" class="h-5 w-5 accent-[#C7332F]" :checked="f.dokumen?.surat?.includes(t.kode)" @change="alihDok('surat', t.kode)" />
+              <span class="min-w-0 flex-1">{{ t.nama }}</span><span v-if="t.kategori === 'santri'" class="lencana w-santri">Kesantrian</span></label>
+          </div>
+          <p class="mt-3 label-isian">Dokumen tahfizh</p>
+          <div class="grid gap-1.5 sm:grid-cols-2">
+            <label v-for="t in kp.pilihanDokumen?.tahfizh || []" :key="t.kode" class="flex min-h-[40px] items-center gap-2.5 rounded-xl border border-garis px-3 text-sm">
+              <input type="checkbox" class="h-5 w-5 accent-[#C7332F]" :checked="f.dokumen?.tahfizh?.includes(t.kode)" @change="alihDok('tahfizh', t.kode)" /> {{ t.nama }}</label>
+          </div>
         </div>
         <button v-if="bolehUbah" class="tombol-utama w-full sm:w-auto" :disabled="prosesSimpan || !berubah" @click="simpan">
           <PhFloppyDisk :size="20" weight="duotone" /> {{ prosesSimpan ? 'Menyimpan…' : 'Simpan pengaturan' }}</button>

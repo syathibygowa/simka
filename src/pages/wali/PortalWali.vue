@@ -1,11 +1,11 @@
-<!-- SIMKA PRO | src/pages/wali/PortalWali.vue | v1.3 | Fase 9 – Tahap 13.3.0 Pengumuman (Info) dengan lencana belum dibaca | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/PortalWali.vue | v1.4 | Fase 9 – Tahap 13.4.0 Dokumen santri | 15/10/2026 -->
 <script setup>
 // Kerangka Portal Wali (#/wali/:bagian). Terpisah dari tata letak pegawai.
 // HP: bilah aplikasi + navigasi bawah ala Android; desktop: kepala + bilah tab. Anak dapat lebih dari satu (pindah lewat chip anak).
 // Bagian yang tersedia mengikuti tahap pengembangan dan butir informasi yang dinyalakan superadmin.
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhHouseLine, PhUserCircle, PhCaretDown, PhArrowsClockwise, PhPlus, PhLockKey, PhCheckCircle, PhArrowLeft, PhCalendarCheck, PhDoorOpen, PhHandshake, PhPackage, PhFirstAidKit, PhBookOpenText, PhExam, PhChartBar, PhTrophy, PhWallet, PhMegaphone } from '@phosphor-icons/vue'
+import { PhHouseLine, PhUserCircle, PhCaretDown, PhArrowsClockwise, PhPlus, PhLockKey, PhCheckCircle, PhArrowLeft, PhCalendarCheck, PhDoorOpen, PhHandshake, PhPackage, PhFirstAidKit, PhBookOpenText, PhExam, PhChartBar, PhTrophy, PhWallet, PhMegaphone, PhFileText } from '@phosphor-icons/vue'
 import { usePortalWali } from '@/stores/portalWali'
 import { useUI } from '@/stores/ui'
 import { MODE_DEMO } from '@/lib/supabase'
@@ -26,6 +26,7 @@ import HafalanWali from './HafalanWali.vue'
 import NilaiWali from './NilaiWali.vue'
 import UjianWali from './UjianWali.vue'
 import PengumumanWali from './PengumumanWali.vue'
+import DokumenWali from './DokumenWali.vue'
 
 const props = defineProps({ bagian: { type: String, default: '' } })
 const router = useRouter(); const pw = usePortalWali(); const ui = useUI()
@@ -44,6 +45,7 @@ const SEMUA = [
   { k: 'kunjungan', n: 'Kunjungan', ikon: PhHandshake, w: 'security', komp: RiwayatWali, butir: 'kunjungan', ket: 'Kunjungan orang tua/wali' },
   { k: 'titipan', n: 'Titipan', ikon: PhPackage, w: 'tugas', komp: RiwayatWali, butir: 'titipan', ket: 'Titipan di pos Security' },
   { k: 'sakit', n: 'Riwayat sakit', ikon: PhFirstAidKit, w: 'klinik', komp: RiwayatWali, butir: 'sakit', ket: 'Ringkasan dari Klinik' },
+  { k: 'dokumen', n: 'Dokumen', ikon: PhFileText, w: 'laporan', komp: DokumenWali, butir: 'dokumen' },
   { k: 'keuangan', n: 'Keuangan', ikon: PhWallet, w: 'keuangan', komp: UjianWali, butir: 'keuangan' },
   { k: 'akun', n: 'Akun', ikon: PhUserCircle, w: 'profil', komp: AkunWali, bawah: true },
 ]

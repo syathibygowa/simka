@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/portalWali.js | v1.0 | Fase 9 – Tahap 13.0.0 Fondasi Portal Wali | 15/10/2026
+// SIMKA PRO | src/lib/portalWali.js | v1.2 | Fase 9 – Tahap 13.4.0 Jenis dokumen santri bawaan | 15/10/2026
 // Daftar butir informasi Portal Wali (dinyalakan/dimatikan superadmin), label hubungan, dan penyimpanan sesi di perangkat.
 // Server (portal_data) hanya mengirim butir yang dinyalakan; daftar ini untuk tampilan pengaturan dan menu portal.
 import {
@@ -40,6 +40,7 @@ export const PENGATURAN_BAWAAN = {
   aktif: false, identitas: 'nis_nisn', lama_sesi_hari: 30, maks_salah: 5, kunci_menit: 15,
   pesan_tutup: 'Portal Wali belum dibuka. Silakan hubungi pengasuh atau Tata Usaha pondok.',
   butir: Object.fromEntries(BUTIR_PORTAL.map((b) => [b.k, !b.sensitif])),
+  dokumen: { surat: ['keterangan_aktif_santri', 'kelakuan_baik', 'keterangan_lulus', 'keterangan_prestasi', 'rekomendasi_sekolah'], tahfizh: ['suket_juz', 'sertifikat_hafalan', 'sertifikat_tahfizh'] },
 }
 
 // ---------- Sesi di perangkat ----------

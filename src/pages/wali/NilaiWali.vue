@@ -1,17 +1,18 @@
-<!-- SIMKA PRO | src/pages/wali/NilaiWali.vue | v1.0 | Fase 9 – Tahap 13.2.0 Nilai rapor di Portal Wali | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/NilaiWali.vue | v1.1 | Fase 9 – Tahap 13.4.0 Unduh PDF ringkasan nilai semester | 15/10/2026 -->
 <script setup>
 // Nilai rapor anak per mapel untuk periode penilaian yang SUDAH DITUTUP (server tidak mengirim periode yang masih berjalan).
 // Menampilkan nilai, predikat, ketuntasan terhadap KKM/KKTP, deskripsi, kehadiran rapor (hari), pengembangan diri,
 // catatan wali kelas, dan keputusan akhir tahun (semester 2). Rapor resmi tetap dibagikan sekolah (bertanda tangan basah).
 import { computed, ref, watch } from 'vue'
-import { PhChartBar, PhChatCenteredText, PhCalendarCheck, PhTarget, PhSealCheck, PhInfo } from '@phosphor-icons/vue'
+import { PhChartBar, PhChatCenteredText, PhCalendarCheck, PhTarget, PhSealCheck, PhInfo, PhFilePdf } from '@phosphor-icons/vue'
+import CetakWali from './CetakWali.vue'
 import { usePortalWali } from '@/stores/portalWali'
 import { SEMESTER_RAPOR, KEPUTUSAN, teksKeputusan, persenHadir } from '@/lib/rapor'
 import { formatPanjang } from '@/lib/tanggal'
 
 defineOptions({ inheritAttrs: false })
 const pw = usePortalWali()
-const pilih = ref(''); const d = ref(null); const memuat = ref(false); const galat = ref('')
+const pilih = ref(''); const cetak = ref(false); const d = ref(null); const memuat = ref(false); const galat = ref('')
 async function muat() {
   memuat.value = true; galat.value = ''
   const [group, semester] = pilih.value ? pilih.value.split('|') : []
@@ -51,6 +52,7 @@ const hadir = computed(() => d.value?.kehadiran)
         </select>
       </div>
 
+      <div class="flex justify-end"><button type="button" class="tombol-garis min-h-[40px] px-3.5 text-sm" @click="cetak = true"><PhFilePdf :size="18" weight="duotone" /> Unduh PDF</button></div>
       <section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <div class="kartu w-penilaian p-3.5"><p class="text-xs text-teks3">Rata-rata nilai</p><p class="text-2xl font-extrabold tabular-nums">{{ rata == null ? '–' : rata.toLocaleString('id-ID', { maximumFractionDigits: 1 }) }}</p>
           <p class="text-xs text-teks3">{{ terisi.length }} dari {{ mapel.length }} mapel</p></div>
@@ -110,6 +112,7 @@ const hadir = computed(() => d.value?.kehadiran)
       </section>
       <p class="px-1 text-xs text-teks3">Rapor resmi bertanda tangan dibagikan langsung oleh wali kelas. Nilai di portal ini sama dengan nilai di rapor.</p>
     </template>
+    <CetakWali v-if="d?.mapel" jenis="nilai" :data="d" v-model:pratinjau="cetak" />
   </div>
 </template>
 <style scoped>

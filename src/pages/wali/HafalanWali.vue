@@ -1,9 +1,10 @@
-<!-- SIMKA PRO | src/pages/wali/HafalanWali.vue | v1.0 | Fase 9 – Tahap 13.2.0 Hafalan di Portal Wali | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/HafalanWali.vue | v1.1 | Fase 9 – Tahap 13.4.0 Unduh PDF laporan hafalan | 15/10/2026 -->
 <script setup>
 // Hafalan anak: total juz resmi (kisi juz 1–30), posisi sabaq/sabqi/manzil terakhir, capaian bulanan yang sudah disahkan,
 // dan riwayat setoran per periode. Sumber: data Tahfizh yang diisi muhaffizh dan disahkan validator.
 import { computed, ref, watch } from 'vue'
-import { PhBookOpenText, PhTarget, PhListChecks, PhNotePencil } from '@phosphor-icons/vue'
+import { PhBookOpenText, PhTarget, PhListChecks, PhNotePencil, PhFilePdf } from '@phosphor-icons/vue'
+import CetakWali from './CetakWali.vue'
 import { usePortalWali } from '@/stores/portalWali'
 import { PROGRAM, SUMBER_JUZ, STATUS_BULANAN, formatPosisi, labelBulan } from '@/lib/tahfizh'
 import { formatHari, formatPanjang } from '@/lib/tanggal'
@@ -12,7 +13,7 @@ import PilihPeriode from './PilihPeriode.vue'
 
 defineOptions({ inheritAttrs: false })
 const pw = usePortalWali()
-const periode = ref(periodeBulanIni()); const d = ref(null); const memuat = ref(false); const galat = ref('')
+const periode = ref(periodeBulanIni()); const cetak = ref(false); const d = ref(null); const memuat = ref(false); const galat = ref('')
 async function muat() {
   if (!periode.value.mulai) return
   memuat.value = true; galat.value = ''
@@ -39,6 +40,7 @@ const sumberJuz = computed(() => {
     <p v-if="d?.nonaktif" class="kartu p-6 text-center text-teks3">Informasi ini tidak ditampilkan oleh pondok.</p>
 
     <template v-if="d && !d.nonaktif">
+      <div class="flex justify-end"><button v-if="d && !d.nonaktif" type="button" class="tombol-garis min-h-[40px] px-3.5 text-sm" @click="cetak = true"><PhFilePdf :size="18" weight="duotone" /> Unduh PDF</button></div>
       <!-- Total juz resmi -->
       <section class="kartu w-tahfizh p-4 sm:p-5">
         <div class="flex items-center gap-3">
@@ -109,6 +111,7 @@ const sumberJuz = computed(() => {
         </ul>
       </section>
     </template>
+    <CetakWali v-if="d && !d.nonaktif" :jenis="'hafalan'" :data="d" v-model:pratinjau="cetak" />
   </div>
 </template>
 <style scoped>

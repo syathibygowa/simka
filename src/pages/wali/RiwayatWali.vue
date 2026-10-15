@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/wali/RiwayatWali.vue | v1.0 | Fase 9 – Tahap 13.1.0 Perizinan, kunjungan, titipan, riwayat sakit | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/RiwayatWali.vue | v1.1 | Fase 9 – Tahap 13.4.0 Unduh PDF perizinan, kunjungan, titipan, riwayat sakit | 15/10/2026 -->
 <script setup>
 // Satu halaman untuk empat bagian Portal Wali (prop bagian):
 //   perizinan : izin keluar/pulang yang disetujui + keluar/kembali di gerbang + libur santri yang disahkan
@@ -6,7 +6,8 @@
 //   titipan   : titipan untuk anak (diterima/diambil); yang masih di pos selalu tampil
 //   sakit     : riwayat Klinik ringkas tanpa diagnosis (hanya bila dinyalakan superadmin)
 import { computed, ref, watch } from 'vue'
-import { PhDoorOpen, PhHandshake, PhPackage, PhFirstAidKit, PhSignOut, PhSignIn, PhWarningCircle, PhCalendarStar, PhClock } from '@phosphor-icons/vue'
+import { PhDoorOpen, PhHandshake, PhPackage, PhFirstAidKit, PhSignOut, PhSignIn, PhWarningCircle, PhCalendarStar, PhClock, PhFilePdf } from '@phosphor-icons/vue'
+import CetakWali from './CetakWali.vue'
 import { usePortalWali } from '@/stores/portalWali'
 import { STATUS_IZIN, JENIS_IZIN, JENIS_PERIODE } from '@/lib/izin'
 import { JENIS_TITIPAN, STATUS_TITIPAN, PENGAMBIL, rupiah } from '@/lib/security'
@@ -18,7 +19,7 @@ import PilihPeriode from './PilihPeriode.vue'
 defineOptions({ inheritAttrs: false })
 const props = defineProps({ bagian: { type: String, required: true } })
 const pw = usePortalWali()
-const periode = ref({}); const d = ref(null); const memuat = ref(false); const galat = ref('')
+const periode = ref({}); const cetak = ref(false); const d = ref(null); const memuat = ref(false); const galat = ref('')
 
 const INFO = {
   perizinan: { n: 'Perizinan dan libur', ikon: PhDoorOpen, w: 'pengajuan', kosong: 'Tidak ada izin keluar atau libur pada periode ini.' },
@@ -45,7 +46,7 @@ const HUB = { ...HUBUNGAN_WALI, saudara: 'Saudara', kakek: 'Kakek', nenek: 'Nene
 
 <template>
   <div :class="['space-y-4', 'w-' + info.w]">
-    <PilihPeriode v-model="periode" />
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-start"><PilihPeriode v-model="periode" class="min-w-0 flex-1" /><button v-if="d && !d.nonaktif" type="button" class="tombol-garis min-h-[40px] self-start px-3.5 text-sm" @click="cetak = true"><PhFilePdf :size="18" weight="duotone" /> Unduh PDF</button></div>
     <p v-if="galat" class="kartu p-4 text-sm font-semibold text-merah" role="alert">{{ galat }}</p>
     <div v-if="memuat && !d" class="kartu h-32 animate-pulse" aria-busy="true" />
     <p v-if="d?.nonaktif" class="kartu p-6 text-center text-teks3">Informasi ini tidak ditampilkan oleh pondok.</p>
@@ -132,5 +133,6 @@ const HUB = { ...HUBUNGAN_WALI, saudara: 'Saudara', kakek: 'Kakek', nenek: 'Nene
         </div>
       </article>
     </template>
+    <CetakWali v-if="d && !d.nonaktif" :jenis="bagian" :data="d" v-model:pratinjau="cetak" />
   </div>
 </template>
