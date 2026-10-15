@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/LembarKartu.vue | v2.1 | Tahap C: juga untuk kartu pelajar santri (jenis="santri") | 16/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/LembarKartu.vue | v2.2 | Perbaikan: nama berkas PDF (nama - Kartu Pegawai/Pelajar) | 16/10/2026 -->
 <script setup>
 // Lembar cetak kartu pegawai TEGAK (54 × 85,6 mm) di kertas F4 (215 × 330 mm, margin 2 cm).
 // Mode bolak-balik: 9 kartu per halaman (3 kolom × 3 baris); halaman belakang dicerminkan per baris (balik tepi panjang).
@@ -6,6 +6,7 @@
 // v2.1: jenis="santri" mencetak kartu pelajar (foto berdasarkan student_id).
 import { computed, ref, watch, onBeforeUnmount } from 'vue'
 import { PhPrinter, PhX } from '@phosphor-icons/vue'
+import { namaBerkas, pasangJudul, lepasJudul, periodeBulan } from '@/lib/namaBerkas'
 import KartuPegawai from '@/components/KartuPegawai.vue'
 import KartuSantri from '@/components/KartuSantri.vue'
 
@@ -34,15 +35,17 @@ const halaman = computed(() => {
   }
   return out
 })
+let dipasang = false
+const namaPdf = computed(() => namaBerkas(props.kartu.length === 1 ? props.kartu[0].nama : `${props.kartu.length} ${santri.value ? 'santri' : 'pegawai'}`, santri.value ? 'Kartu Pelajar' : 'Kartu Pegawai', props.kartu.length === 1 ? '' : periodeBulan()))
 const skala = ref(1)
 const ukur = () => { skala.value = Math.min(1, (window.innerWidth - 32) / 812) }
 const cetak = () => window.print()
 const esc = (e) => e.key === 'Escape' && (pratinjau.value = false)
 watch(pratinjau, (v) => {
   document.body.style.overflow = v ? 'hidden' : ''
-  if (v) { ukur(); addEventListener('resize', ukur); addEventListener('keydown', esc) } else { removeEventListener('resize', ukur); removeEventListener('keydown', esc) }
+  if (v) { ukur(); addEventListener('resize', ukur); addEventListener('keydown', esc); pasangJudul(namaPdf.value); dipasang = true } else { removeEventListener('resize', ukur); removeEventListener('keydown', esc); if (dipasang) { lepasJudul(); dipasang = false } }
 }, { immediate: true })
-onBeforeUnmount(() => { document.body.style.overflow = ''; removeEventListener('resize', ukur); removeEventListener('keydown', esc) })
+onBeforeUnmount(() => { document.body.style.overflow = ''; removeEventListener('resize', ukur); removeEventListener('keydown', esc); if (dipasang) lepasJudul() })
 </script>
 <template>
   <Teleport to="body">

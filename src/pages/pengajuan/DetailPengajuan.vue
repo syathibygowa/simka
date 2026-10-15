@@ -1,5 +1,6 @@
-<!-- SIMKA PRO | src/pages/pengajuan/DetailPengajuan.vue | v1.2 | Fase 8 – Tahap 1 QR dan Cek Keabsahan | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengajuan/DetailPengajuan.vue | v1.3 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
 <script setup>
+import { namaBerkas } from '@/lib/namaBerkas'
 // Rincian satu pengajuan: data pemohon, alur persetujuan (tanda setiap jenjang), lampiran, keputusan
 // (setujui/tolak, superadmin dapat memutus atas nama), pembatalan, dan surat F4 berkop untuk diunduh/dicetak.
 import { ref, computed, watch } from 'vue'
@@ -137,7 +138,7 @@ async function lihatLampiran() {
 
       <button v-if="d.status === 'disetujui'" class="tombol-utama mt-4 w-full" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Unduh / cetak surat</button>
 
-      <DokumenCetak v-if="d.status === 'disetujui'" v-model:pratinjau="pratinjau" :kop="d.kop_kode" :judul="judulSurat" :nomor="d.nomor_surat" :pencetak="sesi.pengguna?.nama_lengkap">
+      <DokumenCetak v-if="d.status === 'disetujui'" v-model:pratinjau="pratinjau" :kop="d.kop_kode" :judul="judulSurat" :nomor="d.nomor_surat" :nama-berkas="namaBerkas(d.pemohon?.nama, judulSurat, d.nomor_surat)" :pencetak="sesi.pengguna?.nama_lengkap">
         <p>Yang bertanda tangan di bawah ini menerangkan bahwa pengajuan pegawai berikut telah disetujui:</p>
         <table class="data" style="margin: 6pt 0 8pt 12pt">
           <tbody>

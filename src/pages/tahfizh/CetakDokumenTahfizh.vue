@@ -1,5 +1,6 @@
-<!-- SIMKA PRO | src/pages/tahfizh/CetakDokumenTahfizh.vue | v1.1 | Perbaikan: logo sertifikat dari pengaturan terkini; bawaan satu logo (pondok) | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/CetakDokumenTahfizh.vue | v1.2 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
 <script setup>
+import { namaBerkas } from '@/lib/namaBerkas'
 // Cetak dokumen tahfizh F4 dari salinan beku (data) dokumen yang sudah terbit:
 //   suket_juz          Surat Keterangan Ujian Kenaikan Juz — berkop pondok; tanda tangan Kepala Bidang Tahfizh (kiri) dan Penguji (kanan)
 //   sertifikat_hafalan Sertifikat Hafalan (sertifikasi 5, 10, 15 … juz) — bingkai sertifikat; Kepala Bidang Tahfizh dan Penguji
@@ -54,7 +55,7 @@ const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kena
 </script>
 <template>
   <!-- ============ SURAT KETERANGAN UJIAN KENAIKAN JUZ ============ -->
-  <DokumenCetak v-if="dok.jenis === 'suket_juz'" kop="pondok" judul="Surat Keterangan Ujian Kenaikan Juz" :nomor="dok.nomor" v-model:pratinjau="pratinjau" tanpa-catatan>
+  <DokumenCetak v-if="dok.jenis === 'suket_juz'" kop="pondok" judul="Surat Keterangan Ujian Kenaikan Juz" :nomor="dok.nomor" :nama-berkas="namaBerkas(d.nama, judulPratinjau, dok.nomor)" v-model:pratinjau="pratinjau" tanpa-catatan>
     <p style="text-align: justify">Yang bertanda tangan di bawah ini, Penguji Ujian Kenaikan Juz dan Kepala Bidang Tahfizh Pondok Pesantren Tahfizhul Qur'an
       Imam Asy-Syathiby Wahdah Islamiyah Gowa, menerangkan bahwa:</p>
     <table class="data" style="margin: 6pt 0 8pt 10mm">
@@ -82,7 +83,7 @@ const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kena
   </DokumenCetak>
 
   <!-- ============ SERTIFIKAT (bingkai) ============ -->
-  <LembarRapor v-else v-model:pratinjau="pratinjau" :judul="judulPratinjau" :keterangan="dok.nomor">
+  <LembarRapor v-else v-model:pratinjau="pratinjau" :judul="judulPratinjau" :keterangan="dok.nomor" :nama-berkas="namaBerkas(d.nama, judulPratinjau, dok.nomor)">
     <HalRapor tanpa-kop>
       <div class="sertifikat">
         <div class="bingkai">

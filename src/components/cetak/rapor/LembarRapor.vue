@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/rapor/LembarRapor.vue | v1.0 | Fase 12 – Tahap 5 Cetak rapor | 13/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/rapor/LembarRapor.vue | v1.1 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
 <script setup>
 // Pratinjau dan cetak dokumen BERHALAMAN BANYAK (rapor per santri, sampul, leger). Isi berupa beberapa <HalRapor>;
 // setiap HalRapor dimulai pada halaman baru dan kepalanya (kop + identitas) berulang di setiap halaman lanjutan.
@@ -6,18 +6,21 @@
 import { ref, watch, onBeforeUnmount } from 'vue'
 import { PhPrinter, PhX } from '@phosphor-icons/vue'
 import { useLembaga } from '@/stores/lembaga'
+import { namaBerkas as susunNama, pasangJudul, lepasJudul } from '@/lib/namaBerkas'
 
 const lembaga = useLembaga(); lembaga.muat()
 const pratinjau = defineModel('pratinjau', { type: Boolean, default: false })
-const props = defineProps({ judul: String, keterangan: String, mendatar: Boolean })
+const props = defineProps({ judul: String, keterangan: String, mendatar: Boolean, namaBerkas: String })
+let dipasang = false
+const nama = () => props.namaBerkas || susunNama(props.judul, props.keterangan)
 const skala = ref(1)
 const ukur = () => { skala.value = Math.min(1, (window.innerWidth - 32) / (props.mendatar ? 1247 : 812)) }
 const esc = (e) => e.key === 'Escape' && (pratinjau.value = false)
 watch(pratinjau, (v) => {
   document.body.style.overflow = v ? 'hidden' : ''
-  if (v) { ukur(); addEventListener('resize', ukur); addEventListener('keydown', esc) } else { removeEventListener('resize', ukur); removeEventListener('keydown', esc) }
+  if (v) { ukur(); addEventListener('resize', ukur); addEventListener('keydown', esc); pasangJudul(nama()); dipasang = true } else { removeEventListener('resize', ukur); removeEventListener('keydown', esc); if (dipasang) { lepasJudul(); dipasang = false } }
 }, { immediate: true })
-onBeforeUnmount(() => { document.body.style.overflow = ''; removeEventListener('resize', ukur); removeEventListener('keydown', esc) })
+onBeforeUnmount(() => { document.body.style.overflow = ''; removeEventListener('resize', ukur); removeEventListener('keydown', esc); if (dipasang) lepasJudul() })
 const cetak = () => window.print()
 </script>
 <template>

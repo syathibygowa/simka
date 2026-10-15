@@ -1,5 +1,6 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabRaporTahfizh.vue | v1.1 | Fase 12 – Tahap 5 Cetak rapor tahfizh per halaqah | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabRaporTahfizh.vue | v1.2 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
 <script setup>
+import { namaBerkas } from '@/lib/namaBerkas'
 // Tahfizh → Rapor: catatan muhaffizh untuk rapor tahfizh per halaqah.
 // Catatan disusun otomatis per santri dari bank kalimat (Penilaian → Kalimat rapor → Catatan muhaffizh) dan data santri:
 // kehadiran halaqah, capaian target bulanan, penambahan hafalan, kelulusan ujian kenaikan juz, dan predikat UTAS; dapat disunting.
@@ -76,7 +77,7 @@ async function simpan(isi) { await rp.simpanCatatan(pilih.value, semester.value,
       <DaftarCatatanRapor :key="pilih + semester" :santri="santri" :boleh="B.boleh" :susun="susun" :simpan="simpan" label="Catatan muhaffizh" :kosong-bank="!bank.length" />
     </template>
     <p v-else class="kartu p-6 text-center text-sm text-teks3">Memuat bahan rapor…</p>
-    <LembarRapor v-model:pratinjau="pratinjau" :judul="`Rapor tahfizh · ${B?.halaqah?.nama || ''}`" :keterangan="LABEL_SEMESTER[semester]">
+    <LembarRapor v-model:pratinjau="pratinjau" :judul="`Rapor tahfizh · ${B?.halaqah?.nama || ''}`" :keterangan="LABEL_SEMESTER[semester]" :nama-berkas="namaBerkas(B?.halaqah?.nama, 'Rapor Tahfizh', LABEL_SEMESTER[semester])">
       <RaporTahfizh v-if="T" :D="T" :penanda="kepalaTz" />
     </LembarRapor>
   </div>

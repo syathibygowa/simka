@@ -1,5 +1,6 @@
-<!-- SIMKA PRO | src/pages/penilaian/CetakRaporKelas.vue | v1.1 | Tahap C: identitas santri memuat pas foto dari biodata | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/CetakRaporKelas.vue | v1.2 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
 <script setup>
+import { namaBerkas } from '@/lib/namaBerkas'
 // Panel cetak rapor satu kelas (Wali Kelas → Rapor → Cetak): pemeriksaan kelengkapan, pilihan santri, dan dokumen:
 //   sampul, identitas sekolah, identitas santri, rapor SMA/Wustha, rapor tahfizh, leger (cetak dan Excel),
 //   laporan ketercapaian, lembar remidi, tanda terima rapor. Semua dokumen F4 dengan kop sesuai jenis rapor.
@@ -81,6 +82,11 @@ async function cetak(d) {
   jenis.value = d.k; pratinjau.value = true
 }
 const foto = ref({})
+// Nama berkas: satu santri → "Nama santri - Rapor … - Semester"; selainnya "Kelas - Rapor … - Semester"
+const namaBerkasRapor = computed(() => {
+  const satu = pilih.value?.length === 1 ? props.D.santri.find((s) => s.id === pilih.value[0])?.nama : ''
+  return namaBerkas(satu || namaKelasRapor(props.D.kelas), judul.value, LABEL_SEMESTER[props.D.semester], props.D.ta?.nama)
+})
 function excel() {
   const D = props.D; const L = leger.value
   const kolom = [{ judul: 'No', kunci: 'no' }, { judul: 'NIS', kunci: 'nis' }, { judul: 'Nama', kunci: 'nama' }, { judul: 'JK', kunci: 'jk' },
@@ -137,7 +143,7 @@ function excel() {
       </div>
     </LembarBawah>
 
-    <LembarRapor v-model:pratinjau="pratinjau" :judul="`${judul} · ${namaKelasRapor(D.kelas)}`" :keterangan="LABEL_SEMESTER[D.semester]" :mendatar="jenis === 'leger'">
+    <LembarRapor v-model:pratinjau="pratinjau" :judul="`${judul} · ${namaKelasRapor(D.kelas)}`" :keterangan="LABEL_SEMESTER[D.semester]" :mendatar="jenis === 'leger'" :nama-berkas="namaBerkasRapor">
       <RaporSekolah v-if="jenis === 'rapor'" :D="D" :pilih="pilih" />
       <SampulRapor v-else-if="['sampul', 'sekolah', 'santri'].includes(jenis)" :D="D" :mode="jenis" :pilih="pilih" :foto="foto" />
       <LegerRapor v-else-if="['leger', 'ketercapaian'].includes(jenis)" :D="D" :mode="jenis" />

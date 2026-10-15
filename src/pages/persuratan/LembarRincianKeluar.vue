@@ -1,5 +1,6 @@
-<!-- SIMKA PRO | src/pages/persuratan/LembarRincianKeluar.vue | v1.3 | Perbaikan: hapus surat salah catat dan rapikan nomor | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/LembarRincianKeluar.vue | v1.4 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
 <script setup>
+import { namaBerkas, periodeBulan, subjekSurat } from '@/lib/namaBerkas'
 // Rincian surat keluar: status, nomor, penanda tangan, dan tindakan sesuai peran:
 //   penyusun (Kepala Bidang) : Ubah, Kirim ke Tata Usaha, Batalkan
 //   Tata Usaha               : Ubah, Ajukan tanda tangan (elektronik/basah), Batalkan, Unggah arsip pindaian, Revisi (surat terbit)
@@ -172,7 +173,7 @@ async function lihatArsip() {
       </div>
       <p v-if="s.status === 'terbit' && s.mode_ttd === 'basah' && !s.berkas_arsip_id" class="flex items-start gap-2 text-xs text-teks3"><PhInfo :size="15" class="mt-0.5 shrink-0" />
         Setelah dicetak dan ditandatangani, unggah pindaiannya sebagai arsip.</p>
-      <DokumenCetak :kop="suratCetak.kop_kode || s.kop_kode" :judul="`${s.jenis_nama}${s.nomor ? ' ' + s.nomor : ''}`" v-model:pratinjau="cetak" sembunyikan-judul tanpa-catatan>
+      <DokumenCetak :kop="suratCetak.kop_kode || s.kop_kode" :judul="`${s.jenis_nama}${s.nomor ? ' ' + s.nomor : ''}`" :nama-berkas="namaBerkas(subjekSurat(s), s.jenis_nama, s.nomor || 'draf', periodeBulan(s.tanggal_surat))" v-model:pratinjau="cetak" sembunyikan-judul tanpa-catatan>
         <SuratResmi :surat="suratCetak" :lembaga="lembagaCetak" :ttd="s.dokumen?.penanda || []" :kode="s.dokumen?.kode || ''"
           :status-dokumen="s.dokumen?.status || ''" :mode="sah ? 'final' : 'pratinjau'" />
       </DokumenCetak>

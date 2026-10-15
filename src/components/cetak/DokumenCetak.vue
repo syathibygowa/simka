@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/DokumenCetak.vue | v1.6 | Perbaikan: catatan "Dicetak melalui SIMKA PRO" di kaki halaman, dapat dinonaktifkan | 14/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/DokumenCetak.vue | v1.7 | Perbaikan: nama berkas PDF sesuai dokumen (nama/bidang - dokumen - periode) | 16/10/2026 -->
 <script setup>
 // Kerangka dokumen cetak F4: kop surat, judul, isi (slot), tanda tangan, catatan cetak.
 // Pratinjau tampil sebagai jendela munculan (pop-up) dengan tombol Cetak dan Tutup.
@@ -8,6 +8,7 @@ import { PhPrinter, PhX } from '@phosphor-icons/vue'
 import { formatPanjang, formatJam, sekarang } from '@/lib/tanggal'
 import { useLembaga } from '@/stores/lembaga'
 import KopSurat from './KopSurat.vue'
+import { namaDariJudul, pasangJudul, lepasJudul } from '@/lib/namaBerkas'
 
 const lembaga = useLembaga()
 lembaga.muat()
@@ -18,7 +19,15 @@ const props = defineProps({
   mendatar: Boolean,                        // kertas F4 mendatar (330 × 215 mm) untuk tabel lebar
   sembunyikanJudul: Boolean,                // surat resmi: judul disusun sendiri (judul tetap tampil di bilah pratinjau)
   tanpaCatatan: Boolean,                    // surat resmi: tanpa baris "Dicetak melalui SIMKA PRO…"
+  namaBerkas: String,                       // nama berkas PDF: "Nama pegawai/santri/bidang - Dokumen - Periode"; bawaan dari judul, subjudul, nomor
 })
+// Nama berkas bawaan: <bidang/kelompok dari subjudul> - Judul - Nomor - <periode bulan dari tanggal di subjudul, atau bulan cetak>
+const nama = computed(() => props.namaBerkas || namaDariJudul(props.judul, props.subjudul, props.nomor))
+// Cetak langsung tanpa pratinjau: pasang nama bila tidak ada dokumen lain yang sedang dipratinjau
+let dipasang = false
+const sebelumCetak = () => { if (pratinjau.value || !document.querySelector('.cetak-saja.tampil')) pasangJudul(nama.value) }
+const sesudahCetak = () => { if (!pratinjau.value) lepasJudul() }
+addEventListener('beforeprint', sebelumCetak); addEventListener('afterprint', sesudahCetak)
 const dicetak = computed(() => {
   const s = sekarang()
   const t = `Dicetak melalui SIMKA PRO pada ${formatPanjang(s)} pukul ${formatJam(s)} WITA${props.pencetak ? ' oleh ' + props.pencetak : ''}`
@@ -31,9 +40,10 @@ const ukur = () => { skala.value = Math.min(1, (window.innerWidth - 32) / (props
 const esc = (e) => e.key === 'Escape' && (pratinjau.value = false)
 watch(pratinjau, (v) => {
   document.body.style.overflow = v ? 'hidden' : ''
-  if (v) { ukur(); addEventListener('resize', ukur); addEventListener('keydown', esc) } else { removeEventListener('resize', ukur); removeEventListener('keydown', esc) }
+  if (v) { ukur(); addEventListener('resize', ukur); addEventListener('keydown', esc); pasangJudul(nama.value); dipasang = true } else { removeEventListener('resize', ukur); removeEventListener('keydown', esc); if (dipasang) { lepasJudul(); dipasang = false } }
 }, { immediate: true })
-onBeforeUnmount(() => { document.body.style.overflow = ''; removeEventListener('resize', ukur); removeEventListener('keydown', esc) })
+watch(nama, (n) => { if (pratinjau.value) pasangJudul(n) })
+onBeforeUnmount(() => { document.body.style.overflow = ''; removeEventListener('resize', ukur); removeEventListener('keydown', esc); removeEventListener('beforeprint', sebelumCetak); removeEventListener('afterprint', sesudahCetak); if (dipasang) lepasJudul() })
 const cetak = () => window.print()
 </script>
 <template>

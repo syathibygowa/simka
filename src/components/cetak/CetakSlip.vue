@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/CetakSlip.vue | v1.1 | Perbaikan: catatan cetak dapat dinonaktifkan di Pengaturan | 14/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/CetakSlip.vue | v1.2 | Perbaikan: nama berkas PDF (nama pegawai - Slip Gaji - periode) | 16/10/2026 -->
 <script setup>
 // Slip gaji F4 tegak: kop, judul SLIP GAJI, periode dan nomor; identitas (NIY, nama, jabatan, unit, status, masa kerja,
 // pendidikan, rekening); pendapatan dan potongan dengan subtotal; jumlah diterima beserta terbilang; tanda tangan
@@ -13,6 +13,7 @@ import { namaPeriode, rupiah, terbilang } from '@/lib/gaji'
 import { PENDIDIKAN, STATUS_PEGAWAI } from '@/lib/kepegawaian'
 import { svgQR, alamatCek } from '@/lib/dokumen'
 import KopSurat from './KopSurat.vue'
+import { namaBerkas, pasangJudul, lepasJudul, periodeBulan } from '@/lib/namaBerkas'
 
 const lembaga = useLembaga(); lembaga.muat()
 const pratinjau = defineModel('pratinjau', { type: Boolean, default: false })
@@ -22,14 +23,16 @@ const props = defineProps({
   pencetak: String,
 })
 const judul = computed(() => (props.slip.length === 1 ? `Slip Gaji ${props.slip[0].data?.nama || ''}` : `Slip Gaji (${props.slip.length} pegawai)`))
+let dipasang = false
+const namaPdf = computed(() => props.slip.length === 1 ? namaBerkas(props.slip[0].data?.nama, 'Slip Gaji', namaPeriode(props.slip[0].periode)) : namaBerkas('Slip Gaji', namaPeriode(props.slip[0]?.periode), `${props.slip.length} pegawai`))
 const skala = ref(1)
 const ukur = () => { skala.value = Math.min(1, (window.innerWidth - 32) / 812) }
 const esc = (e) => e.key === 'Escape' && (pratinjau.value = false)
 watch(pratinjau, (v) => {
   document.body.style.overflow = v ? 'hidden' : ''
-  if (v) { ukur(); addEventListener('resize', ukur); addEventListener('keydown', esc) } else { removeEventListener('resize', ukur); removeEventListener('keydown', esc) }
+  if (v) { ukur(); addEventListener('resize', ukur); addEventListener('keydown', esc); pasangJudul(namaPdf.value); dipasang = true } else { removeEventListener('resize', ukur); removeEventListener('keydown', esc); if (dipasang) { lepasJudul(); dipasang = false } }
 }, { immediate: true })
-onBeforeUnmount(() => { document.body.style.overflow = ''; removeEventListener('resize', ukur); removeEventListener('keydown', esc) })
+onBeforeUnmount(() => { document.body.style.overflow = ''; removeEventListener('resize', ukur); removeEventListener('keydown', esc); if (dipasang) lepasJudul() })
 const cetak = () => window.print()
 
 const pend = (s) => (s.item || []).filter((i) => i.jenis === 'pendapatan' && Number(i.besaran) !== 0)

@@ -1,5 +1,6 @@
-<!-- SIMKA PRO | src/pages/persuratan/LembarSusunSurat.vue | v1.2 | Tahap C: dibuka langsung dengan template dan santri (dari biodata/prestasi); prestasi santri terisi otomatis | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/LembarSusunSurat.vue | v1.3 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
 <script setup>
+import { namaBerkas, periodeBulan, subjekSurat } from '@/lib/namaBerkas'
 // Susun surat keluar dari template: pilih template → isi data surat (tanggal, kop, D/K, perihal, tujuan, lampiran), isian
 // template (teks, tanggal, pegawai, santri, daftar), penanda tangan (dari Setelan → Penanda tangan atau pegawai lain; a.n.),
 // tembusan dan narahubung. Naskah surat ini boleh disunting tanpa mengubah templatenya. Pratinjau F4 berkop kapan saja.
@@ -203,7 +204,7 @@ async function simpan() {
       <p v-if="kosong.length" class="flex items-start gap-2 rounded-xl bg-[#FFF1B8] px-3 py-2 text-xs text-[#7A4E00]"><PhWarningCircle :size="16" class="mt-0.5 shrink-0" />
         Isian wajib belum lengkap: {{ kosong.join(', ') }}. Draf tetap dapat disimpan, tetapi harus lengkap sebelum diajukan.</p>
       <button class="tombol-utama w-full" :disabled="proses" @click="simpan"><PhFloppyDisk :size="20" weight="duotone" /> {{ proses ? 'Menyimpan…' : 'Simpan draf' }}</button>
-      <DokumenCetak :kop="f.kop_kode" :judul="`${t.nama} (pratinjau)`" v-model:pratinjau="pratinjau" sembunyikan-judul tanpa-catatan>
+      <DokumenCetak :kop="f.kop_kode" :judul="`${t.nama} (pratinjau)`" :nama-berkas="namaBerkas(subjekSurat({ nilai, kepada: f.kepada }), t.nama, 'draf', periodeBulan(f.tanggal_surat))" v-model:pratinjau="pratinjau" sembunyikan-judul tanpa-catatan>
         <SuratResmi :surat="suratPratinjau" :lembaga="ps.konteks || {}" />
       </DokumenCetak>
     </div>

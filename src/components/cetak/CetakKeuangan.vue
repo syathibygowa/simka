@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/CetakKeuangan.vue | v1.1 | Perbaikan: catatan cetak dapat dinonaktifkan di Pengaturan | 14/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/CetakKeuangan.vue | v1.2 | Perbaikan: nama berkas PDF (nama santri - Kuitansi/Surat Tagihan - bulan) | 16/10/2026 -->
 <script setup>
 // Dokumen keuangan santri, kertas F4 tegak, satu dokumen per halaman (dapat banyak sekaligus):
 //   • KUITANSI      : kop, nomor; telah terima dari, untuk santri, tanggal, cara bayar; rincian per tagihan (tagihan,
@@ -14,6 +14,7 @@ import { formatPanjang, formatPendek, formatJam, sekarang } from '@/lib/tanggal'
 import { rupiah, terbilang, CARA_BAYAR, JENJANG } from '@/lib/keuangan'
 import { svgQR, alamatCek } from '@/lib/dokumen'
 import KopSurat from './KopSurat.vue'
+import { namaBerkas, pasangJudul, lepasJudul, periodeBulan } from '@/lib/namaBerkas'
 
 const lembaga = useLembaga(); lembaga.muat()
 const pratinjau = defineModel('pratinjau', { type: Boolean, default: false })
@@ -25,14 +26,16 @@ const props = defineProps({
 })
 const kuitansi = computed(() => props.jenis === 'kuitansi')
 const judul = computed(() => (kuitansi.value ? 'Kuitansi' : 'Surat Tagihan') + (props.dok.length === 1 ? ` ${props.dok[0].santri?.nama || ''}` : ` (${props.dok.length} santri)`))
+let dipasang = false
+const namaPdf = computed(() => namaBerkas(props.dok.length === 1 ? props.dok[0].santri?.nama : `${props.dok.length} santri`, kuitansi.value ? 'Kuitansi' : 'Surat Tagihan', props.dok.length === 1 ? props.dok[0].nomor : '', periodeBulan(props.dok[0]?.tanggal)))
 const skala = ref(1)
 const ukur = () => { skala.value = Math.min(1, (window.innerWidth - 32) / 812) }
 const esc = (e) => e.key === 'Escape' && (pratinjau.value = false)
 watch(pratinjau, (v) => {
   document.body.style.overflow = v ? 'hidden' : ''
-  if (v) { ukur(); addEventListener('resize', ukur); addEventListener('keydown', esc) } else { removeEventListener('resize', ukur); removeEventListener('keydown', esc) }
+  if (v) { ukur(); addEventListener('resize', ukur); addEventListener('keydown', esc); pasangJudul(namaPdf.value); dipasang = true } else { removeEventListener('resize', ukur); removeEventListener('keydown', esc); if (dipasang) { lepasJudul(); dipasang = false } }
 }, { immediate: true })
-onBeforeUnmount(() => { document.body.style.overflow = ''; removeEventListener('resize', ukur); removeEventListener('keydown', esc) })
+onBeforeUnmount(() => { document.body.style.overflow = ''; removeEventListener('resize', ukur); removeEventListener('keydown', esc); if (dipasang) lepasJudul() })
 const cetak = () => window.print()
 
 const angka = (n) => Math.round(Number(n) || 0).toLocaleString('id-ID')

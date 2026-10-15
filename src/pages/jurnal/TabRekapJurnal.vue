@@ -1,5 +1,6 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabRekapJurnal.vue | v1.2 | Laporan tabel ceklist harian (butir template × tanggal, centang bila dikerjakan) | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabRekapJurnal.vue | v1.3 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
 <script setup>
+import { namaBerkas, periodeRentang } from '@/lib/namaBerkas'
 // Rekap jurnal per periode: persentase pengisian (hari terisi ÷ hari wajib), butir ceklist, dan kegiatan per status.
 // Pegawai melihat dirinya sendiri; pimpinan melihat anggota unitnya; admin ber-izin verval_jurnal melihat semua.
 // Laporan individu (per hari) dan rekap kolektif dapat dicetak F4 dan diekspor ke Excel.
@@ -141,7 +142,7 @@ const namaUnit = computed(() => (unit.value ? org.cariUnit(unit.value)?.nama : '
       </template>
     </DokumenCetak>
 
-    <DokumenCetak v-if="individu" v-model:pratinjau="pratinjauInd" judul="Laporan Jurnal Harian Pegawai" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak v-if="individu" v-model:pratinjau="pratinjauInd" judul="Laporan Jurnal Harian Pegawai" :nama-berkas="namaBerkas(individu.r.nama, 'Laporan Jurnal Harian', periodeRentang(mulai, akhir))" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="data" style="margin-bottom: 8pt">
         <tbody>
           <tr><td style="width: 32mm">Nama</td><td style="width: 4mm">:</td><td>{{ individu.r.nama }}</td></tr>
@@ -168,7 +169,7 @@ const namaUnit = computed(() => (unit.value ? org.cariUnit(unit.value)?.nama : '
     </DokumenCetak>
 
     <!-- Tabel ceklist bulanan (F4 mendatar) -->
-    <DokumenCetak v-if="matriks" v-model:pratinjau="pratinjauM" mendatar judul="Tabel Ceklist Jurnal Harian Pegawai" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak v-if="matriks" v-model:pratinjau="pratinjauM" mendatar judul="Tabel Ceklist Jurnal Harian Pegawai" :nama-berkas="namaBerkas(matriks.r.nama, 'Tabel Ceklist Jurnal Harian', periodeRentang(mulai, akhir))" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="data" style="margin-bottom: 6pt">
         <tbody>
           <tr><td style="width: 30mm">Nama</td><td style="width: 4mm">:</td><td>{{ matriks.r.nama }}</td><td style="width: 30mm">Bidang/Unit</td><td style="width: 4mm">:</td><td>{{ matriks.r.unit || '–' }}</td></tr>
