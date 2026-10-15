@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menuCepat.js | v1.6 | Perbaikan: Wali Kelas dan Guru Mapel di menu cepat; tombol tupoksi tidak terpotong | 14/10/2026
+// SIMKA PRO | src/lib/menuCepat.js | v1.7 | Perbaikan: tombol Beban Kerja hanya bila ditampilkan untuk pegawai | 16/10/2026
 // Menu cepat beranda pegawai fungsional: tombol langsung ke menu kerja sesuai tupoksi masing-masing
 // (musyrif → Musyrif, muhaffizh → Setoran Tahfizh, wali kelas → Absensi Kelas, medis → Klinik, security → Gerbang, dst.).
 // Tupoksi didahulukan, lalu dilengkapi menu umum sampai 8 tombol (2 baris × 4 kolom).
@@ -43,8 +43,8 @@ export function menuCepat(t = {}, c = {}) {
     { kode: 'jurnal', label: 'Jurnal Harian', ket: 'Ceklist tugas', ikon: PhNotebook, warna: 'tatausaha', ke: '/jurnal' },
     { kode: 'agenda', label: 'Agenda', ket: 'Kegiatan pondok', ikon: PhCalendarCheck, warna: 'agenda', ke: '/agenda' },
     { kode: 'berkas', label: 'Berkas Saya', ket: 'SK, formulir', ikon: PhFolderOpen, warna: 'berkas', ke: '/berkas' },
-    { kode: 'beban', label: 'Beban Kerja', ket: 'Jam per pekan', ikon: PhClockCountdown, warna: 'gaji', ke: '/beban-kerja' },
-  ]
+    c.beban?.saya && { kode: 'beban', label: 'Beban Kerja', ket: 'Jam per pekan', ikon: PhClockCountdown, warna: 'gaji', ke: '/beban-kerja' },
+  ].filter(Boolean)
   // Tombol tupoksi tidak pernah dipotong; menu umum melengkapi sampai kelipatan 4 (sedikitnya 8 tombol)
   const target = Math.max(8, Math.ceil(d.length / 4) * 4)
   for (const u of umum) { if (d.length >= target) break; tambah(u) }

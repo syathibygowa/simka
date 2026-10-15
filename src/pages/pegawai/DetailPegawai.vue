@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/DetailPegawai.vue | v1.3 | Profil lengkap pegawai (tanpa membuka Ubah data), foto, dan cetak CV/Daftar Riwayat Hidup | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/DetailPegawai.vue | v1.4 | Perbaikan: foto pegawai yang sudah diunggah tampil di profil dan CV | 16/10/2026 -->
 <script setup>
 // Biodata pegawai: kepala profil (foto, nama, NIY, status akun), ringkasan jabatan, profil lengkap per bagian
 // (pribadi, kepegawaian, jabatan dan tugas, kontak dan akun), riwayat kepegawaian. Cetak: Biodata (tabel) dan
@@ -17,8 +17,6 @@ import { JENIS_KELOMPOK, judulKelompok, PERAN_PENGASUH } from '@/lib/santri'
 import { usePegawai } from '@/stores/pegawai'
 import { formatPanjang, formatPendek } from '@/lib/tanggal'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
-import { alamatBerkas } from '@/lib/penyimpanan'
-import { MODE_DEMO } from '@/lib/supabase'
 import { useSesi } from '@/stores/sesi'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -32,7 +30,8 @@ onMounted(async () => {
   pimpinan.value = await ambilPenandaTangan('Direktur')
 })
 const p = computed(() => peg.cari(route.params.id))
-watch(() => p.value?.foto_id, async (id) => { foto.value = ''; if (id && !MODE_DEMO) { try { foto.value = (await alamatBerkas(id)) || '' } catch { foto.value = '' } } }, { immediate: true })
+// Foto dibaca ulang dari data pegawai (foto yang baru diunggah lewat Profil/Kartu langsung tampil); cadangan lewat fungsi berkas
+watch(() => [route.params.id, p.value?.foto_id], async ([id]) => { if (!id) return; try { foto.value = (await peg.foto(id)) || '' } catch { foto.value = '' } }, { immediate: true })
 const riwayat = computed(() => peg.riwayat[route.params.id] || [])
 const JENIS_RIWAYAT = { status_kepegawaian: 'Status kepegawaian', status_keaktifan: 'Status keaktifan', pendidikan: 'Pendidikan', level_muhaffizh: 'Level muhaffizh',
   kategori_honorer: 'Kategori honorer', tmt: 'TMT tugas', unit: 'Bidang/unit', jabatan_fungsional: 'Jabatan fungsional', jabatan_struktural: 'Jabatan struktural' }

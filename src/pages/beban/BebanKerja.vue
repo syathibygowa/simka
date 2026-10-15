@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beban/BebanKerja.vue | v1.2 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/beban/BebanKerja.vue | v1.3 | Perbaikan: beban kerja tampil/tersembunyi di akun setiap pegawai (data sensitif) | 16/10/2026 -->
 <script setup>
 // Ekuivalensi jam beban kerja per pekan.
 //   Beban saya   : rincian jam pegawai yang masuk, total, jam wajib, kelebihan/kekurangan.
@@ -6,6 +6,8 @@
 //                  kolom Jabatan Struktural, Guru Mapel, Takhassus, Guru Tahfizh, Guru Walas, Musyrif, Fungsional Lainnya,
 //                  Tugas Tambahan Lainnya; Excel, cetak F4 mendatar, kunci rekap bulanan (dasar gaji Fase 11).
 //   Komponen jam : admin ber-izin atur_beban_kerja mengubah jam per tupoksi, menambah tugas tambahan, dan jam wajib per status.
+// v1.3: tab Beban saya hanya bila beban kerja ditampilkan di akun pegawai tersebut; pengatur beban kerja mengatur tampil/sembunyi
+//       per pegawai atau sekaligus semua di tab Rekap (bawaan tersembunyi).
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
@@ -22,26 +24,39 @@ import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
 const props = defineProps({ tab: String })
 const router = useRouter(); const bk = useBebanKerja(); const org = useOrganisasi(); const lembaga = useLembaga(); const sesi = useSesi(); const ui = useUI()
-const bolehRekap = computed(() => sesi.isAdmin || !!sesi.pengguna?.jabatan_struktural)
+const bolehRekap = computed(() => sesi.isAdmin || sesi.beban.rekap)
 const TAB = computed(() => [
-  { k: 'saya', n: 'Beban saya', i: PhHourglassMedium, w: 'gaji' },
+  sesi.beban.saya && { k: 'saya', n: 'Beban saya', i: PhHourglassMedium, w: 'gaji' },
   bolehRekap.value && { k: 'rekap', n: 'Rekap pegawai', i: PhTable, w: 'rekap' },
   bk.bolehAtur && { k: 'komponen', n: 'Komponen jam', i: PhSlidersHorizontal, w: 'pengaturan' },
 ].filter(Boolean))
-const aktif = computed(() => TAB.value.find((t) => t.k === props.tab) || TAB.value[0])
+const aktif = computed(() => TAB.value.find((t) => t.k === props.tab) || TAB.value[0] || { k: 'tertutup' })
 const jam = (v) => (v == null ? '–' : String(Number(v)).replace('.', ','))
 const STATUS = { tetap: 'Tetap', kontrak: 'Kontrak', honorer: 'Honorer' }
 const SINGKAT = { 'Jabatan Struktural': 'Struk-tural', 'Guru Mapel': 'Mapel', 'Guru Tahfizh': 'Tahfizh', 'Guru Walas': 'Walas', 'Fungsional Lainnya': 'Fungsi lain', 'Tugas Tambahan Lainnya': 'Tugas tambahan' }
 const warnaSelisih = (s) => (s == null ? 'hakakses' : s < 0 ? 'beranda' : s > 0 ? 'pegawai' : 'presensi')
 const teksSelisih = (s) => (s == null ? 'Tidak terikat' : s === 0 ? 'Pas' : s > 0 ? `Lebih ${jam(s)} jam` : `Kurang ${jam(-s)} jam`)
 
-onMounted(async () => { await Promise.all([bk.muatKomponen(), org.muat(), lembaga.muat()]); muat() })
+onMounted(async () => { await Promise.all([bk.muatKomponen(), org.muat(), lembaga.muat(), bolehTampil.value ? bk.muatTampil().catch(() => {}) : null]); muat() })
 watch(aktif, () => muat())
+
+// ---------- Tampil di akun pegawai ----------
+const bolehTampil = computed(() => bk.bolehAtur || sesi.isSuperadmin)
+const terlihat = (id) => !!bk.tampil?.[id]
+const jumlahTerlihat = computed(() => tampil.value.filter((r) => terlihat(r.employee_id)).length)
+async function balikTampil(r) {
+  try { await bk.aturTampil([r.employee_id], !terlihat(r.employee_id)); ui.toast(`Beban kerja ${r.nama} ${terlihat(r.employee_id) ? 'ditampilkan di akunnya' : 'disembunyikan dari akunnya'}.`) } catch (e) { ui.toast(e.message, 'galat') }
+}
+async function aturSemua(v) {
+  const ids = tampil.value.map((r) => r.employee_id)
+  if (!(await ui.konfirmasi({ judul: v ? 'Tampilkan di akun pegawai?' : 'Sembunyikan dari akun pegawai?', pesan: `${ids.length} pegawai yang tampil pada daftar ${v ? 'dapat melihat' : 'tidak lagi dapat melihat'} ekuivalensi jam beban kerjanya sendiri.`, ya: v ? 'Tampilkan' : 'Sembunyikan' }))) return
+  try { const n = await bk.aturTampil(ids, v); ui.toast(`${n} pegawai diperbarui.`) } catch (e) { ui.toast(e.message, 'galat') }
+}
 
 // ---------- Beban saya / rekap ----------
 const data = ref([]); const memuat = ref(false); const unit = ref(''); const status = ref(''); const cari = ref('')
 async function muat() {
-  if (aktif.value.k === 'komponen') return
+  if (aktif.value.k === 'komponen' || aktif.value.k === 'tertutup') return
   memuat.value = true
   try { data.value = await bk.rekap(null) } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false }
 }
@@ -111,8 +126,9 @@ const KELOMPOK = { struktural: 'Jabatan struktural', fungsional: 'Jabatan fungsi
           <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="t.i" :size="20" weight="duotone" /></span><span class="whitespace-nowrap">{{ t.n }}</span></button>
       </nav>
 
+      <p v-if="aktif.k === 'tertutup'" class="kartu p-6 text-center text-sm text-teks2">Ekuivalensi jam beban kerja belum ditampilkan untuk akun Anda. Hubungi admin kepegawaian bila diperlukan.</p>
       <!-- ===== Beban saya ===== -->
-      <template v-if="aktif.k === 'saya'">
+      <template v-else-if="aktif.k === 'saya'">
         <p v-if="memuat" class="py-8 text-center text-teks3">Menghitung…</p>
         <div v-else-if="saya" class="mx-auto max-w-2xl space-y-4">
           <section :class="['kartu p-5', 'w-' + warnaSelisih(saya.selisih)]" style="background: color-mix(in srgb, var(--c) 9%, rgb(var(--permukaan)))">
@@ -155,12 +171,18 @@ const KELOMPOK = { struktural: 'Jabatan struktural', fungsional: 'Jabatan fungsi
           <button class="tombol-garis min-h-[40px] text-sm" @click="ekspor"><PhFileXls :size="18" weight="duotone" /> Excel</button>
           <button v-if="bk.bolehAtur" class="tombol-utama min-h-[40px] text-sm" @click="kunci"><PhLockKey :size="18" weight="duotone" /> Kunci rekap bulan ini</button>
         </div>
+        <div v-if="bolehTampil" class="kartu w-gaji mb-3 flex flex-wrap items-center gap-2 p-3">
+          <span class="chip-ikon h-9 w-9 shrink-0"><PhEye :size="20" weight="duotone" /></span>
+          <p class="min-w-[200px] flex-1 text-sm"><b>Tampil di akun pegawai:</b> {{ jumlahTerlihat }} dari {{ tampil.length }} pegawai. Pegawai lain tidak melihat menu Beban Kerja.</p>
+          <button class="tombol-garis min-h-[38px] px-3 text-sm" @click="aturSemua(true)">Tampilkan semua</button>
+          <button class="tombol-garis min-h-[38px] px-3 text-sm" @click="aturSemua(false)">Sembunyikan semua</button>
+        </div>
         <p v-if="memuat" class="py-8 text-center text-teks3">Menghitung rekap…</p>
         <template v-else>
           <div class="kartu hidden overflow-x-auto lg:block">
             <table class="w-full text-sm">
               <thead><tr class="border-b border-garis text-center text-xs">
-                <th class="p-2 text-left">Nama</th><th class="p-2">Jumlah</th><th v-for="k in KOLOM_BEBAN" :key="k" class="p-2">{{ k }}</th><th class="p-2">Wajib</th><th class="p-2">Selisih</th></tr></thead>
+                <th class="p-2 text-left">Nama</th><th class="p-2">Jumlah</th><th v-for="k in KOLOM_BEBAN" :key="k" class="p-2">{{ k }}</th><th class="p-2">Wajib</th><th class="p-2">Selisih</th><th v-if="bolehTampil" class="p-2">Di akun</th></tr></thead>
               <tbody>
                 <tr v-for="r in tampil" :key="r.employee_id" :class="['border-b border-garis text-center last:border-0', bk.bolehAtur && 'cursor-pointer hover:bg-permukaan2']" @click="ubah(r)">
                   <td class="p-2 text-left"><p class="font-semibold">{{ r.nama }}</p><p class="text-xs text-teks3">{{ STATUS[r.status] }} · {{ r.unit }}</p></td>
@@ -168,6 +190,8 @@ const KELOMPOK = { struktural: 'Jabatan struktural', fungsional: 'Jabatan fungsi
                   <td v-for="k in KOLOM_BEBAN" :key="k" class="p-2 tabular-nums">{{ perKolom(r, k) ? jam(perKolom(r, k)) : '' }}</td>
                   <td class="p-2 tabular-nums">{{ jam(r.jam_wajib) }}</td>
                   <td class="p-2"><span :class="['lencana whitespace-nowrap', 'w-' + warnaSelisih(r.selisih)]">{{ teksSelisih(r.selisih) }}</span></td>
+                  <td v-if="bolehTampil" class="p-2"><button type="button" role="switch" :aria-checked="terlihat(r.employee_id)" :aria-label="`Tampilkan beban kerja di akun ${r.nama}`" @click.stop="balikTampil(r)"
+                    :class="['lencana whitespace-nowrap', terlihat(r.employee_id) ? 'w-presensi' : 'w-hakakses']">{{ terlihat(r.employee_id) ? 'Terlihat' : 'Tersembunyi' }}</button></td>
                 </tr>
               </tbody>
             </table>
@@ -177,7 +201,9 @@ const KELOMPOK = { struktural: 'Jabatan struktural', fungsional: 'Jabatan fungsi
               <div class="flex items-start gap-2"><p class="min-w-0 flex-1 font-semibold">{{ r.nama }}</p><span :class="['lencana', 'w-' + warnaSelisih(r.selisih)]">{{ teksSelisih(r.selisih) }}</span></div>
               <p class="text-xs text-teks3">{{ STATUS[r.status] }} · {{ r.unit }}</p>
               <p class="mt-1 text-sm"><b class="tabular-nums">{{ jam(r.total) }}</b> dari {{ jam(r.jam_wajib) }} jam · {{ r.rincian.map((x) => `${x.nama} ${jam(x.jam)}`).join(', ') }}</p>
-            </button></li>
+            </button>
+            <button v-if="bolehTampil" type="button" role="switch" :aria-checked="terlihat(r.employee_id)" :class="['lencana mt-1', terlihat(r.employee_id) ? 'w-presensi' : 'w-hakakses']" @click="balikTampil(r)">
+              Di akun pegawai: {{ terlihat(r.employee_id) ? 'Terlihat' : 'Tersembunyi' }}</button></li>
           </ul>
           <p v-if="bk.bolehAtur" class="mt-2 text-xs text-teks3">Ketuk baris pegawai untuk mengubah jam tupoksi atau menambah tugas tambahan.</p>
         </template>

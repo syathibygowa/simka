@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengaturan/TabKop.vue | v1.1 | Perbaikan: sakelar catatan "Dicetak melalui SIMKA PRO" di kaki dokumen | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/TabKop.vue | v1.2 | Perbaikan: nama satuan pendidikan dan NPSN per kop (isian {lembaga} surat) | 16/10/2026 -->
 <script setup>
 // Empat kop surat: pratinjau langsung saat diketik dan cetak uji F4.
 import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
@@ -65,6 +65,7 @@ async function simpan() {
   try {
     await lembaga.simpanBaris('letterheads', {
       id: d.id, nama: d.nama, kode_unit: d.kode_unit.trim().toUpperCase(), bentuk: d.bentuk, gambar_url: d.gambar_url,
+      nama_lembaga: d.nama_lembaga?.trim() || null, npsn: d.npsn?.trim() || null,
       logo_kiri_url: d.logo_kiri_url || null, logo_kanan_url: d.logo_kanan_url || null,
       baris: d.baris.filter((b) => b.teks?.trim()), pita_teks: d.pita_teks || null, pita_warna: d.pita_warna || '#F8E02F',
     })
@@ -122,6 +123,10 @@ async function cetakUji(k) {
       <div class="kartu grid gap-4 p-5 sm:grid-cols-2">
         <div><label class="label-isian" for="kp-nama">Nama kop</label><input id="kp-nama" v-model="draf.nama" class="isian" /></div>
         <div><label class="label-isian" for="kp-unit">Kode unit (untuk nomor surat)</label><input id="kp-unit" v-model="draf.kode_unit" class="isian uppercase" /></div>
+        <div class="sm:col-span-2"><label class="label-isian" for="kp-lembaga">Nama satuan pendidikan/lembaga</label>
+          <input id="kp-lembaga" v-model="draf.nama_lembaga" class="isian" placeholder="Contoh: SMAS Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa" />
+          <p class="mt-1 text-xs text-teks3">Dipakai untuk isian {lembaga} pada surat yang memakai kop ini, mis. "Kepala SMAS Tahfizhul Qur'an …". Kosong = nama lembaga di Identitas.</p></div>
+        <div><label class="label-isian" for="kp-npsn">NPSN satuan</label><input id="kp-npsn" v-model="draf.npsn" class="isian" inputmode="numeric" /></div>
         <div class="sm:col-span-2">
           <p class="label-isian">Bentuk kop</p>
           <div class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Bentuk kop">

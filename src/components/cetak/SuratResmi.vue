@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/SuratResmi.vue | v1.3 | Tahap C: opsi kotak pas foto 3 × 4 di samping tanda tangan (SKL) | 16/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/SuratResmi.vue | v1.4 | Perbaikan: nama satuan ({lembaga}) mengikuti kop surat | 16/10/2026 -->
 <script setup>
 // Isi surat keluar resmi di dalam DokumenCetak (kop dari DokumenCetak): kepala surat (judul di tengah, atau nomor/lampiran/hal
 // di kiri dengan tempat-tanggal di kanan dan alamat tujuan), basmalah/salam/hamdalah/doa (Latin, miring), isi dari template,
@@ -24,7 +24,7 @@ const penanda = computed(() => (props.surat.penanda || []).map((p, i) => {
   const s = props.ttd.find((x) => x.urutan === i + 1) || props.ttd.find((x) => x.posisi === p.posisi && x.nama === p.nama)
   return { ...p, status: s?.status, waktu: s?.waktu, basah: s?.catatan === 'basah' }
 }))
-const ktx = computed(() => susunKonteks({ nilai: props.surat.nilai, isian: t.value.isian, lembaga: props.lembaga, penanda: penanda.value,
+const ktx = computed(() => susunKonteks({ nilai: props.surat.nilai, isian: t.value.isian, lembaga: props.lembaga, kop_kode: props.surat.kop_kode, penanda: penanda.value,
   tanggal_surat: props.surat.tanggal_surat, tanggal_hijriah: props.surat.tanggal_hijriah, nomor: props.surat.nomor, perihal: props.surat.perihal }))
 const isiHtml = computed(() => renderIsi(t.value.isi, ktx.value, props.mode))
 const judulHtml = computed(() => renderBaris(t.value.judul, ktx.value, props.mode))

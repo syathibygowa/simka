@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/suratKeluar.js | v1.3 | Tahap C: isian santri orang tua, hafalan, tanggal masuk; opsi kotak pas foto | 16/10/2026
+// SIMKA PRO | src/lib/suratKeluar.js | v1.4 | Perbaikan: {lembaga} mengikuti kop surat (Pondok/SMAS/Kesetaraan Wustha/Yayasan); jabatan + lembaga tidak berulang | 16/10/2026
 // Mesin template surat keluar (template sistem, bukan Word). Isi template ditulis sebagai teks biasa:
 //   {kunci}, {kunci.bagian}   isian (lihat ISIAN_GLOBAL dan isian template), mis. {santri.nama}, {pegawai.jabatan}, {lembaga}
 //   *tebal*  _miring_          gaya teks (seperti WhatsApp)
@@ -51,6 +51,22 @@ const escape = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;
 const JENJANG = { wustha: 'Kesetaraan Wustha', sma: 'SMA' }
 export const ttlSantri = (s) => [s?.tempat_lahir, s?.tanggal_lahir ? formatPanjang(s.tanggal_lahir) : ''].filter(Boolean).join(', ')
 
+/** Nama satuan sesuai kop: { lembaga, npsn } dari konteks.kop[kode]; bila kosong, nama lembaga (pondok). */
+export const lembagaKop = (L = {}, kop = 'pondok') => ({ ...L, lembaga: L.kop?.[kop]?.lembaga || L.lembaga, npsn: L.kop?.[kop]?.npsn || L.npsn })
+/**
+ * Jabatan diikuti nama satuan tanpa pengulangan: "Kepala SMA" + "SMAS Tahfizhul Qur'an …" → "Kepala SMAS Tahfizhul Qur'an …";
+ * "Kepala Kesetaraan Wustha (SMP)" + "Kesetaraan Wustha PPS …" → "Kepala Kesetaraan Wustha PPS …"; "Direktur" + "Pondok …" tetap.
+ */
+export function jabatanLembaga(jabatan = '', lembaga = '') {
+  const j = String(jabatan || '').trim(); const l = String(lembaga || '').trim()
+  if (!j) return l
+  if (!l) return j
+  const kata = j.replace(/\(.*?\)/g, ' ').split(/\s+/).filter(Boolean)
+  const awalL = l.toUpperCase().split(/[\s,]+/)[0] // kata pertama nama satuan, mis. SMAS, KESETARAAN
+  const ulang = kata.slice(1).some((k) => k.length >= 3 && awalL.startsWith(k.toUpperCase()))
+  return ulang ? `${kata[0]} ${l}` : `${j} ${l}`
+}
+
 /** Nilai bawaan isian template untuk surat baru. */
 export function nilaiAwal(isian = [], hariIni = '') {
   const v = {}
@@ -71,10 +87,11 @@ export function nilaiAwal(isian = [], hariIni = '') {
  */
 export function susunKonteks(k) {
   const t = {}; const blok = {}
-  const L = k.lembaga || {}
+  const L = lembagaKop(k.lembaga || {}, k.kop_kode || 'pondok')
   Object.assign(t, { lembaga: L.lembaga, 'lembaga.alamat': L.alamat, 'lembaga.npsn': L.npsn, 'lembaga.nspp': L.nspp, 'lembaga.kota': L.kota,
     tahun_ajaran: L.tahun_ajaran, tanggal_surat: k.tanggal_surat ? formatPanjang(k.tanggal_surat) : '', tanggal_hijriah: k.tanggal_hijriah, nomor: k.nomor, perihal: k.perihal })
-  ;(k.penanda || []).forEach((p, i) => { const a = i ? `penanda${i + 1}` : 'penanda'; t[`${a}.nama`] = p?.nama; t[`${a}.jabatan`] = p?.jabatan; t[`${a}.niy`] = p?.niy })
+  ;(k.penanda || []).forEach((p, i) => { const a = i ? `penanda${i + 1}` : 'penanda'; t[`${a}.nama`] = p?.nama; t[`${a}.jabatan`] = p?.jabatan; t[`${a}.niy`] = p?.niy
+    t[`${a}.jabatan_lembaga`] = jabatanLembaga(p?.jabatan, L.lembaga) })
   for (const i of k.isian || []) {
     const v = (k.nilai || {})[i.kunci]
     switch (i.jenis) {
@@ -134,7 +151,8 @@ const RE_SEJAJAR = /^([^:|\n]{1,40}?)\s+:\s*(.*)$/
 
 /** Isi template → HTML. */
 export function renderIsi(teks, ktx, mode = 'pratinjau') {
-  const baris = String(teks || '').replace(/\r/g, '').split('\n')
+  // "{penanda.jabatan} {lembaga}" → jabatan dan nama satuan tanpa kata yang berulang (mis. Kepala SMAS …)
+  const baris = String(teks || '').replace(/\{(penanda\d?)\.jabatan\} \{lembaga\}/g, '{$1.jabatan_lembaga}').replace(/\r/g, '').split('\n')
   const out = []; let i = 0
   while (i < baris.length) {
     const b = baris[i]

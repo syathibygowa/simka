@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.7 | Tahap C: foto santri, kartu pelajar, prestasi, dan surat santri (rekomendasi, SKL, keterangan) | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.8 | Perbaikan: surat keterangan pindah memakai nama satuan sesuai kop (SMAS/Kesetaraan Wustha) | 16/10/2026 -->
 <script setup>
 // Biodata santri: identitas, kontak orang tua/wali (tombol WA), riwayat status dan mutasi;
 // ubah status, mutasi keluar beserta surat keterangan pindah; cetak biodata F4. Fase 5: bagian Hafalan. Fase 6: bagian Kesehatan, perizinan, dan laporan.
@@ -35,6 +35,7 @@ import LembarKartu from '@/components/cetak/LembarKartu.vue'
 import { useLembaga } from '@/stores/lembaga'
 import { usePersuratan } from '@/stores/persuratan'
 import { MODE_DEMO } from '@/lib/supabase'
+import { jabatanLembaga } from '@/lib/suratKeluar'
 
 const route = useRoute(); const router = useRouter(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
 const s = computed(() => san.cari(route.params.id))
@@ -143,6 +144,9 @@ const mutasiMasuk = computed(() => riwayat.value.mutasi.find((m) => m.jenis === 
 function bukaSuratPindah(m) { mutasiCetak.value = m; pratinjauPindah.value = true }
 const alasanSurat = computed(() => { const a = (mutasiCetak.value?.alasan || '').trim().replace(/\.$/, ''); return a.charAt(0).toLowerCase() + a.slice(1) })
 const kopJenjang = computed(() => (s.value?.jenjang === 'sma' ? 'sma' : 'wustha'))
+// Nama satuan sesuai kop surat pindah (Setelan → Kop surat → Nama satuan); bawaan nama lembaga
+const satuanPindah = computed(() => lembaga.kop(mutasiCetak.value?.kop || kopJenjang.value)?.nama_lembaga
+  || `${JENJANG[mutasiCetak.value?.jenjang || s.value?.jenjang] || ''} ${lembaga.identitas?.nama_lengkap || "Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa"}`.trim())
 const orangTua = computed(() => (s.value?.kontak || []).filter((k) => k.hubungan !== 'wali').map((k) => k.nama).filter(Boolean).join(' / ') || kontakUtama(s.value)?.nama || '–')
 const baris = computed(() => !s.value ? [] : [
   ['Nama lengkap', s.value.nama_lengkap], ['Nama panggilan', s.value.nama_panggilan || '–'], ['NIS', s.value.nis], ['NISN', s.value.nisn || '–'], ['NIK', s.value.nik || '–'], ['Nomor KK', s.value.no_kk || '–'],
@@ -319,7 +323,7 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
     <!-- Surat keterangan pindah F4 -->
     <DokumenCetak v-if="mutasiCetak" :kop="mutasiCetak.kop || kopJenjang" judul="Surat Keterangan Pindah" :nomor="mutasiCetak.nomor_surat"
       v-model:pratinjau="pratinjauPindah" :pencetak="sesi.pengguna?.nama_lengkap">
-      <p>Yang bertanda tangan di bawah ini, {{ pimpinan.jabatan || 'Kepala ' + JENJANG[s.jenjang] }} Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa, menerangkan bahwa:</p>
+      <p>Yang bertanda tangan di bawah ini, {{ jabatanLembaga(pimpinan.jabatan || 'Kepala ' + JENJANG[s.jenjang], satuanPindah) }}, menerangkan bahwa:</p>
       <table class="data" style="margin: 6pt 0 8pt 12pt">
         <tbody>
           <tr><td style="width: 46mm">Nama</td><td style="width: 4mm">:</td><td>{{ s.nama_lengkap }}</td></tr>
@@ -331,7 +335,7 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
           <tr><td>Alamat</td><td>:</td><td>{{ alamatLengkap(s) || '–' }}</td></tr>
         </tbody>
       </table>
-      <p style="text-align: justify">adalah benar santri pada {{ JENJANG[mutasiCetak.jenjang || s.jenjang] }} Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa
+      <p style="text-align: justify">adalah benar santri pada {{ satuanPindah }}
         sejak {{ s.tanggal_masuk ? formatPanjang(s.tanggal_masuk) : 'tahun ' + s.tahun_masuk }} dan terhitung mulai tanggal {{ formatPanjang(mutasiCetak.tanggal) }}
         telah pindah ke {{ mutasiCetak.sekolah }} dengan alasan {{ alasanSurat }}.</p>
       <p style="margin-top: 6pt; text-align: justify">Demikian surat keterangan ini dibuat dengan sebenarnya untuk dipergunakan sebagaimana mestinya.</p>

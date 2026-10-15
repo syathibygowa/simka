@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/bebanKerja.js | v1.0 | Fase 3 – Perbaikan P5 (ekuivalensi jam) | 04/10/2026
+// SIMKA PRO | src/stores/bebanKerja.js | v1.1 | Perbaikan: tampil/sembunyi beban kerja di akun pegawai | 16/10/2026
 // Ekuivalensi jam beban kerja: komponen jam per tupoksi, jam per pegawai, rekap (total, wajib, selisih), dan kunci bulanan.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -35,7 +35,7 @@ const rincianDemo = () => (RINCIAN_DEMO ||= Object.fromEntries(PEG.map(([id, , ,
 const WAJIB_DEMO = { tetap: 48, kontrak: 48, honorer: null }
 
 export const useBebanKerja = defineStore('bebanKerja', {
-  state: () => ({ komponen: [], wajib: { tetap: 48, kontrak: 48, honorer: null }, memuat: false }),
+  state: () => ({ komponen: [], wajib: { tetap: 48, kontrak: 48, honorer: null }, memuat: false, tampil: null }),
   getters: {
     bolehAtur: () => useSesi().bolehAdmin('atur_beban_kerja'),
     tambahan: (s) => s.komponen.filter((k) => k.aktif && !k.structural_position_id && !k.functional_position_id && !k.tautan),
@@ -80,6 +80,16 @@ export const useBebanKerja = defineStore('bebanKerja', {
     async aturWajib(w) {
       if (!MODE_DEMO) await rpc('atur_jam_wajib', { p: w })
       this.wajib = { tetap: w.tetap === '' ? null : Number(w.tetap), kontrak: w.kontrak === '' ? null : Number(w.kontrak), honorer: w.honorer === '' || w.honorer == null ? null : Number(w.honorer) }
+    },
+    /** Peta employee_id → terlihat (beban kerja ditampilkan di akun pegawai). */
+    async muatTampil() {
+      if (MODE_DEMO) { if (!this.tampil) this.tampil = Object.fromEntries(PEG.map(([id]) => [id, id === useSesi().pengguna?.id])); return this.tampil }
+      this.tampil = (await rpc('daftar_tampil_beban')) || {}; return this.tampil
+    },
+    /** Tampilkan/sembunyikan untuk pegawai tertentu (ids) atau semua (ids = null). */
+    async aturTampil(ids, tampil) {
+      if (MODE_DEMO) { const t = this.tampil || {}; (ids || Object.keys(t)).forEach((id) => { t[id] = tampil }); this.tampil = { ...t }; return (ids || Object.keys(t)).length }
+      const n = await rpc('atur_tampil_beban', { p_ids: ids, p_tampil: tampil }); await this.muatTampil(); return n
     },
     async kunci(periode) { if (MODE_DEMO) return 6; return await rpc('kunci_beban_kerja', { p_periode: periode }) },
     async salinan(periode) {

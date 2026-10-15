@@ -1,9 +1,15 @@
-// SIMKA PRO | src/lib/demoSurat.js | v1.2 | Tahap C: template rekomendasi sekolah, SKL, keterangan prestasi | 16/10/2026
+// SIMKA PRO | src/lib/demoSurat.js | v1.3 | Perbaikan: nama satuan per kop (konteks demo) | 16/10/2026
 // Data contoh mode demo: sebagian template isi awal (salinan dari migrasi 6800) dan konteks lembaga.
 export const KONTEKS_DEMO = {
   lembaga: "Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa",
   alamat: 'Jl. Poros Malino KM.04, Bontoramba, Kec. Somba Opu, Kabupaten Gowa, Sulawesi Selatan 92119',
   npsn: '70023617', nspp: '502373060054', kota: 'Gowa', tahun_ajaran: '2026/2027', hijriah_hari_ini: '28 Rabiul Akhir 1448 H',
+  kop: {
+    pondok: { lembaga: "Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa", npsn: '70023617' },
+    sma: { lembaga: "SMAS Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa", npsn: '69981356' },
+    wustha: { lembaga: "Kesetaraan Wustha PPS Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa", npsn: '70023617' },
+    yayasan: { lembaga: 'Yayasan Pesantren Imam Asysyatiby (YPIA) Wahdah Islamiyah' },
+  },
 }
 export const PENANDA_DEMO = [
   { id: 'sg-dir', jabatan: 'Direktur', nama: 'Siswandi Safari, S.Pd.I., Lc., S.H., M.Ag.', niy: '1983020910201401', employee_id: 'e-dir' },

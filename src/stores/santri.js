@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/santri.js | v1.2 | Tahap C: foto santri dan kartu pelajar | 16/10/2026
+// SIMKA PRO | src/stores/santri.js | v1.3 | Perbaikan: foto santri dengan cadangan fungsi berkas | 16/10/2026
 // Data santri: daftar (sesuai cakupan RLS), simpan beserta kontak, impor Excel, status, mutasi keluar,
 // riwayat, dan hapus (superadmin). Semua penulisan lewat fungsi SQL (tabel santri tidak dapat ditulis langsung).
 // v1.2: foto santri (bucket profil, santri/{id}/…; dipotong 3:4) dan data kartu pelajar berkode QR.
@@ -9,7 +9,7 @@ import { dataKelompokDemo, kelompokSantriDemo, ID_PEGAWAI_DEMO } from '@/lib/dem
 import { useSesi } from './sesi'
 import { pesanGalat } from './lembaga'
 import { hariIniISO } from '@/lib/tanggal'
-import { unggahSupabase, kompresGambar, alamatBerkas } from '@/lib/penyimpanan'
+import { unggahSupabase, kompresGambar, alamatFoto } from '@/lib/penyimpanan'
 
 const KODE_DEMO = {}
 const kodeDemo = () => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let k = ''; for (let i = 0; i < 10; i++) k += a[Math.floor(Math.random() * a.length)]; return k }
@@ -163,7 +163,7 @@ export const useSantri = defineStore('santri', {
       if (!s) return null
       if (this.foto[s.id] !== undefined) return this.foto[s.id]
       if (MODE_DEMO || !s.foto_id) return null
-      try { this.foto[s.id] = await alamatBerkas(s.foto_id) } catch { this.foto[s.id] = null }
+      this.foto[s.id] = await alamatFoto(s.foto_id)
       return this.foto[s.id]
     },
     /** Unggah dan pasang foto santri (dipotong 3:4, maks. 600 px). */

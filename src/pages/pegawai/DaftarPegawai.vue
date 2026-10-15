@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.5 | Perbaikan: tab Tim kerja, saringan jenis kelamin dan bidang (juga untuk cetak/Excel) | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.6 | Perbaikan: saringan jenis kelamin "Semua" | 16/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
@@ -99,7 +99,7 @@ const saringanTeks = computed(() => [jk.value === 'L' ? 'Laki-laki' : jk.value =
         <PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIY, bidang, atau jabatan" aria-label="Cari pegawai" />
       </div>
-      <select v-model="jk" class="isian w-auto" aria-label="Saring jenis kelamin"><option value="">L dan P</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select>
+      <select v-model="jk" class="isian w-auto" aria-label="Saring jenis kelamin"><option value="">Semua</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select>
       <select v-model="bidang" class="isian w-auto max-w-full" aria-label="Saring bidang"><option value="">Semua bidang</option><option v-for="b in daftarBidang" :key="b.id" :value="b.id">{{ b.nama }}</option></select>
       <select v-model="keaktifan" class="isian w-auto" aria-label="Saring status keaktifan">
         <option value="semua">Semua keaktifan</option><option v-for="(n, k) in KEAKTIFAN" :key="k" :value="k">{{ n }}</option>
@@ -188,7 +188,7 @@ const saringanTeks = computed(() => [jk.value === 'L' ? 'Laki-laki' : jk.value =
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div><label class="label-isian" for="c-jk">Jenis kelamin</label>
-            <select id="c-jk" v-model="jk" class="isian"><option value="">Laki-laki dan perempuan</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
+            <select id="c-jk" v-model="jk" class="isian"><option value="">Semua</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
           <div><label class="label-isian" for="c-bd">Bidang</label>
             <select id="c-bd" v-model="bidang" class="isian"><option value="">Semua bidang</option><option v-for="b in daftarBidang" :key="b.id" :value="b.id">{{ b.nama }}</option></select></div>
         </div>

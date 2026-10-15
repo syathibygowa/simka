@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demo.js | v1.11 | Fase 11 – Tahap 6 Fitur slip gaji dipindah ke Fitur sensitif | 11/10/2026
+// SIMKA PRO | src/lib/demo.js | v1.12 | Perbaikan: nama satuan per kop surat | 16/10/2026
 // Data contoh untuk MODE DEMO. Nama pegawai di bawah fiktif.
 const menitLalu = (m) => new Date(Date.now() - m * 60000).toISOString()
 
@@ -90,16 +90,16 @@ export const LEMBAGA_DEMO = () => ({
   hijriah: { koreksi_hari: 0 },
   integrasi: { gas_url: '', drive_folder_nama: 'SIMKA PRO', drive_folder_id: '', email_pengirim: 'syathiby.gowa@gmail.com', nama_pengirim: 'SIMKA PRO Imam Asy-Syathiby', domain_aplikasi: '' },
   letterheads: [
-    { id: 'k1', kode: 'pondok', nama: 'Kop Pondok', kode_unit: 'PPTQ-IAS', bentuk: 'gambar', gambar_url: 'kop/kop-pondok.jpg', logo_kiri_url: KEMENAG, logo_kanan_url: LOGO_PONDOK,
+    { id: 'k1', kode: 'pondok', nama: 'Kop Pondok', nama_lembaga: "Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa", npsn: '70023617', kode_unit: 'PPTQ-IAS', bentuk: 'gambar', gambar_url: 'kop/kop-pondok.jpg', logo_kiri_url: KEMENAG, logo_kanan_url: LOGO_PONDOK,
       baris: [{ teks: 'KEMENTERIAN AGAMA KABUPATEN GOWA', tebal: false, ukuran: 13 }, { teks: "PONDOK PESANTREN TAHFIZHUL QUR'AN", tebal: true, ukuran: 15 }, { teks: 'IMAM ASY-SYATHIBY WAHDAH ISLAMIYAH GOWA', tebal: true, ukuran: 15 }, { teks: 'NPSN. 70023617  NSPP. 502373060054  e-Mail: syathiby.gowa@gmail.com', tebal: false, ukuran: 10 }],
       pita_teks: ALAMAT_KOP + ' | Telp. 085243324006', pita_warna: '#F8E02F', aktif: true, urutan: 1 },
-    { id: 'k2', kode: 'wustha', nama: 'Kop Kesetaraan Wustha', kode_unit: 'KW-IAS', bentuk: 'gambar', gambar_url: 'kop/kop-wustha.jpg', logo_kiri_url: KEMENAG, logo_kanan_url: null,
+    { id: 'k2', kode: 'wustha', nama: 'Kop Kesetaraan Wustha', nama_lembaga: "Kesetaraan Wustha PPS Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa", npsn: '70023617', kode_unit: 'KW-IAS', bentuk: 'gambar', gambar_url: 'kop/kop-wustha.jpg', logo_kiri_url: KEMENAG, logo_kanan_url: null,
       baris: [{ teks: 'KEMENTERIAN AGAMA KABUPATEN GOWA', tebal: false, ukuran: 13 }, { teks: "KESETARAAN WUSTHA PPS TAHFIZHUL QUR'AN", tebal: true, ukuran: 15 }, { teks: 'IMAM ASY-SYATHIBY WAHDAH ISLAMIYAH GOWA', tebal: true, ukuran: 15 }],
       pita_teks: ALAMAT_KOP + ' | Telp. 082194934531', pita_warna: '#F8E02F', aktif: true, urutan: 2 },
-    { id: 'k3', kode: 'sma', nama: 'Kop SMA', kode_unit: 'SMAS-IAS', bentuk: 'gambar', gambar_url: 'kop/kop-sma.jpg', logo_kiri_url: null, logo_kanan_url: null,
+    { id: 'k3', kode: 'sma', nama: 'Kop SMA', nama_lembaga: "SMAS Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa", npsn: '69981356', kode_unit: 'SMAS-IAS', bentuk: 'gambar', gambar_url: 'kop/kop-sma.jpg', logo_kiri_url: null, logo_kanan_url: null,
       baris: [{ teks: 'PEMERINTAH PROVINSI SULAWESI SELATAN', tebal: false, ukuran: 12 }, { teks: "SMAS TAHFIZHUL QUR'AN IMAM ASY-SYATIBY W.I", tebal: true, ukuran: 15 }],
       pita_teks: ALAMAT_KOP + ' | Telp. 085256006743', pita_warna: '#F8E02F', aktif: true, urutan: 3 },
-    { id: 'k4', kode: 'yayasan', nama: 'Kop Yayasan', kode_unit: 'YPIA', bentuk: 'gambar', gambar_url: 'kop/kop-yayasan.jpg', logo_kiri_url: null, logo_kanan_url: null,
+    { id: 'k4', kode: 'yayasan', nama: 'Kop Yayasan', nama_lembaga: 'Yayasan Pesantren Imam Asysyatiby (YPIA) Wahdah Islamiyah', kode_unit: 'YPIA', bentuk: 'gambar', gambar_url: 'kop/kop-yayasan.jpg', logo_kiri_url: null, logo_kanan_url: null,
       baris: [{ teks: 'YAYASAN PESANTREN IMAM ASYSYATIBY (YPIA)', tebal: true, ukuran: 15 }, { teks: 'WAHDAH ISLAMIYAH', tebal: true, ukuran: 14 }],
       pita_teks: 'Nomor Induk Berusaha. 0205230018097', pita_warna: '#F8E02F', aktif: true, urutan: 4 },
   ],

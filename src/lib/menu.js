@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.23 | Tahap D: menu Tahfizh tampil juga bagi penguji ujian | 16/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.24 | Perbaikan: Beban Kerja pindah ke kelompok Administrasi, tampil sesuai pengaturan per pegawai | 16/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Fungsional, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -26,7 +26,6 @@ export const MENU = [
   { kode: 'pengajuan',  nama: 'Pengajuan',       ikon: PhFileText,       warna: 'pengajuan',  ke: '/pengajuan',         grup: 'Layanan Pegawai' },
   { kode: 'jurnal',     nama: 'Jurnal Harian',   ikon: PhNotebook,       warna: 'tatausaha',  ke: '/jurnal',            grup: 'Layanan Pegawai' },
   { kode: 'berkas',     nama: 'Berkas Saya',     ikon: PhFolderOpen,     warna: 'berkas',     ke: '/berkas',            grup: 'Layanan Pegawai' },
-  { kode: 'bebankerja', nama: 'Beban Kerja',     ikon: PhClockCountdown, warna: 'gaji',       ke: '/beban-kerja',       grup: 'Layanan Pegawai' },
   // Kepegawaian (pengelolaan data pegawai)
   { kode: 'pegawai',    nama: 'Data Pegawai',    ikon: PhUsersThree,     warna: 'pegawai',    ke: '/pegawai',           grup: 'Kepegawaian', peran: ADMIN },
   { kode: 'verifikasi', nama: 'Verifikasi Akun', ikon: PhUserCheck,      warna: 'verifikasi', ke: '/verifikasi',        grup: 'Kepegawaian', peran: ADMIN, izin: 'verval_akun' },
@@ -74,6 +73,8 @@ export const MENU = [
   // Gaji: pengelola/pembaca gaji (superadmin dan yang ditunjuk superadmin) dan pegawai bila slip ditampilkan di akun pegawai
   { kode: 'gaji',       nama: 'Gaji',            ikon: PhWallet,         warna: 'gaji',       ke: '/gaji',              grup: 'Administrasi', hak: (c) => !!c.gaji },
   // Tunjangan: tarif, peta tunjangan, rekening, pengingat kenaikan (pengelola dan pembaca gaji)
+  { kode: 'bebankerja', nama: 'Beban Kerja',     ikon: PhClockCountdown, warna: 'gaji',       ke: '/beban-kerja',       grup: 'Administrasi',
+    hak: (c) => !!(c.beban?.saya || c.beban?.rekap || c.beban?.atur) },
   { kode: 'tunjangan',  nama: 'Tunjangan',       ikon: PhCoins,          warna: 'tahfizh',    ke: '/tunjangan',         grup: 'Administrasi', hak: (c) => !!c.gajiLihat },
   // Keuangan santri: hanya superadmin dan pegawai yang ditunjuk superadmin (mis. Bendahara Pondok)
   { kode: 'keuangan',   nama: 'Keuangan',        ikon: PhCashRegister,   warna: 'keuangan',   ke: '/keuangan',          grup: 'Administrasi', hak: (c) => !!c.keuangan },

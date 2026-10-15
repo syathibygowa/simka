@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/penyimpanan.js | v1.1 | Fase 2 – Tahap 6 Verval dan koreksi | 03/10/2026
+// SIMKA PRO | src/lib/penyimpanan.js | v1.2 | Perbaikan: alamatFoto (cadangan lewat fungsi berkas bila tautan langsung gagal) | 16/10/2026
 // Adapter penyimpanan berkas (Bagian 39 & 41).
 // Database menyimpan PENYEDIA + KUNCI berkas, bukan tautan Drive langsung.
 // Alur: kompres di HP → unggah ke bucket "antrian" → catat storage_objects(status antri)
@@ -73,6 +73,13 @@ export async function alamatBerkas(id) {
   }
   // gdrive: diambil lewat Edge Function "berkas" (hak akses diperiksa server, GAS mengambil dari Drive)
   return await ambilBerkasUrl(id);
+}
+
+/** Alamat foto (pegawai/santri): tautan langsung; bila gagal atau kosong, diambil lewat fungsi "berkas" (hak diperiksa server). */
+export async function alamatFoto(id) {
+  if (!id) return null;
+  try { const u = await alamatBerkas(id); if (u) return u; } catch { /* lanjut ke cadangan */ }
+  try { return await ambilBerkasUrl(id); } catch { return null; }
 }
 
 const cacheBerkas = new Map();

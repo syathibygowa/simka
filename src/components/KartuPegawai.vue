@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/KartuPegawai.vue | v2.0 | Fase 3 – Perbaikan P4 (kartu pegawai portrait) | 04/10/2026 -->
+<!-- SIMKA PRO | src/components/KartuPegawai.vue | v2.1 | Perbaikan: kaki kartu gradasi warna | 16/10/2026 -->
 <script setup>
 // Kartu pegawai TEGAK (portrait) ukuran ID-1: 54 × 85,6 mm (cetak 1:1).
 // Depan : pas foto (= foto profil akun), nama, NIY, jabatan kartu (struktural bila ada, bila tidak satu jabatan fungsional),
@@ -98,7 +98,7 @@ const KETENTUAN = [
 .depan .qr :deep(svg) { width: 100%; height: 100%; display: block; }
 .depan .kk { font-size: 5pt; color: #6b5658; }
 .depan .kv { font-size: 6.6pt; font-weight: 800; letter-spacing: .2mm; color: #3a0f0d; }
-.pita { position: absolute; left: 0; right: 0; bottom: 0; height: 1.8mm; background: repeating-linear-gradient(90deg, #C7332F 0 7mm, #F39A4E 7mm 10mm, #0B7F81 10mm 13mm); }
+.pita { position: absolute; left: 0; right: 0; bottom: 0; height: 1.8mm; background: linear-gradient(90deg, #7A1512 0%, #C7332F 50%, #F39A4E 100%); }
 .cap { position: absolute; top: 45mm; left: 50%; transform: translateX(-50%) rotate(-14deg); border: 0.6mm solid #C7332F; color: #C7332F; font-weight: 800; font-size: 10pt;
   padding: 0.5mm 2mm; background: rgba(255,255,255,.88); white-space: nowrap; }
 /* ---------- Belakang ---------- */

@@ -1,9 +1,10 @@
-// SIMKA PRO | src/stores/pegawai.js | v1.2 | Fase 2 – Tahap 5 Jadwal shift | 03/10/2026
+// SIMKA PRO | src/stores/pegawai.js | v1.3 | Perbaikan: foto pegawai terbaru untuk profil dan CV | 16/10/2026
 // Data kepegawaian: daftar, simpan (beserta jabatan, satu transaksi di server), impor Excel,
 // riwayat kepegawaian, dan hapus (superadmin, hanya data tanpa akun/ditolak).
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { PEGAWAI_DEMO } from '@/lib/demo'
+import { useSesi } from './sesi'
 import { pesanGalat } from './lembaga'
 import { useOrganisasi } from './organisasi'
 
@@ -84,6 +85,17 @@ export const usePegawai = defineStore('pegawai', {
       return hasil
     },
 
+    /** Foto pegawai terbaru (foto_id dibaca ulang agar foto yang baru diunggah langsung tampil). */
+    async foto(id) {
+      if (MODE_DEMO) return null
+      const sesi = useSesi()
+      if (id === sesi.pengguna?.id && sesi.fotoUrl) return sesi.fotoUrl
+      const { data } = await supabase.from('employees').select('foto_id').eq('id', id).maybeSingle()
+      const fid = data?.foto_id || this.cari(id)?.foto_id
+      if (!fid) return null
+      const { alamatFoto } = await import('@/lib/penyimpanan')
+      return await alamatFoto(fid)
+    },
     async muatRiwayat(id) {
       if (MODE_DEMO) { this.riwayat[id] = []; return }
       const { data } = await supabase.from('employment_history').select('*').eq('employee_id', id).order('tanggal_berlaku', { ascending: false }).order('id', { ascending: false })

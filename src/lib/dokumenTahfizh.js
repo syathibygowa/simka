@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/dokumenTahfizh.js | v1.0 | Tahap D: dokumen tahfizh (suket kenaikan juz, sertifikat hafalan, Sertifikat Tahfizhul Quran) | 16/10/2026
+// SIMKA PRO | src/lib/dokumenTahfizh.js | v1.1 | Perbaikan: bawaan sertifikat satu logo (pondok) | 16/10/2026
 // Istilah jenis dan status dokumen tahfizh, serta pengaturan bawaan kepala Sertifikat Tahfizhul Quran.
 export const JENIS_DOK_TAHFIZH = {
   suket_juz: { n: 'Suket kenaikan juz', panjang: 'Surat Keterangan Ujian Kenaikan Juz', w: 'agenda' },
@@ -19,7 +19,8 @@ export const PENGATURAN_SERTIFIKAT = {
   pembuka: "Dengan memohon ridho Allah _Subhanahu Wata'ala_, Pondok Pesantren Tahfizhul Quran Imam Asy-Syathiby Wahdah Islamiyah Gowa menerangkan bahwa:",
   program: 'Telah menyelesaikan Program Tahfizhul Quran di Pondok Pesantren Tahfizhul Quran Imam Asy-Syathiby Wahdah Islamiyah Gowa',
   penutup: 'Demikian sertifikat ini diberikan sebagai tanda hafalan untuk terus menjaga, mengamalkan dan menyebarkan nilai-nilai Al-Quran.',
-  logo_kiri: 'kop/logo-ypwi.png', logo_kanan: '',
+  // logo_kanan = logo utama (kosong = logo pondok di Setelan → Identitas); logo_kiri = logo tambahan (kosong = tidak ditampilkan)
+  logo_kiri: '', logo_kanan: '',
 }
 /** Teks dengan _miring_ → HTML aman. */
 export const miring = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/_([^_]+)_/g, '<i>$1</i>')

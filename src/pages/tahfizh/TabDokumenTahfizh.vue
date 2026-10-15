@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabDokumenTahfizh.vue | v1.0 | Tahap D: daftar dan cetak dokumen tahfizh, Sertifikat Tahfizhul Quran kelas 9/12 | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabDokumenTahfizh.vue | v1.1 | Perbaikan: logo sertifikat dapat diganti/diunggah; bawaan satu logo (pondok) | 16/10/2026 -->
 <script setup>
 // Tab Dokumen pada menu Tahfizh:
 //   Dokumen terbit : suket ujian kenaikan juz, sertifikat hafalan, Sertifikat Tahfizhul Quran (kartu statistik, saringan, cetak, cabut)
@@ -17,6 +17,11 @@ import KartuStatistik from '@/components/KartuStatistik.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import CetakDokumenTahfizh from './CetakDokumenTahfizh.vue'
+import { useSesi } from '@/stores/sesi'
+import { useLembaga } from '@/stores/lembaga'
+import { MODE_DEMO } from '@/lib/supabase'
+import { unggahSupabase, alamatAset } from '@/lib/penyimpanan'
+import logoLokal from '@/assets/logo-pondok.png'
 import LembarTerbitTahfizh from './LembarTerbitTahfizh.vue'
 
 const tz = useTahfizh(); const ui = useUI(); const route = useRoute(); const router = useRouter()
@@ -83,7 +88,20 @@ async function cetakCalon(s) { const d = daftar.value.find((x) => x.id === s.dok
 
 // ---------- Pengaturan sertifikat ----------
 const lembarAtur = ref(false); const atur = ref({ ...PENGATURAN_SERTIFIKAT })
-async function bukaAtur() { try { atur.value = await tz.pengaturanSertifikat(); lembarAtur.value = true } catch (e) { ui.toast(e.message, 'galat') } }
+const sesi = useSesi(); const lembaga = useLembaga(); const mengunggah = ref('')
+const pratinjauLogo = (k) => alamatAset(atur.value[k] || (k === 'logo_kanan' ? lembaga.identitas?.logo_url || '' : '')) || logoLokal
+async function unggahLogo(e, k) {
+  const b = e.target.files?.[0]; e.target.value = ''
+  if (!b) return
+  if (b.size > 1024 * 1024) return ui.toast('Ukuran logo paling besar 1 MB.', 'galat')
+  mengunggah.value = k
+  try {
+    if (MODE_DEMO) atur.value[k] = URL.createObjectURL(b)
+    else { const { url } = await unggahSupabase(b, { bucket: 'publik', path: `sertifikat/logo-${k}-${Date.now()}.${(b.type.split('/')[1] || 'png').replace('jpeg', 'jpg')}`, kategori: 'logo', publik: true }); atur.value[k] = url }
+    ui.toast('Logo terunggah. Simpan pengaturan untuk memakainya.')
+  } catch (er) { ui.toast(er.message, 'galat') } finally { mengunggah.value = '' }
+}
+async function bukaAtur() { lembaga.muat(); try { atur.value = await tz.pengaturanSertifikat(); lembarAtur.value = true } catch (e) { ui.toast(e.message, 'galat') } }
 async function simpanAtur() {
   proses.value = true
   try { await tz.simpanPengaturanSertifikat({ ...atur.value }); ui.toast('Pengaturan sertifikat tersimpan. Berlaku untuk sertifikat yang terbit berikutnya.'); lembarAtur.value = false }
@@ -181,14 +199,28 @@ const BAGIAN = computed(() => [{ k: 'terbit', n: 'Dokumen terbit', i: PhCertific
 
     <LembarBawah v-model="lembarAtur" judul="Pengaturan Sertifikat Tahfizhul Quran" lebar>
       <div class="space-y-3 pb-2">
-        <p class="text-sm text-teks2">Kepala dan kalimat sertifikat. Gunakan _teks_ untuk huruf miring. Perubahan berlaku untuk sertifikat yang terbit berikutnya.</p>
+        <p class="text-sm text-teks2">Kepala dan kalimat sertifikat. Gunakan _teks_ untuk huruf miring. Perubahan kalimat berlaku untuk sertifikat yang terbit berikutnya; perubahan logo langsung berlaku juga saat mencetak ulang.</p>
         <div v-for="[k, n] in [['baris1', 'Baris 1 (yayasan)'], ['baris2', 'Baris 2 (pondok, tebal)'], ['baris3', 'Baris 3 (tebal)']]" :key="k">
           <label class="label-isian" :for="'as-' + k">{{ n }}</label><input :id="'as-' + k" v-model="atur[k]" class="isian" /></div>
         <div v-for="[k, n] in [['pembuka', 'Kalimat pembuka'], ['program', 'Kalimat program (sebelum jumlah juz)'], ['penutup', 'Kalimat penutup']]" :key="k">
           <label class="label-isian" :for="'as-' + k">{{ n }}</label><textarea :id="'as-' + k" v-model="atur[k]" rows="2" class="isian min-h-[64px]" /></div>
         <div class="grid gap-3 sm:grid-cols-2">
-          <div><label class="label-isian" for="as-lk">Logo kiri (alamat gambar)</label><input id="as-lk" v-model="atur.logo_kiri" class="isian" placeholder="kop/logo-ypwi.png" /></div>
-          <div><label class="label-isian" for="as-lka">Logo kanan (kosong = logo pondok)</label><input id="as-lka" v-model="atur.logo_kanan" class="isian" placeholder="Logo pondok di Setelan → Identitas" /></div>
+          <div v-for="[k, n, ket] in [['logo_kanan', 'Logo utama', 'Kosong = logo pondok (Setelan → Identitas)'], ['logo_kiri', 'Logo tambahan (opsional)', 'Kosong = hanya satu logo']]" :key="k" class="rounded-2xl border border-garis p-3">
+            <p class="label-isian">{{ n }}</p>
+            <div class="flex items-center gap-3">
+              <span class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-white">
+                <img v-if="atur[k] || k === 'logo_kanan'" :src="pratinjauLogo(k)" alt="" class="h-full w-full object-contain" @error="(e) => (e.target.src = logoLokal)" />
+                <span v-else class="text-[10px] text-teks3">Tidak ada</span></span>
+              <div class="min-w-0 flex-1 space-y-1.5">
+                <input v-model="atur[k]" class="isian" :placeholder="'Tautan gambar · ' + ket" :aria-label="'Alamat ' + n" />
+                <div class="flex flex-wrap gap-2">
+                  <label v-if="sesi.isSuperadmin" class="tombol-garis min-h-[36px] cursor-pointer px-3 text-xs">{{ mengunggah === k ? 'Mengunggah…' : 'Unggah gambar' }}
+                    <input type="file" accept="image/png,image/jpeg,image/webp" class="sr-only" :disabled="!!mengunggah" @change="(e) => unggahLogo(e, k)" /></label>
+                  <button v-if="atur[k]" type="button" class="tombol-teks min-h-[36px] px-2 text-xs" @click="atur[k] = ''">{{ k === 'logo_kanan' ? 'Pakai logo pondok' : 'Hapus logo' }}</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <button class="tombol-utama w-full" :disabled="proses" @click="simpanAtur">{{ proses ? 'Menyimpan…' : 'Simpan pengaturan' }}</button>
       </div>

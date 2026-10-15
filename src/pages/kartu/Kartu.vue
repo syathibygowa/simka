@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kartu/Kartu.vue | v1.3 | Fase 7 – Perbaikan uji coba: kartu di Profil, cetak massal di Data Pegawai | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/kartu/Kartu.vue | v1.4 | Perbaikan: foto kartu massal dengan cadangan fungsi berkas | 16/10/2026 -->
 <script setup>
 // Kartu pegawai. Kartu saya: lihat depan/belakang, ganti pas foto, cetak, dan ganti kode bila kartu hilang.
 // Cetak massal (admin ber-izin cetak_kartu): pilih pegawai, cetak 9 kartu tegak per F4 (bolak-balik) atau berdampingan.
@@ -14,7 +14,7 @@ import { useOrganisasi } from '@/stores/organisasi'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 import { MODE_DEMO } from '@/lib/supabase'
-import { alamatBerkas } from '@/lib/penyimpanan'
+import { alamatBerkas, alamatFoto } from '@/lib/penyimpanan'
 import { alamatVerifikasi } from '@/lib/kartu'
 import { toPng, toJpeg } from 'html-to-image'
 import logoLokal from '@/assets/logo-pondok.png'
@@ -91,7 +91,7 @@ async function siapkanMassal() {
   try {
     const d = await kt.data([...pilih.value])
     const tanpaNiy = d.filter((x) => !x.niy).length
-    await Promise.all(d.filter((x) => x.foto_id && !foto.value[x.employee_id]).map(async (x) => { try { foto.value[x.employee_id] = await alamatBerkas(x.foto_id) } catch { /* tanpa foto */ } }))
+    await Promise.all(d.filter((x) => x.foto_id && !foto.value[x.employee_id]).map(async (x) => { foto.value[x.employee_id] = await alamatFoto(x.foto_id) }))
     cetakData.value = d; pratinjau.value = true
     if (tanpaNiy) ui.toast(`${tanpaNiy} pegawai belum memiliki NIY. Lengkapi di Data Pegawai sebelum mencetak final.`, 'info')
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }

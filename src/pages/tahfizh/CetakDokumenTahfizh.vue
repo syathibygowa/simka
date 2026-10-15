@@ -1,11 +1,12 @@
-<!-- SIMKA PRO | src/pages/tahfizh/CetakDokumenTahfizh.vue | v1.0 | Tahap D: cetak suket kenaikan juz, sertifikat hafalan, Sertifikat Tahfizhul Quran | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/CetakDokumenTahfizh.vue | v1.1 | Perbaikan: logo sertifikat dari pengaturan terkini; bawaan satu logo (pondok) | 16/10/2026 -->
 <script setup>
 // Cetak dokumen tahfizh F4 dari salinan beku (data) dokumen yang sudah terbit:
 //   suket_juz          Surat Keterangan Ujian Kenaikan Juz — berkop pondok; tanda tangan Kepala Bidang Tahfizh (kiri) dan Penguji (kanan)
 //   sertifikat_hafalan Sertifikat Hafalan (sertifikasi 5, 10, 15 … juz) — bingkai sertifikat; Kepala Bidang Tahfizh dan Penguji
 //   sertifikat_tahfizh Sertifikat Tahfizhul Quran (ijazah hafalan akhir jenjang) — mengikuti format pondok; Direktur
 // Tanda tangan elektronik tampil sebagai QR Cek Keabsahan; tanda tangan basah dikosongkan. Draf/dicabut diberi catatan.
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
+import { useTahfizh } from '@/stores/tahfizh'
 import { useLembaga } from '@/stores/lembaga'
 import { formatPanjang, formatPendek, formatJam } from '@/lib/tanggal'
 import { svgQR, alamatCek } from '@/lib/dokumen'
@@ -40,8 +41,13 @@ const kota = computed(() => lembaga.identitas?.kota_surat || 'Gowa')
 const tglGanda = (m, h) => [m ? formatPanjang(m) : '', h].filter(Boolean).join('/')
 // Pengaturan kepala sertifikat (dibekukan saat terbit untuk Sertifikat Tahfizhul Quran)
 const atur = computed(() => ({ ...PENGATURAN_SERTIFIKAT, ...(d.value.pengaturan || {}) }))
-const logoKiri = computed(() => (atur.value.logo_kiri ? alamatAset(atur.value.logo_kiri) : ''))
-const logoKanan = computed(() => alamatAset(atur.value.logo_kanan || lembaga.identitas?.logo_url || '') || logoLokal)
+// Logo selalu dari pengaturan terkini (logo bukan isi resmi sertifikat): logo utama (kosong = logo pondok) dan logo tambahan (opsional)
+const tz = useTahfizh(); const aturKini = ref(null)
+onMounted(async () => { try { aturKini.value = await tz.pengaturanSertifikat() } catch { aturKini.value = null } })
+const sumberLogo = computed(() => aturKini.value || atur.value)
+const bukanLama = (u) => (u && !/logo-ypwi/i.test(u) ? u : '')
+const logoKiri = computed(() => (bukanLama(sumberLogo.value.logo_kiri) ? alamatAset(sumberLogo.value.logo_kiri) : ''))
+const logoKanan = computed(() => alamatAset(bukanLama(sumberLogo.value.logo_kanan) || lembaga.identitas?.logo_url || '') || logoLokal)
 // Logo dari situs lain yang gagal dimuat diganti logo pondok bawaan aplikasi
 const ganti = (e) => { if (!e.target.src.endsWith(logoLokal)) e.target.src = logoLokal }
 const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kenaikan Juz', sertifikat_hafalan: 'Sertifikat Hafalan', sertifikat_tahfizh: 'Sertifikat Tahfizhul Quran' }[props.dok.jenis]))
@@ -83,7 +89,7 @@ const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kena
           <span v-for="p in ['ki-at', 'ka-at', 'ki-bw', 'ka-bw']" :key="p" :class="['sudut', p]" aria-hidden="true" />
           <img class="tanda-air" :src="logoKanan" alt="" aria-hidden="true" @error="ganti" />
           <div class="logo">
-            <img v-if="logoKiri" :src="logoKiri" alt="" />
+            <img v-if="logoKiri" :src="logoKiri" alt="" @error="(e) => (e.target.style.display = 'none')" />
             <img :src="logoKanan" alt="" @error="ganti" />
           </div>
           <p class="baris1">{{ atur.baris1 }}</p>
