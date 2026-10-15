@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoPortalWali.js | v1.2 | Fase 9 – Tahap 13.2.0 Hafalan, ujian, nilai, prestasi, keuangan | 15/10/2026
+// SIMKA PRO | src/lib/demoPortalWali.js | v1.3 | Fase 9 – Tahap 13.3.0 Pengumuman untuk wali | 15/10/2026
 // Data contoh Portal Wali untuk MODE DEMO (dibangun dari santri dan kelompok contoh). Semua nama fiktif.
 import { SANTRI_DEMO } from './demoSantri'
 import { dataKelompokDemo } from './demoKelompok'
@@ -6,6 +6,10 @@ import { PENGATURAN_BAWAAN } from './portalWali'
 import { hariIniISO } from './tanggal'
 
 let santri = null
+const PENGUMUMAN_DEMO = [
+  { id: 'pd1', judul: 'Jadwal kunjungan wali bulan November', isi: 'Kunjungan wali santri dilaksanakan *Ahad, 9 November 2026* pukul 08.00–15.00 WITA.\nMohon membawa _kartu kunjungan_ dan menjaga ketertiban di area pondok.', penting: true, tautan: null, nama_tautan: null, created_at: new Date(Date.now() - 36e5).toISOString(), dibaca_pada: null, pengirim: 'Kepala Bidang Kesantrian' },
+  { id: 'pd2', judul: 'Pembagian rapor tengah semester', isi: 'Rapor tengah semester dibagikan wali kelas pada Sabtu, 25 Oktober 2026.', penting: false, tautan: 'https://forms.gle/contoh', nama_tautan: 'Konfirmasi kehadiran', created_at: new Date(Date.now() - 3 * 864e5).toISOString(), dibaca_pada: new Date(Date.now() - 2 * 864e5).toISOString(), pengirim: 'Direktur' },
+]
 const semua = () => (santri ||= SANTRI_DEMO())
 const angka = (v) => String(v || '').replace(/\D/g, '')
 
@@ -117,6 +121,7 @@ export function dataDemo(nis, bagian, p = {}) {
       { nama: 'SPP September 2026', jatuh_tempo: '2026-09-10', nominal: 500000, dibayar: 500000, status: 'lunas', potongan: 0, lewat: false }],
     pembayaran: [{ tanggal: '2026-09-08', nomor: 'KW.0012/X/1448', jumlah: 500000, cara: 'transfer', riwayat: false }],
     rekening: [{ bank: 'BSI', nomor: '7123456789', atas_nama: 'PPS Imam Asy-Syathiby' }] }
+  if (bagian === 'pengumuman') return { pengumuman: PENGUMUMAN_DEMO }
   if (bagian !== 'beranda') return { galat: 'Bagian ini belum tersedia pada mode demo.' }
   const kel = dataKelompok(s)
   const nama = (j) => kel.filter((g) => g.jenis === j).map((g) => g.nama).join(', ') || null
@@ -136,6 +141,7 @@ export function dataDemo(nis, bagian, p = {}) {
       program: 'reguler', tempat_lahir: s.tempat_lahir, tanggal_lahir: s.tanggal_lahir, tahun_masuk: s.tahun_masuk,
     },
     pengasuh,
+    pengumuman_baru: PENGUMUMAN_DEMO.filter((p) => !p.dibaca_pada).length,
     bulan_ini: rekapDemo(sesiDemo(s, `${hariIniISO().slice(0, 8)}01`, hariIniISO())).pokok,
     hari_ini: [
       { jenis: 'asrama', kelompok: nama('kamar') || 'Asrama', sesi: 'Asrama pagi', jam: '04.30', kode: 'H' },

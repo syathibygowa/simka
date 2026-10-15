@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.24 | Perbaikan: Beban Kerja pindah ke kelompok Administrasi, tampil sesuai pengaturan per pegawai | 16/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.25 | Fase 9 – Perbaikan: menu Portal Wali tersendiri; Roster menjadi Jadwal Pelajaran | 15/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Fungsional, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -37,7 +37,9 @@ export const MENU = [
     syarat: (c) => c.kelompok || Number(c.fitur?.absensi_kelas ?? 0) >= 1 },
   { kode: 'statistiksantri', nama: 'Statistik Santri', ikon: PhChartPieSlice, warna: 'rekap', ke: '/statistik-santri', grup: 'Santri', fitur: 'data_santri' },
   { kode: 'tahunajaran', nama: 'Naik Kelas', ikon: PhCalendarPlus, warna: 'agenda', ke: '/tahun-ajaran-baru', grup: 'Santri', peran: ADMIN, izin: 'kelompok_santri' },
-  { kode: 'jadwalpelajaran', nama: 'Roster', ikon: PhCalendarDots, warna: 'jadwal', ke: '/jadwal-pelajaran', grup: 'Santri',
+  // Portal Wali (Fase 9): pengaturan butir informasi, kesiapan data, sesi wali, percobaan gagal, pengumuman wali
+  { kode: 'portalwali', nama: 'Portal Wali', ikon: PhUsersFour, warna: 'portalwali', ke: '/portal-wali', grup: 'Santri', peran: ADMIN, izin: 'kelola_santri' },
+  { kode: 'jadwalpelajaran', nama: 'Jadwal Pelajaran', ikon: PhCalendarDots, warna: 'jadwal', ke: '/jadwal-pelajaran', grup: 'Santri',
     syarat: (c) => c.kelompok || Number(c.fitur?.jadwal_mengajar ?? 0) >= 1 },
   // Wali Kelas: wali kelas yang ditetapkan pada kelas, pimpinan/pemegang hak Absensi Kelas atau Jadwal mengajar, admin
   { kode: 'walikelas', nama: 'Wali Kelas', ikon: PhChalkboard, warna: 'walikelas', ke: '/wali-kelas', grup: 'Fungsional',

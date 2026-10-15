@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/auth/Masuk.vue | v1.4 | Fase 9 – Tahap 13.0.0: tautan Portal Wali | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/auth/Masuk.vue | v1.5 | Fase 9 – Perbaikan: tombol Portal Wali merah gradasi jingga | 15/10/2026 -->
 <script setup>
 // v1.2: "Ingat saya di perangkat ini". Username diingat di perangkat; kata sandi disimpan oleh PENGELOLA SANDI
 // peramban/HP (Google Password Manager, iCloud Keychain, dll.), bukan oleh aplikasi, sehingga tetap aman.
@@ -124,14 +124,19 @@ const PERAN_DEMO = [
             </button>
           </div>
         </div>
-        <router-link to="/wali" class="kartu w-pengumuman mt-6 flex items-center gap-3 p-3 hover:bg-permukaan2">
-          <span class="chip-ikon h-11 w-11"><PhUsersFour :size="24" weight="duotone" /></span>
-          <span class="min-w-0 flex-1"><span class="block font-bold">Orang tua/wali santri?</span><span class="block text-sm text-teks3">Masuk Portal Wali dengan NIS/NISN dan nomor HP terdaftar</span></span>
-          <PhCaretRight :size="20" class="shrink-0 text-teks3" />
+        <router-link to="/wali" class="tombol-wali mt-6 flex items-center gap-3 rounded-2xl p-3 text-white transition active:scale-[.99]">
+          <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/20"><PhUsersFour :size="26" weight="fill" /></span>
+          <span class="min-w-0 flex-1"><span class="block font-bold">Portal Wali Santri</span><span class="block text-sm text-white/90">Untuk orang tua/wali: masuk dengan NIS/NISN dan nomor HP terdaftar</span></span>
+          <PhCaretRight :size="22" weight="bold" class="shrink-0" />
         </router-link>
         <div class="mt-8"><PilihTema /></div>
       </div>
     </section>
   </div>
 </template>
-<style scoped>.panel-merek { background: var(--gradasi-utama); }</style>
+<style scoped>
+.panel-merek { background: var(--gradasi-utama); }
+/* Tombol Portal Wali: merah gradasi jingga (teks putih kontras ≥ 4,5:1 di sisi paling terang) */
+.tombol-wali { background: linear-gradient(120deg, #B3261E 0%, #C7332F 45%, #C2410C 100%); box-shadow: 0 10px 22px -10px rgba(199, 51, 47, .7); }
+.tombol-wali:hover { filter: brightness(1.06); }
+</style>

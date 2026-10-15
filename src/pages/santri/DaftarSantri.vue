@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.5 | Fase 9 – Tahap 13.0.0: tombol Portal Wali | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.6 | Fase 9 – Perbaikan: tombol Portal Wali dipindah ke menu Portal Wali tersendiri | 15/10/2026 -->
 <script setup>
 // Daftar santri sesuai cakupan pengguna (RLS): kartu statistik langsung, cari dan saring,
 // ekspor Excel, cetak daftar F4 berkop jenjang. v1.4: cetak kartu pelajar massal (santri aktif yang tampil, per rombel).
@@ -7,7 +7,7 @@ import { useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
 import {
   PhMagnifyingGlass, PhStudent, PhUserPlus, PhFileXls, PhDownloadSimple, PhEye, PhSlidersHorizontal, PhPrinter, PhCaretRight,
-  PhGenderMale, PhGenderFemale, PhBooks, PhGraduationCap, PhUserMinus, PhCards, PhUsersFour,
+  PhGenderMale, PhGenderFemale, PhBooks, PhGraduationCap, PhUserMinus, PhCards,
 } from '@phosphor-icons/vue'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
@@ -136,7 +136,6 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
         <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="bukaPratinjau"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau cetak</button>
         <button class="w-tatausaha tombol-garis shrink-0 px-4 text-sm" @click="opsiCetak = true"><PhSlidersHorizontal :size="20" weight="duotone" style="color: var(--c)" /> Atur dan cetak</button>
         <button v-if="bolehUbah" class="w-presensi tombol-garis shrink-0 px-4 text-sm" @click="lembarKartu = true"><PhCards :size="20" weight="duotone" style="color: var(--c)" /> Cetak kartu pelajar</button>
-        <router-link v-if="bolehImpor" to="/santri/portal-wali" class="w-pengumuman tombol-garis shrink-0 px-4 text-sm"><PhUsersFour :size="20" weight="duotone" style="color: var(--c)" /> Portal Wali</router-link>
       </div>
 
       <!-- Pencarian dan saringan -->

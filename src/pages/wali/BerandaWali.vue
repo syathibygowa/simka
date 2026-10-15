@@ -1,10 +1,10 @@
-<!-- SIMKA PRO | src/pages/wali/BerandaWali.vue | v1.1 | Fase 9 – Tahap 13.1.0 Menu dan kehadiran bulan ini | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/BerandaWali.vue | v1.2 | Fase 9 – Tahap 13.3.0 Kartu pengumuman baru | 15/10/2026 -->
 <script setup>
 // Beranda Portal Wali: sapaan, kartu identitas anak, kegiatan hari ini (kehadiran), dan pengasuh.
 // Bagian hanya tampil bila butirnya dinyalakan superadmin (server juga tidak mengirim data butir yang mati).
 import { computed } from 'vue'
 import {
-  PhStudent, PhChalkboardTeacher, PhBed, PhBookOpenText, PhTarget, PhCalendarCheck, PhUsersThree, PhCake, PhCalendarBlank, PhCaretRight,
+  PhStudent, PhChalkboardTeacher, PhBed, PhBookOpenText, PhTarget, PhCalendarCheck, PhUsersThree, PhCake, PhCalendarBlank, PhCaretRight, PhMegaphone,
 } from '@phosphor-icons/vue'
 import { usePortalWali } from '@/stores/portalWali'
 import { KODE, JENIS_ABSENSI, teksPersen } from '@/lib/absensi'
@@ -54,6 +54,13 @@ const ringkasHari = computed(() => {
         <h1 class="text-xl font-extrabold">{{ sapaWali }}</h1>
         <p class="mt-0.5 text-sm text-teks3">{{ formatHari(b.tanggal) }} · {{ formatHijriah() }}</p>
       </section>
+
+      <!-- Pengumuman baru -->
+      <button v-if="b.pengumuman_baru" type="button" class="pengumuman-baru flex w-full items-center gap-3 rounded-2xl p-4 text-left text-white" @click="emit('buka', 'pengumuman')">
+        <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/20"><PhMegaphone :size="24" weight="fill" /></span>
+        <span class="min-w-0 flex-1"><span class="block font-bold">{{ b.pengumuman_baru }} pengumuman baru dari pondok</span><span class="block text-sm text-white/90">Ketuk untuk membaca</span></span>
+        <PhCaretRight :size="22" weight="bold" />
+      </button>
 
       <!-- Identitas anak -->
       <section class="kartu w-santri overflow-hidden">
@@ -132,5 +139,6 @@ const ringkasHari = computed(() => {
 </template>
 <style scoped>
 .kepala-anak { background: var(--gradasi-utama); }
+.pengumuman-baru { background: linear-gradient(120deg, #B3261E 0%, #C7332F 45%, #C2410C 100%); }
 .lencana.kode { color: rgb(var(--teks)); background: color-mix(in srgb, var(--c) 18%, rgb(var(--permukaan))); }
 </style>

@@ -1,12 +1,13 @@
-<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.5 | Perbaikan: ceklis "Termasuk yang sudah lewat" dihapus | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.6 | Fase 9 – Tahap 13.3.0 Tab Untuk wali (pengumuman Portal Wali) | 15/10/2026 -->
 <script setup>
 // Pengumuman: semua pegawai membaca pengumuman yang ditujukan kepadanya (tanda dibaca/belum).
 // Admin, superadmin, dan pegawai yang diberi hak fitur "pengumuman" (tingkat 2+) dapat membuat,
 // mengubah, menghapus, melihat siapa yang sudah/belum membaca, dan mencetak pengumuman (F4 berkop).
 // v1.4: isi dapat ditulis tebal/miring (IsianTeksKaya; penanda gaya WhatsApp *tebal* _miring_), tampil rapi di layar dan cetakan.
+// v1.6: tab "Untuk wali" (TabPengumumanWali) bagi pengelola pengumuman dan pimpinan; ?tab=wali membuka tab ini.
 // v1.1: lampiran berkas (PDF/foto ke Drive) dan tautan (Drive, Google Form, Zoom, dll.); ekspor Excel pembaca dihapus.
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { PhMegaphone, PhPlus, PhMagnifyingGlass, PhPushPin, PhPencilSimple, PhTrash, PhPrinter, PhUsers, PhEnvelopeSimpleOpen, PhTray, PhListChecks, PhPaperclip, PhLink, PhX, PhDownloadSimple } from '@phosphor-icons/vue'
 import { usePengumuman } from '@/stores/pengumuman'
 import IsianTeksKaya from '@/components/IsianTeksKaya.vue'
@@ -26,11 +27,16 @@ import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
 import { pesanWA, halamanAplikasi } from '@/lib/wa'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
+import TabPengumumanWali from './TabPengumumanWali.vue'
+import { usePengumumanWali } from '@/stores/pengumumanWali'
+import { PhUsersFour } from '@phosphor-icons/vue'
 
 const props = defineProps({ id: String })
 const router = useRouter(); const pg = usePengumuman(); const lembaga = useLembaga(); const sesi = useSesi(); const ui = useUI()
 const kelola = computed(() => pg.bolehKelola())
-const tab = ref('saya'); const cari = ref('')
+const bolehWali = computed(() => usePengumumanWali().boleh())
+const route = useRoute()
+const tab = ref(route.query.tab === 'wali' && bolehWali.value ? 'wali' : 'saya'); const cari = ref('')
 const form = ref(null); const simpanan = ref(false); const ringkasSasaran = ref('Semua pegawai')
 const pembaca = ref(null); const saringBaca = ref('semua'); const pratinjau = ref(false)
 
@@ -107,9 +113,12 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
   <div class="w-pengumuman mx-auto max-w-3xl">
     <div class="layar-saja">
       <div class="mb-4 flex flex-wrap items-center gap-2">
-        <BilahTab v-if="kelola" :tepi="false" v-model="tab" label="Tampilan pengumuman" :tab="[{ k: 'saya', n: 'Untuk saya', ikon: PhTray, w: 'pengumuman', lencana: belum || null }, { k: 'kelola', n: 'Kelola', ikon: PhListChecks, w: 'hakakses' }]" />
-        <button v-if="kelola" class="tombol-utama ml-auto hidden lg:inline-flex" @click="baru"><PhPlus :size="20" weight="bold" /> Buat pengumuman</button>
+        <BilahTab v-if="kelola || bolehWali" :tepi="false" v-model="tab" label="Tampilan pengumuman" :tab="[{ k: 'saya', n: 'Untuk saya', ikon: PhTray, w: 'pengumuman', lencana: belum || null },
+          ...(kelola ? [{ k: 'kelola', n: 'Kelola', ikon: PhListChecks, w: 'hakakses' }] : []), ...(bolehWali ? [{ k: 'wali', n: 'Untuk wali', ikon: PhUsersFour, w: 'portalwali' }] : [])]" />
+        <button v-if="kelola && tab !== 'wali'" class="tombol-utama ml-auto hidden lg:inline-flex" @click="baru"><PhPlus :size="20" weight="bold" /> Buat pengumuman</button>
       </div>
+      <TabPengumumanWali v-if="tab === 'wali'" />
+      <template v-else>
       <div class="mb-3 flex flex-wrap items-center gap-2">
         <div class="relative min-w-[14rem] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" class="isian pl-10" placeholder="Cari judul atau isi" aria-label="Cari pengumuman" /></div>
@@ -150,6 +159,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
         <p class="mt-1 text-sm text-teks3">Pengumuman baru akan muncul di sini dan di lonceng notifikasi.</p>
       </div>
       <TombolAksi v-if="kelola" label="Buat" :ikon="PhPlus" warna="pengumuman" @klik="baru" />
+      </template>
     </div>
 
     <!-- Detail -->

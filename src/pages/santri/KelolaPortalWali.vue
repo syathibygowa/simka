@@ -1,12 +1,13 @@
-<!-- SIMKA PRO | src/pages/santri/KelolaPortalWali.vue | v1.0 | Fase 9 – Tahap 13.0.0 Fondasi Portal Wali | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/KelolaPortalWali.vue | v1.1 | Fase 9 – Menu Portal Wali tersendiri (#/portal-wali/:tab), tautan pengumuman wali | 15/10/2026 -->
 <script setup>
-// Data Santri → Portal Wali (superadmin; admin ber-izin Kelola santri).
+// Menu Portal Wali (superadmin; admin ber-izin Kelola santri). v1.1: menu tersendiri, tab di alamat #/portal-wali/:tab.
 // Tab: Ringkasan (kesiapan, tautan portal), Data belum lengkap, Sesi aktif (cabut), Percobaan gagal (buka kunci),
 // Pengaturan (buka/tutup portal, cara masuk, batas salah, BUTIR INFORMASI yang dapat dinyalakan/dimatikan; ubah hanya superadmin).
 import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   PhGauge, PhUserMinus, PhDeviceMobile, PhLockKey, PhGearSix, PhCheckCircle, PhUsers, PhSignIn, PhWarning, PhStudent, PhLink,
-  PhCopy, PhShareNetwork, PhMagnifyingGlass, PhFileXls, PhPencilSimple, PhProhibit, PhLockOpen, PhFloppyDisk, PhLockSimple, PhLockSimpleOpen, PhShieldWarning,
+  PhCopy, PhShareNetwork, PhMegaphone, PhMagnifyingGlass, PhFileXls, PhPencilSimple, PhProhibit, PhLockOpen, PhFloppyDisk, PhLockSimple, PhLockSimpleOpen, PhShieldWarning,
 } from '@phosphor-icons/vue'
 import { useKelolaPortalWali } from '@/stores/kelolaPortalWali'
 import { useSesi } from '@/stores/sesi'
@@ -19,9 +20,10 @@ import { namaBerkas } from '@/lib/namaBerkas'
 import BilahTab from '@/components/BilahTab.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 
-const kp = useKelolaPortalWali(); const sesi = useSesi(); const ui = useUI()
+const props = defineProps({ tab: { type: String, default: '' } })
+const kp = useKelolaPortalWali(); const sesi = useSesi(); const ui = useUI(); const router = useRouter()
 const boleh = computed(() => sesi.bolehAdmin('kelola_santri'))
-const tab = ref('ringkasan')
+const tab = computed({ get: () => props.tab || 'ringkasan', set: (k) => router.replace(`/portal-wali/${k}`) })
 onMounted(() => { if (boleh.value) kp.muat() })
 
 const TAB = computed(() => [
@@ -138,7 +140,11 @@ const berubah = computed(() => f.value && kp.pengaturan && JSON.stringify({ ...f
           <button v-if="bisaBagikan" class="tombol-garis text-sm" @click="bagikan"><PhShareNetwork :size="18" weight="duotone" /> Bagikan</button>
         </div>
       </div>
-      <div class="kartu w-pengumuman p-4 text-sm text-teks2 sm:p-5">
+      <router-link to="/pengumuman?tab=wali" class="kartu w-pengumuman flex items-center gap-3 p-4 hover:bg-permukaan2">
+        <span class="chip-ikon h-10 w-10"><PhMegaphone :size="22" weight="duotone" /></span>
+        <span class="min-w-0 flex-1"><span class="block font-bold">Pengumuman untuk wali</span><span class="block text-sm text-teks3">Buat dan pantau pengumuman di menu Pengumuman → tab Untuk wali.</span></span>
+      </router-link>
+      <div class="kartu w-hakakses p-4 text-sm text-teks2 sm:p-5">
         <p class="font-bold text-teks">Cara masuk wali</p>
         <p class="mt-1">{{ kp.pengaturan?.identitas === 'nisn' ? 'NISN' : 'NIS atau NISN' }} santri + tanggal lahir santri + 6 digit terakhir nomor HP ayah, ibu, atau wali yang terdaftar di Data Santri.
           Salah {{ kp.pengaturan?.maks_salah }} kali berturut-turut dikunci {{ kp.pengaturan?.kunci_menit }} menit. Masuk berlaku {{ kp.pengaturan?.lama_sesi_hari }} hari di perangkat itu,

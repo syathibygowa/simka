@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabNilaiGuru.vue | v1.0 | Fase 12 – Tahap 2 Isian nilai guru mapel | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabNilaiGuru.vue | v1.1 | Perbaikan: menu Roster menjadi Jadwal Pelajaran | 15/10/2026 -->
 <script setup>
 // Tab Nilai di menu Guru Mapel: kelas–mapel yang diampu (guru) atau semua (pengelola nilai/pimpinan) untuk satu semester,
 // beserta status periode, cara menentukan nilai, dan kemajuan pengisian (nilai rapor dan sikap). Ketuk kartu → lembar nilai.
@@ -58,7 +58,7 @@ const buka = (x) => router.push({ path: `/guru-mapel/nilai/${x.assignment_id}`, 
           </div>
         </section>
       </template>
-      <p v-if="nl.dimuat && !daftar.length" class="kartu p-6 text-center text-sm text-teks3">Belum ada kelas dan mapel yang dapat Anda nilai. Penugasan mengajar diatur di menu Roster → Penugasan.</p>
+      <p v-if="nl.dimuat && !daftar.length" class="kartu p-6 text-center text-sm text-teks3">Belum ada kelas dan mapel yang dapat Anda nilai. Penugasan mengajar diatur di menu Jadwal Pelajaran → Penugasan.</p>
       <p v-else-if="!nl.dimuat" class="kartu p-6 text-center text-sm text-teks3">Memuat…</p>
     </template>
   </div>

@@ -1,7 +1,7 @@
-<!-- SIMKA PRO | src/pages/wali/MasukWali.vue | v1.0 | Fase 9 – Tahap 13.0.0 Fondasi Portal Wali | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/MasukWali.vue | v1.1 | Fase 9 – Perbaikan: keterangan nomor HP dan tambah anak dihapus | 15/10/2026 -->
 <script setup>
 // Halaman Masuk Portal Wali (tampil bila belum ada anak tersimpan di perangkat ini).
-import { PhInfo, PhLockKey } from '@phosphor-icons/vue'
+import { PhLockKey } from '@phosphor-icons/vue'
 import { usePortalWali } from '@/stores/portalWali'
 import { formatHari, formatHijriah } from '@/lib/tanggal'
 import LogoSimka from '@/components/LogoSimka.vue'
@@ -41,13 +41,6 @@ const pw = usePortalWali()
 
         <FormMasukWali class="mt-6" @selesai="emit('selesai', $event)" />
 
-        <div class="w-pengumuman mt-6 flex gap-3 rounded-2xl border border-garis bg-permukaan p-4 text-sm">
-          <span class="chip-ikon h-9 w-9 rounded-lg"><PhInfo :size="20" weight="duotone" /></span>
-          <div class="text-teks2">
-            <p>Nomor HP harus sama dengan yang terdaftar di data santri. Bila belum terdaftar atau sudah berganti nomor, hubungi wali kelas, musyrif, atau Tata Usaha pondok.</p>
-            <p class="mt-1.5">Punya lebih dari satu anak di pondok? Setelah masuk, tekan <b class="text-teks">Tambah anak</b>.</p>
-          </div>
-        </div>
 
         <div class="mt-8"><PilihTema /></div>
         <p class="mt-6 text-center text-sm text-teks2">Pegawai pondok? <router-link to="/masuk" class="font-semibold text-merah">Masuk akun pegawai</router-link></p>

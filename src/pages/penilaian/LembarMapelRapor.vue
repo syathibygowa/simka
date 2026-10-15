@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/LembarMapelRapor.vue | v1.0 | Fase 12 – Tahap 1 Pengaturan penilaian | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/LembarMapelRapor.vue | v1.1 | Perbaikan: menu Roster menjadi Jadwal Pelajaran | 15/10/2026 -->
 <script setup>
 // Lembar tambah/ubah mapel rapor: nama di rapor, singkatan, judul kelompok, KKM/KKTP, sumber nilai (mapel ajar tunggal atau
 // gabungan berbobot, nilai UTAS tahfizh, atau diisi wali kelas), cara menentukan nilai (ikut ketentuan atau khusus mapel ini).
@@ -91,7 +91,7 @@ async function simpan() {
           <button type="button" class="tombol-garis min-h-[44px] px-3" :disabled="!tambahId" @click="tambahSumber"><PhPlus :size="18" weight="bold" /></button>
         </div>
         <p v-if="!f.sumber_mapel.length" class="mt-2 text-xs font-semibold text-merah">Belum ada sumber: nilai mapel ini belum dapat terisi otomatis.</p>
-        <p class="mt-2 flex gap-1.5 text-xs text-teks3"><PhInfo :size="14" class="mt-0.5 shrink-0" /> Daftar mapel ajar diatur di menu Roster → Mapel dan jam. Guru pengampunya dibaca dari penugasan mengajar kelas ini.</p>
+        <p class="mt-2 flex gap-1.5 text-xs text-teks3"><PhInfo :size="14" class="mt-0.5 shrink-0" /> Daftar mapel ajar diatur di menu Jadwal Pelajaran → Mapel dan jam. Guru pengampunya dibaca dari penugasan mengajar kelas ini.</p>
       </div>
 
       <div class="grid gap-3 sm:grid-cols-2">

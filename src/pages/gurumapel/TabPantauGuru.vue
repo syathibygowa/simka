@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.0 | Fase 4 – Menu Guru Mapel: pantauan pimpinan dan admin | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.1 | Perbaikan: menu Roster menjadi Jadwal Pelajaran | 15/10/2026 -->
 <script setup>
 // Pantauan guru mapel (admin, superadmin, pimpinan sesuai cakupannya):
 //   Harian  : tanggal dengan tombol sebelum/sesudah; statistik jam pelajaran (terjadwal, terlaksana, belum diisi, tidak
@@ -165,7 +165,7 @@ function ekspor() {
           <tr><th colspan="5">Jumlah</th><th>{{ totP.terjadwal }}</th><th>{{ totP.terlaksana }}</th><th>{{ totP.tidak }}</th><th>{{ totP.kosong }}</th><th class="kanan">{{ teksPersen(persenJP(totP.terlaksana, totP.terjadwal)) }}</th></tr>
         </tbody>
       </table>
-      <p class="mt-2 text-[8pt]">Berdasarkan jurnal mengajar. JP terjadwal = jam pelajaran sesuai roster pada hari sekolah (di luar libur) yang sudah lewat jamnya.</p>
+      <p class="mt-2 text-[8pt]">Berdasarkan jurnal mengajar. JP terjadwal = jam pelajaran sesuai jadwal pelajaran pada hari sekolah (di luar libur) yang sudah lewat jamnya.</p>
       <template #ttd><TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: direktur.jabatan_tertulis || 'Direktur', nama: direktur.nama || '', niy: direktur.niy }" :kanan="{ jabatan: 'Pembuat', nama: sesi.pengguna?.nama_lengkap || '', niy: sesi.pengguna?.niy }" /></template>
     </DokumenCetak>
   </div>

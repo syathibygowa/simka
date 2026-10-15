@@ -1,7 +1,9 @@
-<!-- SIMKA PRO | src/pages/wali/AkunWali.vue | v1.0 | Fase 9 – Tahap 13.0.0 Fondasi Portal Wali | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/AkunWali.vue | v1.1 | Fase 9 – Tahap 13.3.0 Sakelar notifikasi HP | 15/10/2026 -->
 <script setup>
 // Akun Portal Wali: daftar anak di perangkat ini (pindah, tambah, keluar), tema, dan keterangan privasi.
-import { PhCheckCircle, PhPlus, PhSignOut, PhShieldCheck, PhPaintBrush, PhStudent } from '@phosphor-icons/vue'
+import { onMounted, ref } from 'vue'
+import { PhCheckCircle, PhPlus, PhSignOut, PhShieldCheck, PhPaintBrush, PhStudent, PhBellRinging } from '@phosphor-icons/vue'
+import { statusWali, aktifkanWali, matikanWali, dukungan } from '@/lib/dorongWali'
 import { usePortalWali } from '@/stores/portalWali'
 import { useUI } from '@/stores/ui'
 import { HUBUNGAN_WALI } from '@/lib/portalWali'
@@ -14,6 +16,17 @@ defineOptions({ inheritAttrs: false })
 const emit = defineEmits(['tambah', 'pilih'])
 const pw = usePortalWali(); const ui = useUI()
 
+// Notifikasi HP (untuk anak yang sedang dibuka)
+const notif = ref(false); const prosesNotif = ref(false)
+const dukung = dukungan()
+onMounted(async () => { notif.value = await statusWali(pw.aktif?.token) })
+async function alihNotif() {
+  prosesNotif.value = true
+  try {
+    if (notif.value) { await matikanWali(pw.aktif.token); notif.value = false; ui.toast('Notifikasi HP untuk anak ini dimatikan.', 'sukses') }
+    else { await aktifkanWali([pw.aktif.token]); notif.value = true; ui.toast('Notifikasi HP menyala.', 'sukses') }
+  } catch (e) { ui.toast(e.message, 'galat') } finally { prosesNotif.value = false }
+}
 async function keluar(a) {
   if (!(await ui.konfirmasi({ judul: 'Keluar', pesan: `Keluar dari data ${a.nama} di perangkat ini? Untuk membukanya lagi, masuk kembali dengan NIS/NISN, tanggal lahir, dan 6 digit nomor HP.`, ya: 'Keluar', bahaya: true }))) return
   await pw.keluar(a.nis); ui.toast(`Data ${a.nama} sudah dikeluarkan dari perangkat ini.`, 'sukses')
@@ -46,6 +59,16 @@ async function keluarSemua() {
       <div class="mt-3 flex flex-wrap gap-2">
         <button type="button" class="tombol-utama" @click="emit('tambah')"><PhPlus :size="20" weight="bold" /> Tambah anak</button>
         <button v-if="pw.anak.length > 1" type="button" class="tombol-garis" @click="keluarSemua"><PhSignOut :size="20" /> Keluar semua</button>
+      </div>
+    </section>
+
+    <section class="kartu w-notifikasi p-4 sm:p-5">
+      <div class="flex items-center gap-3">
+        <span class="chip-ikon h-10 w-10"><PhBellRinging :size="22" weight="duotone" /></span>
+        <div class="min-w-0 flex-1"><h2 class="judul-bagian">Notifikasi HP</h2>
+          <p class="text-sm text-teks3">{{ dukung === 'demo' ? 'Tidak tersedia pada mode demo.' : dukung === 'tidak_didukung' ? 'Peramban ini belum mendukung notifikasi HP.' : `Pengumuman pondok untuk ${pw.aktif?.panggilan || pw.aktif?.nama || 'anak ini'} masuk ke HP ini.` }}</p></div>
+        <button type="button" role="switch" :aria-checked="notif" aria-label="Notifikasi HP" :disabled="prosesNotif || ['demo', 'tidak_didukung'].includes(dukung)" @click="alihNotif"
+          :class="['relative h-8 w-14 shrink-0 rounded-full transition disabled:opacity-50', notif ? 'bg-[#1E7D4F]' : 'bg-garis']"><span :class="['absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all', notif ? 'left-7' : 'left-1']" /></button>
       </div>
     </section>
 

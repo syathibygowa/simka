@@ -1,7 +1,7 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabJadwalGuru.vue | v1.0 | Fase 4 – Menu Guru Mapel: jadwal mengajar pekanan | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabJadwalGuru.vue | v1.1 | Perbaikan: menu Roster menjadi Jadwal Pelajaran | 15/10/2026 -->
 <script setup>
 // Jadwal mengajar pekanan seorang guru (Senin–Sabtu). Guru melihat jadwalnya sendiri; pemantau dapat memilih guru.
-// Cetak jadwal tersedia di menu Roster → Jadwal guru (kertas F4).
+// Cetak jadwal tersedia di menu Jadwal Pelajaran → Jadwal guru (kertas F4).
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { PhPrinter } from '@phosphor-icons/vue'
@@ -22,7 +22,7 @@ const jumlahJP = computed(() => jd.jadwal.filter((s) => s.employee_id === emp.va
       <div v-if="pemantau" class="min-w-[220px] flex-1 sm:max-w-sm"><label class="label-isian" for="jg-guru">Guru</label>
         <select id="jg-guru" v-model="emp" class="isian"><option v-for="g in guruList" :key="g.id" :value="g.id">{{ g.nama }}</option></select></div>
       <p class="flex-1 self-center text-sm text-teks2">{{ jumlahJP }} jam pelajaran per pekan</p>
-      <button class="tombol-garis" @click="router.push('/jadwal-pelajaran/guru')"><PhPrinter :size="20" weight="duotone" /> Cetak di Roster</button>
+      <button class="tombol-garis" @click="router.push('/jadwal-pelajaran/guru')"><PhPrinter :size="20" weight="duotone" /> Cetak di Jadwal Pelajaran</button>
     </div>
     <div class="kartu p-3">
       <GridJadwal v-if="jd.dimuat && emp" mode="guru" :employee-id="emp" />

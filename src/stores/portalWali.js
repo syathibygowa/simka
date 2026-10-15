@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/portalWali.js | v1.1 | Fase 9 – Tahap 13.1.0 Butir dimatikan memperbarui menu | 15/10/2026
+// SIMKA PRO | src/stores/portalWali.js | v1.2 | Fase 9 – Tahap 13.3.0 Tanda dibaca pengumuman wali | 15/10/2026
 // Portal Wali: sesi per anak di perangkat (beberapa anak dapat ditambahkan), masuk/keluar, dan data portal.
 // Semua data lewat fungsi SQL portal_masuk / portal_keluar / portal_data (tanpa akun pegawai).
 // Kunci sesi tidak sah/dicabut → anak itu dihapus dari perangkat dan wali diminta masuk kembali.
@@ -100,6 +100,17 @@ export const usePortalWali = defineStore('portalWali', {
         this.simpan()
       }
       return h
+    },
+
+    /** Tandai pengumuman dibaca (oleh ayah/ibu/wali yang masuk) dan kurangi hitungan di Beranda. */
+    async bacaPengumuman(id) {
+      const a = this.aktif; if (!a) return
+      const d = this.data[a.nis]
+      const p = d?.pengumuman?.pengumuman?.find((x) => x.id === id)
+      if (!p || p.dibaca_pada) return
+      p.dibaca_pada = new Date().toISOString()
+      if (d.beranda?.pengumuman_baru) d.beranda.pengumuman_baru--
+      if (!MODE_DEMO) { try { await supabase.rpc('portal_baca_pengumuman', { p_token: a.token, p_id: id }) } catch { /* dicoba lagi saat dibuka berikutnya */ } }
     },
 
     async muatBeranda() {

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.25 | Fase 9 – Tahap 13.0.0: rute Portal Wali dan Kelola Portal Wali | 15/10/2026
+// SIMKA PRO | src/router/index.js | v3.26 | Fase 9 – Perbaikan: menu Portal Wali tersendiri (#/portal-wali); Roster menjadi Jadwal Pelajaran | 15/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -34,7 +34,8 @@ const routes = [
       { path: 'santri', component: () => import('@/pages/santri/DaftarSantri.vue'), meta: { judul: 'Data Santri', cetak: true, kembali: '/tugas' } },
       { path: 'santri/baru', component: () => import('@/pages/santri/FormSantri.vue'), meta: { judul: 'Tambah Santri', kembali: '/santri' } },
       { path: 'santri/impor', component: () => import('@/pages/santri/ImporSantri.vue'), meta: { judul: 'Impor Data Santri', peran: ADMIN, kembali: '/santri' } },
-      { path: 'santri/portal-wali', component: () => import('@/pages/santri/KelolaPortalWali.vue'), meta: { judul: 'Portal Wali', peran: ADMIN, kembali: '/santri' } },
+      { path: 'santri/portal-wali', redirect: '/portal-wali' },
+      { path: 'portal-wali/:tab?', component: () => import('@/pages/santri/KelolaPortalWali.vue'), props: true, meta: { judul: 'Portal Wali', peran: ADMIN, kembali: '/tugas' } },
       { path: 'santri/:id/ubah', component: () => import('@/pages/santri/FormSantri.vue'), meta: { judul: 'Ubah Data Santri', kembali: '/santri' } },
       { path: 'santri/:id', component: () => import('@/pages/santri/DetailSantri.vue'), meta: { judul: 'Biodata Santri', cetak: true, kembali: '/santri' } },
       { path: 'absensi-santri/isi/:group/:tanggal/:sesi', component: () => import('@/pages/absensisantri/IsiAbsensi.vue'), meta: { judul: 'Isi Absensi Santri', kembali: '/absensi-santri' } },
@@ -42,7 +43,7 @@ const routes = [
       { path: 'absensi-santri/:tab?', component: () => import('@/pages/absensisantri/AbsensiSantri.vue'), props: true, meta: { judul: 'Absensi Santri', kembali: '/tugas' } },
       { path: 'statistik-santri', component: () => import('@/pages/santri/StatistikSantri.vue'), meta: { judul: 'Statistik Santri', cetak: true, kembali: '/tugas' } },
       { path: 'tahun-ajaran-baru', component: () => import('@/pages/santri/PergantianTA.vue'), meta: { judul: 'Naik Kelas', peran: ADMIN, kembali: '/tugas' } },
-      { path: 'jadwal-pelajaran/:tab?', component: () => import('@/pages/jadwal/JadwalPelajaran.vue'), props: true, meta: { judul: 'Roster', kembali: '/tugas' } },
+      { path: 'jadwal-pelajaran/:tab?', component: () => import('@/pages/jadwal/JadwalPelajaran.vue'), props: true, meta: { judul: 'Jadwal Pelajaran', kembali: '/tugas' } },
       { path: 'tahfizh/impor', component: () => import('@/pages/tahfizh/ImporHafalan.vue'), meta: { judul: 'Impor Hafalan Awal', kembali: '/tahfizh' } },
       { path: 'tahfizh/:tab?', component: () => import('@/pages/tahfizh/Tahfizh.vue'), props: true, meta: { judul: 'Tahfizh', kembali: '/tugas' } },
       { path: 'wali-kelas/:tab?', component: () => import('@/pages/walikelas/WaliKelas.vue'), props: true, meta: { judul: 'Wali Kelas', kembali: '/tugas' } },

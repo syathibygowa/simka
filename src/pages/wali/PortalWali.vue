@@ -1,11 +1,11 @@
-<!-- SIMKA PRO | src/pages/wali/PortalWali.vue | v1.2 | Fase 9 – Tahap 13.2.0 Hafalan, ujian, nilai, prestasi, keuangan | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/PortalWali.vue | v1.3 | Fase 9 – Tahap 13.3.0 Pengumuman (Info) dengan lencana belum dibaca | 15/10/2026 -->
 <script setup>
 // Kerangka Portal Wali (#/wali/:bagian). Terpisah dari tata letak pegawai.
 // HP: bilah aplikasi + navigasi bawah ala Android; desktop: kepala + bilah tab. Anak dapat lebih dari satu (pindah lewat chip anak).
 // Bagian yang tersedia mengikuti tahap pengembangan dan butir informasi yang dinyalakan superadmin.
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhHouseLine, PhUserCircle, PhCaretDown, PhArrowsClockwise, PhPlus, PhLockKey, PhCheckCircle, PhArrowLeft, PhCalendarCheck, PhDoorOpen, PhHandshake, PhPackage, PhFirstAidKit, PhBookOpenText, PhExam, PhChartBar, PhTrophy, PhWallet } from '@phosphor-icons/vue'
+import { PhHouseLine, PhUserCircle, PhCaretDown, PhArrowsClockwise, PhPlus, PhLockKey, PhCheckCircle, PhArrowLeft, PhCalendarCheck, PhDoorOpen, PhHandshake, PhPackage, PhFirstAidKit, PhBookOpenText, PhExam, PhChartBar, PhTrophy, PhWallet, PhMegaphone } from '@phosphor-icons/vue'
 import { usePortalWali } from '@/stores/portalWali'
 import { useUI } from '@/stores/ui'
 import { MODE_DEMO } from '@/lib/supabase'
@@ -25,6 +25,7 @@ import RiwayatWali from './RiwayatWali.vue'
 import HafalanWali from './HafalanWali.vue'
 import NilaiWali from './NilaiWali.vue'
 import UjianWali from './UjianWali.vue'
+import PengumumanWali from './PengumumanWali.vue'
 
 const props = defineProps({ bagian: { type: String, default: '' } })
 const router = useRouter(); const pw = usePortalWali(); const ui = useUI()
@@ -35,6 +36,7 @@ const SEMUA = [
   { k: '', n: 'Beranda', ikon: PhHouseLine, w: 'beranda', komp: BerandaWali, bawah: true },
   { k: 'kehadiran', n: 'Kehadiran', ikon: PhCalendarCheck, w: 'presensi', komp: KehadiranWali, butir: 'kehadiran', bawah: true },
   { k: 'hafalan', n: 'Hafalan', ikon: PhBookOpenText, w: 'tahfizh', komp: HafalanWali, butir: 'hafalan', bawah: true },
+  { k: 'pengumuman', n: 'Info', ikon: PhMegaphone, w: 'pengumuman', komp: PengumumanWali, butir: 'pengumuman', bawah: true },
   { k: 'ujian', n: 'Ujian tahfizh', ikon: PhExam, w: 'rapor', komp: UjianWali, butir: 'ujian' },
   { k: 'nilai', n: 'Nilai rapor', ikon: PhChartBar, w: 'penilaian', komp: NilaiWali, butir: 'nilai' },
   { k: 'prestasi', n: 'Prestasi', ikon: PhTrophy, w: 'prestasi', komp: UjianWali, butir: 'prestasi' },
@@ -52,7 +54,8 @@ const MENU = computed(() => NAV.value.filter((t) => t.k && t.k !== 'akun'))
 const segar = ref(0)
 const aktifTab = computed(() => NAV.value.find((t) => t.k === props.bagian) || NAV.value[0])
 const tabModel = computed({ get: () => aktifTab.value.k || 'beranda', set: (k) => buka(k === 'beranda' ? '' : k) })
-const tabDesktop = computed(() => NAV.value.map((t) => ({ ...t, k: t.k || 'beranda', ket: undefined })))
+const baru = computed(() => pw.beranda?.pengumuman_baru || 0)
+const tabDesktop = computed(() => NAV.value.map((t) => ({ ...t, k: t.k || 'beranda', ket: undefined, n: t.k === 'pengumuman' ? 'Pengumuman' : t.n, lencana: t.k === 'pengumuman' && baru.value ? baru.value : null })))
 const buka = (k) => { router.replace(k ? `/wali/${k}` : '/wali'); window.scrollTo({ top: 0 }) }
 
 const lembarAnak = ref(false); const lembarTambah = ref(false)
@@ -125,7 +128,8 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', segarkanB
       <ul class="relative mx-auto grid max-w-xl" :style="{ gridTemplateColumns: `repeat(${NAV_BAWAH.length}, minmax(0, 1fr))` }">
         <li v-for="t in NAV_BAWAH" :key="t.k" :class="'w-' + t.w">
           <button type="button" class="flex h-[68px] w-full flex-col items-center justify-center gap-1" :aria-current="aktifTab.k === t.k ? 'page' : undefined" @click="buka(t.k)">
-            <span :class="['pil grid h-8 w-14 place-items-center rounded-full transition', aktifTab.k === t.k && 'aktif']">
+            <span :class="['pil relative grid h-8 w-14 place-items-center rounded-full transition', aktifTab.k === t.k && 'aktif']">
+              <span v-if="t.k === 'pengumuman' && baru" class="absolute -right-0.5 -top-1 grid h-5 min-w-[1.25rem] place-items-center rounded-full bg-[#C7332F] px-1 text-[11px] font-bold text-white" :aria-label="baru + ' pengumuman baru'">{{ baru }}</span>
               <component :is="t.ikon" :size="24" :weight="aktifTab.k === t.k ? 'fill' : 'duotone'" :style="{ color: aktifTab.k === t.k ? 'var(--c)' : undefined }" :class="aktifTab.k !== t.k && 'text-teks2'" />
             </span>
             <span :class="['text-[11px] leading-none', aktifTab.k === t.k ? 'font-bold text-teks' : 'font-medium text-teks2']">{{ t.n }}</span>

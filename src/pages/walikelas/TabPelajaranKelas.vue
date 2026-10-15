@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabPelajaranKelas.vue | v1.0 | Fase 4 – Menu Wali Kelas: pelajaran di kelas | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabPelajaranKelas.vue | v1.1 | Perbaikan: menu Roster menjadi Jadwal Pelajaran | 15/10/2026 -->
 <script setup>
 // Pelajaran di satu kelas berdasarkan jurnal mengajar guru: rekap keterlaksanaan per mapel/guru, materi per tanggal,
 // dan roster (jadwal pelajaran pekanan). Wali kelas dapat memantau mapel yang kosong; cetak F4 rekap keterlaksanaan.
@@ -28,7 +28,7 @@ watch(periode, muat)
 const rekap = computed(() => rekapPenugasan(slot.value))
 const total = computed(() => rekap.value.reduce((a, r) => ({ terjadwal: a.terjadwal + r.terjadwal, terlaksana: a.terlaksana + r.terlaksana, tidak: a.tidak + r.tidak, kosong: a.kosong + r.kosong }), { terjadwal: 0, terlaksana: 0, tidak: 0, kosong: 0 }))
 const perTanggal = computed(() => { const m = {}; for (const s of slot.value) (m[s.tanggal] ||= []).push(s); return Object.entries(m).sort((a, b) => b[0].localeCompare(a[0])) })
-const TAMPILAN = [{ k: 'rekap', n: 'Per mapel', ikon: PhListChecks }, { k: 'tanggal', n: 'Per tanggal', ikon: PhCalendarDots }, { k: 'roster', n: 'Roster', ikon: PhGridFour }]
+const TAMPILAN = [{ k: 'rekap', n: 'Per mapel', ikon: PhListChecks }, { k: 'tanggal', n: 'Per tanggal', ikon: PhCalendarDots }, { k: 'roster', n: 'Jadwal pelajaran', ikon: PhGridFour }]
 const waliKelas = computed(() => wk.kelasPilih?.wali?.[0] || {})
 const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan === 'DIREKTUR' || /^direktur/i.test(s.jabatan_tertulis)) || {})
 </script>
@@ -49,10 +49,10 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
 
     <div v-if="tampilan === 'roster'" class="kartu p-3">
       <GridJadwal v-if="jd.dimuat" mode="kelas" :group-id="wk.pilih" :jenjang="wk.kelasPilih?.jenjang || 'wustha'" />
-      <p v-else class="p-6 text-center text-sm text-teks3">Memuat roster…</p>
+      <p v-else class="p-6 text-center text-sm text-teks3">Memuat jadwal pelajaran…</p>
     </div>
     <p v-else-if="memuat && !slot.length" class="kartu p-8 text-center text-sm text-teks3">Memuat jurnal mengajar…</p>
-    <p v-else-if="!slot.length" class="kartu p-8 text-center text-sm text-teks3">Belum ada jam pelajaran terjadwal untuk kelas ini pada periode tersebut. Jadwal diatur di menu Roster.</p>
+    <p v-else-if="!slot.length" class="kartu p-8 text-center text-sm text-teks3">Belum ada jam pelajaran terjadwal untuk kelas ini pada periode tersebut. Jadwal diatur di menu Jadwal Pelajaran.</p>
     <template v-else-if="tampilan === 'rekap'">
       <p class="mb-2 text-sm text-teks2">Terlaksana <b>{{ total.terlaksana }}</b> dari {{ total.terjadwal }} JP ({{ teksPersen(persenJP(total.terlaksana, total.terjadwal)) }}) · tidak terlaksana {{ total.tidak }} · belum diisi {{ total.kosong }}</p>
       <ul class="grid gap-2 md:grid-cols-2">
