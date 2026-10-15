@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoPortalWali.js | v1.1 | Fase 9 – Tahap 13.1.0 Kehadiran, perizinan, kunjungan, titipan, sakit | 15/10/2026
+// SIMKA PRO | src/lib/demoPortalWali.js | v1.2 | Fase 9 – Tahap 13.2.0 Hafalan, ujian, nilai, prestasi, keuangan | 15/10/2026
 // Data contoh Portal Wali untuk MODE DEMO (dibangun dari santri dan kelompok contoh). Semua nama fiktif.
 import { SANTRI_DEMO } from './demoSantri'
 import { dataKelompokDemo } from './demoKelompok'
@@ -87,6 +87,36 @@ export function dataDemo(nis, bagian, p = {}) {
     { jenis: 'makanan', uraian: 'Kue kering dan buah', pengirim: s.kontak[1]?.nama || s.kontak[0].nama, ekspedisi: null, status: 'di_pos', diterima_pada: jamLalu(0, 7) },
     { jenis: 'paket', uraian: 'Kitab dan alat tulis', pengirim: s.kontak[0].nama, ekspedisi: 'JNE', status: 'diambil', diterima_pada: jamLalu(6, 10), diambil_pada: jamLalu(6, 16), pengambil_jenis: 'santri', pengambil_nama: s.nama_lengkap }] }
   if (bagian === 'sakit') return { ...r, kasus: [{ dibuka_pada: jamLalu(3, 7), keluhan: 'Demam dan pusing', status: 'selesai', tindak_lanjut: 'istirahat', kontrol_pada: null, selesai_pada: jamLalu(1, 9), hasil: 'sembuh' }] }
+  if (bagian === 'hafalan') {
+    const b = Number(s.nis.slice(-3)); const awal = 40 + (b % 5) * 20
+    const setoran = []
+    for (let i = 0; i < 8; i++) setoran.push({ tanggal: jamLalu(i * 2).slice(0, 10), sesi: ['Halaqah subuh', 'Halaqah ashar'][i % 2], jam: ['05.15', '15.45'][i % 2],
+      sabaq_hal: awal + 20 - i, sabqi_hal: awal - 10, manzil_hal: 20, tambah_hal: 1, catatan: i === 1 ? 'Perbaiki mad thabi\'i pada halaman terakhir.' : null })
+    return { ...r, program: 'reguler', sabaq_hal: awal + 20, sabqi_hal: awal - 10, manzil_hal: 20, juz_sedang: 27, posisi_pada: jamLalu(0, 5), halaqah: dataKelompok(s).find((g) => g.jenis === 'halaqah')?.nama,
+      juz: [{ juz: 30, sumber: 'awal', tanggal: '2026-07-13' }, { juz: 29, sumber: 'awal', tanggal: '2026-07-13' }, { juz: 28, sumber: 'ujian', tanggal: '2026-09-21' }],
+      bulanan: [{ bulan: '2026-09-01', status: 'tercapai', tambah_hal: 22, target_hal: 20 }, { bulan: '2026-08-01', status: 'tidak_tercapai', tambah_hal: 14, target_hal: 20 }], setoran }
+  }
+  if (bagian === 'ujian') return {
+    ujian: [{ jenis: 'kenaikan', juz: [28], ujian_ke: 1, tajwid: 88, itqan: 90, nilai_akhir: 89, huruf: 'A', predikat: 'Mumtaz', hasil: 'tuntas', diuji_pada: '2026-09-20T09:00:00+08:00', penguji: 'Ust. Hasan Basri, Lc.', catatan: 'Lancar, jaga ghunnah.' }],
+    utas: [] }
+  if (bagian === 'nilai') {
+    const kelas = dataKelompok(s).find((g) => g.jenis === 'kelas')?.nama || '7A'
+    const mapel = ['Al-Qur\'an Hadis', 'Akidah Akhlak', 'Fikih', 'Bahasa Arab', 'Bahasa Indonesia', 'Matematika', 'IPA', 'Bahasa Inggris'].map((n, i) => {
+      const v = 72 + ((Number(s.nis.slice(-2)) * 7 + i * 11) % 26)
+      return { urutan: i + 1, kelompok: i < 4 ? 'Kelompok A (Kepesantrenan)' : 'Kelompok B (Umum)', nama: n, kkm: 75, nilai: v, keterampilan: v, predikat: v >= 90 ? 'A' : v >= 80 ? 'B' : v >= 75 ? 'C' : 'D', tuntas: v >= 75, deskripsi: v >= 80 ? 'Menunjukkan penguasaan yang baik pada seluruh kompetensi.' : 'Perlu bimbingan pada beberapa kompetensi.' }
+    })
+    return { pilihan: [{ group: 'g', semester: 1, kelas, ta: '2026/2027', jenjang: s.jenjang }], group: 'g', semester: 1, kelas, jenjang: s.jenjang, tingkat: s.tingkat, ta: '2026/2027', tanggal_rapor: '2026-12-19', label_ambang: 'KKM',
+      mapel, kehadiran: { hari: 96, hadir: 92, sakit: 2, izin: 2, absen: 0 }, pd: [{ kegiatan: 'Panahan', nilai: 'B', deskripsi: 'Aktif dan disiplin berlatih.' }],
+      catatan: `${s.nama_panggilan} santun, rajin murajaah, dan aktif bertanya di kelas. Tingkatkan ketelitian dalam berhitung.`, keputusan: null }
+  }
+  if (bagian === 'prestasi') return { prestasi: [{ tanggal: '2026-09-20', bidang: 'tahfizh', tingkat: 'kabupaten', nama_kegiatan: 'MHQ 3 Juz Kabupaten Gowa', capaian: 'Juara 2', penyelenggara: 'LPTQ Kab. Gowa' }] }
+  if (bagian === 'keuangan') return {
+    ringkas: { tagihan: 1500000, dibayar: 500000, sisa: 1000000, tunggakan: 500000, jumlah_tunggak: 1 },
+    tagihan: [{ nama: 'SPP Oktober 2026', jatuh_tempo: '2026-10-10', nominal: 500000, dibayar: 0, status: 'belum', potongan: 0, lewat: true },
+      { nama: 'SPP November 2026', jatuh_tempo: '2026-11-10', nominal: 500000, dibayar: 0, status: 'belum', potongan: 0, lewat: false },
+      { nama: 'SPP September 2026', jatuh_tempo: '2026-09-10', nominal: 500000, dibayar: 500000, status: 'lunas', potongan: 0, lewat: false }],
+    pembayaran: [{ tanggal: '2026-09-08', nomor: 'KW.0012/X/1448', jumlah: 500000, cara: 'transfer', riwayat: false }],
+    rekening: [{ bank: 'BSI', nomor: '7123456789', atas_nama: 'PPS Imam Asy-Syathiby' }] }
   if (bagian !== 'beranda') return { galat: 'Bagian ini belum tersedia pada mode demo.' }
   const kel = dataKelompok(s)
   const nama = (j) => kel.filter((g) => g.jenis === j).map((g) => g.nama).join(', ') || null

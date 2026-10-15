@@ -5,6 +5,7 @@ import {
   PhIdentificationCard, PhUsersThree, PhCalendarCheck, PhDoorOpen, PhHandshake, PhPackage, PhFirstAidKit,
   PhBookOpenText, PhExam, PhChartBar, PhTrophy, PhFileText, PhWallet, PhMegaphone,
 } from '@phosphor-icons/vue'
+import { hariIniISO } from './tanggal'
 
 /** Butir informasi. sensitif: bawaan nonaktif dan diberi tanda. tahap: versi yang menampilkannya di portal. */
 export const BUTIR_PORTAL = [
@@ -29,6 +30,9 @@ export const sudahTersedia = (b, versi) => {
   const [a1, a2] = String(versi).split('.').map(Number); const [b1, b2] = String(b.tahap).split('.').map(Number)
   return a1 > b1 || (a1 === b1 && a2 >= b2)
 }
+
+/** Periode bawaan Portal Wali: awal bulan ini s.d. hari ini (yyyy-mm-dd). */
+export const periodeBulanIni = () => { const h = hariIniISO(); return { mulai: `${h.slice(0, 8)}01`, selesai: h } }
 
 export const HUBUNGAN_WALI = { ayah: 'Ayah', ibu: 'Ibu', wali: 'Wali' }
 

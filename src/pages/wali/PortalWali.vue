@@ -1,11 +1,11 @@
-<!-- SIMKA PRO | src/pages/wali/PortalWali.vue | v1.1 | Fase 9 – Tahap 13.1.0 Kehadiran, perizinan, kunjungan, titipan, riwayat sakit | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/PortalWali.vue | v1.2 | Fase 9 – Tahap 13.2.0 Hafalan, ujian, nilai, prestasi, keuangan | 15/10/2026 -->
 <script setup>
 // Kerangka Portal Wali (#/wali/:bagian). Terpisah dari tata letak pegawai.
 // HP: bilah aplikasi + navigasi bawah ala Android; desktop: kepala + bilah tab. Anak dapat lebih dari satu (pindah lewat chip anak).
 // Bagian yang tersedia mengikuti tahap pengembangan dan butir informasi yang dinyalakan superadmin.
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhHouseLine, PhUserCircle, PhCaretDown, PhArrowsClockwise, PhPlus, PhLockKey, PhCheckCircle, PhArrowLeft, PhCalendarCheck, PhDoorOpen, PhHandshake, PhPackage, PhFirstAidKit } from '@phosphor-icons/vue'
+import { PhHouseLine, PhUserCircle, PhCaretDown, PhArrowsClockwise, PhPlus, PhLockKey, PhCheckCircle, PhArrowLeft, PhCalendarCheck, PhDoorOpen, PhHandshake, PhPackage, PhFirstAidKit, PhBookOpenText, PhExam, PhChartBar, PhTrophy, PhWallet } from '@phosphor-icons/vue'
 import { usePortalWali } from '@/stores/portalWali'
 import { useUI } from '@/stores/ui'
 import { MODE_DEMO } from '@/lib/supabase'
@@ -22,6 +22,9 @@ import BerandaWali from './BerandaWali.vue'
 import AkunWali from './AkunWali.vue'
 import KehadiranWali from './KehadiranWali.vue'
 import RiwayatWali from './RiwayatWali.vue'
+import HafalanWali from './HafalanWali.vue'
+import NilaiWali from './NilaiWali.vue'
+import UjianWali from './UjianWali.vue'
 
 const props = defineProps({ bagian: { type: String, default: '' } })
 const router = useRouter(); const pw = usePortalWali(); const ui = useUI()
@@ -31,10 +34,15 @@ const router = useRouter(); const pw = usePortalWali(); const ui = useUI()
 const SEMUA = [
   { k: '', n: 'Beranda', ikon: PhHouseLine, w: 'beranda', komp: BerandaWali, bawah: true },
   { k: 'kehadiran', n: 'Kehadiran', ikon: PhCalendarCheck, w: 'presensi', komp: KehadiranWali, butir: 'kehadiran', bawah: true },
+  { k: 'hafalan', n: 'Hafalan', ikon: PhBookOpenText, w: 'tahfizh', komp: HafalanWali, butir: 'hafalan', bawah: true },
+  { k: 'ujian', n: 'Ujian tahfizh', ikon: PhExam, w: 'rapor', komp: UjianWali, butir: 'ujian' },
+  { k: 'nilai', n: 'Nilai rapor', ikon: PhChartBar, w: 'penilaian', komp: NilaiWali, butir: 'nilai' },
+  { k: 'prestasi', n: 'Prestasi', ikon: PhTrophy, w: 'prestasi', komp: UjianWali, butir: 'prestasi' },
   { k: 'perizinan', n: 'Perizinan', ikon: PhDoorOpen, w: 'pengajuan', komp: RiwayatWali, butir: 'perizinan', ket: 'Izin keluar, pulang, dan libur' },
   { k: 'kunjungan', n: 'Kunjungan', ikon: PhHandshake, w: 'security', komp: RiwayatWali, butir: 'kunjungan', ket: 'Kunjungan orang tua/wali' },
   { k: 'titipan', n: 'Titipan', ikon: PhPackage, w: 'tugas', komp: RiwayatWali, butir: 'titipan', ket: 'Titipan di pos Security' },
   { k: 'sakit', n: 'Riwayat sakit', ikon: PhFirstAidKit, w: 'klinik', komp: RiwayatWali, butir: 'sakit', ket: 'Ringkasan dari Klinik' },
+  { k: 'keuangan', n: 'Keuangan', ikon: PhWallet, w: 'keuangan', komp: UjianWali, butir: 'keuangan' },
   { k: 'akun', n: 'Akun', ikon: PhUserCircle, w: 'profil', komp: AkunWali, bawah: true },
 ]
 const NAV = computed(() => SEMUA.filter((t) => !t.butir || pw.butir[t.butir]))
