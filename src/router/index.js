@@ -1,9 +1,10 @@
-// SIMKA PRO | src/router/index.js | v3.24 | Tahap C: rute Prestasi Santri | 16/10/2026
+// SIMKA PRO | src/router/index.js | v3.25 | Fase 9 – Tahap 13.0.0: rute Portal Wali dan Kelola Portal Wali | 15/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useSesi } from '@/stores/sesi'
 import TataLetakAplikasi from '@/layouts/TataLetakAplikasi.vue'
+import { adaSesiWali } from '@/lib/portalWali'
 
 const ADMIN = ['admin', 'superadmin']
 const routes = [
@@ -12,6 +13,7 @@ const routes = [
   { path: '/lupa-sandi', component: () => import('@/pages/auth/LupaSandi.vue'), meta: { publik: true, judul: 'Lupa kata sandi' } },
   { path: '/cek-kartu/:kode?', component: () => import('@/pages/kartu/VerifikasiKartu.vue'), props: true, meta: { publik: true, bebas: true, judul: 'Verifikasi kartu pegawai' } },
   { path: '/atur-sandi', component: () => import('@/pages/auth/AturSandi.vue'), meta: { publik: true, bebas: true, judul: 'Atur kata sandi' } },
+  { path: '/wali/:bagian?', component: () => import('@/pages/wali/PortalWali.vue'), props: true, meta: { publik: true, bebas: true, judul: 'Portal Wali' } },
   { path: '/cek/:kode?', component: () => import('@/pages/cek/CekDokumen.vue'), props: true, meta: { publik: true, bebas: true, judul: 'Cek Keabsahan Dokumen' } },
   { path: '/pantauan', component: () => import('@/pages/pantauan/Pantauan.vue'), meta: { judul: 'Layar Pantauan' } },
   { path: '/ganti-sandi', component: () => import('@/pages/auth/GantiSandi.vue'), meta: { judul: 'Ganti kata sandi' } },
@@ -32,6 +34,7 @@ const routes = [
       { path: 'santri', component: () => import('@/pages/santri/DaftarSantri.vue'), meta: { judul: 'Data Santri', cetak: true, kembali: '/tugas' } },
       { path: 'santri/baru', component: () => import('@/pages/santri/FormSantri.vue'), meta: { judul: 'Tambah Santri', kembali: '/santri' } },
       { path: 'santri/impor', component: () => import('@/pages/santri/ImporSantri.vue'), meta: { judul: 'Impor Data Santri', peran: ADMIN, kembali: '/santri' } },
+      { path: 'santri/portal-wali', component: () => import('@/pages/santri/KelolaPortalWali.vue'), meta: { judul: 'Portal Wali', peran: ADMIN, kembali: '/santri' } },
       { path: 'santri/:id/ubah', component: () => import('@/pages/santri/FormSantri.vue'), meta: { judul: 'Ubah Data Santri', kembali: '/santri' } },
       { path: 'santri/:id', component: () => import('@/pages/santri/DetailSantri.vue'), meta: { judul: 'Biodata Santri', cetak: true, kembali: '/santri' } },
       { path: 'absensi-santri/isi/:group/:tanggal/:sesi', component: () => import('@/pages/absensisantri/IsiAbsensi.vue'), meta: { judul: 'Isi Absensi Santri', kembali: '/absensi-santri' } },
@@ -96,6 +99,8 @@ router.beforeEach(async (to) => {
   const sesi = useSesi()
   if (!sesi.siap) await sesi.mulai()
   if (to.meta.publik) return sesi.masuk && !to.meta.bebas ? (to.query.lanjut || '/') : true
+  // Perangkat wali (ada sesi Portal Wali, tanpa akun pegawai): aplikasi terpasang langsung membuka Portal Wali
+  if (!sesi.masuk && to.path === '/' && adaSesiWali()) return '/wali'
   if (!sesi.masuk) return { path: '/masuk', query: to.fullPath !== '/' ? { lanjut: to.fullPath } : {} }
   // Akun dengan sandi sementara wajib mengganti sandi lebih dulu
   if (sesi.wajibGantiSandi && to.path !== '/ganti-sandi') return '/ganti-sandi'

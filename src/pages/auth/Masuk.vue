@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/auth/Masuk.vue | v1.3 | Fase 8 – Perbaikan: catatan Ingat saya dihapus (hemat ruang) | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/auth/Masuk.vue | v1.4 | Fase 9 – Tahap 13.0.0: tautan Portal Wali | 15/10/2026 -->
 <script setup>
 // v1.2: "Ingat saya di perangkat ini". Username diingat di perangkat; kata sandi disimpan oleh PENGELOLA SANDI
 // peramban/HP (Google Password Manager, iCloud Keychain, dll.), bukan oleh aplikasi, sehingga tetap aman.
@@ -6,7 +6,7 @@
 // API; Safari/iPhone lewat saran isi otomatis keyboard) → pengguna cukup menekan Masuk.
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { PhUser, PhLockKey, PhEye, PhEyeSlash, PhCrown, PhUserGear, PhIdentificationBadge } from '@phosphor-icons/vue'
+import { PhUser, PhLockKey, PhEye, PhEyeSlash, PhCrown, PhUserGear, PhIdentificationBadge, PhUsersFour, PhCaretRight } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import { MODE_DEMO } from '@/lib/supabase'
 import { formatHari, formatHijriah } from '@/lib/tanggal'
@@ -124,6 +124,11 @@ const PERAN_DEMO = [
             </button>
           </div>
         </div>
+        <router-link to="/wali" class="kartu w-pengumuman mt-6 flex items-center gap-3 p-3 hover:bg-permukaan2">
+          <span class="chip-ikon h-11 w-11"><PhUsersFour :size="24" weight="duotone" /></span>
+          <span class="min-w-0 flex-1"><span class="block font-bold">Orang tua/wali santri?</span><span class="block text-sm text-teks3">Masuk Portal Wali dengan NIS/NISN dan nomor HP terdaftar</span></span>
+          <PhCaretRight :size="20" class="shrink-0 text-teks3" />
+        </router-link>
         <div class="mt-8"><PilihTema /></div>
       </div>
     </section>
