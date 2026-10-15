@@ -1,11 +1,11 @@
-<!-- SIMKA PRO | src/pages/wali/PortalWali.vue | v1.0 | Fase 9 – Tahap 13.0.0 Fondasi Portal Wali | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/PortalWali.vue | v1.1 | Fase 9 – Tahap 13.1.0 Kehadiran, perizinan, kunjungan, titipan, riwayat sakit | 15/10/2026 -->
 <script setup>
 // Kerangka Portal Wali (#/wali/:bagian). Terpisah dari tata letak pegawai.
 // HP: bilah aplikasi + navigasi bawah ala Android; desktop: kepala + bilah tab. Anak dapat lebih dari satu (pindah lewat chip anak).
 // Bagian yang tersedia mengikuti tahap pengembangan dan butir informasi yang dinyalakan superadmin.
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhHouseLine, PhUserCircle, PhCaretDown, PhArrowsClockwise, PhPlus, PhLockKey, PhCheckCircle } from '@phosphor-icons/vue'
+import { PhHouseLine, PhUserCircle, PhCaretDown, PhArrowsClockwise, PhPlus, PhLockKey, PhCheckCircle, PhArrowLeft, PhCalendarCheck, PhDoorOpen, PhHandshake, PhPackage, PhFirstAidKit } from '@phosphor-icons/vue'
 import { usePortalWali } from '@/stores/portalWali'
 import { useUI } from '@/stores/ui'
 import { MODE_DEMO } from '@/lib/supabase'
@@ -20,24 +20,38 @@ import MasukWali from './MasukWali.vue'
 import FormMasukWali from './FormMasukWali.vue'
 import BerandaWali from './BerandaWali.vue'
 import AkunWali from './AkunWali.vue'
+import KehadiranWali from './KehadiranWali.vue'
+import RiwayatWali from './RiwayatWali.vue'
 
 const props = defineProps({ bagian: { type: String, default: '' } })
 const router = useRouter(); const pw = usePortalWali(); const ui = useUI()
 
-// Bagian portal. butir = butir informasi yang harus aktif (kosong = selalu tampil).
+// Bagian portal. butir = butir informasi yang harus aktif (kosong = selalu tampil); bawah = tampil di navigasi bawah HP.
+// Bagian lain dibuka dari Menu di Beranda (HP) atau bilah tab (desktop).
 const SEMUA = [
-  { k: '', n: 'Beranda', ikon: PhHouseLine, w: 'beranda', komp: BerandaWali },
-  { k: 'akun', n: 'Akun', ikon: PhUserCircle, w: 'profil', komp: AkunWali },
+  { k: '', n: 'Beranda', ikon: PhHouseLine, w: 'beranda', komp: BerandaWali, bawah: true },
+  { k: 'kehadiran', n: 'Kehadiran', ikon: PhCalendarCheck, w: 'presensi', komp: KehadiranWali, butir: 'kehadiran', bawah: true },
+  { k: 'perizinan', n: 'Perizinan', ikon: PhDoorOpen, w: 'pengajuan', komp: RiwayatWali, butir: 'perizinan', ket: 'Izin keluar, pulang, dan libur' },
+  { k: 'kunjungan', n: 'Kunjungan', ikon: PhHandshake, w: 'security', komp: RiwayatWali, butir: 'kunjungan', ket: 'Kunjungan orang tua/wali' },
+  { k: 'titipan', n: 'Titipan', ikon: PhPackage, w: 'tugas', komp: RiwayatWali, butir: 'titipan', ket: 'Titipan di pos Security' },
+  { k: 'sakit', n: 'Riwayat sakit', ikon: PhFirstAidKit, w: 'klinik', komp: RiwayatWali, butir: 'sakit', ket: 'Ringkasan dari Klinik' },
+  { k: 'akun', n: 'Akun', ikon: PhUserCircle, w: 'profil', komp: AkunWali, bawah: true },
 ]
 const NAV = computed(() => SEMUA.filter((t) => !t.butir || pw.butir[t.butir]))
+const NAV_BAWAH = computed(() => NAV.value.filter((t) => t.bawah))
+/** Menu di Beranda: semua bagian selain Beranda dan Akun. */
+const MENU = computed(() => NAV.value.filter((t) => t.k && t.k !== 'akun'))
+const segar = ref(0)
 const aktifTab = computed(() => NAV.value.find((t) => t.k === props.bagian) || NAV.value[0])
 const tabModel = computed({ get: () => aktifTab.value.k || 'beranda', set: (k) => buka(k === 'beranda' ? '' : k) })
-const tabDesktop = computed(() => NAV.value.map((t) => ({ ...t, k: t.k || 'beranda' })))
+const tabDesktop = computed(() => NAV.value.map((t) => ({ ...t, k: t.k || 'beranda', ket: undefined })))
 const buka = (k) => { router.replace(k ? `/wali/${k}` : '/wali'); window.scrollTo({ top: 0 }) }
 
 const lembarAnak = ref(false); const lembarTambah = ref(false)
 let terakhirMuat = 0
 async function muat() { terakhirMuat = Date.now(); await pw.muatBeranda() }
+/** Tombol segarkan: beranda dimuat ulang dan bagian yang sedang dibuka dipasang ulang (memuat datanya lagi). */
+async function segarkan() { segar.value++; await muat() }
 function pilih(nis) { pw.pilih(nis); lembarAnak.value = false; buka('') }
 function tambahSelesai(a) {
   lembarTambah.value = false; lembarAnak.value = false
@@ -73,7 +87,7 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', segarkanB
             <span class="block text-xs text-white/85">{{ pw.aktif.kelas ? 'Kelas ' + pw.aktif.kelas : 'NIS ' + pw.aktif.nis }}</span></span>
           <PhCaretDown :size="16" weight="bold" class="shrink-0" />
         </button>
-        <button type="button" class="tombol-ikon h-11 w-11 shrink-0 text-white hover:bg-white/15 sm:ml-auto" :disabled="pw.memuat" aria-label="Segarkan data" @click="muat">
+        <button type="button" class="tombol-ikon h-11 w-11 shrink-0 text-white hover:bg-white/15 sm:ml-auto" :disabled="pw.memuat" aria-label="Segarkan data" @click="segarkan">
           <PhArrowsClockwise :size="22" :class="pw.memuat && 'animate-spin'" />
         </button>
       </div>
@@ -85,14 +99,23 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', segarkanB
         <span class="chip-ikon h-10 w-10"><PhLockKey :size="22" weight="duotone" /></span>
         <p class="text-sm font-semibold">{{ pw.tutup }}</p>
       </div>
-      <component :is="aktifTab.komp" v-else @tambah="lembarTambah = true" @pilih="pilih" />
+      <template v-else>
+        <!-- Judul bagian (HP) untuk bagian yang tidak ada di navigasi bawah -->
+        <div v-if="!aktifTab.bawah" :class="['mb-3 flex items-center gap-2 lg:hidden', 'w-' + aktifTab.w]">
+          <button type="button" class="tombol-ikon h-11 w-11 -ml-2" aria-label="Kembali ke Beranda" @click="buka('')"><PhArrowLeft :size="24" /></button>
+          <span class="chip-ikon h-9 w-9 rounded-lg"><component :is="aktifTab.ikon" :size="20" weight="duotone" /></span>
+          <h1 class="text-lg font-bold">{{ aktifTab.n }}</h1>
+        </div>
+        <component :is="aktifTab.komp" :key="aktifTab.k + pw.aktif.nis + segar" :bagian="aktifTab.k" :menu="MENU"
+          @tambah="lembarTambah = true" @pilih="pilih" @buka="buka" />
+      </template>
     </main>
 
     <!-- Navigasi bawah (HP) -->
     <nav class="layar-saja fixed inset-x-0 bottom-0 z-30 lg:hidden" style="padding-bottom: env(safe-area-inset-bottom)" aria-label="Menu Portal Wali">
       <div class="absolute inset-0 border-t border-garis bg-permukaan/95 backdrop-blur" aria-hidden="true" />
-      <ul class="relative mx-auto grid max-w-xl" :style="{ gridTemplateColumns: `repeat(${NAV.length}, minmax(0, 1fr))` }">
-        <li v-for="t in NAV" :key="t.k" :class="'w-' + t.w">
+      <ul class="relative mx-auto grid max-w-xl" :style="{ gridTemplateColumns: `repeat(${NAV_BAWAH.length}, minmax(0, 1fr))` }">
+        <li v-for="t in NAV_BAWAH" :key="t.k" :class="'w-' + t.w">
           <button type="button" class="flex h-[68px] w-full flex-col items-center justify-center gap-1" :aria-current="aktifTab.k === t.k ? 'page' : undefined" @click="buka(t.k)">
             <span :class="['pil grid h-8 w-14 place-items-center rounded-full transition', aktifTab.k === t.k && 'aktif']">
               <component :is="t.ikon" :size="24" :weight="aktifTab.k === t.k ? 'fill' : 'duotone'" :style="{ color: aktifTab.k === t.k ? 'var(--c)' : undefined }" :class="aktifTab.k !== t.k && 'text-teks2'" />

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/portalWali.js | v1.0 | Fase 9 – Tahap 13.0.0 Fondasi Portal Wali | 15/10/2026
+// SIMKA PRO | src/stores/portalWali.js | v1.1 | Fase 9 – Tahap 13.1.0 Butir dimatikan memperbarui menu | 15/10/2026
 // Portal Wali: sesi per anak di perangkat (beberapa anak dapat ditambahkan), masuk/keluar, dan data portal.
 // Semua data lewat fungsi SQL portal_masuk / portal_keluar / portal_data (tanpa akun pegawai).
 // Kunci sesi tidak sah/dicabut → anak itu dihapus dari perangkat dan wali diminta masuk kembali.
@@ -91,6 +91,8 @@ export const usePortalWali = defineStore('portalWali', {
       if (h?.tutup) { this.tutup = h.pesan || PENGATURAN_BAWAAN.pesan_tutup; return null }
       this.tutup = ''
       if (h?.galat) throw new Error(h.galat)
+      // Butir dimatikan superadmin sesudah beranda dimuat: perbarui daftar butir agar menunya ikut hilang
+      if (h?.nonaktif && h.butir && this.data[a.nis]?.beranda) this.data[a.nis].beranda.butir = h.butir
       this.data[a.nis] = { ...(this.data[a.nis] || {}), [bagian]: h }
       // Perbarui ringkasan anak di perangkat (kelas dapat berubah saat naik kelas)
       if (bagian === 'beranda' && h?.santri) {

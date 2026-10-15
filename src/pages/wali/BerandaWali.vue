@@ -1,17 +1,20 @@
-<!-- SIMKA PRO | src/pages/wali/BerandaWali.vue | v1.0 | Fase 9 – Tahap 13.0.0 Fondasi Portal Wali | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/BerandaWali.vue | v1.1 | Fase 9 – Tahap 13.1.0 Menu dan kehadiran bulan ini | 15/10/2026 -->
 <script setup>
 // Beranda Portal Wali: sapaan, kartu identitas anak, kegiatan hari ini (kehadiran), dan pengasuh.
 // Bagian hanya tampil bila butirnya dinyalakan superadmin (server juga tidak mengirim data butir yang mati).
 import { computed } from 'vue'
 import {
-  PhStudent, PhChalkboardTeacher, PhBed, PhBookOpenText, PhTarget, PhCalendarCheck, PhUsersThree, PhCake, PhCalendarBlank,
+  PhStudent, PhChalkboardTeacher, PhBed, PhBookOpenText, PhTarget, PhCalendarCheck, PhUsersThree, PhCake, PhCalendarBlank, PhCaretRight,
 } from '@phosphor-icons/vue'
 import { usePortalWali } from '@/stores/portalWali'
-import { KODE, JENIS_ABSENSI } from '@/lib/absensi'
+import { KODE, JENIS_ABSENSI, teksPersen } from '@/lib/absensi'
 import { HUBUNGAN_WALI } from '@/lib/portalWali'
 import { formatHari, formatPanjang, formatHijriah, salamWaktu } from '@/lib/tanggal'
 import { inisial } from '@/lib/santri'
 
+defineOptions({ inheritAttrs: false })
+defineProps({ menu: { type: Array, default: () => [] } })
+const emit = defineEmits(['buka'])
 const pw = usePortalWali()
 const b = computed(() => pw.beranda)
 const s = computed(() => b.value?.santri || {})
@@ -76,12 +79,25 @@ const ringkasHari = computed(() => {
         </div>
       </section>
 
+      <!-- Menu -->
+      <section v-if="menu.length" class="grid grid-cols-4 gap-2 sm:grid-cols-5 lg:hidden" aria-label="Menu Portal Wali">
+        <button v-for="m in menu" :key="m.k" type="button" :class="['flex flex-col items-center gap-1.5 rounded-2xl p-2 text-center', 'w-' + m.w]" @click="emit('buka', m.k)">
+          <span class="chip-ikon h-12 w-12 rounded-2xl"><component :is="m.ikon" :size="26" weight="duotone" /></span>
+          <span class="text-xs font-semibold leading-tight">{{ m.n }}</span>
+        </button>
+      </section>
+
       <!-- Kegiatan hari ini -->
       <section v-if="pw.butir.kehadiran" class="kartu w-presensi p-4 sm:p-5">
         <div class="flex items-center gap-3">
           <span class="chip-ikon h-10 w-10"><PhCalendarCheck :size="22" weight="duotone" /></span>
           <div class="flex-1"><h2 class="judul-bagian">Kehadiran hari ini</h2>
             <p class="text-sm text-teks3">{{ ringkasHari || 'Belum ada absensi yang diisi pengasuh hari ini.' }}</p></div>
+          <button v-if="b.bulan_ini?.sesi" type="button" class="flex min-h-[44px] items-center gap-1 rounded-xl px-2 text-right hover:bg-permukaan2" @click="emit('buka', 'kehadiran')">
+            <span><span class="block text-lg font-extrabold leading-tight tabular-nums">{{ teksPersen(b.bulan_ini.persen) }}</span>
+              <span class="block text-xs text-teks3">bulan ini</span></span>
+            <PhCaretRight :size="18" class="text-teks3" />
+          </button>
         </div>
         <ul v-if="hariIni.length" class="mt-3 divide-y divide-garis/70">
           <li v-for="(x, i) in hariIni" :key="i" class="flex items-center gap-3 py-2.5">

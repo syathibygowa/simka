@@ -10,6 +10,7 @@ import { inisial } from '@/lib/santri'
 import { VERSI_APLIKASI } from '@/lib/versi'
 import PilihTema from '@/components/PilihTema.vue'
 
+defineOptions({ inheritAttrs: false })
 const emit = defineEmits(['tambah', 'pilih'])
 const pw = usePortalWali(); const ui = useUI()
 

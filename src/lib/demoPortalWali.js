@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoPortalWali.js | v1.0 | Fase 9 – Tahap 13.0.0 Fondasi Portal Wali | 15/10/2026
+// SIMKA PRO | src/lib/demoPortalWali.js | v1.1 | Fase 9 – Tahap 13.1.0 Kehadiran, perizinan, kunjungan, titipan, sakit | 15/10/2026
 // Data contoh Portal Wali untuk MODE DEMO (dibangun dari santri dan kelompok contoh). Semua nama fiktif.
 import { SANTRI_DEMO } from './demoSantri'
 import { dataKelompokDemo } from './demoKelompok'
@@ -34,9 +34,59 @@ function dataKelompok(s) {
   return d.anggota.filter((a) => a.student_id === s.id && !a.selesai).map((a) => d.kelompok.find((g) => g.id === a.group_id)).filter(Boolean)
 }
 
-export function dataDemo(nis, bagian) {
+// ---------- Kehadiran contoh (deterministik per santri dan tanggal) ----------
+const acak = (n) => { const x = Math.sin(n) * 10000; return x - Math.floor(x) }
+const isoTgl = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+function sesiDemo(s, mulai, selesai) {
+  const kel = dataKelompok(s); const nama = (j) => kel.find((g) => g.jenis === j)?.nama
+  const hasil = []; const akhir = new Date(selesai + 'T00:00:00'); const benih = Number(s.nis.slice(-3))
+  for (let d = new Date(mulai + 'T00:00:00'); d <= akhir; d.setDate(d.getDate() + 1)) {
+    const t = isoTgl(d); const hari = d.getDay(); const n = benih * 97 + d.getDate() + d.getMonth() * 31
+    const kode = (i) => { const r = acak(n + i); return r < 0.84 ? 'H' : r < 0.9 ? 'T' : r < 0.94 ? 'I' : r < 0.97 ? 'S' : r < 0.99 ? 'B' : 'A' }
+    const daftar = [['asrama', nama('kamar'), 'Asrama pagi', '04.30'], ['asrama', nama('kamar'), 'Asrama malam', '21.00']]
+    if (hari !== 0) daftar.push(['halaqah', nama('halaqah'), 'Halaqah subuh', '05.15'], ['halaqah', nama('halaqah'), 'Halaqah ashar', '15.45'], ['halaqah', nama('halaqah'), 'Halaqah maghrib', '18.15'])
+    if (hari !== 0 && nama('kelas')) daftar.push(['kelas', nama('kelas'), 'Absensi kelas', '07.30'])
+    if ([2, 4].includes(hari) && nama('ekskul')) daftar.push(['ekskul', nama('ekskul'), 'Latihan ekskul', '16.00'])
+    daftar.filter((x) => x[1]).forEach((x, i) => {
+      const k = kode(i)
+      hasil.push({ t, j: x[0], g: x[1], s: x[2], jam: x[3], k, ket: k === 'I' ? 'Acara keluarga' : k === 'T' ? 'Terlambat bangun' : null })
+    })
+  }
+  return hasil.sort((a, b) => (a.t < b.t ? 1 : a.t > b.t ? -1 : a.jam.localeCompare(b.jam)))
+}
+function rekapDemo(sesi) {
+  const kosong = () => ({ sesi: 0, hadir: 0, izin: 0, sakit: 0, bolos: 0, absen: 0, terlambat: 0 })
+  const r = { pokok: kosong() }
+  for (const x of sesi) {
+    const target = [r[x.j] ||= kosong(), ...(x.j !== 'ekskul' ? [r.pokok] : [])]
+    for (const o of target) {
+      o.sesi++; if (!['I', 'S', 'A'].includes(x.k)) o.hadir++
+      if (x.k === 'I') o.izin++; if (x.k === 'S') o.sakit++; if (x.k === 'B') o.bolos++; if (x.k === 'A') o.absen++; if (x.k === 'T') o.terlambat++
+    }
+  }
+  for (const o of Object.values(r)) o.persen = o.sesi ? Math.round((o.hadir * 1000) / o.sesi) / 10 : null
+  return r
+}
+function rentangDemo(p = {}) {
+  const hari = hariIniISO(); const selesai = p.selesai && p.selesai < hari ? p.selesai : hari
+  return { mulai: p.mulai || `${selesai.slice(0, 8)}01`, selesai }
+}
+const jamLalu = (hari, jam = 8) => { const d = new Date(); d.setDate(d.getDate() - hari); d.setHours(jam, 15, 0, 0); return d.toISOString() }
+
+export function dataDemo(nis, bagian, p = {}) {
   const s = semua().find((x) => x.nis === nis)
   if (!s) return { sesi_berakhir: true }
+  const r = rentangDemo(p)
+  if (bagian === 'kehadiran') { const sesi = sesiDemo(s, r.mulai, r.selesai); return { ...r, rekap: rekapDemo(sesi), sesi } }
+  if (bagian === 'perizinan') return { ...r,
+    izin: [{ jenis: 'pulang', alasan: 'Menghadiri pernikahan kakak', penjemput: s.kontak[0].nama, hubungan_penjemput: 'ayah', keluar_pada: jamLalu(9, 13), kembali_batas: jamLalu(7, 17), lama_hari: 2, keluar_aktual: jamLalu(9, 13), kembali_pada: jamLalu(7, 16), status: 'kembali', terlambat: false },
+      { jenis: 'keluar', alasan: 'Periksa gigi di puskesmas', penjemput: null, keluar_pada: jamLalu(2, 9), kembali_batas: jamLalu(2, 12), lama_hari: 1, keluar_aktual: jamLalu(2, 9), kembali_pada: jamLalu(2, 13), status: 'kembali', terlambat: true }],
+    libur: [{ nama: 'Libur bulanan Oktober', jenis: 'bulanan', pulang_pada: jamLalu(-10, 13), kembali_batas: jamLalu(-12, 17), keputusan: 'boleh' }] }
+  if (bagian === 'kunjungan') return { ...r, kunjungan: [{ pengunjung: s.kontak[0].nama, hubungan: s.kontak[0].hubungan, jumlah_orang: 3, datang_pada: jamLalu(4, 10), pulang_pada: jamLalu(4, 12), luar_jadwal: false }] }
+  if (bagian === 'titipan') return { ...r, titipan: [
+    { jenis: 'makanan', uraian: 'Kue kering dan buah', pengirim: s.kontak[1]?.nama || s.kontak[0].nama, ekspedisi: null, status: 'di_pos', diterima_pada: jamLalu(0, 7) },
+    { jenis: 'paket', uraian: 'Kitab dan alat tulis', pengirim: s.kontak[0].nama, ekspedisi: 'JNE', status: 'diambil', diterima_pada: jamLalu(6, 10), diambil_pada: jamLalu(6, 16), pengambil_jenis: 'santri', pengambil_nama: s.nama_lengkap }] }
+  if (bagian === 'sakit') return { ...r, kasus: [{ dibuka_pada: jamLalu(3, 7), keluhan: 'Demam dan pusing', status: 'selesai', tindak_lanjut: 'istirahat', kontrol_pada: null, selesai_pada: jamLalu(1, 9), hasil: 'sembuh' }] }
   if (bagian !== 'beranda') return { galat: 'Bagian ini belum tersedia pada mode demo.' }
   const kel = dataKelompok(s)
   const nama = (j) => kel.filter((g) => g.jenis === j).map((g) => g.nama).join(', ') || null
@@ -56,6 +106,7 @@ export function dataDemo(nis, bagian) {
       program: 'reguler', tempat_lahir: s.tempat_lahir, tanggal_lahir: s.tanggal_lahir, tahun_masuk: s.tahun_masuk,
     },
     pengasuh,
+    bulan_ini: rekapDemo(sesiDemo(s, `${hariIniISO().slice(0, 8)}01`, hariIniISO())).pokok,
     hari_ini: [
       { jenis: 'asrama', kelompok: nama('kamar') || 'Asrama', sesi: 'Asrama pagi', jam: '04.30', kode: 'H' },
       { jenis: 'halaqah', kelompok: nama('halaqah') || 'Halaqah', sesi: 'Halaqah subuh', jam: '05.15', kode: kodeHalaqah },
