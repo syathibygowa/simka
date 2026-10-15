@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/security/TabTitipan.vue | v1.0 | Fase 7 – Tahap 2 Titipan, buku tamu, kunjungan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/security/TabTitipan.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Titipan barang/uang untuk santri (Blueprint Bagian 24). Mencegah paket hilang di pos:
 //   Terima : santri penerima, jenis, uraian, pengirim, ekspedisi, FOTO BARANG WAJIB → musyrif dinotifikasi.
@@ -119,9 +119,9 @@ watch(pratinjau, async (v) => { if (v) penanda.value = await penandaKelompok({ j
 <template>
   <div>
     <div class="flex flex-wrap items-center gap-2">
-      <div class="flex gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Saring titipan">
-        <button v-for="p in [{ k: 'di_pos', n: 'Di pos' }, { k: 'semua', n: 'Riwayat' }]" :key="p.k" type="button" role="radio" :aria-checked="cakupan === p.k" @click="cakupan = p.k"
-          :class="['min-h-[40px] rounded-xl px-4 text-sm font-semibold', cakupan === p.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ p.n }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Saring titipan">
+        <button v-for="p in [{ k: 'di_pos', n: 'Di pos' }, { k: 'semua', n: 'Riwayat' }]" :key="p.k" type="button" role="tab" :aria-selected="cakupan === p.k" @click="cakupan = p.k"
+          :class="['tab-garis', cakupan === p.k && 'aktif']">{{ p.n }}</button>
       </div>
       <div class="relative min-w-[180px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri, barang, atau pengirim" aria-label="Cari titipan" /></div>

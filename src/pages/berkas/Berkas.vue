@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/berkas/Berkas.vue | v1.2 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/berkas/Berkas.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Berkas Saya: berkas untuk pegawai dengan kategori yang dapat dibuat sendiri. Berkas tersimpan di Google Drive pondok
 // dan dibuka lewat tautan sementara (tidak publik); setiap pembukaan tercatat. Tanpa masa berlaku: berkas tetap ada
@@ -112,8 +112,10 @@ async function simpanKat(k, baru) {
       <button v-if="kelola" class="tombol-utama hidden lg:inline-flex" @click="bukaForm"><PhPlus :size="20" weight="bold" /> Kirim berkas</button>
     </div>
     <div class="mb-3 flex gap-1.5 overflow-x-auto pb-1">
-      <button @click="kat = ''" :class="['min-h-[40px] shrink-0 rounded-full border px-3.5 text-sm font-semibold', kat === '' ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2']">Semua</button>
-      <button v-for="k in bp.kategoriAktif" :key="k.kode" @click="kat = k.kode" :class="['min-h-[40px] shrink-0 rounded-full border px-3.5 text-sm font-semibold', kat === k.kode ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2']">{{ k.nama }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Kategori berkas">
+        <button @click="kat = ''" :class="['tab-garis', (kat === '') && 'aktif']" role="tab" :aria-selected="kat === ''">Semua</button>
+      <button v-for="k in bp.kategoriAktif" :key="k.kode" @click="kat = k.kode" :class="['tab-garis', (kat === k.kode) && 'aktif']" role="tab" :aria-selected="kat === k.kode">{{ k.nama }}</button>
+      </div>
     </div>
     <div class="relative mb-3"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
       <input v-model="cari" class="isian pl-10" placeholder="Cari judul berkas" aria-label="Cari berkas" /></div>

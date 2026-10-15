@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/aturPresensi.js | v1.0 | Fase 2 – Tahap 3 Pengaturan presensi | 03/10/2026
+// SIMKA PRO | src/stores/aturPresensi.js | v1.1 | Perbaikan 13.6.0: data jadwal kerja semua pegawai | 15/10/2026
 // Data pengaturan presensi: titik GPS, pola tugas, sesi, jadwal pegawai, dan pengaturan umum.
 // Hak (diperiksa server/RLS): titik dan pengaturan umum = superadmin; pola, sesi, jadwal = izin atur_presensi.
 import { defineStore } from 'pinia'
@@ -9,6 +9,8 @@ import { useSesi } from './sesi'
 import { useOrganisasi } from './organisasi'
 import { usePegawai } from './pegawai'
 import { hariIniISO } from '@/lib/tanggal'
+import { keMenit, jamTitik } from '@/lib/presensi'
+import { useShift } from './shift'
 
 const BAWAAN = { mulai_tanggal: null, jeda_minimal_pulang_menit: 15, batas_akurasi_m: 100, berlaku_cek_detik: 180, retensi_selfie_hari: 183, folder_selfie: 'SIMKA PRO/Presensi', pengingat_menit: 10 }
 const idDemo = (awal) => `${awal}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`
@@ -149,6 +151,39 @@ export const useAturPresensi = defineStore('aturPresensi', {
       this.jadwal = await jalankan(supabase.from('employee_schedules').select('*'))
       return n
     },
+    /**
+     * Jadwal kerja semua pegawai aktif selama 7 hari mulai `senin` (jam presensi yang dibaca sistem).
+     * Hasil: { mulai, libur: [{ t, nama }], pegawai: [{ id, niy, nama, jk, unit_id, unit, pola: [], hari: [{ t, sesi: [...] }] }] }
+     */
+    async jadwalKerja(senin) {
+      if (!MODE_DEMO) return jalankan(supabase.rpc('jadwal_kerja_pekan', { p_mulai: senin }))
+      await this.muat()
+      const peg = usePegawai(); const org = useOrganisasi(); const sh = useShift(); sh.siapkanDemo()
+      const tgl = Array.from({ length: 7 }, (_, i) => { const d = new Date(senin + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + i); return d.toISOString().slice(0, 10) })
+      const jam = (m) => jamTitik(m).slice(0, 5)
+      const pegawai = peg.daftar.filter((p) => (p.status_keaktifan || 'aktif') === 'aktif').map((p) => {
+        const js = this.jadwal.filter((j) => j.employee_id === p.id && j.aktif).map((j) => ({ j, pola: this.cariPola(j.pattern_id) })).filter((x) => x.pola?.aktif)
+        const hari = tgl.map((t) => {
+          const dow = new Date(t + 'T00:00:00Z').getUTCDay(); const sesi = []
+          for (const { j, pola } of js) {
+            for (const x of this.sesiPola(pola.id).filter((x) => x.aktif && (!j.sesi_dipegang?.length || j.sesi_dipegang.includes(x.id)))) {
+              const masuk = pola.jenis === 'shift'
+                ? sh.demoRoster.some((r) => r.employee_id === p.id && r.tanggal === t && r.session_id === x.id)
+                : (x.hari || []).includes(dow)
+              if (!masuk) continue
+              const m = keMenit(x.jam_mulai)
+              sesi.push({ pola: pola.nama, jenis: pola.jenis, sesi: x.nama, warna: pola.warna, opsional: x.opsional, mulai: jam(m), selesai: jam(keMenit(x.jam_selesai)),
+                buka: jam(m - (x.buka_menit ?? 30)), tepat: jam(m + (x.toleransi_terlambat_menit ?? 10)), tutup: jam(m + (x.tutup_menit ?? 120)), pulang: !!x.wajib_pulang, _m: m })
+            }
+          }
+          return { t, sesi: sesi.sort((a, b) => a._m - b._m) }
+        })
+        return { id: p.id, niy: p.niy, nama: p.nama_lengkap, jk: p.jenis_kelamin, unit_id: p.org_unit_id, unit: org.units.find((u) => u.id === p.org_unit_id)?.nama || null,
+          pola: [...new Set(js.map((x) => x.pola.nama))], hari }
+      }).sort((a, b) => a.nama.localeCompare(b.nama))
+      return { mulai: senin, libur: [], pegawai }
+    },
+
     /** Mode demo: tiru fungsi server sinkron_jadwal(). */
     sinkronDemo(empId) {
       const org = useOrganisasi(); const p = usePegawai().cari(empId); if (!p) return

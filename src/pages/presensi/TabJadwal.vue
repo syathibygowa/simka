@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/presensi/TabJadwal.vue | v1.0 | Fase 2 – Tahap 3 Pengaturan presensi | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/TabJadwal.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Jadwal per pegawai: pola dari jabatan (otomatis) dapat disesuaikan per orang —
 // memegang sebagian sesi, dinonaktifkan, ditambah pola lain, atau jadwal khusus pribadi.
@@ -105,9 +105,11 @@ const SARING = [{ k: 'semua', n: 'Semua' }, { k: 'kosong', n: 'Belum berjadwal' 
       <button v-if="bolehUbah" class="tombol-garis" :disabled="proses" @click="sinkron"><PhArrowsClockwise :size="20" weight="duotone" /> Sinkron dari jabatan</button>
     </div>
     <div class="flex flex-wrap gap-2">
-      <button v-for="s in SARING" :key="s.k" @click="saring = s.k"
-        :class="['min-h-[40px] rounded-full border px-3.5 text-sm font-semibold', saring === s.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2']">
+      <div class="bilah-tab kecil" role="tablist" aria-label="Saring jadwal">
+        <button v-for="s in SARING" :key="s.k" @click="saring = s.k"
+        :class="['tab-garis', (saring === s.k) && 'aktif']" role="tab" :aria-selected="saring === s.k">
         {{ s.n }}<template v-if="s.k !== 'semua'"> ({{ jumlah[s.k] }})</template></button>
+      </div>
     </div>
 
     <ul class="grid gap-2 md:grid-cols-2 xl:grid-cols-3">

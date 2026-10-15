@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/CetakDokumenTahfizh.vue | v1.2 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/CetakDokumenTahfizh.vue | v1.3 | Perbaikan 13.6.0: logo dipilih dari daftar logo terpusat | 15/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Cetak dokumen tahfizh F4 dari salinan beku (data) dokumen yang sudah terbit:
@@ -47,8 +47,9 @@ const tz = useTahfizh(); const aturKini = ref(null)
 onMounted(async () => { try { aturKini.value = await tz.pengaturanSertifikat() } catch { aturKini.value = null } })
 const sumberLogo = computed(() => aturKini.value || atur.value)
 const bukanLama = (u) => (u && !/logo-ypwi/i.test(u) ? u : '')
-const logoKiri = computed(() => (bukanLama(sumberLogo.value.logo_kiri) ? alamatAset(sumberLogo.value.logo_kiri) : ''))
-const logoKanan = computed(() => alamatAset(bukanLama(sumberLogo.value.logo_kanan) || lembaga.identitas?.logo_url || '') || logoLokal)
+// Nilai logo berupa rujukan daftar logo (Setelan → Logo) "logo:<kode>" atau tautan lama
+const logoKiri = computed(() => (bukanLama(sumberLogo.value.logo_kiri) ? lembaga.urlLogo(sumberLogo.value.logo_kiri) : ''))
+const logoKanan = computed(() => lembaga.urlLogo(bukanLama(sumberLogo.value.logo_kanan) || 'logo:pondok') || logoLokal)
 // Logo dari situs lain yang gagal dimuat diganti logo pondok bawaan aplikasi
 const ganti = (e) => { if (!e.target.src.endsWith(logoLokal)) e.target.src = logoLokal }
 const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kenaikan Juz', sertifikat_hafalan: 'Sertifikat Hafalan', sertifikat_tahfizh: 'Sertifikat Tahfizhul Quran' }[props.dok.jenis]))

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/rekap/RekapPresensi.vue | v1.4 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/rekap/RekapPresensi.vue | v1.5 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Rekap presensi pegawai (admin dan superadmin): harian (semua sesi semua pegawai) dan periode
 // (ringkasan per pegawai), saring per bidang, ekspor Excel, dan cetak F4 dengan kop + tanda tangan.
@@ -139,7 +139,9 @@ const namaUnit = computed(() => unit.value ? org.cariUnit(unit.value)?.nama : 'S
             <p class="text-2xl font-extrabold tabular-nums">{{ k[1] }}</p><p class="text-xs font-semibold text-teks2">{{ k[0] }}</p></div>
         </div>
         <div class="mb-3 flex flex-wrap gap-2">
-          <button v-for="s in SARING_H" :key="s.k" @click="saringH = s.k" :class="['min-h-[40px] rounded-full border px-3.5 text-sm font-semibold', saringH === s.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2']">{{ s.n }}</button>
+          <div class="bilah-tab kecil" role="tablist" aria-label="Saring keadaan">
+            <button v-for="s in SARING_H" :key="s.k" @click="saringH = s.k" :class="['tab-garis', (saringH === s.k) && 'aktif']" role="tab" :aria-selected="saringH === s.k">{{ s.n }}</button>
+          </div>
         </div>
         <div class="kartu hidden overflow-x-auto lg:block">
           <table class="w-full text-sm">

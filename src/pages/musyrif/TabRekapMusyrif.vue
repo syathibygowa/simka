@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.0 | Fase 6 – Tahap M1 Menu Musyrif | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Rekap kehadiran asrama satu kamar. Empat tampilan:
 //   kamar   : per santri pada rentang (sesi, hadir, I, S, B, A, T, %)
@@ -149,7 +149,9 @@ const subjudulCetak = computed(() => `${kamar.value?.nama || ''} · ${teksPeriod
   <div>
     <div class="kartu mb-4 space-y-3 p-4">
       <div class="flex flex-wrap gap-2">
-        <button v-for="p in PRESET" :key="p.k" :class="['min-h-[36px] rounded-full border px-3 text-sm font-semibold', presetAktif === p.k ? 'border-transparent bg-[#245E3F] text-white' : 'border-garis bg-permukaan text-teks2']" @click="pakai(p)">{{ p.n }}</button>
+        <div class="bilah-tab kecil" role="tablist" aria-label="Periode cepat">
+          <button v-for="p in PRESET" :key="p.k" :class="['tab-garis', (presetAktif === p.k) && 'aktif']" role="tab" :aria-selected="presetAktif === p.k" @click="pakai(p)">{{ p.n }}</button>
+        </div>
       </div>
       <div class="grid grid-cols-2 gap-3 sm:max-w-md"><InputTanggal v-model="mulai" label="Dari" wajib /><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
     </div>
@@ -268,9 +270,9 @@ const subjudulCetak = computed(() => `${kamar.value?.nama || ''} · ${teksPeriod
     <!-- Salin grup -->
     <LembarBawah v-model="lembarGrup" judul="Salin rekap untuk grup WA">
       <div class="space-y-3 pb-2">
-        <div class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Isi rekap">
-          <button v-for="g in [{ k: 'rinci', n: 'Rinci per santri' }, { k: 'ringkas', n: 'Ringkas' }]" :key="g.k" type="button" role="radio" :aria-checked="gayaGrup === g.k" @click="gayaGrup = g.k"
-            :class="['min-h-[40px] rounded-xl text-sm font-semibold', gayaGrup === g.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ g.n }}</button></div>
+        <div class="bilah-tab kecil" role="tablist" aria-label="Isi rekap">
+          <button v-for="g in [{ k: 'rinci', n: 'Rinci per santri' }, { k: 'ringkas', n: 'Ringkas' }]" :key="g.k" type="button" role="tab" :aria-selected="gayaGrup === g.k" @click="gayaGrup = g.k"
+            :class="['tab-garis', gayaGrup === g.k && 'aktif']">{{ g.n }}</button></div>
         <textarea v-model="teksSunting" rows="12" class="isian font-mono text-xs leading-relaxed" aria-label="Teks rekap untuk grup WA" />
         <p class="text-xs text-teks3">Teks dapat disunting sebelum disalin. Keterangan sakit atau alasan pribadi santri tidak dicantumkan.</p>
         <div class="grid gap-2 sm:grid-cols-2">

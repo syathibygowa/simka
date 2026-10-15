@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabRingkasanMusyrif.vue | v1.2 | Fase 7 – Perbaikan uji coba: tanpa jurnal musyrif | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabRingkasanMusyrif.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Dasbor pemantauan seluruh kamar untuk admin, superadmin, dan pimpinan: kehadiran asrama, keterisian sesi,
 // santri sakit/izin per kamar (keaktifan jurnal musyrif tidak lagi ditampilkan; tab Jurnal dihapus). Ketuk kartu kamar untuk membuka dasbor kamar itu.
@@ -38,7 +38,9 @@ function buka(x) { mu.pilih = x.id; emit('buka') }
 <template>
   <div>
     <div class="mb-3 flex flex-wrap items-center gap-2">
-      <button v-for="x in PERIODE" :key="x.k" :class="['min-h-[36px] rounded-full border px-3 text-sm font-semibold', periode === x.k ? 'border-transparent bg-[#245E3F] text-white' : 'border-garis bg-permukaan text-teks2']" @click="periode = x.k">{{ x.n }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Periode">
+        <button v-for="x in PERIODE" :key="x.k" :class="['tab-garis', (periode === x.k) && 'aktif']" role="tab" :aria-selected="periode === x.k" @click="periode = x.k">{{ x.n }}</button>
+      </div>
       <span class="text-xs text-teks3">{{ teksRentang(p.m, p.s) }}</span>
     </div>
     <div class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabDokumenTahfizh.vue | v1.1 | Perbaikan: logo sertifikat dapat diganti/diunggah; bawaan satu logo (pondok) | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabDokumenTahfizh.vue | v1.2 | Perbaikan 13.6.0: logo dipilih dari daftar logo terpusat | 15/10/2026 -->
 <script setup>
 // Tab Dokumen pada menu Tahfizh:
 //   Dokumen terbit : suket ujian kenaikan juz, sertifikat hafalan, Sertifikat Tahfizhul Quran (kartu statistik, saringan, cetak, cabut)
@@ -18,6 +18,7 @@ import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import CetakDokumenTahfizh from './CetakDokumenTahfizh.vue'
 import { useSesi } from '@/stores/sesi'
+import PilihLogo from '@/components/PilihLogo.vue'
 import { useLembaga } from '@/stores/lembaga'
 import { MODE_DEMO } from '@/lib/supabase'
 import { unggahSupabase, alamatAset } from '@/lib/penyimpanan'
@@ -89,7 +90,7 @@ async function cetakCalon(s) { const d = daftar.value.find((x) => x.id === s.dok
 // ---------- Pengaturan sertifikat ----------
 const lembarAtur = ref(false); const atur = ref({ ...PENGATURAN_SERTIFIKAT })
 const sesi = useSesi(); const lembaga = useLembaga(); const mengunggah = ref('')
-const pratinjauLogo = (k) => alamatAset(atur.value[k] || (k === 'logo_kanan' ? lembaga.identitas?.logo_url || '' : '')) || logoLokal
+const pratinjauLogo = (k) => lembaga.urlLogo(atur.value[k] || (k === 'logo_kanan' ? 'logo:pondok' : '')) || logoLokal
 async function unggahLogo(e, k) {
   const b = e.target.files?.[0]; e.target.value = ''
   if (!b) return
@@ -204,24 +205,8 @@ const BAGIAN = computed(() => [{ k: 'terbit', n: 'Dokumen terbit', i: PhCertific
           <label class="label-isian" :for="'as-' + k">{{ n }}</label><input :id="'as-' + k" v-model="atur[k]" class="isian" /></div>
         <div v-for="[k, n] in [['pembuka', 'Kalimat pembuka'], ['program', 'Kalimat program (sebelum jumlah juz)'], ['penutup', 'Kalimat penutup']]" :key="k">
           <label class="label-isian" :for="'as-' + k">{{ n }}</label><textarea :id="'as-' + k" v-model="atur[k]" rows="2" class="isian min-h-[64px]" /></div>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <div v-for="[k, n, ket] in [['logo_kanan', 'Logo utama', 'Kosong = logo pondok (Setelan → Identitas)'], ['logo_kiri', 'Logo tambahan (opsional)', 'Kosong = hanya satu logo']]" :key="k" class="rounded-2xl border border-garis p-3">
-            <p class="label-isian">{{ n }}</p>
-            <div class="flex items-center gap-3">
-              <span class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-white">
-                <img v-if="atur[k] || k === 'logo_kanan'" :src="pratinjauLogo(k)" alt="" class="h-full w-full object-contain" @error="(e) => (e.target.src = logoLokal)" />
-                <span v-else class="text-[10px] text-teks3">Tidak ada</span></span>
-              <div class="min-w-0 flex-1 space-y-1.5">
-                <input v-model="atur[k]" class="isian" :placeholder="'Tautan gambar · ' + ket" :aria-label="'Alamat ' + n" />
-                <div class="flex flex-wrap gap-2">
-                  <label v-if="sesi.isSuperadmin" class="tombol-garis min-h-[36px] cursor-pointer px-3 text-xs">{{ mengunggah === k ? 'Mengunggah…' : 'Unggah gambar' }}
-                    <input type="file" accept="image/png,image/jpeg,image/webp" class="sr-only" :disabled="!!mengunggah" @change="(e) => unggahLogo(e, k)" /></label>
-                  <button v-if="atur[k]" type="button" class="tombol-teks min-h-[36px] px-2 text-xs" @click="atur[k] = ''">{{ k === 'logo_kanan' ? 'Pakai logo pondok' : 'Hapus logo' }}</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PilihLogo v-model="atur.logo_kanan" label="Logo utama" kosong="Logo pondok (bawaan)" />
+        <PilihLogo v-model="atur.logo_kiri" label="Logo tambahan (opsional)" kosong="Tanpa logo tambahan" />
         <button class="tombol-utama w-full" :disabled="proses" @click="simpanAtur">{{ proses ? 'Menyimpan…' : 'Simpan pengaturan' }}</button>
       </div>
     </LembarBawah>

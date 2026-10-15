@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.4 | Fase 11 – Pelengkap: impor Excel jam honor, potongan, dan tambahan | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.5 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Rincian satu periode gaji: ringkasan, daftar pegawai (skema, penyesuaian, pendapatan, potongan, diterima),
 // hitung ulang, impor jumlah diterima dari Excel, ekspor Excel, cetak Daftar Gaji F4 mendatar.
@@ -229,9 +229,11 @@ const jumlahKolom = computed(() => Object.fromEntries(KOLOM_DAFTAR.map(([c]) => 
         <button v-if="boleh" class="tombol-garis" @click="hapus"><PhTrash :size="20" /> Hapus</button>
       </div>
       <div class="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="group" aria-label="Saring pegawai">
-        <button v-for="s in SARING" :key="s.k" type="button" @click="saring = s.k" :aria-pressed="saring === s.k"
-          :class="['min-h-[40px] shrink-0 rounded-xl border px-3 text-sm font-semibold', saring === s.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis text-teks2']">
-          {{ s.n }} <span class="tabular-nums opacity-80">{{ s.j }}</span></button>
+        <div class="bilah-tab kecil" role="tablist" aria-label="Saring pegawai">
+          <button v-for="s in SARING" :key="s.k" type="button" @click="saring = s.k"
+          :class="['tab-garis', (saring === s.k) && 'aktif']" role="tab" :aria-selected="saring === s.k">
+          {{ s.n }} <span class="angka-tab">{{ s.j }}</span></button>
+        </div>
       </div>
 
       <p v-if="!tampil.length" class="kartu p-8 text-center text-sm text-teks3">Tidak ada pegawai yang sesuai.</p>

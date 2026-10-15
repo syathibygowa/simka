@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/TabRekening.vue | v1.1 | Fase 11 – Tahap 6 Jabatan penanda tangan dari penunjukan superadmin | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/TabRekening.vue | v1.2 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Rekening penerimaan gaji setiap pegawai aktif: cara bayar (transfer/tunai), bank, nomor rekening, atas nama.
 // Tampil di slip gaji. Diubah pengelola gaji (satu per satu atau impor Excel); pembaca gaji hanya melihat.
@@ -113,8 +113,10 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
       <div class="relative min-w-[220px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIY, bank, atau nomor rekening" aria-label="Cari rekening" /></div>
       <div class="flex gap-1.5 overflow-x-auto" role="group" aria-label="Saring cara bayar">
-        <button v-for="s in SARING" :key="s.k" type="button" @click="saring = s.k" :aria-pressed="saring === s.k"
-          :class="['min-h-[40px] shrink-0 rounded-xl border px-3 text-sm font-semibold', saring === s.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis text-teks2']">{{ s.n }}</button>
+        <div class="bilah-tab kecil" role="tablist" aria-label="Saring cara bayar">
+          <button v-for="s in SARING" :key="s.k" type="button" @click="saring = s.k"
+          :class="['tab-garis', (saring === s.k) && 'aktif']" role="tab" :aria-selected="saring === s.k">{{ s.n }}</button>
+        </div>
       </div>
       <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
       <button v-if="boleh" class="tombol-garis" @click="masukan.click()"><PhUploadSimple :size="20" weight="duotone" /> Impor Excel</button>

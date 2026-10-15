@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Pantauan guru mapel (admin, superadmin, pimpinan sesuai cakupannya):
 //   Harian  : tanggal dengan tombol sebelum/sesudah; statistik jam pelajaran (terjadwal, terlaksana, belum diisi, tidak
@@ -91,9 +91,9 @@ function ekspor() {
       <div class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
         <KartuStatistik v-for="k in statH" :key="k.judul" class="w-[44%] shrink-0 snap-start sm:w-auto" :judul="k.judul" :nilai="memuatH && !slotH.length ? '…' : k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket" />
       </div>
-      <div class="-mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="radiogroup" aria-label="Saring status">
-        <button v-for="s in SARING" :key="s.k" type="button" role="radio" :aria-checked="saring === s.k" @click="saring = s.k"
-          :class="['min-h-[40px] shrink-0 rounded-full border px-3 text-sm font-semibold', saring === s.k ? 'border-transparent bg-[var(--c)] text-white dark:text-[#10141A]' : 'border-garis bg-permukaan text-teks2']">{{ s.n }}</button>
+      <div class="bilah-tab kecil mt-3" role="tablist" aria-label="Saring status">
+        <button v-for="s in SARING" :key="s.k" type="button" role="tab" :aria-selected="saring === s.k" @click="saring = s.k"
+          :class="['tab-garis', saring === s.k && 'aktif']">{{ s.n }}</button>
       </div>
       <p v-if="memuatH && !slotH.length" class="kartu mt-3 p-8 text-center text-sm text-teks3">Memuat…</p>
       <p v-else-if="!guruH.length" class="kartu mt-3 p-8 text-center text-sm text-teks3">{{ slotH.length ? 'Tidak ada guru yang cocok.' : 'Tidak ada jam pelajaran terjadwal pada tanggal ini (hari Ahad atau libur sekolah).' }}</p>
@@ -114,7 +114,7 @@ function ekspor() {
     <!-- ===== Rekap periode ===== -->
     <template v-else>
       <div class="mb-3 flex flex-wrap items-center gap-2">
-        <button v-for="x in PERIODE" :key="x.k" :class="['min-h-[36px] rounded-full border px-3 text-sm font-semibold', periode === x.k ? 'border-transparent bg-[var(--c)] text-white dark:text-[#10141A]' : 'border-garis bg-permukaan text-teks2']" @click="periode = x.k">{{ x.n }}</button>
+        <div class="bilah-tab kecil" role="tablist" aria-label="Periode"><button v-for="x in PERIODE" :key="x.k" :class="['tab-garis', periode === x.k && 'aktif']" type="button" role="tab" :aria-selected="periode === x.k" @click="periode = x.k">{{ x.n }}</button></div>
         <span class="text-xs text-teks3">{{ teksRentang(p.m, p.s) }}</span><span class="flex-1" />
         <button class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!guruP.length" @click="ekspor"><PhFileXls :size="18" weight="duotone" /> Excel</button>
         <button class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!guruP.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>

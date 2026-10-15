@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.25 | Fase 9 – Perbaikan: menu Portal Wali tersendiri; Roster menjadi Jadwal Pelajaran | 15/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.26 | Perbaikan 13.6.0: Audit Log khusus superadmin | 15/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Fungsional, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -81,7 +81,7 @@ export const MENU = [
   // Keuangan santri: hanya superadmin dan pegawai yang ditunjuk superadmin (mis. Bendahara Pondok)
   { kode: 'keuangan',   nama: 'Keuangan',        ikon: PhCashRegister,   warna: 'keuangan',   ke: '/keuangan',          grup: 'Administrasi', hak: (c) => !!c.keuangan },
   // Sistem
-  { kode: 'auditlog',   nama: 'Audit Log',       ikon: PhClockCounterClockwise, warna: 'audit', ke: '/audit-log',     grup: 'Sistem' },
+  { kode: 'auditlog',   nama: 'Audit Log',       ikon: PhClockCounterClockwise, warna: 'audit', ke: '/audit-log',     grup: 'Sistem', peran: ['superadmin'] },
   { kode: 'organisasi', nama: 'Organisasi', ikon: PhTreeStructure, warna: 'sistem',  ke: '/organisasi',        grup: 'Sistem', peran: ['superadmin'] },
   { kode: 'hakakses',   nama: 'Hak Akses',       ikon: PhKey,            warna: 'hakakses',   ke: '/hak-akses',         grup: 'Sistem', peran: ['superadmin'] },
   { kode: 'pengaturan', nama: 'Setelan',         ikon: PhGearSix,        warna: 'pengaturan', ke: '/pengaturan',        grup: 'Sistem', peran: ['superadmin'] },

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabUtas.vue | v1.2 | Fase 12 – Tahap 6 Permintaan ubah nilai UTAS | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabUtas.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Ujian Tahfizh Akhir Semester (UTAS), di Tahfizh → Ujian → UTAS (SOP UTAS pondok).
 //   Panitia (admin/superadmin/pengatur rapor tahfizh): menetapkan penguji per kelas, membagi peserta otomatis (bergilir,
@@ -172,9 +172,9 @@ const namaCetak = (k) => (k.jenis === 'halaqah' ? k.nama : `Kelas ${k.nama}`)
 <template>
   <div class="space-y-4">
     <div class="kartu flex flex-wrap items-end gap-3 p-4">
-      <div class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Semester">
-        <button v-for="s in [1, 2]" :key="s" type="button" role="radio" :aria-checked="semester === s" @click="muat(s)"
-          :class="['min-h-[40px] rounded-xl px-3 text-sm font-semibold', semester === s ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ LABEL_SEMESTER[s] }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Semester">
+        <button v-for="s in [1, 2]" :key="s" type="button" role="tab" :aria-selected="semester === s" @click="muat(s)"
+          :class="['tab-garis', semester === s && 'aktif']">{{ LABEL_SEMESTER[s] }}</button>
       </div>
       <p class="min-w-[220px] flex-1 text-xs text-teks3">Juz diujikan otomatis: SMA {{ ket.juz_sma || 5 }} juz, Wustha {{ ket.juz_wustha || 3 }} juz (hafalan resmi terakhir; bila kurang, semua hafalan). Nilai akhir = (Tajwid + Itqan) ÷ 2 · KKM {{ Number(ket.kkm || 80) }}.</p>
       <div class="flex gap-2"><button class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!D" @click="cetak('pembagian')"><PhPrinter :size="18" weight="duotone" /> Pembagian</button>
@@ -211,9 +211,9 @@ const namaCetak = (k) => (k.jenis === 'halaqah' ? k.nama : `Kelas ${k.nama}`)
 
       <!-- Saringan -->
       <div class="flex flex-wrap items-center gap-2">
-        <div v-if="D.peserta.some((p) => p.saya) && D.peserta.some((p) => !p.saya)" class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Tampilan">
-          <button v-for="t in [{ k: 'saya', n: 'Peserta saya' }, { k: 'semua', n: 'Semua' }]" :key="t.k" type="button" role="radio" :aria-checked="lihat === t.k" @click="lihat = t.k"
-            :class="['min-h-[38px] rounded-xl px-3 text-sm font-semibold', lihat === t.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ t.n }}</button>
+        <div v-if="D.peserta.some((p) => p.saya) && D.peserta.some((p) => !p.saya)" class="bilah-tab kecil" role="tablist" aria-label="Tampilan">
+          <button v-for="t in [{ k: 'saya', n: 'Peserta saya' }, { k: 'semua', n: 'Semua' }]" :key="t.k" type="button" role="tab" :aria-selected="lihat === t.k" @click="lihat = t.k"
+            :class="['tab-garis', lihat === t.k && 'aktif']">{{ t.n }}</button>
         </div>
         <select v-model="kelasPilih" class="isian w-auto" aria-label="Saring kelompok"><option value="">Semua {{ LBL.toLowerCase() }}</option><option v-for="k in D.kelas" :key="k.group_id" :value="k.group_id">{{ namaK(k) }}</option></select>
         <div class="relative min-w-[180px] flex-1"><PhMagnifyingGlass :size="18" class="absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />

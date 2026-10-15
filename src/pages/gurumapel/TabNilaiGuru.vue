@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabNilaiGuru.vue | v1.1 | Perbaikan: menu Roster menjadi Jadwal Pelajaran | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabNilaiGuru.vue | v1.2 | Perbaikan 13.6.0: sub-tab bergaris bawah, saring dan warna kartu per jenjang | 15/10/2026 -->
 <script setup>
 // Tab Nilai di menu Guru Mapel: kelas–mapel yang diampu (guru) atau semua (pengelola nilai/pimpinan) untuk satu semester,
 // beserta status periode, cara menentukan nilai, dan kemajuan pengisian (nilai rapor dan sikap). Ketuk kartu → lembar nilai.
@@ -9,13 +9,16 @@ import { useNilai } from '@/stores/nilai'
 import { MODE_NILAI, STATUS_PERIODE } from '@/lib/penilaian'
 import { LABEL_SEMESTER } from '@/lib/nilai'
 import { JENJANG_PENDEK } from '@/lib/santri'
+import { warnaJenjang } from '@/lib/jadwal'
+import SubTabJenjang from '@/components/SubTabJenjang.vue'
 
 const nl = useNilai(); const router = useRouter()
-const semester = ref(null); const cari = ref(''); const galat = ref('')
+const semester = ref(null); const cari = ref(''); const galat = ref(''); const jenjang = ref('')
 async function muat(s) { galat.value = ''; try { await nl.muatDaftar(s); semester.value = nl.semester } catch (e) { galat.value = e.message } }
 onMounted(() => muat(nl.semester))
 function ganti(s) { semester.value = s; muat(s) }
-const daftar = computed(() => { const q = cari.value.toLowerCase().trim(); return nl.daftar.filter((x) => !q || `${x.kelas} ${x.mapel} ${x.guru}`.toLowerCase().includes(q)) })
+const daftar = computed(() => { const q = cari.value.toLowerCase().trim(); return nl.daftar.filter((x) => (!jenjang.value || x.jenjang === jenjang.value) && (!q || `${x.kelas} ${x.mapel} ${x.guru}`.toLowerCase().includes(q))) })
+const jumlahJ = computed(() => ({ '': nl.daftar.length, wustha: nl.daftar.filter((x) => x.jenjang === 'wustha').length, sma: nl.daftar.filter((x) => x.jenjang === 'sma').length }))
 const milik = computed(() => daftar.value.filter((x) => x.milik_saya))
 const lain = computed(() => daftar.value.filter((x) => !x.milik_saya))
 const IKON = { disiapkan: PhHourglassMedium, dibuka: PhLockSimpleOpen, ditutup: PhLockSimple }
@@ -24,10 +27,11 @@ const buka = (x) => router.push({ path: `/guru-mapel/nilai/${x.assignment_id}`, 
 </script>
 <template>
   <div class="space-y-4">
+    <SubTabJenjang v-model="jenjang" :jumlah="jumlahJ" label="Saring jenjang" />
     <div class="kartu flex flex-wrap items-end gap-3 p-4">
-      <div class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Semester">
-        <button v-for="s in [1, 2]" :key="s" type="button" role="radio" :aria-checked="semester === s" @click="ganti(s)"
-          :class="['min-h-[40px] rounded-xl px-3 text-sm font-semibold', semester === s ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ LABEL_SEMESTER[s] }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Semester">
+        <button v-for="s in [1, 2]" :key="s" type="button" role="tab" :aria-selected="semester === s" @click="ganti(s)"
+          :class="['tab-garis', semester === s && 'aktif']">{{ LABEL_SEMESTER[s] }}</button>
       </div>
       <div v-if="nl.daftar.length > 6" class="relative min-w-[200px] flex-1"><PhMagnifyingGlass :size="18" class="absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-10" placeholder="Cari kelas, mapel, atau guru" aria-label="Cari" /></div>
@@ -38,11 +42,11 @@ const buka = (x) => router.push({ path: `/guru-mapel/nilai/${x.assignment_id}`, 
         <section v-if="kel.d.length">
           <p class="mb-2 text-sm font-bold text-teks2">{{ kel.n }} · {{ kel.d.length }}</p>
           <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <button v-for="x in kel.d" :key="x.assignment_id" type="button" class="kartu w-gurumapel flex flex-col gap-2 p-4 text-left transition hover:shadow-lg" @click="buka(x)">
+            <button v-for="x in kel.d" :key="x.assignment_id" type="button" :class="['kartu kartu-jenjang flex flex-col gap-2 p-4 text-left transition hover:shadow-lg', 'w-' + warnaJenjang(x.jenjang)]" @click="buka(x)">
               <div class="flex items-start gap-3">
                 <span class="chip-ikon h-11 w-11"><PhExam :size="24" weight="duotone" /></span>
                 <div class="min-w-0 flex-1"><p class="truncate font-bold">{{ x.mapel }}</p>
-                  <p class="truncate text-sm text-teks2">Kelas {{ x.kelas }} · {{ JENJANG_PENDEK[x.jenjang] }}{{ x.milik_saya ? '' : ` · ${x.guru}` }}</p></div>
+                  <p class="truncate text-sm text-teks2">Kelas {{ x.kelas }} · <b class="font-semibold" style="color: var(--c)">{{ JENJANG_PENDEK[x.jenjang] }}</b>{{ x.milik_saya ? '' : ` · ${x.guru}` }}</p></div>
                 <PhCaretRight :size="18" class="mt-1 text-teks3" />
               </div>
               <div class="flex flex-wrap gap-1.5">
@@ -63,3 +67,7 @@ const buka = (x) => router.push({ path: `/guru-mapel/nilai/${x.assignment_id}`, 
     </template>
   </div>
 </template>
+<style scoped>
+/* Warna kartu mengikuti jenjang kelas (Wustha jingga-emas, SMA biru) */
+.kartu-jenjang { border-left: 4px solid var(--c); background: linear-gradient(135deg, color-mix(in srgb, var(--c) 7%, rgb(var(--permukaan))) 0%, rgb(var(--permukaan)) 60%); }
+</style>

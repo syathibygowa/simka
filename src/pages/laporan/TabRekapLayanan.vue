@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabRekapLayanan.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabRekapLayanan.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Laporan periode modul layanan (menu Dokumen → Rekap layanan): Security, libur santri, pengajuan pegawai, klinik.
 // Pilihan laporan tampil sesuai hak (diperiksa server). Daftar santri berurutan NIS, Nama, JK. Data klinik tanpa diagnosis.
@@ -147,8 +147,10 @@ const ada = computed(() => !!d.value)
         <select v-model="unit" class="isian"><option value="">Semua yang dapat Anda lihat</option>
           <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ ' '.repeat(u.tingkat * 2) }}{{ u.nama }}</option></select></label>
       <div class="flex flex-wrap gap-2">
-        <button v-for="p in PERIODE_CEPAT" :key="p.k" type="button" @click="pilihCepat(p.k)"
-          :class="['min-h-[40px] rounded-full border px-3.5 text-sm font-semibold', cepat === p.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2']">{{ p.n }}</button>
+        <div class="bilah-tab kecil" role="tablist" aria-label="Periode cepat">
+          <button v-for="p in PERIODE_CEPAT" :key="p.k" type="button" @click="pilihCepat(p.k)"
+          :class="['tab-garis', (cepat === p.k) && 'aktif']" role="tab" :aria-selected="cepat === p.k">{{ p.n }}</button>
+        </div>
       </div>
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
         <InputTanggal v-model="mulai" label="Dari tanggal" />

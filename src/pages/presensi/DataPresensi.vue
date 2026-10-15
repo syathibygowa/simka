@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/presensi/DataPresensi.vue | v1.0 | Fase 3 – Menu Data Presensi (harian per bidang dan bulanan) | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/DataPresensi.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Data Presensi (admin ber-izin verval_presensi dan superadmin), dipisah dari tab Verval Presensi:
 //   Harian  : semua pegawai satu bidang (beserta cabangnya) pada satu tanggal, tombol sebelum/sesudah, saring status,
@@ -222,10 +222,10 @@ const ringkasB = (p) => ['hadir', 'terlambat', 'dinas_luar', 'izin', 'sakit', 'c
           <KartuStatistik judul="Izin/sakit/cuti" :nilai="hitungH.izin" :ikon="PhFirstAid" warna="klinik" />
           <KartuStatistik judul="Tanpa keterangan" :nilai="hitungH.tanpa" :ikon="PhXCircle" warna="beranda" :keterangan="hitungH.belum ? `${hitungH.belum} belum presensi` : 'Sesi wajib terlewat'" />
         </div>
-        <div class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0" role="radiogroup" aria-label="Saring menurut keadaan">
-          <button v-for="(v, k) in KELOMPOK" :key="k" type="button" role="radio" :aria-checked="saring === k" @click="saring = k"
-            :class="['min-h-[40px] shrink-0 rounded-full border px-3 text-sm font-semibold', saring === k ? 'border-transparent bg-[var(--c)] text-white dark:text-[#0B1414]' : 'border-garis bg-permukaan text-teks2']">
-            {{ v.n }} <span class="tabular-nums opacity-80">{{ hitungH[k] }}</span></button>
+        <div class="bilah-tab kecil" role="tablist" aria-label="Saring menurut keadaan">
+          <button v-for="(v, k) in KELOMPOK" :key="k" type="button" role="tab" :aria-selected="saring === k" @click="saring = k"
+            :class="['tab-garis', saring === k && 'aktif']">
+            {{ v.n }} <span class="angka-tab">{{ hitungH[k] }}</span></button>
         </div>
         <p class="text-sm font-bold">{{ formatHari(tgl) }} · {{ namaUnit }}</p>
         <p v-if="memuatH && !hari" class="py-10 text-center text-teks3">Memuat data presensi…</p>

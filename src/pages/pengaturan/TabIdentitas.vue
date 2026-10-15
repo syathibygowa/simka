@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengaturan/TabIdentitas.vue | v1.0 | Fase 1 – Pengaturan | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/TabIdentitas.vue | v1.1 | Perbaikan 13.6.0: nama tab Setelan baru (Lembaga, Kalender, Logo, Nomor Surat) | 15/10/2026 -->
 <script setup>
 import { ref } from 'vue'
 import { PhFloppyDisk, PhCopySimple } from '@phosphor-icons/vue'
@@ -17,14 +17,13 @@ const ISIAN = [
   { k: 'kota_surat', l: 'Kota pada tanggal surat', ket: 'Contoh: Gowa → "Gowa, 03 Oktober 2026"' },
   { k: 'alamat', l: 'Alamat lengkap', lebar: true, panjang: true },
 ]
-const LOGO = [
-  { k: 'logo_url', l: 'Logo pondok' }, { k: 'logo_kemenag_url', l: 'Logo Kementerian Agama' }, { k: 'ikon_url', l: 'Ikon SIMKA PRO' },
-]
+// Logo lembaga dikelola di tab Logo (daftar terpusat); di sini hanya ikon aplikasi.
+const LOGO = [{ k: 'ikon_url', l: 'Ikon aplikasi SIMKA PRO' }]
 
 async function simpan() {
   if (!f.value.nama_lengkap?.trim()) { ui.toast('Nama lembaga lengkap wajib diisi.', 'galat'); return }
   proses.value = true
-  try { await lembaga.simpanPengaturan('identitas', f.value); ui.toast('Identitas lembaga disimpan.') }
+  try { await lembaga.simpanPengaturan('identitas', f.value); ui.toast('Data lembaga disimpan.') }
   catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 async function salin(k) {
@@ -46,8 +45,8 @@ async function salin(k) {
     </div>
 
     <div class="kartu p-5">
-      <h3 class="judul-bagian">Logo</h3>
-      <p class="mb-4 text-sm text-teks3">Logo dari tautan internet sebaiknya disalin ke penyimpanan sistem agar tidak hilang bila tautan asal berubah.</p>
+      <h3 class="judul-bagian">Ikon aplikasi</h3>
+      <p class="mb-4 text-sm text-teks3">Ikon tab peramban dan layar utama HP. Logo pondok, yayasan, Wustha, SMA, Kemenag, dan Diknas diatur di tab Logo.</p>
       <div class="space-y-4">
         <div v-for="g in LOGO" :key="g.k" class="flex flex-wrap items-end gap-3">
           <span class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl border border-garis bg-white">

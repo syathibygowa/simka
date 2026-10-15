@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jadwal/TabPenugasan.vue | v1.0 | Fase 4 – Tahap 5 Jadwal pelajaran dan jurnal mengajar | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/jadwal/TabPenugasan.vue | v1.1 | Perbaikan 13.6.0: sub-tab jenjang Wustha (SMP)/SMA | 15/10/2026 -->
 <script setup>
 // Penugasan mengajar per kelas: mapel, guru, JP per pekan. Tambah/ubah/hapus, impor dan ekspor Excel.
 import { ref, computed, onMounted } from 'vue'
@@ -11,11 +11,17 @@ import { useOrganisasi } from '@/stores/organisasi'
 import { useUI } from '@/stores/ui'
 import { judulKelompok } from '@/lib/santri'
 import LembarBawah from '@/components/LembarBawah.vue'
+import SubTabJenjang from '@/components/SubTabJenjang.vue'
+import { JENJANG_TAB, warnaJenjang } from '@/lib/jadwal'
 
 const props = defineProps({ bolehAtur: Boolean })
 const jd = useJadwal(); const kel = useKelompokSantri(); const peg = usePegawai(); const org = useOrganisasi(); const ui = useUI()
 onMounted(async () => { await Promise.all([kel.muat(), jd.muat(), org.muat()]); if (props.bolehAtur && !peg.daftar.length) peg.muat() })
-const kelasList = computed(() => kel.dariTA.filter((g) => g.jenis === 'kelas' && g.aktif))
+// Sub-tab jenjang: Wustha (SMP) dan SMA
+const jenjang = ref('wustha')
+const semuaKelas = computed(() => kel.dariTA.filter((g) => g.jenis === 'kelas' && g.aktif))
+const kelasList = computed(() => semuaKelas.value.filter((g) => g.jenjang === jenjang.value))
+const jumlahJenjang = computed(() => Object.fromEntries(Object.keys(JENJANG_TAB).map((j) => [j, jd.penugasan.filter((t) => kel.cari(t.group_id)?.jenjang === j).length])))
 const perKelas = computed(() => kelasList.value.map((g) => ({ g, t: jd.penugasan.filter((x) => x.group_id === g.id) })).filter((x) => x.t.length || props.bolehAtur))
 const terjadwal = (id) => jd.jadwal.filter((s) => s.assignment_id === id).length
 
@@ -64,6 +70,7 @@ async function impor(e) {
 </script>
 <template>
   <div>
+    <SubTabJenjang v-model="jenjang" :semua="false" class="mb-3" :jumlah="jumlahJenjang" label="Jenjang penugasan" />
     <div class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
       <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> {{ bolehAtur ? 'Ekspor / templat Excel' : 'Ekspor Excel' }}</button>
       <label v-if="bolehAtur" class="w-gaji tombol-garis shrink-0 cursor-pointer px-4 text-sm"><PhUploadSimple :size="20" weight="duotone" style="color: var(--c)" /> Impor Excel
@@ -73,9 +80,9 @@ async function impor(e) {
       <li v-for="h in hasil.filter((x) => !x.ok)" :key="h.baris"><b>Baris {{ h.baris + 1 }}:</b> <span style="color: var(--c)">{{ h.pesan }}</span></li>
     </ul>
     <div class="grid gap-3 lg:grid-cols-2">
-      <section v-for="x in perKelas" :key="x.g.id" class="kartu w-laporan p-4">
+      <section v-for="x in perKelas" :key="x.g.id" :class="['kartu kartu-jenjang p-4', 'w-' + warnaJenjang(x.g.jenjang)]">
         <div class="mb-2 flex items-center gap-2">
-          <p class="flex-1 font-bold">{{ judulKelompok(x.g) }} <span class="text-sm font-normal text-teks3">· {{ x.t.reduce((n, t) => n + t.jp_pekan, 0) }} JP/pekan</span></p>
+          <p class="flex-1 font-bold"><span class="titik-jenjang" aria-hidden="true" />{{ judulKelompok(x.g) }} <span class="text-sm font-normal text-teks3">· {{ x.t.reduce((n, t) => n + t.jp_pekan, 0) }} JP/pekan</span></p>
           <button v-if="bolehAtur" class="tombol-garis min-h-[36px] px-3 text-sm" @click="buka(x.g)"><PhPlus :size="16" weight="bold" /> Mapel</button>
         </div>
         <ul class="divide-y divide-garis">
@@ -88,7 +95,7 @@ async function impor(e) {
         </ul>
       </section>
     </div>
-    <p v-if="!perKelas.length && !jd.memuat" class="kartu py-10 text-center text-sm text-teks3">Belum ada penugasan mengajar. Kelas dibuat di Kelompok Santri.</p>
+    <p v-if="!perKelas.length && !jd.memuat" class="kartu py-10 text-center text-sm text-teks3">Belum ada penugasan mengajar {{ JENJANG_TAB[jenjang].n }}. Kelas dibuat di Kelompok Santri.</p>
 
     <LembarBawah v-model="lembar" :judul="f?.id ? 'Ubah penugasan' : `Tambah mapel ${judulKelompok(gF || {})}`">
       <div v-if="f" class="space-y-3 pb-2">
@@ -107,3 +114,7 @@ async function impor(e) {
     </LembarBawah>
   </div>
 </template>
+<style scoped>
+.kartu-jenjang { border-top: 4px solid var(--c); }
+.titik-jenjang { display: inline-block; width: .625rem; height: .625rem; margin-right: .5rem; border-radius: 9999px; background: var(--c); vertical-align: middle; }
+</style>

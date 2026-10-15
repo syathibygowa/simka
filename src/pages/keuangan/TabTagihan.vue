@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabTagihan.vue | v1.2 | Fase 13 – Tagihan tahun ajaran lalu, sasaran putra/putri, impor catatan lama | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabTagihan.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Buat tagihan massal: pilih jenis biaya → periode (bulan-bulan untuk bulanan; tahun ajaran untuk tahunan; sekali)
 // → sasaran (jenjang, tingkat, santri baru saja, atau santri tertentu) → pratinjau (standar, subsidi, tagihan, sudah ada)
@@ -111,8 +111,10 @@ function ekspor() {
       <button v-if="keu.hak.kelola" class="tombol-utama" :disabled="!keu.jenisAktif.length" @click="mulai"><PhPlus :size="20" weight="bold" /> Buat tagihan</button>
     </div>
     <div class="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="group" aria-label="Saring status">
-      <button v-for="s in STATUS" :key="s.k" type="button" @click="saring.status = s.k" :aria-pressed="saring.status === s.k"
-        :class="['min-h-[40px] shrink-0 rounded-xl border px-3 text-sm font-semibold', saring.status === s.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis text-teks2']">{{ s.n }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Saring status">
+        <button v-for="s in STATUS" :key="s.k" type="button" @click="saring.status = s.k"
+        :class="['tab-garis', (saring.status === s.k) && 'aktif']" role="tab" :aria-selected="saring.status === s.k">{{ s.n }}</button>
+      </div>
     </div>
     <button v-if="['segera', 'lewat', 'tunggak'].includes(saring.status) && tampil.length" class="tombol-garis mb-3 w-presensi" style="color: var(--c)" @click="bukaKirim">
       <PhWhatsappLogo :size="20" weight="duotone" /> {{ saring.status === 'segera' ? 'WA pengingat jatuh tempo ke wali' : 'WA tunggakan ke wali' }}</button>

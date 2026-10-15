@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabRingkasanKelas.vue | v1.0 | Fase 4 – Menu Wali Kelas: pemantauan semua kelas | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabRingkasanKelas.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Dasbor pemantauan seluruh kelas (admin, superadmin, pimpinan): kehadiran kelas, absensi kelas hari ini sudah/belum diisi,
 // santri sakit/izin, dan keterlaksanaan pelajaran (jurnal mengajar) per kelas. Saring jenjang; cetak F4 mendatar dan Excel.
@@ -57,7 +57,7 @@ function ekspor() {
 <template>
   <div>
     <div class="mb-3 flex flex-wrap items-center gap-2">
-      <button v-for="x in PERIODE" :key="x.k" :class="['min-h-[36px] rounded-full border px-3 text-sm font-semibold', periode === x.k ? 'border-transparent bg-[var(--c)] text-white dark:text-[#10141A]' : 'border-garis bg-permukaan text-teks2']" @click="periode = x.k">{{ x.n }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Periode"><button v-for="x in PERIODE" :key="x.k" :class="['tab-garis', periode === x.k && 'aktif']" type="button" role="tab" :aria-selected="periode === x.k" @click="periode = x.k">{{ x.n }}</button></div>
       <select v-model="jenjang" class="isian h-9 w-auto py-0 text-sm" aria-label="Saring jenjang"><option value="">Semua jenjang</option><option value="wustha">Wustha</option><option value="sma">SMA</option></select>
       <span class="text-xs text-teks3">{{ teksRentang(p.m, p.s) }}</span>
       <span class="flex-1" />

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabTunggakan.vue | v1.1 | Fase 13 – Pelengkap: per kamar/halaqah dan periode jatuh tempo (harian, pekanan, bulanan, rentang) | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabTunggakan.vue | v1.2 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Posisi tunggakan per tanggal (bawaan hari ini): tagihan yang jatuh tempo paling lambat tanggal itu dan masih bersisa
 // pada tanggal itu. Dikelompokkan per santri, kelas, kamar, halaqah, jenis biaya, atau jenjang. Cetak F4 dan Excel.
@@ -80,8 +80,10 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
       <KartuStatistik class="w-[44%] shrink-0 snap-start sm:w-auto" judul="Tagihan tertunggak" :nilai="data.length" :ikon="PhInvoice" warna="tahfizh" :keterangan="'Tertua ' + (data.length ? formatPendek(data.map((r) => r.jatuh_tempo).sort()[0]) : '–')" />
     </div>
     <div class="mb-3 flex flex-wrap items-center gap-1.5" role="group" aria-label="Kelompokkan">
-      <button v-for="c in CAKUPAN" :key="c.k" type="button" :aria-pressed="cakupan === c.k" @click="(cakupan = c.k), (buka = {})"
-        :class="['min-h-[40px] rounded-xl border px-3 text-sm font-semibold', cakupan === c.k ? 'border-transparent bg-[#B42A5E] text-white' : 'border-garis text-teks2']">{{ c.n }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Kelompokkan">
+        <button v-for="c in CAKUPAN" :key="c.k" type="button" @click="(cakupan = c.k), (buka = {})"
+        :class="['tab-garis', (cakupan === c.k) && 'aktif']" role="tab" :aria-selected="cakupan === c.k">{{ c.n }}</button>
+      </div>
       <div class="flex-1" />
       <button v-if="santri.length" class="tombol-garis min-h-[40px] px-3 text-sm w-presensi" style="color: var(--c)" @click="kirim = true"><PhWhatsappLogo :size="18" weight="duotone" /> WA ke semua wali</button>
       <button v-if="santri.length && keu.hak.kelola" class="tombol-utama min-h-[40px] px-3 text-sm" @click="surat = santri.map((k) => ({ id: k.student_id, nama: k.nama }))"><PhPaperPlaneTilt :size="18" weight="duotone" /> Surat tagihan semua</button>

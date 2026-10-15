@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/klinik.js | v1.1 | Fase 6 – Tahap 3 Jurnal musyrif dan klinik lanjutan | 06/10/2026
+// SIMKA PRO | src/stores/klinik.js | v1.2 | Perbaikan 13.6.0: rujuk santri tidak tersedia bagi tenaga klinik | 15/10/2026
 // Klinik: hak pengguna, ketentuan (jam layanan, batas waktu rujukan), petugas klinik putra/putri, daftar kasus
 // (antrean, dirawat, riwayat, rujukan saya), rincian kasus, rujukan, pemeriksaan, pembatalan, dan penyelesaian.
 // Penulisan hanya lewat fungsi SQL; catatan pemeriksaan rahasia disaring server.
@@ -29,7 +29,8 @@ export const useKlinik = defineStore('klinik', {
       if (MODE_DEMO) {
         const sesi = useSesi(); const p = sesi.peran
         const atur = p === 'superadmin' || (p === 'admin' && sesi.izinAdmin.includes('kelola_klinik'))
-        this.hak = { ...HAK_KOSONG, atur, rujuk: true, lihat: true }
+        const medis = (sesi.tugas?.klinik || []).length > 0 || (sesi.tugas?.fungsional || []).includes('MEDIS')
+        this.hak = { ...HAK_KOSONG, atur, rujuk: !medis, lihat: true }
       } else this.hak = { ...HAK_KOSONG, ...((await rpc('hak_klinik')) || {}) }
       this.hakDimuat = true
       return this.hak

@@ -1,9 +1,9 @@
-<!-- SIMKA PRO | src/pages/shift/JadwalShift.vue | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/shift/JadwalShift.vue | v1.2 | Perbaikan 13.6.0: tab pola bergaris bawah, NIY di cetakan | 15/10/2026 -->
 <script setup>
 // Jadwal shift pekanan (medis, security). Admin ber-izin atur_presensi menyusun jadwal
 // (manual per sel atau pembuat jadwal bergilir); petugas melihat jadwal dan mengajukan tukar shift.
 import { ref, computed, onMounted, watch } from 'vue'
-import { PhCaretLeft, PhCaretRight, PhMagicWand, PhFloppyDisk, PhEye, PhWarning, PhArrowsLeftRight, PhCalendarBlank, PhCheck, PhX, PhInfo, PhArrowCounterClockwise } from '@phosphor-icons/vue'
+import { PhCaretLeft, PhCaretRight, PhMagicWand, PhFloppyDisk, PhEye, PhWarning, PhArrowsLeftRight, PhCalendarBlank, PhCheck, PhX, PhInfo, PhArrowCounterClockwise, PhCalendarStar } from '@phosphor-icons/vue'
 import { useAturPresensi } from '@/stores/aturPresensi'
 import { useShift } from '@/stores/shift'
 import { usePegawai } from '@/stores/pegawai'
@@ -131,11 +131,11 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
     <template v-else>
       <div class="layar-saja space-y-3">
         <!-- Pilih pola -->
-        <div class="flex flex-wrap gap-2">
-          <button v-for="p in polaShift" :key="p.id" @click="polaId = p.id"
-            :class="['flex min-h-[44px] items-center gap-2 rounded-xl border px-3.5 text-sm font-semibold', 'w-' + p.warna, polaId === p.id ? 'aktif text-teks' : 'border-garis bg-permukaan text-teks2']">
-            <span class="h-2.5 w-2.5 rounded-full" style="background: var(--c)" />{{ p.nama }}</button>
-        </div>
+        <nav class="bilah-tab -mx-4 px-4 lg:mx-0 lg:px-0" role="tablist" aria-label="Pola shift">
+          <button v-for="p in polaShift" :key="p.id" type="button" role="tab" :aria-selected="polaId === p.id" @click="polaId = p.id"
+            :class="['tab-garis', 'w-' + p.warna, polaId === p.id && 'aktif']">
+            <PhCalendarStar :size="20" weight="duotone" /><span>{{ p.nama }}</span></button>
+        </nav>
         <!-- Navigasi pekan -->
         <div class="kartu flex flex-wrap items-center gap-2 p-2.5">
           <button class="tombol-ikon" @click="pindahPekan(-1)" aria-label="Pekan sebelumnya"><PhCaretLeft :size="22" /></button>
@@ -286,9 +286,9 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
         </table>
         <p style="margin: 10pt 0 4pt">Rekapitulasi petugas</p>
         <table class="tabel">
-          <colgroup><col style="width:6%"><col style="width:40%"><col v-for="s in sesi" :key="s.id" :style="`width:${40 / sesi.length}%`"><col style="width:14%"></colgroup>
-          <thead><tr><th>No.</th><th>Nama</th><th v-for="s in sesi" :key="s.id">{{ s.nama }}</th><th>Libur (hari)</th></tr></thead>
-          <tbody><tr v-for="(r, i) in ringkas" :key="r.id"><td class="tengah">{{ i + 1 }}</td><td>{{ r.nama }}</td><td v-for="s in sesi" :key="s.id" class="tengah">{{ r.perSesi[s.id] }}</td><td class="tengah">{{ r.libur }}</td></tr></tbody>
+          <colgroup><col style="width:5%"><col style="width:15%"><col style="width:32%"><col v-for="s in sesi" :key="s.id" :style="`width:${36 / sesi.length}%`"><col style="width:12%"></colgroup>
+          <thead><tr><th>No.</th><th>NIY</th><th>Nama</th><th v-for="s in sesi" :key="s.id">{{ s.nama }}</th><th>Libur (hari)</th></tr></thead>
+          <tbody><tr v-for="(r, i) in ringkas" :key="r.id"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ r.niy || '–' }}</td><td>{{ r.nama }}</td><td v-for="s in sesi" :key="s.id" class="tengah">{{ r.perSesi[s.id] }}</td><td class="tengah">{{ r.libur }}</td></tr></tbody>
         </table>
         <template #ttd>
           <TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: direktur.jabatan_tertulis || 'Direktur', nama: direktur.nama || '', niy: direktur.niy }"
@@ -299,6 +299,3 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
     <p v-if="MODE_DEMO && siap" class="layar-saja mt-3 text-xs text-teks3">Mode demo: jadwal contoh disusun otomatis dan tidak disimpan.</p>
   </div>
 </template>
-<style scoped>
-button.aktif { border-color: color-mix(in srgb, var(--c) 35%, transparent); background: color-mix(in srgb, var(--c) 12%, rgb(var(--permukaan))); }
-</style>

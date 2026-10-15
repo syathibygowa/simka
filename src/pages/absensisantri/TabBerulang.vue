@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/TabBerulang.vue | v1.0 | Santri perlu perhatian: sakit, izin, alfa, bolos, terlambat berulang | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/TabBerulang.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Santri dengan ketidakhadiran berulang pada satu periode, untuk tindakan dan penanganan lanjutan:
 //   Sakit     = absen kode S (kelas, halaqah, asrama, ekskul, pelajaran) + kasus klinik
@@ -89,10 +89,10 @@ function ekspor() {
       </div>
     </div>
 
-    <div class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" role="radiogroup" aria-label="Kategori">
-      <button v-for="(k, kode) in KAT" :key="kode" type="button" role="radio" :aria-checked="kategori === kode" @click="kategori = kode"
-        :class="['flex min-h-[44px] shrink-0 items-center gap-2 rounded-2xl border px-3 text-sm font-semibold', 'w-' + k.w, kategori === kode ? 'border-transparent bg-[color-mix(in_srgb,var(--c)_16%,transparent)] text-teks' : 'border-garis bg-permukaan text-teks2']">
-        <component :is="k.ikon" :size="18" weight="duotone" style="color: var(--c)" /> {{ k.n }} <span class="lencana">{{ jumlahKat[kode] }}</span></button>
+    <div class="bilah-tab kecil" role="tablist" aria-label="Kategori">
+      <button v-for="(k, kode) in KAT" :key="kode" type="button" role="tab" :aria-selected="kategori === kode" @click="kategori = kode"
+        :class="['tab-garis', 'w-' + k.w, kategori === kode && 'aktif']">
+        <component :is="k.ikon" :size="18" weight="duotone" /> {{ k.n }} <span class="angka-tab">{{ jumlahKat[kode] }}</span></button>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">

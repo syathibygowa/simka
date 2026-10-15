@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.2 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Daftar izin santri. Dipakai di menu Perizinan (cakupan tetap) dan menu Musyrif (disaring per kamar,
 // dengan pilihan Menunggu/Aktif/Semua). Aksi sesuai hak dari server: setujui/tolak, ubah, batalkan,
@@ -94,9 +94,9 @@ const kosong = computed(() => ({ persetujuan: 'Tidak ada izin yang menunggu kepu
 <template>
   <div>
     <div class="flex flex-wrap items-center gap-2">
-      <div v-if="!cakupan" class="flex gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Saring izin">
-        <button v-for="p in [{ k: 'menunggu', n: 'Menunggu' }, { k: 'aktif', n: 'Aktif' }, { k: 'semua', n: 'Semua' }]" :key="p.k" type="button" role="radio" :aria-checked="pilihan === p.k" @click="pilihan = p.k"
-          :class="['min-h-[40px] rounded-xl px-4 text-sm font-semibold', pilihan === p.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ p.n }}</button>
+      <div v-if="!cakupan" class="bilah-tab kecil" role="tablist" aria-label="Saring izin">
+        <button v-for="p in [{ k: 'menunggu', n: 'Menunggu' }, { k: 'aktif', n: 'Aktif' }, { k: 'semua', n: 'Semua' }]" :key="p.k" type="button" role="tab" :aria-selected="pilihan === p.k" @click="pilihan = p.k"
+          :class="['tab-garis', pilihan === p.k && 'aktif']">{{ p.n }}</button>
       </div>
       <div class="relative min-w-[180px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri atau alasan" aria-label="Cari izin" /></div>

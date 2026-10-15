@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabRaporKelas.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabRaporKelas.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Wali Kelas → Rapor: isian wali kelas untuk rapor kelas terpilih.
 //   Catatan wali kelas : disusun otomatis per santri dari bank kalimat dan keunggulan santri (nilai tertinggi, kehadiran,
@@ -91,9 +91,9 @@ async function simpanKok() {
 <template>
   <div class="w-rapor space-y-4">
     <div class="kartu flex flex-wrap items-center gap-3 p-4">
-      <div class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Semester">
-        <button v-for="s in [1, 2]" :key="s" type="button" role="radio" :aria-checked="semester === s" @click="muat(s)"
-          :class="['min-h-[40px] rounded-xl px-3 text-sm font-semibold', semester === s ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ LABEL_SEMESTER[s] }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Semester">
+        <button v-for="s in [1, 2]" :key="s" type="button" role="tab" :aria-selected="semester === s" @click="muat(s)"
+          :class="['tab-garis', semester === s && 'aktif']">{{ LABEL_SEMESTER[s] }}</button>
       </div>
       <p class="min-w-[200px] flex-1 text-xs text-teks3">Nilai mapel diisi guru mapel, pengembangan diri oleh pembina ekskul, dan UTAS oleh penguji; wali kelas melengkapi catatan{{ kokAktif ? ', kokurikuler' : '' }}{{ semester === 2 ? ', keputusan akhir tahun' : '' }}, lalu mencetak.</p>
       <div class="bilah-tab kecil w-full" role="tablist" aria-label="Bagian rapor">

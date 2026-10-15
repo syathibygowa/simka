@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabRekapNilai.vue | v1.0 | Fase 12 – Tahap 6 Rekap penilaian pimpinan | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabRekapNilai.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Penilaian → Rekap: kemajuan pengisian rapor semester berjalan untuk pimpinan, pengatur penilaian, dan pengelola nilai
 // (cakupan menurut jenjang yang menjadi hak). Per kelas: mapel lengkap, nilai terisi, sikap, catatan wali kelas,
@@ -37,9 +37,9 @@ const pratinjau = ref(false)
 <template>
   <div class="space-y-4">
     <div class="kartu flex flex-wrap items-center gap-3 p-4">
-      <div class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Semester">
-        <button v-for="s in [1, 2]" :key="s" type="button" role="radio" :aria-checked="semester === s" @click="muat(s)"
-          :class="['min-h-[40px] rounded-xl px-3 text-sm font-semibold', semester === s ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ LABEL_SEMESTER[s] }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Semester">
+        <button v-for="s in [1, 2]" :key="s" type="button" role="tab" :aria-selected="semester === s" @click="muat(s)"
+          :class="['tab-garis', semester === s && 'aktif']">{{ LABEL_SEMESTER[s] }}</button>
       </div>
       <select v-if="(R?.jenis || []).filter((j) => j !== 'tahfizh').length > 1" v-model="jenjang" class="isian w-auto" aria-label="Saring jenjang">
         <option value="">Semua jenjang</option><option value="sma">SMA</option><option value="wustha">Wustha</option></select>

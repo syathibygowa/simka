@@ -1,5 +1,6 @@
-<!-- SIMKA PRO | src/pages/pengaturan/TabKop.vue | v1.2 | Perbaikan: nama satuan pendidikan dan NPSN per kop (isian {lembaga} surat) | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/TabKop.vue | v1.3 | Perbaikan 13.6.0: logo kop dipilih dari daftar logo terpusat | 15/10/2026 -->
 <script setup>
+import PilihLogo from '@/components/PilihLogo.vue'
 // Empat kop surat: pratinjau langsung saat diketik dan cetak uji F4.
 import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { PhPencilSimple, PhPrinter, PhUploadSimple, PhPlus, PhTrash, PhFloppyDisk, PhArrowLeft, PhCopySimple } from '@phosphor-icons/vue'
@@ -148,15 +149,8 @@ async function cetakUji(k) {
         </template>
 
         <template v-else>
-          <div v-for="lg in [{ k: 'logo_kiri_url', n: 'Logo kiri' }, { k: 'logo_kanan_url', n: 'Logo kanan (boleh kosong)' }]" :key="lg.k" class="sm:col-span-2">
-            <label class="label-isian" :for="'kp-' + lg.k">{{ lg.n }}</label>
-            <div class="flex flex-wrap gap-2">
-              <input :id="'kp-' + lg.k" v-model="draf[lg.k]" class="isian min-w-[220px] flex-1" placeholder="https://…" />
-              <button type="button" class="tombol-garis" @click="salin(lg.k)"><PhCopySimple :size="20" weight="duotone" /> Salin</button>
-              <label class="tombol-garis cursor-pointer"><PhUploadSimple :size="20" weight="duotone" /> Unggah
-                <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="sr-only" @change="unggah($event, lg.k)" /></label>
-            </div>
-          </div>
+          <PilihLogo v-model="draf.logo_kiri_url" class="sm:col-span-2" label="Logo kiri" />
+          <PilihLogo v-model="draf.logo_kanan_url" class="sm:col-span-2" label="Logo kanan (boleh kosong)" />
           <div class="sm:col-span-2">
             <p class="label-isian">Baris teks</p>
             <div class="space-y-2">

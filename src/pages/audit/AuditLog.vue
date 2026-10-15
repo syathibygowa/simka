@@ -1,11 +1,12 @@
-<!-- SIMKA PRO | src/pages/audit/AuditLog.vue | v1.1 | Fase 11 & 13 – Nama jenis data gaji dan keuangan | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/audit/AuditLog.vue | v2.0 | Perbaikan 13.6.0: khusus superadmin, kartu statistik kategori sebagai saringan | 15/10/2026 -->
 <script setup>
-// Audit log 30 hari terakhir. Pegawai melihat aktivitasnya sendiri; admin ber-izin "audit_log" dan
-// superadmin melihat semua. Saring tanggal, pelaku, dan jenis data; rincian perubahan per kolom;
-// ekspor Excel; cetak F4 mendatar. Log lebih dari 3 bulan dihapus otomatis (pg_cron).
+// Audit log 30 hari terakhir, KHUSUS SUPERADMIN (server juga menolak akun lain).
+// Kartu statistik per kategori aktivitas sekaligus menjadi saringan; saring tanggal, pelaku, dan jenis data;
+// rincian perubahan per kolom; ekspor Excel; cetak F4 mendatar. Log lebih dari 3 bulan dihapus otomatis (pg_cron).
 import { ref, computed, onMounted, watch } from 'vue'
 import * as XLSX from 'xlsx'
-import { PhPlusCircle, PhPencilSimpleLine, PhMinusCircle, PhLightning, PhMagnifyingGlass, PhEye, PhFileXls, PhArrowClockwise, PhInfo } from '@phosphor-icons/vue'
+import { PhPlusCircle, PhPencilSimpleLine, PhMinusCircle, PhLightning, PhMagnifyingGlass, PhEye, PhFileXls, PhArrowClockwise, PhInfo, PhListBullets, PhLockSimple } from '@phosphor-icons/vue'
+import { KATEGORI_AUDIT, KATEGORI_LAIN, kategoriTabel, tabelKategori } from '@/lib/audit'
 import { useAudit } from '@/stores/audit'
 import { usePegawai } from '@/stores/pegawai'
 import { useSesi } from '@/stores/sesi'
@@ -18,9 +19,9 @@ import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
 const audit = useAudit(); const peg = usePegawai(); const sesi = useSesi(); const ui = useUI()
-const semua = computed(() => sesi.bolehAdmin('audit_log'))
+const semua = computed(() => sesi.isSuperadmin)
 const mulai = ref(tambahHari(hariIniISO(), -6)); const akhir = ref(hariIniISO())
-const pelaku = ref(''); const tabel = ref(''); const cari = ref(''); const pilih = ref(null); const pratinjau = ref(false)
+const pelaku = ref(''); const tabel = ref(''); const kategori = ref(''); const cari = ref(''); const pilih = ref(null); const pratinjau = ref(false)
 
 const TABEL = {
   employees: 'Data pegawai', employee_functions: 'Jabatan fungsional pegawai', employee_structurals: 'Jabatan struktural pegawai',
@@ -34,6 +35,16 @@ const TABEL = {
   savings_programs: 'Program simpanan', savings_members: 'Anggota simpanan', savings_transactions: 'Transaksi simpanan', employee_bank_accounts: 'Rekening gaji pegawai',
   payroll_slip_requests: 'Permintaan slip gaji', sensitive_access: 'Akses fitur sensitif', fee_types: 'Jenis biaya santri', fee_rates: 'Tarif biaya santri',
   fee_subsidies: 'Subsidi santri', bills: 'Tagihan santri', payments: 'Pembayaran santri', payment_items: 'Rincian pembayaran santri', billing_letters: 'Surat tagihan santri',
+  students: 'Data santri', student_contacts: 'Kontak wali santri', student_groups: 'Kelompok santri', group_keepers: 'Pengasuh kelompok', group_members: 'Anggota kelompok',
+  student_permits: 'Perizinan santri', student_achievements: 'Prestasi santri', student_cards: 'Kartu santri', gate_logs: 'Catatan gerbang', guest_logs: 'Buku tamu',
+  parcels: 'Titipan', parent_visits: 'Kunjungan wali', clinic_staff: 'Petugas klinik', guardian_sessions: 'Sesi Portal Wali', guardian_login_attempts: 'Percobaan masuk Portal Wali',
+  guardian_announcements: 'Pengumuman wali', teaching_assignments: 'Penugasan mengajar', grade_periods: 'Periode nilai', grade_columns: 'Kolom nilai', grade_finals: 'Nilai rapor',
+  grade_change_requests: 'Permintaan ubah nilai', report_settings: 'Ketentuan rapor', report_notes: 'Catatan rapor', report_decisions: 'Keputusan kenaikan', student_tahfizh: 'Data tahfizh santri',
+  tahfizh_exams: 'Ujian tahfizh', tahfizh_documents: 'Dokumen tahfizh', juz_proposals: 'Usulan ujian juz', juz_achievements: 'Capaian juz', monthly_achievements: 'Capaian bulanan',
+  utas_results: 'Hasil UTAS', letter_templates: 'Templat surat', incoming_letters: 'Surat masuk', outgoing_letters: 'Surat keluar', letter_dispositions: 'Disposisi surat',
+  wa_templates: 'Templat WA', employee_documents: 'Berkas pegawai', employee_data_requests: 'Permintaan ubah data pegawai', acting_assignments: 'Penunjukan Plt',
+  employee_groups: 'Kelompok pegawai', employee_group_members: 'Anggota kelompok pegawai', employee_cards: 'Kartu pegawai', employee_workloads: 'Beban kerja pegawai',
+  workload_components: 'Komponen beban kerja', journal_items: 'Butir jurnal harian', agendas: 'Agenda', holiday_periods: 'Masa libur santri', leave_types: 'Jenis cuti',
 }
 const AKSI = {
   tambah: { n: 'Menambah', i: PhPlusCircle, w: 'presensi' }, ubah: { n: 'Mengubah', i: PhPencilSimpleLine, w: 'pegawai' },
@@ -45,12 +56,36 @@ const KOLOM = { nama_lengkap: 'Nama lengkap', status_akun: 'Status akun', status
   jenis_kelamin: 'Jenis kelamin', tmt_tugas: 'TMT tugas', status_kepegawaian: 'Status kepegawaian', pendidikan_terakhir: 'Pendidikan', judul: 'Judul', isi: 'Isi', nama: 'Nama', nilai: 'Nilai', aktif: 'Aktif' }
 const namaKolom = (k) => KOLOM[k] || k.replace(/_/g, ' ')
 
-onMounted(async () => { if (semua.value && !peg.daftar.length) peg.muat(); muat() })
+onMounted(async () => { if (!semua.value) return; if (!peg.daftar.length) peg.muat(); muat() })
+/** Jenis data yang dikirim ke server: satu jenis terpilih, atau semua jenis dalam kategori terpilih. */
+const saringTabel = computed(() => {
+  if (tabel.value) return [tabel.value]
+  if (!kategori.value) return []
+  const t = tabelKategori(kategori.value, audit.ringkasan)
+  return t.length ? t : ['__tidak_ada__']
+})
 async function muat() {
+  if (!semua.value) return
   if (akhir.value < mulai.value) return ui.toast('Tanggal akhir tidak boleh sebelum tanggal mulai.', 'galat')
-  try { await audit.muat({ mulai: mulai.value, akhir: akhir.value, pegawai: pelaku.value, tabel: tabel.value, batas: 1000 }) } catch (e) { ui.toast(e.message, 'galat') }
+  try { await audit.muat({ mulai: mulai.value, akhir: akhir.value, pegawai: pelaku.value, tabel: saringTabel.value, batas: 1000 }) } catch (e) { ui.toast(e.message, 'galat') }
 }
-watch([mulai, akhir, pelaku, tabel], muat)
+watch([mulai, akhir, pelaku], muat)
+watch(saringTabel, (b, l) => { if (JSON.stringify(b) !== JSON.stringify(l)) muat() })
+function pilihKategori(k) { tabel.value = ''; kategori.value = kategori.value === k ? '' : k }
+
+// ---------- Kartu statistik per kategori (jumlah dari ringkasan server, bukan dari daftar yang dibatasi) ----------
+const statistik = computed(() => {
+  const per = {}; let total = 0; const aksi = { tambah: 0, ubah: 0, hapus: 0, lain: 0 }
+  for (const r of audit.ringkasan) {
+    const k = kategoriTabel(r.tabel); per[k] = (per[k] || 0) + r.jumlah; total += r.jumlah
+    aksi[aksi[r.aksi] !== undefined ? r.aksi : 'lain'] += r.jumlah
+  }
+  const kart = [...KATEGORI_AUDIT, KATEGORI_LAIN].map((k) => ({ ...k, jumlah: per[k.k] || 0 })).filter((k) => k.jumlah || k.k !== 'lain')
+  return { total, aksi, kart }
+})
+const kategoriAktif = computed(() => [...KATEGORI_AUDIT, KATEGORI_LAIN].find((k) => k.k === kategori.value))
+/** Pilihan jenis data: mengikuti kategori terpilih. */
+const pilihanTabel = computed(() => Object.entries(TABEL).filter(([k]) => !kategori.value || kategoriTabel(k) === kategori.value))
 const batasAwal = computed(() => tambahHari(hariIniISO(), -29))
 
 const judulBaris = (r) => {
@@ -89,10 +124,32 @@ function ekspor() {
 const namaPelaku = computed(() => (pelaku.value ? peg.cari(pelaku.value)?.nama_lengkap : semua.value ? 'Semua pegawai' : sesi.pengguna?.nama_lengkap))
 </script>
 <template>
-  <div class="w-audit">
+  <div v-if="!semua" class="kartu w-audit mx-auto flex max-w-md flex-col items-center gap-2 p-8 text-center">
+    <span class="chip-ikon h-14 w-14 rounded-2xl"><PhLockSimple :size="30" weight="duotone" /></span>
+    <p class="font-bold">Audit log khusus superadmin</p>
+    <p class="text-sm text-teks3">Catatan aktivitas seluruh akun hanya dapat dibuka oleh superadmin.</p>
+  </div>
+  <div v-else class="w-audit">
     <div class="layar-saja">
       <p class="mb-3 flex gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" />
-        {{ semua ? 'Menampilkan aktivitas seluruh pengguna' : 'Menampilkan aktivitas akun Anda' }} selama 30 hari terakhir. Log yang berumur lebih dari 3 bulan dihapus otomatis.</p>
+        Aktivitas seluruh akun selama 30 hari terakhir. Audit log hanya dapat dibuka superadmin; log yang berumur lebih dari 3 bulan dihapus otomatis.</p>
+
+      <!-- Kartu statistik kategori (ketuk untuk menyaring) -->
+      <section class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5" aria-label="Kategori aktivitas">
+        <button type="button" :class="['kartu-kat w-audit', !kategori && 'aktif']" :aria-pressed="!kategori" @click="pilihKategori('')">
+          <span class="chip-padat"><PhListBullets :size="20" weight="fill" /></span>
+          <span class="angka">{{ statistik.total.toLocaleString('id-ID') }}</span>
+          <span class="judul">Semua aktivitas</span>
+          <span class="ket">+{{ statistik.aksi.tambah }} · ubah {{ statistik.aksi.ubah }} · hapus {{ statistik.aksi.hapus }}</span>
+        </button>
+        <button v-for="k in statistik.kart" :key="k.k" type="button" :class="['kartu-kat', 'w-' + k.w, kategori === k.k && 'aktif', !k.jumlah && 'kosong']"
+          :aria-pressed="kategori === k.k" @click="pilihKategori(k.k)">
+          <span class="chip-padat"><component :is="k.ikon" :size="20" weight="fill" /></span>
+          <span class="angka">{{ k.jumlah.toLocaleString('id-ID') }}</span>
+          <span class="judul">{{ k.n }}</span>
+          <span class="ket">{{ statistik.total ? Math.round((k.jumlah * 100) / statistik.total) : 0 }}% dari semua aktivitas</span>
+        </button>
+      </section>
       <div class="kartu mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
         <InputTanggal v-model="mulai" label="Dari tanggal" />
         <InputTanggal v-model="akhir" label="Sampai tanggal" />
@@ -100,8 +157,8 @@ const namaPelaku = computed(() => (pelaku.value ? peg.cari(pelaku.value)?.nama_l
           <select id="au-pelaku" v-model="pelaku" class="isian"><option value="">Semua pegawai</option>
             <option v-for="p in peg.daftar.filter((x) => x.status_akun === 'aktif')" :key="p.id" :value="p.id">{{ p.nama_lengkap }}</option></select></div>
         <div><label class="label-isian" for="au-tabel">Jenis data</label>
-          <select id="au-tabel" v-model="tabel" class="isian"><option value="">Semua jenis</option>
-            <option v-for="(n, k) in TABEL" :key="k" :value="k">{{ n }}</option></select></div>
+          <select id="au-tabel" v-model="tabel" class="isian"><option value="">{{ kategoriAktif ? 'Semua jenis ' + kategoriAktif.n.toLowerCase() : 'Semua jenis' }}</option>
+            <option v-for="[k, n] in pilihanTabel" :key="k" :value="k">{{ n }}</option></select></div>
         <div :class="semua ? 'sm:col-span-2 lg:col-span-4' : 'sm:col-span-2'"><label class="label-isian" for="au-cari">Cari</label>
           <div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
             <input id="au-cari" v-model="cari" class="isian pl-10" placeholder="Nama, aktivitas, atau isi perubahan" /></div></div>
@@ -111,7 +168,7 @@ const namaPelaku = computed(() => (pelaku.value ? peg.cari(pelaku.value)?.nama_l
         <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak</button>
         <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
         <button class="tombol-garis" :disabled="audit.memuat" @click="muat"><PhArrowClockwise :size="20" /> Muat ulang</button>
-        <span class="ml-auto text-sm font-semibold text-teks3">{{ tampil.length }} aktivitas</span>
+        <span class="ml-auto text-sm font-semibold text-teks3">{{ tampil.length }} aktivitas<template v-if="kategoriAktif"> · {{ kategoriAktif.n }}</template></span>
       </div>
 
       <p v-if="audit.memuat" class="py-8 text-center text-teks3">Memuat audit log…</p>
@@ -147,7 +204,7 @@ const namaPelaku = computed(() => (pelaku.value ? peg.cari(pelaku.value)?.nama_l
       </div>
     </LembarBawah>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Audit Log Aktivitas Pengguna" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)} · ${namaPelaku}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Audit Log Aktivitas Pengguna" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)} · ${namaPelaku}${kategoriAktif ? ' · ' + kategoriAktif.n : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:4%"><col style="width:13%"><col style="width:18%"><col style="width:27%"><col style="width:38%"></colgroup>
         <thead><tr><th>No.</th><th>Waktu</th><th>Pelaku</th><th>Aktivitas</th><th>Rincian perubahan</th></tr></thead>
@@ -161,3 +218,17 @@ const namaPelaku = computed(() => (pelaku.value ? peg.cari(pelaku.value)?.nama_l
     </DokumenCetak>
   </div>
 </template>
+<style scoped>
+.kartu-kat { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: .125rem; padding: .875rem 1rem; text-align: left;
+  border-radius: 1.25rem; border: 1px solid color-mix(in srgb, var(--c) 35%, rgb(var(--garis)));
+  background: linear-gradient(155deg, color-mix(in srgb, var(--c) 18%, rgb(var(--permukaan))) 0%, color-mix(in srgb, var(--c) 5%, rgb(var(--permukaan))) 80%);
+  transition: transform .15s, box-shadow .15s; }
+.kartu-kat:hover { transform: translateY(-2px); }
+.kartu-kat.aktif { border-color: var(--c); box-shadow: 0 0 0 2px var(--c); }
+.kartu-kat.kosong { opacity: .62; }
+.kartu-kat .chip-padat { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; margin-bottom: .375rem; border-radius: .75rem; color: #fff; background: var(--c); }
+:global(.dark) .kartu-kat .chip-padat { color: rgb(var(--latar)); }
+.kartu-kat .angka { font-size: 1.6rem; font-weight: 800; line-height: 1.1; color: rgb(var(--teks)); font-variant-numeric: tabular-nums; }
+.kartu-kat .judul { font-size: .875rem; font-weight: 700; color: rgb(var(--teks)); }
+.kartu-kat .ket { font-size: .75rem; color: rgb(var(--teks-2)); }
+</style>

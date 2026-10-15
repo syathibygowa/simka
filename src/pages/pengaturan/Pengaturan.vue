@@ -1,13 +1,14 @@
-<!-- SIMKA PRO | src/pages/pengaturan/Pengaturan.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/Pengaturan.vue | v1.3 | Perbaikan 13.6.0: nama tab Setelan baru (Lembaga, Kalender, Logo, Nomor Surat) | 15/10/2026 -->
 <script setup>
 // Menu Pengaturan lembaga (superadmin). Setiap tab memiliki ikon dan warna sendiri.
 import { computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhBuildings, PhCalendarDots, PhStamp, PhSignature, PhHash, PhPlugsConnected, PhWhatsappLogo } from '@phosphor-icons/vue'
+import { PhBuildings, PhCalendarDots, PhStamp, PhSignature, PhHash, PhPlugsConnected, PhWhatsappLogo, PhImages } from '@phosphor-icons/vue'
 import { useLembaga } from '@/stores/lembaga'
 import TabIdentitas from './TabIdentitas.vue'
 import TabKalender from './TabKalender.vue'
 import TabKop from './TabKop.vue'
+import TabLogo from './TabLogo.vue'
 import TabPenandaTangan from './TabPenandaTangan.vue'
 import TabPenomoran from './TabPenomoran.vue'
 import TabIntegrasi from './TabIntegrasi.vue'
@@ -23,11 +24,12 @@ onMounted(async () => {
 })
 
 const TAB = [
-  { k: 'identitas', n: 'Identitas lembaga', ikon: PhBuildings, w: 'pengaturan', komp: TabIdentitas },
-  { k: 'kalender', n: 'Tahun ajaran dan kalender', ikon: PhCalendarDots, w: 'tahfizh', komp: TabKalender },
+  { k: 'identitas', n: 'Lembaga', ikon: PhBuildings, w: 'pengaturan', komp: TabIdentitas },
+  { k: 'kalender', n: 'Kalender', ikon: PhCalendarDots, w: 'tahfizh', komp: TabKalender },
+  { k: 'logo', n: 'Logo', ikon: PhImages, w: 'klinik', komp: TabLogo },
   { k: 'kop', n: 'Kop surat', ikon: PhStamp, w: 'laporan', komp: TabKop },
   { k: 'penanda-tangan', n: 'Penanda tangan', ikon: PhSignature, w: 'pengajuan', komp: TabPenandaTangan },
-  { k: 'penomoran', n: 'Penomoran dokumen', ikon: PhHash, w: 'santri', komp: TabPenomoran },
+  { k: 'penomoran', n: 'Nomor Surat', ikon: PhHash, w: 'santri', komp: TabPenomoran },
   { k: 'template-wa', n: 'Template WA', ikon: PhWhatsappLogo, w: 'presensi', komp: TabTemplateWA },
   { k: 'integrasi', n: 'Integrasi', ikon: PhPlugsConnected, w: 'sistem', komp: TabIntegrasi },
 ]

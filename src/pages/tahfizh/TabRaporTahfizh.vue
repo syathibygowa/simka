@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabRaporTahfizh.vue | v1.2 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabRaporTahfizh.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Tahfizh → Rapor: catatan muhaffizh untuk rapor tahfizh per halaqah.
@@ -60,9 +60,9 @@ async function simpan(isi) { await rp.simpanCatatan(pilih.value, semester.value,
 <template>
   <div class="w-rapor space-y-4">
     <div class="kartu flex flex-wrap items-center gap-3 p-4">
-      <div class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Semester">
-        <button v-for="s in [1, 2]" :key="s" type="button" role="radio" :aria-checked="semester === s" @click="muat(s)"
-          :class="['min-h-[40px] rounded-xl px-3 text-sm font-semibold', semester === s ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ LABEL_SEMESTER[s] }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Semester">
+        <button v-for="s in [1, 2]" :key="s" type="button" role="tab" :aria-selected="semester === s" @click="muat(s)"
+          :class="['tab-garis', semester === s && 'aktif']">{{ LABEL_SEMESTER[s] }}</button>
       </div>
       <select v-if="halaqah.length > 1" v-model="pilih" class="isian w-auto max-w-full font-semibold" aria-label="Pilih halaqah" @change="ganti">
         <option v-for="h in halaqah" :key="h.group_id" :value="h.group_id">{{ h.nama }}{{ h.asuhan_saya ? ' (halaqah saya)' : '' }} · {{ h.santri }} santri</option></select>

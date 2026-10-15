@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/TabKetentuanSurat.vue | v1.3 | Fase 10 – Penutup: revisi surat dan inventaris semua surat | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/TabKetentuanSurat.vue | v1.4 | Perbaikan 13.6.0: nama tab Setelan baru (Lembaga, Kalender, Logo, Nomor Surat) | 15/10/2026 -->
 <script setup>
 // Ketentuan persuratan: alur surat masuk (dibaca semua), pilihan instruksi disposisi dan batas waktu bawaan (diubah pengelola).
 import { ref, watch } from 'vue'
@@ -20,7 +20,7 @@ async function simpan() {
 const ALUR_KELUAR = [
   'Semua surat melalui Tata Usaha. Tata Usaha menyusun surat dari template (isian, penanda tangan, tembusan) dan dapat mencatat pemohonnya, yaitu pegawai atau pimpinan yang meminta surat. Naskah boleh disunting per surat.',
   'Kepala Bidang ke atas juga dapat menyusun draf, tetapi draf itu selalu dikirim ke Tata Usaha untuk diperiksa. Hanya Tata Usaha yang mengajukan tanda tangan: elektronik (pejabat menandatangani dari akunnya di Dokumen → Tanda tangan) atau basah.',
-  'Nomor surat diambil otomatis saat surat sah (tanda tangan basah: saat diterbitkan), sesuai format di Setelan → Penomoran; Surat Keputusan memakai urutan sendiri.',
+  'Nomor surat diambil otomatis saat surat sah (tanda tangan basah: saat diterbitkan), sesuai format di Setelan → Nomor Surat; Surat Keputusan memakai urutan sendiri.',
   'Surat sah memuat QR dan kode validasi yang dapat diperiksa di halaman Cek Keabsahan, lalu tercatat di buku agenda surat keluar. Pindaian surat bertanda tangan basah dapat diunggah sebagai arsip.',
   'Penanda tangan dapat menolak dengan alasan; surat kembali ke penyusun untuk diperbaiki dan diajukan ulang.',
   'Surat yang sudah terbit dapat direvisi Tata Usaha: draf revisi disalin dari surat lama (nomor lama dipakai, atau nomor baru bila dipilih) lalu ditandatangani ulang. Setelah revisi sah, surat lama berstatus Direvisi dan Cek Keabsahan menunjuk penggantinya.',
@@ -42,7 +42,7 @@ const ALUR = [
       <ol class="mt-3 space-y-2.5 text-sm">
         <li v-for="(a, i) in ALUR" :key="i" class="flex gap-3"><span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-permukaan2 text-xs font-bold">{{ i + 1 }}</span><span class="text-teks2">{{ a }}</span></li>
       </ol>
-      <p class="mt-3 flex items-center gap-2 text-xs text-teks3"><PhNumberSquareOne :size="16" /> Format nomor agenda diatur di Setelan → Penomoran (bawaan 001/SM/bulan Hijriah/tahun Hijriah).</p>
+      <p class="mt-3 flex items-center gap-2 text-xs text-teks3"><PhNumberSquareOne :size="16" /> Format nomor agenda diatur di Setelan → Nomor Surat (bawaan 001/SM/bulan Hijriah/tahun Hijriah).</p>
       <h2 class="judul-bagian mt-5 flex items-center gap-2"><span class="chip-ikon h-9 w-9"><PhFlowArrow :size="20" weight="duotone" /></span> Alur surat keluar</h2>
       <ol class="mt-3 space-y-2.5 text-sm">
         <li v-for="(a, i) in ALUR_KELUAR" :key="i" class="flex gap-3"><span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-permukaan2 text-xs font-bold">{{ i + 1 }}</span><span class="text-teks2">{{ a }}</span></li>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengumuman/TabPengumumanWali.vue | v1.0 | Fase 9 – Tahap 13.3.0 Pengumuman untuk wali | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengumuman/TabPengumumanWali.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Pengumuman → tab "Untuk wali": pengumuman yang tampil di Portal Wali (dan notifikasi HP wali yang berlangganan).
 // Sasaran: semua wali, jenjang, tingkat kelas, kelompok (kelas/kamar/halaqah/ekskul), santri tertentu, dan putra/putri.
@@ -189,9 +189,9 @@ const pesanIngat = (r) => `Assalamu'alaikum warahmatullahi wabarakatuh. Bapak/Ib
     <!-- Pembaca -->
     <LembarBawah :model-value="!!pembaca" :judul="pembaca ? 'Pembaca: ' + pembaca.p.judul : ''" lebar @update:model-value="(v) => !v && (pembaca = null)">
       <div v-if="pembaca" class="px-5">
-        <div class="mb-3 flex gap-2" role="radiogroup" aria-label="Saring pembaca">
-          <button v-for="s in [{ k: 'belum', n: 'Belum dibaca' }, { k: 'sudah', n: 'Sudah dibaca' }, { k: 'semua', n: 'Semua' }]" :key="s.k" type="button" role="radio" :aria-checked="saring === s.k" @click="saring = s.k"
-            :class="['min-h-[38px] rounded-xl border px-3 text-sm font-semibold', saring === s.k ? 'border-[#A3305F]/50 bg-[#A3305F]/10' : 'border-garis text-teks2']">
+        <div class="bilah-tab kecil mb-3" role="tablist" aria-label="Saring pembaca">
+          <button v-for="s in [{ k: 'belum', n: 'Belum dibaca' }, { k: 'sudah', n: 'Sudah dibaca' }, { k: 'semua', n: 'Semua' }]" :key="s.k" type="button" role="tab" :aria-selected="saring === s.k" @click="saring = s.k"
+            :class="['tab-garis', saring === s.k && 'aktif']">
             {{ s.n }} ({{ pembaca.daftar.filter((r) => s.k === 'semua' || (s.k === 'sudah' ? r.dibaca_pada : !r.dibaca_pada)).length }})</button>
         </div>
         <p v-if="!daftarPembaca.length" class="py-6 text-center text-sm text-teks3">Tidak ada data.</p>

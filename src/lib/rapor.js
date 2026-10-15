@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/rapor.js | v1.0 | Fase 12 – Tahap 5 Cetak rapor dan leger | 13/10/2026
+// SIMKA PRO | src/lib/rapor.js | v1.1 | Perbaikan 13.6.0: logo rapor dari daftar logo terpusat | 15/10/2026
 // Pengolah data cetak rapor (data_rapor / data_rapor_tahfizh): nilai per mapel rapor (pembulatan, predikat, deskripsi
 // otomatis), jumlah/rata-rata/peringkat untuk leger, kehadiran (persentase dan kalimat), keputusan akhir tahun,
 // identitas sekolah, serta label kelas Romawi.
@@ -25,8 +25,8 @@ export const IDENTITAS_SEKOLAH = [
   { k: 'npsn', n: 'NPSN' }, { k: 'nss', n: 'NSS/NSPP' }, { k: 'alamat', n: 'Alamat sekolah', lebar: true },
   { k: 'kelurahan', n: 'Kelurahan/desa' }, { k: 'kecamatan', n: 'Kecamatan' }, { k: 'kota', n: 'Kabupaten/kota' }, { k: 'provinsi', n: 'Provinsi' },
   { k: 'kode_pos', n: 'Kode pos' }, { k: 'telepon', n: 'Telepon' }, { k: 'email', n: 'E-mail' }, { k: 'kementerian', n: 'Kementerian (sampul)', lebar: true },
-  { k: 'logo_url', n: 'Alamat gambar logo sampul (kosong = logo pondok)', lebar: true },
 ]
+// Logo sampul (identitas.logo_url) dipilih dari daftar logo terpusat (Setelan → Logo); kosong = logo pondok.
 
 export const KEPUTUSAN = {
   naik: { n: 'Naik kelas', w: 'presensi' }, tinggal: { n: 'Tinggal kelas', w: 'klinik' },

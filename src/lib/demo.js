@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demo.js | v1.12 | Perbaikan: nama satuan per kop surat | 16/10/2026
+// SIMKA PRO | src/lib/demo.js | v1.13 | Perbaikan 13.6.0: Audit Log khusus superadmin | 15/10/2026
 // Data contoh untuk MODE DEMO. Nama pegawai di bawah fiktif.
 const menitLalu = (m) => new Date(Date.now() - m * 60000).toISOString()
 
@@ -180,11 +180,11 @@ export const FITUR_DEMO = [
   ['absensi_asrama', 'Absensi asrama', 'Santri', 4], ['tahfizh', 'Tahfizh', 'Santri', 5], ['klinik', 'Klinik', 'Layanan', 6], ['gerbang', 'Gerbang dan izin keluar', 'Layanan', 7],
   ['pantauan', 'Pantauan langsung', 'Layanan', 7], ['tata_usaha', 'Tata usaha', 'Administrasi', 10],
   ['laporan', 'Laporan dan ekspor', 'Administrasi', 8], ['pengumuman', 'Pengumuman', 'Sistem', 3], ['pengaturan_lembaga', 'Pengaturan lembaga', 'Sistem', 1],
-  ['hak_akses', 'Hak akses', 'Sistem', 1], ['audit_log', 'Audit log', 'Sistem', 3],
+  ['hak_akses', 'Hak akses', 'Sistem', 1],
 ].map(([kode, nama, kelompok, fase], i) => ({ kode, nama, kelompok, fase, urutan: i }))
 export const IZIN_ADMIN_DEMO = [
   { kode: 'verval_akun', nama: 'Verifikasi akun pegawai baru', urutan: 1 }, { kode: 'kelola_pegawai', nama: 'Mengelola data kepegawaian dan impor Excel', urutan: 2 },
-  { kode: 'kalender', nama: 'Mengelola hari libur dan kalender', urutan: 3 }, { kode: 'audit_log', nama: 'Melihat audit log seluruh pegawai', urutan: 4 },
+  { kode: 'kalender', nama: 'Mengelola hari libur dan kalender', urutan: 3 }, 
   { kode: 'verval_presensi', nama: 'Verval presensi di luar area dan permintaan koreksi', urutan: 5 },
   { kode: 'atur_presensi', nama: 'Mengatur pola sesi, jadwal pegawai, dan shift presensi', urutan: 8 },
 ]
@@ -279,4 +279,13 @@ export const AUDIT_DEMO = () => [
   { m: 600, pelaku: 'Ust. Fadhil Rahman, S.Kom.', emp: 'd-ad', aksi: 'tambah', tabel: 'shift_rosters', data: { tanggal: hariDepan(1), employee_id: 'p5' } },
   { m: 1500, pelaku: 'Superadmin SIMKA', emp: 'd-sa', aksi: 'hapus', tabel: 'holidays', data: { nama: 'Libur contoh', tanggal: hariDepan(-2) } },
   { m: 2880, pelaku: 'Ust. Hasan Basri, Lc.', emp: 'd-pg', aksi: 'ubah', tabel: 'employees', data: { tema: { lama: 'sistem', baru: 'gelap' } } },
+  { m: 40, pelaku: 'Ust. Fadhil Rahman, S.Kom.', emp: 'd-ad', aksi: 'tambah', tabel: 'students', data: { nama_lengkap: 'Ahmad Zaki', nis: '2615042' } },
+  { m: 95, pelaku: 'Ust. Fadhil Rahman, S.Kom.', emp: 'd-ad', aksi: 'ubah', tabel: 'student_contacts', data: { no_hp: { lama: '081200000001', baru: '081355512345' } } },
+  { m: 130, pelaku: 'Superadmin SIMKA', emp: 'd-sa', aksi: 'ubah', tabel: 'feature_grants', data: { tingkat: { lama: 1, baru: 2 } } },
+  { m: 260, pelaku: 'Ust. Hasan Basri, Lc.', emp: 'd-pg', aksi: 'tambah', tabel: 'juz_proposals', data: { juz: 5 } },
+  { m: 420, pelaku: 'Superadmin SIMKA', emp: 'd-sa', aksi: 'ubah', tabel: 'institution_settings', data: { nilai: { lama: '…', baru: '…' } } },
+  { m: 720, pelaku: 'Superadmin SIMKA', emp: 'd-sa', aksi: 'tambah', tabel: 'outgoing_letters', data: { perihal: 'Undangan rapat wali santri' } },
+  { m: 980, pelaku: 'Superadmin SIMKA', emp: 'd-sa', aksi: 'tambah', tabel: 'payments', data: { jumlah: 750000 } },
+  { m: 1300, pelaku: 'Ust. Fadhil Rahman, S.Kom.', emp: 'd-ad', aksi: 'ubah', tabel: 'grade_periods', data: { status: { lama: 'buka', baru: 'ditutup' } } },
+  { m: 2100, pelaku: 'Superadmin SIMKA', emp: 'd-sa', aksi: 'tambah', tabel: 'employee_schedules', data: { pattern_id: 'pola-guru' } },
 ].map((r, i) => ({ id: i + 1, created_at: menitLalu(r.m), employee_id: r.emp, pelaku: r.pelaku, aksi: r.aksi, tabel: r.tabel, data_id: null, ringkasan: null, data: r.data }))

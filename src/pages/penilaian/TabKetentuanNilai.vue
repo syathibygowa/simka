@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabKetentuanNilai.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabKetentuanNilai.vue | v1.3 | Perbaikan 13.6.0: logo rapor dari daftar logo terpusat | 15/10/2026 -->
 <script setup>
 // Ketentuan per jenis rapor: judul, kop (dari kop surat sistem), label ambang (KKM/KKTP) dan nilai bawaannya, pembulatan,
 // bagian rapor (keterampilan, sikap di rapor, kokurikuler, daftar TP, rata-rata, peringkat), fase per kelas (SMA),
@@ -12,6 +12,7 @@ import { useLembaga } from '@/stores/lembaga'
 import { useUI } from '@/stores/ui'
 import { JENIS_RAPOR } from '@/lib/penilaian'
 import { IDENTITAS_SEKOLAH } from '@/lib/rapor'
+import PilihLogo from '@/components/PilihLogo.vue'
 
 const pn = usePenilaian(); const lb = useLembaga(); const ui = useUI(); const proses = ref(false)
 onMounted(() => lb.muat().catch(() => {}))
@@ -138,6 +139,7 @@ const penanda = computed(() => lb.signatories.find((s) => s.id === f.value?.sign
             <label class="label-isian" :for="`idn-${x.k}`">{{ x.k === 'nss' && jenis !== 'sma' ? 'NSPP' : x.n }}</label>
             <input :id="`idn-${x.k}`" v-model="f.identitas[x.k]" class="isian" :disabled="!boleh" /></div>
         </div>
+        <PilihLogo v-model="f.identitas.logo_url" class="mt-3" :disabled="!boleh" :label="`Logo sampul rapor ${JENIS_RAPOR[jenis].n}`" kosong="Logo pondok (bawaan)" />
       </section>
 
       <section class="kartu p-4 xl:col-span-2">

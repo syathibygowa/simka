@@ -1,10 +1,10 @@
-<!-- SIMKA PRO | src/pages/presensi/AturPresensi.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/AturPresensi.vue | v1.3 | Perbaikan 13.6.0: tab Jadwal kerja semua pegawai | 15/10/2026 -->
 <script setup>
-// Penjadwalan (admin dan superadmin): titik GPS, pola sesi, jadwal pegawai, dan aturan umum.
+// Penjadwalan (admin dan superadmin): titik GPS, pola sesi, jadwal pegawai, jadwal kerja semua pegawai (cetak), dan aturan umum.
 // Setiap tab memiliki ikon dan warna sendiri.
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhMapPinArea, PhClockCountdown, PhCalendarCheck, PhSlidersHorizontal } from '@phosphor-icons/vue'
+import { PhMapPinArea, PhClockCountdown, PhCalendarCheck, PhSlidersHorizontal, PhTable } from '@phosphor-icons/vue'
 import { useAturPresensi } from '@/stores/aturPresensi'
 import { useOrganisasi } from '@/stores/organisasi'
 import { usePegawai } from '@/stores/pegawai'
@@ -13,6 +13,7 @@ import TabTitik from './TabTitik.vue'
 import TabPola from './TabPola.vue'
 import TabJadwal from './TabJadwal.vue'
 import TabUmum from './TabUmum.vue'
+import TabJadwalKerja from './TabJadwalKerja.vue'
 
 const props = defineProps({ tab: { type: String, default: 'titik' } })
 const router = useRouter()
@@ -27,6 +28,7 @@ const TAB = [
   { k: 'titik', n: 'Titik GPS', ikon: PhMapPinArea, w: 'santri', komp: TabTitik },
   { k: 'pola', n: 'Pola dan sesi', ikon: PhClockCountdown, w: 'tahfizh', komp: TabPola },
   { k: 'jadwal', n: 'Jadwal pegawai', ikon: PhCalendarCheck, w: 'pegawai', komp: TabJadwal },
+  { k: 'jadwal-kerja', n: 'Jadwal kerja', ikon: PhTable, w: 'shift', komp: TabJadwalKerja },
   { k: 'umum', n: 'Aturan umum', ikon: PhSlidersHorizontal, w: 'pengaturan', komp: TabUmum },
 ]
 const aktif = computed(() => TAB.find((t) => t.k === props.tab) || TAB[0])

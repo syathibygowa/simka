@@ -1,10 +1,10 @@
-<!-- SIMKA PRO | src/pages/jadwal/GridJadwal.vue | v1.1 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/jadwal/GridJadwal.vue | v1.2 | Perbaikan 13.6.0: jam mengikuti pembagian jam per hari | 15/10/2026 -->
 <script setup>
-// Kisi jadwal pekanan (Senin–Sabtu; Jumat memakai jam pelajaran Jumat). Mode "kelas": sel berisi mapel dan guru;
+// Kisi jadwal pekanan (Senin–Sabtu; jam tiap hari mengikuti pembagian jam per hari: reguler/Jumat/Sabtu). Mode "kelas": sel berisi mapel dan guru;
 // mode "guru": sel berisi kelas dan mapel (gabungan jenjang Wustha dan SMA). Sel dapat diketuk bila boleh diubah.
 import { computed, ref } from 'vue'
 import { HARI } from '@/lib/tanggal'
-import { HARI_SEKOLAH, jenisHari, jamPendek } from '@/lib/jadwal'
+import { HARI_SEKOLAH, jamPendek } from '@/lib/jadwal'
 import { useJadwal } from '@/stores/jadwal'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 
@@ -20,7 +20,7 @@ const singkat = (nama) => String(nama || '').replace(/^(Ust\.|Ustzh\.)\s*/, '').
 
 const kolom = computed(() => HARI_SEKOLAH.map((h) => {
   if (props.mode === 'kelas') {
-    const jam = jd.jamUntuk(props.jenjang, jenisHari(h))
+    const jam = jd.jamHari(props.jenjang, h)   // kumpulan jam hari ini (reguler/Jumat/Sabtu) sesuai pengaturan jenjang
     return { hari: h, sel: jam.map((p) => ({ p, s: jd.jadwal.find((x) => x.group_id === props.groupId && x.hari === h && x.period_id === p.id) })) }
   }
   // Mode guru: semua jam yang diisi guru ini pada hari itu, urut jam mulai

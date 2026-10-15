@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/jadwal.js | v1.2 | Jurnal mengajar rinci: jadwal sepekan, peserta pelajaran, pengaturan jurnal | 14/10/2026
+// SIMKA PRO | src/stores/jadwal.js | v1.3 | Perbaikan 13.6.0: pembagian jam pelajaran per hari (reguler/Jumat/Sabtu) | 15/10/2026
 // Mata pelajaran, jam pelajaran, penugasan mengajar, jadwal pelajaran per kelas/guru, jurnal mengajar, dan rekap.
 // Penulisan lewat fungsi SQL (hak atur_jadwal; guru menulis jurnal dan rencana materinya sendiri).
 import { defineStore } from 'pinia'
@@ -9,6 +9,7 @@ import { pesanGalat } from './lembaga'
 import { useSesi } from './sesi'
 import { useKelompokSantri } from './kelompokSantri'
 import { useSantri } from './santri'
+import { HARI_JAM_BAWAAN } from '@/lib/jadwal'
 
 const rpc = async (nama, arg) => { const { data, error } = await supabase.rpc(nama, arg); if (error) throw new Error(pesanGalat(error)); return data }
 const j5 = (t) => String(t || '').slice(0, 5)
@@ -19,9 +20,16 @@ export const ATUR_JURNAL_DEMO = { batas_hari: 1, absen_santri: true,
   media: ['Papan tulis', 'Buku paket', 'Kitab', 'Lembar kerja', 'Proyektor/LCD', 'Video', 'Alat peraga', 'Lingkungan sekitar'] }
 
 export const useJadwal = defineStore('jadwal', {
-  state: () => ({ mapel: [], jam: [], penugasan: [], jadwal: [], memuat: false, dimuat: false, aturJurnal: null }),
+  state: () => ({ mapel: [], jam: [], penugasan: [], jadwal: [], hariJam: { wustha: { ...HARI_JAM_BAWAAN }, sma: { ...HARI_JAM_BAWAAN } }, memuat: false, dimuat: false, aturJurnal: null }),
   getters: {
     jamUntuk: (s) => (jenjang, jenisHari) => s.jam.filter((p) => p.jenjang === jenjang && p.jenis_hari === jenisHari).sort((a, b) => a.urutan - b.urutan),
+    /** Kumpulan jam (reguler/jumat/sabtu) yang dipakai hari h pada jenjang tertentu (Mapel dan jam → Pembagian jam per hari). */
+    jenisHariUntuk: (s) => (jenjang, h) => s.hariJam?.[jenjang]?.[String(h)] || HARI_JAM_BAWAAN[h] || 'reguler',
+    /** Jam pelajaran untuk satu hari pada jenjang tertentu. */
+    jamHari: (s) => (jenjang, h) => {
+      const jh = s.hariJam?.[jenjang]?.[String(h)] || HARI_JAM_BAWAAN[h] || 'reguler'
+      return s.jam.filter((p) => p.jenjang === jenjang && p.jenis_hari === jh).sort((a, b) => a.urutan - b.urutan)
+    },
     cariMapel: (s) => (id) => s.mapel.find((m) => m.id === id),
     cariPenugasan: (s) => (id) => s.penugasan.find((t) => t.id === id),
   },
@@ -32,14 +40,17 @@ export const useJadwal = defineStore('jadwal', {
       try {
         if (MODE_DEMO) { const d = dataJadwalDemo(); Object.assign(this, { mapel: d.mapel, jam: d.jam, penugasan: d.penugasan, jadwal: d.jadwal }); this.dimuat = true; return }
         const ta = useKelompokSantri().taAktif?.id
-        const [m, j, t, s] = await Promise.all([
+        const [m, j, t, s, st] = await Promise.all([
           supabase.from('subjects').select('*').order('urutan'),
           supabase.from('lesson_periods').select('*').order('urutan'),
           supabase.from('teaching_assignments').select('*, guru:employee_id(nama_lengkap, niy)').order('created_at'),
           supabase.from('class_schedules').select('*'),
+          supabase.from('institution_settings').select('nilai').eq('kunci', 'jadwal_pelajaran').maybeSingle(),
         ])
         for (const r of [m, j, t, s]) if (r.error) throw new Error(pesanGalat(r.error))
         this.mapel = m.data
+        const hj = st.data?.nilai?.hari_jam || {}
+        this.hariJam = { wustha: { ...HARI_JAM_BAWAAN, ...(hj.wustha || {}) }, sma: { ...HARI_JAM_BAWAAN, ...(hj.sma || {}) } }
         this.jam = j.data.map((p) => ({ ...p, jam_mulai: j5(p.jam_mulai), jam_selesai: j5(p.jam_selesai) }))
         this.penugasan = t.data.filter((x) => !ta || x.academic_year_id === ta).map((x) => ({ ...x, nama_guru: x.guru?.nama_lengkap, niy_guru: x.guru?.niy }))
         const ids = new Set(this.penugasan.map((x) => x.id))
@@ -54,6 +65,26 @@ export const useJadwal = defineStore('jadwal', {
     async simpanJam(jenjang, jenisHari, daftar) {
       if (MODE_DEMO) { const d = dataJadwalDemo(); d.jam = [...d.jam.filter((p) => !(p.jenjang === jenjang && p.jenis_hari === jenisHari)), ...daftar.map((p) => ({ ...p, id: p.id || `p-${jenjang}|${jenisHari}-${p.urutan}`, jenjang, jenis_hari: jenisHari }))]; return this.muat(true) }
       await rpc('simpan_jam_pelajaran', { p_jenjang: jenjang, p_jenis_hari: jenisHari, p_daftar: daftar }); await this.muat(true)
+    },
+    /** Simpan pembagian hari → kumpulan jam satu jenjang. peta: { '1': 'reguler', …, '6': 'sabtu' } */
+    async simpanHariJam(jenjang, peta) {
+      if (MODE_DEMO) {
+        const d = dataJadwalDemo()
+        for (const [h, jh] of Object.entries(peta)) {
+          const lama = this.jenisHariUntuk(jenjang, h)
+          if (lama === jh) continue
+          if (!d.jam.some((p) => p.jenjang === jenjang && p.jenis_hari === jh)) d.jam.push(...d.jam.filter((p) => p.jenjang === jenjang && p.jenis_hari === lama).map((p) => ({ ...p, id: `p-${jenjang}|${jh}-${p.urutan}`, jenis_hari: jh })))
+          for (const x of d.jadwal.filter((x) => Number(x.hari) === Number(h))) {
+            const p = d.jam.find((q) => q.id === x.period_id); if (!p || p.jenjang !== jenjang) continue
+            const baru = d.jam.find((q) => q.jenjang === jenjang && q.jenis_hari === jh && q.urutan === p.urutan && q.jenis === 'jp')
+            if (baru) x.period_id = baru.id; else d.jadwal.splice(d.jadwal.indexOf(x), 1)
+          }
+        }
+        const sim = { ...this.hariJam, [jenjang]: { ...this.hariJam[jenjang], ...peta } }
+        await this.muat(true); this.hariJam = sim
+        return { dipindah: 0, dikosongkan: 0 }
+      }
+      const r = await rpc('simpan_hari_jam', { p_jenjang: jenjang, p_peta: peta }); await this.muat(true); return r
     },
     async simpanPenugasan(isi, namaGuru = '') {
       if (MODE_DEMO) {

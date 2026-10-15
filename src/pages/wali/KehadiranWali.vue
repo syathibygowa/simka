@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/wali/KehadiranWali.vue | v1.1 | Fase 9 – Tahap 13.4.0 Unduh PDF rekap kehadiran | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/KehadiranWali.vue | v1.2 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Kehadiran anak: persentase program pokok (kelas + halaqah + asrama; Terlambat dan Bolos dihitung hadir),
 // rekap per kegiatan termasuk ekskul, jumlah HISBAT, dan catatan per tanggal. Periode bawaan bulan ini, paling panjang satu semester.
@@ -83,9 +83,9 @@ const hari = computed(() => {
         <div class="flex flex-wrap items-center gap-3">
           <span class="chip-ikon h-10 w-10"><PhCalendarCheck :size="22" weight="duotone" /></span>
           <h2 class="judul-bagian flex-1">Rincian per tanggal</h2>
-          <div class="flex w-full rounded-xl bg-permukaan2 p-1 text-sm font-semibold sm:w-auto" role="radiogroup" aria-label="Tampilan rincian">
-            <button type="button" role="radio" :aria-checked="!hanyaCatatan" :class="['min-h-[36px] flex-1 rounded-lg px-3', !hanyaCatatan ? 'bg-permukaan shadow-kartu' : 'text-teks2']" @click="hanyaCatatan = false">Semua</button>
-            <button type="button" role="radio" :aria-checked="hanyaCatatan" :class="['min-h-[36px] flex-1 rounded-lg px-3', hanyaCatatan ? 'bg-permukaan shadow-kartu' : 'text-teks2']" @click="hanyaCatatan = true">Hanya catatan</button>
+          <div class="bilah-tab kecil" role="tablist" aria-label="Tampilan rincian">
+            <button type="button" role="tab" :aria-selected="!hanyaCatatan" :class="['tab-garis', !hanyaCatatan && 'aktif']" @click="hanyaCatatan = false">Semua</button>
+            <button type="button" role="tab" :aria-selected="hanyaCatatan" :class="['tab-garis', hanyaCatatan && 'aktif']" @click="hanyaCatatan = true">Hanya catatan</button>
           </div>
         </div>
         <p class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-teks3">

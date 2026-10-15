@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/klinik/Klinik.vue | v1.0 | Fase 6 – Tahap 1 Dasar Klinik | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/klinik/Klinik.vue | v1.1 | Perbaikan 13.6.0: rujuk santri tidak tersedia bagi tenaga klinik | 15/10/2026 -->
 <script setup>
 // Menu Klinik (Blueprint Bagian 21). Klinik Putra dan Putri dipisah.
 //   Tenaga klinik (petugas, pengelola, pimpinan Kesantrian): Antrean, Dirawat, Riwayat, Ketentuan.
@@ -20,7 +20,7 @@ const TAB = computed(() => [
     { k: 'dirawat', n: 'Dirawat', ikon: PhBed, w: 'klinik' },
     { k: 'riwayat', n: 'Riwayat', ikon: PhClockCounterClockwise, w: 'laporan' },
   ] : []),
-  ...(kl.hak.rujuk ? [{ k: 'rujukan', n: kl.tenagaKlinik ? 'Rujukan saya' : 'Rujukan', ikon: PhPaperPlaneTilt, w: 'santri' }] : []),
+  ...(kl.hak.rujuk ? [{ k: 'rujukan', n: 'Rujukan', ikon: PhPaperPlaneTilt, w: 'santri' }] : []),
   { k: 'ketentuan', n: 'Ketentuan', ikon: PhListChecks, w: 'pengaturan' },
 ])
 const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : TAB.value[0].k))

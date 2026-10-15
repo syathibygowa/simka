@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/IsiNilai.vue | v1.1 | Fase 12 – Tahap 6 Permintaan ubah nilai saat periode ditutup | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/IsiNilai.vue | v1.2 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Lembar nilai satu kelas–mapel × semester (Guru Mapel → Nilai). Bagian:
 //   Isian nilai : isian per komponen (Harian 1, Harian 2, Ulangan, UTS, UAS, …) yang ditambah guru sendiri; tampilan tabel
@@ -157,8 +157,8 @@ const ringkasSaran = computed(() => { const v = santri.value.map((s) => saran(s.
               <span v-if="!L.mapel_rapor.length" class="lencana w-klinik">Belum dipakai di mapel rapor mana pun</span>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Semester">
-            <button v-for="s in [1, 2]" :key="s" type="button" role="radio" :aria-checked="L.semester === s" :class="['min-h-[38px] rounded-xl px-3 text-sm font-semibold', L.semester === s ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']"
+          <div class="bilah-tab kecil" role="tablist" aria-label="Semester">
+            <button v-for="s in [1, 2]" :key="s" type="button" role="tab" :aria-selected="L.semester === s" :class="['tab-garis', L.semester === s && 'aktif']"
               @click="router.replace({ query: { smt: s } }).then(muat)">Smt {{ s }}</button>
           </div>
         </div>
@@ -189,9 +189,9 @@ const ringkasSaran = computed(() => { const v = santri.value.map((s) => saran(s.
         </section>
 
         <div v-if="kolom.length" class="mb-3 flex flex-wrap items-center gap-2">
-          <div class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Tampilan">
-            <button v-for="t in [{ k: 'tabel', n: 'Tabel', i: PhTable }, { k: 'per', n: 'Per isian', i: PhListBullets }]" :key="t.k" type="button" role="radio" :aria-checked="tampil === t.k" @click="tampil = t.k"
-              :class="['flex min-h-[38px] items-center gap-1.5 rounded-xl px-3 text-sm font-semibold', tampil === t.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']"><component :is="t.i" :size="16" /> {{ t.n }}</button>
+          <div class="bilah-tab kecil" role="tablist" aria-label="Tampilan">
+            <button v-for="t in [{ k: 'tabel', n: 'Tabel', i: PhTable }, { k: 'per', n: 'Per isian', i: PhListBullets }]" :key="t.k" type="button" role="tab" :aria-selected="tampil === t.k" @click="tampil = t.k"
+              :class="['tab-garis', tampil === t.k && 'aktif']"><component :is="t.i" :size="16" /> {{ t.n }}</button>
           </div>
           <p class="text-xs text-teks3">Saran tersedia {{ ringkasSaran.ada }}/{{ santri.length }} santri · lengkap semua komponen {{ ringkasSaran.lengkap }}</p>
         </div>

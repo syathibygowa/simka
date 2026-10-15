@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.9 | Fase 11 – Tahap 4 Kartu Slip gaji (buka atau minta ke Bendahara) | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.10 | Perbaikan 13.6.0: keterangan versi diringkas | 15/10/2026 -->
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -92,8 +92,7 @@ function ganti(p) { sesi.masukDemo(p); notif.berhenti(); pengumuman.berhenti(); 
       <span class="chip-ikon h-10 w-10"><PhSignOut :size="22" weight="duotone" /></span>
       <span class="font-bold">Keluar dari akun</span>
     </button>
-    <p class="text-center text-xs text-teks3">SIMKA PRO versi {{ VERSI_APLIKASI }} – {{ KETERANGAN_VERSI }}</p>
-    <p v-if="WAKTU_BUILD" class="pb-2 text-center text-xs text-teks3">Dibangun {{ formatPendek(WAKTU_BUILD) }} pukul {{ formatJam(WAKTU_BUILD) }} WITA</p>
+    <p class="pb-2 text-center text-xs text-teks3" :title="KETERANGAN_VERSI">SIMKA PRO versi {{ VERSI_APLIKASI }}<template v-if="WAKTU_BUILD"> · dibangun {{ formatPendek(WAKTU_BUILD) }} pukul {{ formatJam(WAKTU_BUILD) }} WITA</template></p>
   </div>
 </template>
 <style scoped>.kepala { background: var(--gradasi-utama); }</style>

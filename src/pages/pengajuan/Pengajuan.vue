@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengajuan/Pengajuan.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengajuan/Pengajuan.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Pengajuan izin, sakit, dinas luar, dan cuti. Tab: Pengajuan saya (semua pegawai), Persetujuan (pejabat
 // penyetuju dan Plt), Semua (admin ber-izin lihat_pengajuan/superadmin: rekap, Excel, cetak F4), Ketentuan (dibaca semua).
@@ -111,7 +111,9 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
               <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
         </div>
         <div class="mb-3 flex flex-wrap items-center gap-2">
-          <button v-for="s in SARING" :key="s.k" @click="saring = s.k" :class="['min-h-[40px] rounded-full border px-3.5 text-sm font-semibold', saring === s.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2']">{{ s.n }}</button>
+          <div class="bilah-tab kecil" role="tablist" aria-label="Saring status">
+            <button v-for="s in SARING" :key="s.k" @click="saring = s.k" :class="['tab-garis', (saring === s.k) && 'aktif']" role="tab" :aria-selected="saring === s.k">{{ s.n }}</button>
+          </div>
           <div v-if="tab !== 'saya'" class="relative min-w-[12rem] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
             <input v-model="cari" class="isian pl-10" placeholder="Cari nama, jenis, nomor" aria-label="Cari pengajuan" /></div>
         </div>

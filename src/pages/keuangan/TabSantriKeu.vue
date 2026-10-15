@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabSantriKeu.vue | v1.1 | Fase 13 – Pelengkap: saringan kelas/kamar/halaqah | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabSantriKeu.vue | v1.2 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Per santri: tagihan, dibayar, sisa, tunggakan lewat tempo, subsidi, wali (WA). Ketuk santri → rincian (?santri=).
 // Pilih beberapa santri → terbitkan surat tagihan sekaligus. Ekspor Excel dan cetak F4.
@@ -64,8 +64,10 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
       <button class="tombol-garis" :disabled="!tampil.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Cetak</button>
     </div>
     <div class="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="group" aria-label="Saring santri">
-      <button v-for="s in SARING" :key="s.k" type="button" @click="status = s.k" :aria-pressed="status === s.k"
-        :class="['min-h-[40px] shrink-0 rounded-xl border px-3 text-sm font-semibold', status === s.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis text-teks2']">{{ s.n }} <span class="tabular-nums opacity-80">{{ s.j }}</span></button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Saring santri">
+        <button v-for="s in SARING" :key="s.k" type="button" @click="status = s.k"
+        :class="['tab-garis', (status === s.k) && 'aktif']" role="tab" :aria-selected="status === s.k">{{ s.n }} <span class="angka-tab">{{ s.j }}</span></button>
+      </div>
     </div>
     <div v-if="keu.hak.kelola" class="mb-3 flex flex-wrap items-center gap-2">
       <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="pilihSemua"><component :is="pilih.size ? PhCheckSquare : PhSquare" :size="18" /> {{ pilih.size ? 'Kosongkan pilihan' : 'Pilih semua yang bersisa' }}</button>

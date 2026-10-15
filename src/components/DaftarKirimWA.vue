@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/DaftarKirimWA.vue | v1.0 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026 -->
+<!-- SIMKA PRO | src/components/DaftarKirimWA.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Daftar kirim WA berurutan untuk banyak penerima. Setiap ketukan membuka WhatsApp di HP pengirim dengan pesan
 // yang sudah terisi (wa.me); pengirim menekan Kirim di WhatsApp lalu kembali ke sini. Penerima yang sudah dibuka
@@ -28,8 +28,10 @@ function kirim(p) {
 <template>
   <div class="w-presensi">
     <div v-if="saringan.length" class="mb-2 flex flex-wrap gap-1.5">
-      <button v-for="s in saringan" :key="s.k" type="button" @click="saring = s.k"
-        :class="['min-h-[36px] rounded-full border px-3 text-sm font-semibold', saring === s.k ? 'border-transparent bg-[#1E7D4F] text-white' : 'border-garis bg-permukaan text-teks2']">{{ s.n }} ({{ penerima.filter(s.f).length }})</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Saring penerima">
+        <button v-for="s in saringan" :key="s.k" type="button" @click="saring = s.k"
+        :class="['tab-garis', (saring === s.k) && 'aktif']" role="tab" :aria-selected="saring === s.k">{{ s.n }} ({{ penerima.filter(s.f).length }})</button>
+      </div>
     </div>
     <div class="mb-2 flex flex-wrap items-center gap-2 rounded-xl p-3" style="background: color-mix(in srgb, var(--c) 10%, rgb(var(--permukaan)))">
       <p class="flex-1 text-sm"><span class="font-bold">{{ berHP.length - sisa.length }}/{{ berHP.length }}</span> sudah dibuka di WhatsApp<template v-if="tampil.length > berHP.length"> · {{ tampil.length - berHP.length }} tanpa nomor HP</template></p>

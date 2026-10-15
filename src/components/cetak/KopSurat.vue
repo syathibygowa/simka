@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/KopSurat.vue | v1.1 | Fase 8 – Perbaikan: kop F4 mendatar proporsional | 10/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/KopSurat.vue | v1.2 | Perbaikan 13.6.0: logo kop dipilih dari daftar logo terpusat | 15/10/2026 -->
 <script setup>
 // Kop surat untuk layar dan cetak. Dua bentuk:
 //   gambar : satu gambar kop utuh (bawaan: kop resmi pondok)
@@ -10,13 +10,17 @@ import kopPondok from '@/assets/kop/kop-pondok.jpg'
 import kopWustha from '@/assets/kop/kop-wustha.jpg'
 import kopSma from '@/assets/kop/kop-sma.jpg'
 import kopYayasan from '@/assets/kop/kop-yayasan.jpg'
+import { useLembaga } from '@/stores/lembaga'
+import { kodeRujukan } from '@/lib/logo'
 
 const BAWAAN = { pondok: kopPondok, wustha: kopWustha, sma: kopSma, yayasan: kopYayasan }
 const props = defineProps({ kop: { type: Object, default: null }, kode: { type: String, default: 'pondok' }, mendatar: Boolean })
 
 /** Alamat gambar: kop bawaan dipakai dari paket aplikasi; selain itu URL penuh. */
+const lembaga = useLembaga()
 function alamat(u) {
   if (!u) return ''
+  if (kodeRujukan(u)) return lembaga.urlLogo(u)   // logo dari Setelan → Logo
   const m = /^kop\/kop-(\w+)\.jpg$/.exec(u)
   if (m && BAWAAN[m[1]]) return BAWAAN[m[1]]
   if (/^(https?:|data:|blob:)/.test(u)) return u

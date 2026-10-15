@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/sesi.js | v1.31 | Perbaikan: hak menu Beban Kerja (tampil/sembunyi per pegawai) | 16/10/2026
+// SIMKA PRO | src/stores/sesi.js | v1.32 | Perbaikan 13.6.0: Audit Log khusus superadmin | 15/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
 import { muatTemplatWA } from '@/lib/wa'
 import { defineStore } from 'pinia'
@@ -100,7 +100,7 @@ export const useSesi = defineStore('sesi', {
       return r
     },
 
-    masukDemo(peran) { this.pengguna = { ...PENGGUNA_DEMO[peran] }; this.izinAdmin = peran === 'admin' ? ['verval_akun', 'kelola_pegawai', 'audit_log', 'verval_presensi', 'atur_presensi', 'kalender', 'lihat_pengajuan', 'atur_pengajuan', 'verval_jurnal', 'atur_jurnal', 'kelola_berkas', 'cetak_kartu', 'kelola_agenda', 'kelola_kelompok', 'atur_beban_kerja', 'kelola_santri', 'kelompok_santri', 'absensi_atas_nama', 'atur_jadwal', 'atur_tahfizh', 'validasi_tahfizh', 'kelola_klinik', 'atur_penilaian', 'kelola_nilai'] : []; this.kelompokSaya = peran === 'pegawai' ? [{ id: 'g-7a', jenis: 'kelas', nama: '7A' }, { id: 'g-hhb', jenis: 'halaqah', nama: 'Halaqah Ust. Hasan' }, { id: 'g-kum', jenis: 'kamar', nama: 'Kamar Umar' }] : []; this.tugas = TUGAS_DEMO[peran] || {}; this.persuratan = true; this.gaji = peran !== 'pegawai'; this.gajiLihat = peran !== 'pegawai'; this.keuangan = peran === 'superadmin'; this.penilaian = peran !== 'pegawai'; this.beban = { saya: true, atur: peran !== 'pegawai', rekap: peran !== 'pegawai' }; simpan('simka.demo.peran', peran) },
+    masukDemo(peran) { this.pengguna = { ...PENGGUNA_DEMO[peran] }; this.izinAdmin = peran === 'admin' ? ['verval_akun', 'kelola_pegawai', 'verval_presensi', 'atur_presensi', 'kalender', 'lihat_pengajuan', 'atur_pengajuan', 'verval_jurnal', 'atur_jurnal', 'kelola_berkas', 'cetak_kartu', 'kelola_agenda', 'kelola_kelompok', 'atur_beban_kerja', 'kelola_santri', 'kelompok_santri', 'absensi_atas_nama', 'atur_jadwal', 'atur_tahfizh', 'validasi_tahfizh', 'kelola_klinik', 'atur_penilaian', 'kelola_nilai'] : []; this.kelompokSaya = peran === 'pegawai' ? [{ id: 'g-7a', jenis: 'kelas', nama: '7A' }, { id: 'g-hhb', jenis: 'halaqah', nama: 'Halaqah Ust. Hasan' }, { id: 'g-kum', jenis: 'kamar', nama: 'Kamar Umar' }] : []; this.tugas = TUGAS_DEMO[peran] || {}; this.persuratan = true; this.gaji = peran !== 'pegawai'; this.gajiLihat = peran !== 'pegawai'; this.keuangan = peran === 'superadmin'; this.penilaian = peran !== 'pegawai'; this.beban = { saya: true, atur: peran !== 'pegawai', rekap: peran !== 'pegawai' }; simpan('simka.demo.peran', peran) },
 
     async keluar() {
       if (!MODE_DEMO) await supabase.auth.signOut()

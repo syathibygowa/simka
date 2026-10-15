@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/lembaga.js | v1.2 | Perbaikan: getter catatanCetak (tampil/sembunyi catatan cetak) | 14/10/2026
+// SIMKA PRO | src/stores/lembaga.js | v1.3 | Perbaikan 13.6.0: getter daftar logo terpusat | 15/10/2026
 // Pengaturan lembaga: identitas, kalender, kop surat, penanda tangan, penomoran, integrasi.
 // Dibaca semua pengguna masuk (kop dan penanda tangan dipakai saat mencetak);
 // diubah hanya oleh superadmin (dijaga RLS di server).
@@ -6,6 +6,7 @@ import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO, panggilFungsi } from '@/lib/supabase'
 import { LEMBAGA_DEMO } from '@/lib/demo'
 import { unggahSupabase } from '@/lib/penyimpanan'
+import { daftarLogo, urlLogo } from '@/lib/logo'
 
 /** Pesan galat database dalam bahasa Indonesia. */
 export function pesanGalat(e) {
@@ -33,6 +34,10 @@ export const useLembaga = defineStore('lembaga', {
     tahunAktif: (s) => s.academic_years.find((t) => t.aktif),
     /** Catatan "Dicetak melalui SIMKA PRO …" di kaki dokumen cetak (bawaan: tampil). */
     catatanCetak: (s) => s.identitas?.catatan_cetak !== false,
+    /** Daftar logo terpusat (Setelan → Logo). */
+    daftarLogo: (s) => daftarLogo(s.identitas || {}),
+    /** Alamat gambar dari nilai "logo:<kode>" atau tautan biasa. */
+    urlLogo: (s) => (nilai) => urlLogo(nilai, s.identitas || {}),
   },
   actions: {
     async muat(paksa = false) {

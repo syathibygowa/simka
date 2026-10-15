@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabVervalJurnal.vue | v1.0 | Fase 3 – Tahap 3 Jurnal harian | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabVervalJurnal.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Verval kegiatan jurnal yang ditulis sendiri (admin ber-izin verval_jurnal dan superadmin):
 // pilih satu atau beberapa, setujui sekaligus, atau kembalikan dengan catatan. Pegawai mendapat notifikasi.
@@ -34,8 +34,10 @@ async function kirimKembali() {
 <template>
   <div>
     <div class="mb-3 flex flex-wrap items-center gap-2">
-      <button v-for="s in [{ k: 'menunggu', n: 'Menunggu verval' }, { k: 'disetujui', n: 'Disetujui (30 hari)' }, { k: 'dikembalikan', n: 'Dikembalikan (30 hari)' }]" :key="s.k" @click="status = s.k"
-        :class="['min-h-[40px] rounded-full border px-3.5 text-sm font-semibold', status === s.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2']">{{ s.n }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Status jurnal">
+        <button v-for="s in [{ k: 'menunggu', n: 'Menunggu verval' }, { k: 'disetujui', n: 'Disetujui (30 hari)' }, { k: 'dikembalikan', n: 'Dikembalikan (30 hari)' }]" :key="s.k" @click="status = s.k"
+        :class="['tab-garis', (status === s.k) && 'aktif']" role="tab" :aria-selected="status === s.k">{{ s.n }}</button>
+      </div>
     </div>
     <div v-if="status === 'menunggu' && jr.antrian.length" class="kartu mb-3 flex flex-wrap items-center gap-2 p-2">
       <button class="tombol-teks" @click="pilihSemua"><component :is="semua ? PhCheckSquare : PhSquare" :size="20" /> {{ semua ? 'Batalkan pilihan' : 'Pilih semua' }}</button>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jadwal/JadwalPelajaran.vue | v1.4 | Perbaikan: menu Roster menjadi Jadwal Pelajaran | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/jadwal/JadwalPelajaran.vue | v1.5 | Perbaikan 13.6.0: saring jenjang kelas, cetak sel kosong | 15/10/2026 -->
 <script setup>
 // Jadwal pelajaran. Tab: Jadwal kelas, Jadwal guru, Penugasan mengajar, Pengaturan (mapel dan jam pelajaran),
 // Rekap mengajar. Pengatur: admin ber-izin atur_jadwal (atau hak fitur jadwal_mengajar tingkat 3).
@@ -12,7 +12,8 @@ import { usePegawai } from '@/stores/pegawai'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 import { HARI, formatPanjang, hariIniISO } from '@/lib/tanggal'
-import { HARI_SEKOLAH, jenisHari, jamPendek } from '@/lib/jadwal'
+import { HARI_SEKOLAH, jamPendek } from '@/lib/jadwal'
+import SubTabJenjang from '@/components/SubTabJenjang.vue'
 import { judulKelompok, penandaJenjang } from '@/lib/santri'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import GridJadwal from './GridJadwal.vue'
@@ -34,7 +35,14 @@ const TAB = computed(() => [
 ])
 // Guru tanpa kelas perwalian membuka "Jadwal guru" (jadwalnya sendiri) lebih dulu
 const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : !sesi.luas('jadwal_mengajar') && !kelasList.value.length ? 'guru' : 'kelas'))
-const kelasList = computed(() => kel.dariTA.filter((g) => g.jenis === 'kelas' && g.aktif))
+const semuaKelas = computed(() => kel.dariTA.filter((g) => g.jenis === 'kelas' && g.aktif))
+// Saring kelas menurut jenjang (Semua / Wustha (SMP) / SMA)
+const jenjangKelas = ref('')
+const kelasList = computed(() => semuaKelas.value.filter((g) => !jenjangKelas.value || g.jenjang === jenjangKelas.value))
+const jumlahJenjang = computed(() => ({ '': semuaKelas.value.length, wustha: semuaKelas.value.filter((g) => g.jenjang === 'wustha').length, sma: semuaKelas.value.filter((g) => g.jenjang === 'sma').length }))
+watch(jenjangKelas, () => { if (!kelasList.value.some((x) => x.id === groupId.value)) groupId.value = kelasList.value[0]?.id || '' })
+// Cetak: sel tanpa pelajaran dikosongkan atau diberi garis
+const selKosong = ref('kosong')
 const groupId = ref(''); const employeeId = ref('')
 onMounted(async () => {
   await kel.muat(); await jd.muat()
@@ -62,7 +70,7 @@ async function cetak() { penanda.value = aktif.value === 'kelas' && g.value ? aw
 const barisCetak = computed(() => {
   // Baris = urutan jam reguler; sel Jumat diambil menurut urutan pada jam Jumat
   const jj = aktif.value === 'kelas' ? g.value?.jenjang || 'wustha' : 'wustha'
-  const per = HARI_SEKOLAH.map((h) => jd.jamUntuk(jj, jenisHari(h)))
+  const per = HARI_SEKOLAH.map((h) => jd.jamHari(jj, h))
   const n = Math.max(...per.map((x) => x.length), 0)
   return Array.from({ length: n }, (_, i) => HARI_SEKOLAH.map((h, k) => {
     const p = per[k][i]; if (!p) return { teks: '' }
@@ -70,7 +78,8 @@ const barisCetak = computed(() => {
     const s = aktif.value === 'kelas' ? jd.jadwal.find((x) => x.group_id === groupId.value && x.hari === h && x.period_id === p.id)
       : jd.jadwal.find((x) => x.employee_id === employeeId.value && x.hari === h && x.period_id === p.id)
     const t = s && jd.cariPenugasan(s.assignment_id)
-    return { teks: `${jamPendek(p.jam_mulai)}–${jamPendek(p.jam_selesai)}`, isi: t ? (aktif.value === 'kelas' ? `${jd.cariMapel(t.subject_id)?.nama} (${String(t.nama_guru || '').split(',')[0]})` : `${kel.cari(t.group_id)?.nama} · ${jd.cariMapel(t.subject_id)?.nama}`) : '' }
+    if (!t) return { teks: selKosong.value === 'garis' ? '—' : '', kosong: true }
+    return { teks: `${jamPendek(p.jam_mulai)}–${jamPendek(p.jam_selesai)}`, isi: aktif.value === 'kelas' ? `${jd.cariMapel(t.subject_id)?.nama} (${String(t.nama_guru || '').split(',')[0]})` : `${kel.cari(t.group_id)?.nama} · ${jd.cariMapel(t.subject_id)?.nama}` }
   }))
 })
 const namaGuru = computed(() => guruList.value.find((x) => x.id === employeeId.value)?.nama || '')
@@ -80,20 +89,23 @@ const namaGuru = computed(() => guruList.value.find((x) => x.id === employeeId.v
     <BilahTab class="mb-4" :tab="TAB" :model-value="aktif" label="Bagian jadwal pelajaran" @update:model-value="(k) => router.replace(`/jadwal-pelajaran/${k}`)" />
 
     <template v-if="aktif === 'kelas' || aktif === 'guru'">
+      <SubTabJenjang v-if="aktif === 'kelas'" v-model="jenjangKelas" class="mb-3" :jumlah="jumlahJenjang" label="Saring jenjang kelas" />
       <div class="kartu mb-4 flex flex-wrap items-end gap-3 p-4">
         <div v-if="aktif === 'kelas'" class="min-w-[200px] flex-1"><label class="label-isian" for="jp-kelas">Kelas</label>
           <select id="jp-kelas" v-model="groupId" class="isian"><option v-for="x in kelasList" :key="x.id" :value="x.id">{{ judulKelompok(x) }}{{ x.asuhan_saya ? ' (kelas saya)' : '' }}</option>
-            <option v-if="!kelasList.length" value="">Belum ada kelas di Kelompok Santri</option></select></div>
+            <option v-if="!kelasList.length" value="">{{ semuaKelas.length ? 'Tidak ada kelas pada jenjang ini' : 'Belum ada kelas di Kelompok Santri' }}</option></select></div>
         <div v-else class="min-w-[200px] flex-1"><label class="label-isian" for="jp-guru">Guru</label>
           <select id="jp-guru" v-model="employeeId" class="isian"><option v-for="x in guruList" :key="x.id" :value="x.id">{{ x.nama }}{{ x.id === jd.idSaya() ? ' (saya)' : '' }}</option>
             <option v-if="!guruList.length" value="">Belum ada penugasan mengajar</option></select></div>
+        <div class="w-full sm:w-auto"><label class="label-isian" for="jp-kosong">Sel tanpa pelajaran saat dicetak</label>
+          <select id="jp-kosong" v-model="selKosong" class="isian"><option value="kosong">Dikosongkan</option><option value="garis">Diberi garis (—)</option></select></div>
         <button class="tombol-garis" @click="cetak"><PhEye :size="20" weight="duotone" /> Cetak jadwal</button>
       </div>
       <section class="kartu w-jadwal p-4">
         <GridJadwal v-if="aktif === 'kelas' && g" mode="kelas" :group-id="groupId" :jenjang="g.jenjang" :boleh-ubah="bolehAtur" @sel="bukaSel" />
         <GridJadwal v-else-if="aktif === 'guru' && employeeId" mode="guru" :employee-id="employeeId" />
         <p v-else class="py-8 text-center text-sm text-teks3">Pilih kelas atau guru.</p>
-        <p v-if="aktif === 'kelas' && bolehAtur" class="mt-3 text-xs text-teks3">Ketuk jam untuk mengisi pelajaran dari penugasan kelas ini. Bentrok kelas dan bentrok guru ditolak otomatis. Jumat memakai jam pelajaran Jumat.</p>
+        <p v-if="aktif === 'kelas' && bolehAtur" class="mt-3 text-xs text-teks3">Ketuk jam untuk mengisi pelajaran dari penugasan kelas ini. Bentrok kelas dan bentrok guru ditolak otomatis. Jam tiap hari mengikuti pembagian jam per hari di tab Mapel dan jam.</p>
       </section>
       <section v-if="aktif === 'kelas' && penugasanKelas.length" class="kartu mt-4 p-4">
         <p class="mb-2 font-bold">Kecukupan jam per mapel</p>
@@ -123,7 +135,7 @@ const namaGuru = computed(() => guruList.value.find((x) => x.id === employeeId.v
       :subjudul="`Tahun Ajaran ${kel.taSekarang?.nama || ''} · keadaan ${formatPanjang(hariIniISO())}`" mendatar v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">
         <thead><tr><th v-for="h in HARI_SEKOLAH" :key="h">{{ HARI[h] }}</th></tr></thead>
-        <tbody><tr v-for="(b, i) in barisCetak" :key="i"><td v-for="(c, k) in b" :key="k" :class="c.istirahat && 'tengah'">{{ c.teks }}<template v-if="c.isi"><br />{{ c.isi }}</template></td></tr></tbody>
+        <tbody><tr v-for="(b, i) in barisCetak" :key="i"><td v-for="(c, k) in b" :key="k" :class="(c.istirahat || c.kosong) && 'tengah'">{{ c.teks }}<template v-if="c.isi"><br />{{ c.isi }}</template></td></tr></tbody>
       </table>
       <template #ttd>
         <TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: penanda.jabatan, nama: penanda.nama, niy: penanda.niy }"

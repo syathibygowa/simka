@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabRekapGuru.vue | v1.0 | Fase 4 – Menu Guru Mapel: rekap dan laporan individu | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabRekapGuru.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Rekap keterlaksanaan mengajar seorang guru untuk satu periode (paling lama 62 hari): per kelas-mapel dan daftar jurnal
 // per tanggal (materi atau keterangan). Guru melihat dirinya; pemantau dapat memilih guru.
@@ -49,8 +49,8 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
       <div class="sm:w-40"><InputTanggal v-model="mulai" label="Dari" wajib /></div>
       <div class="sm:w-40"><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
       <button class="tombol-utama h-12" :disabled="!rekap.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Cetak laporan</button>
-      <div class="flex flex-wrap gap-1.5 sm:col-span-4">
-        <button v-for="x in PERIODE" :key="x.k" :class="['min-h-[36px] rounded-full border px-3 text-sm font-semibold', mulai === x.m && selesai === x.s ? 'border-transparent bg-[var(--c)] text-white dark:text-[#10141A]' : 'border-garis bg-permukaan text-teks2']" @click="pilihCepat(x)">{{ x.n }}</button>
+      <div class="bilah-tab kecil sm:col-span-4" role="tablist" aria-label="Periode cepat">
+        <button v-for="x in PERIODE" :key="x.k" type="button" role="tab" :aria-selected="mulai === x.m && selesai === x.s" :class="['tab-garis', mulai === x.m && selesai === x.s && 'aktif']" @click="pilihCepat(x)">{{ x.n }}</button>
       </div>
     </div>
     <p class="mb-2 text-sm text-teks2">{{ teksRentang(mulai, selesai) }} · terlaksana <b>{{ total.terlaksana }}</b> dari {{ total.terjadwal }} JP ({{ teksPersen(persenJP(total.terlaksana, total.terjadwal)) }}) · tidak terlaksana {{ total.tidak }} · belum diisi {{ total.kosong }}</p>

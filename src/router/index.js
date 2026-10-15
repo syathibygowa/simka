@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.26 | Fase 9 – Perbaikan: menu Portal Wali tersendiri (#/portal-wali); Roster menjadi Jadwal Pelajaran | 15/10/2026
+// SIMKA PRO | src/router/index.js | v3.27 | Perbaikan 13.6.0: Audit Log khusus superadmin | 15/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -85,7 +85,7 @@ const routes = [
       { path: 'agenda/:id?', component: () => import('@/pages/agenda/Agenda.vue'), props: true, meta: { judul: 'Agenda', kembali: '/' } },
       { path: 'kelompok-pegawai', redirect: { path: '/pegawai', query: { tab: 'tim' } } },   // Tim Kerja kini tab di Data Pegawai
       { path: 'beban-kerja/:tab?', component: () => import('@/pages/beban/BebanKerja.vue'), props: true, meta: { judul: 'Ekuivalensi Jam Beban Kerja', kembali: '/tugas' } },
-      { path: 'audit-log', component: () => import('@/pages/audit/AuditLog.vue'), meta: { judul: 'Audit Log', kembali: '/tugas' } },
+      { path: 'audit-log', component: () => import('@/pages/audit/AuditLog.vue'), meta: { judul: 'Audit Log', peran: ['superadmin'], kembali: '/tugas' } },
       { path: 'rekap/:tab?', component: () => import('@/pages/laporan/Laporan.vue'), props: true, meta: { judul: 'Dokumen', cetak: true, kembali: '/tugas' } },
       { path: 'laporan/:tab?', redirect: (to) => ({ path: `/rekap/${to.params.tab || ''}`, query: to.query }) },
       { path: 'segera/:kode', component: () => import('@/pages/umum/Segera.vue'), props: true, meta: { judul: 'Segera hadir', kembali: '/tugas' } },

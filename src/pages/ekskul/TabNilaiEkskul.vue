@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/ekskul/TabNilaiEkskul.vue | v1.1 | Fase 12 – Tahap 5 Kontras tombol nilai terpilih | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/ekskul/TabNilaiEkskul.vue | v1.2 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Ekskul → Nilai rapor: pembina mengisi nilai Pengembangan Diri (predikat A–D) per santri anggota ekskul.
 // Acuan: persentase kehadiran ekskul semester ini (usulan otomatis: ≥ 90% A, ≥ 75% B, ≥ 60% C, selain itu D).
@@ -60,9 +60,9 @@ const pembina = computed(() => daftar.value.find((g) => g.group_id === pilih.val
 <template>
   <div class="w-ekskul space-y-4">
     <div class="kartu flex flex-wrap items-center gap-3 p-4">
-      <div class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Semester">
-        <button v-for="s in [1, 2]" :key="s" type="button" role="radio" :aria-checked="semester === s" @click="muat(s)"
-          :class="['min-h-[40px] rounded-xl px-3 text-sm font-semibold', semester === s ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ LABEL_SEMESTER[s] }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Semester">
+        <button v-for="s in [1, 2]" :key="s" type="button" role="tab" :aria-selected="semester === s" @click="muat(s)"
+          :class="['tab-garis', semester === s && 'aktif']">{{ LABEL_SEMESTER[s] }}</button>
       </div>
       <p class="min-w-[200px] flex-1 text-xs text-teks3">Nilai Pengembangan Diri di rapor diambil dari ekskul yang diikuti santri. Usulan nilai dari kehadiran: ≥ 90% A, ≥ 75% B, ≥ 60% C, selain itu D.</p>
       <button class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!D" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>

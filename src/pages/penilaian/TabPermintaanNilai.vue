@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabPermintaanNilai.vue | v1.0 | Fase 12 – Tahap 6 Permintaan ubah nilai | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabPermintaanNilai.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Penilaian → Permintaan: permintaan ubah nilai setelah periode ditutup (nilai mapel dari guru pengampu, nilai UTAS dari
 // penguji). Pengelola nilai menyetujui (nilai langsung diperbarui; mode akumulasi memakai nilai koreksi) atau menolak
@@ -43,9 +43,9 @@ const pratinjau = ref(false)
 <template>
   <div class="space-y-4">
     <div class="kartu flex flex-wrap items-center gap-2 p-3">
-      <div class="flex gap-1 overflow-x-auto rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Saring status">
-        <button v-for="s in SARING" :key="s.k" type="button" role="radio" :aria-checked="saring === s.k" @click="saring = s.k; muat()"
-          :class="['min-h-[38px] shrink-0 rounded-xl px-3 text-sm font-semibold', saring === s.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ s.n }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Saring status">
+        <button v-for="s in SARING" :key="s.k" type="button" role="tab" :aria-selected="saring === s.k" @click="saring = s.k; muat()"
+          :class="['tab-garis', saring === s.k && 'aktif']">{{ s.n }}</button>
       </div>
       <p class="min-w-[200px] flex-1 text-xs text-teks3">Guru/penguji mengajukan perubahan setelah periode ditutup. Persetujuan langsung memperbarui nilai; semua permintaan tersimpan sebagai riwayat.</p>
       <button class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!daftar.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabKalimatRapor.vue | v1.1 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabKalimatRapor.vue | v1.2 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Bank kalimat rapor: catatan wali kelas dan catatan muhaffizh disusun otomatis dari pembuka + apresiasi kelebihan santri
 // (dipicu data: mapel nilai tertinggi, kehadiran, hafalan, UTAS, pengembangan diri, sikap) + dorongan + penutup,
@@ -60,9 +60,9 @@ async function alihAktif(k) { try { await pn.simpanKalimat({ id: k.id, teks: k.t
     <p class="flex gap-2 rounded-2xl bg-permukaan2 p-3 text-sm text-teks2"><PhInfo :size="18" class="mt-0.5 shrink-0" />
       <span v-if="ambang">Kalimat dipilih menurut <b>persentase kehadiran</b>: yang dipakai adalah ambang tertinggi yang dicapai santri.</span>
       <span v-else>Catatan disusun otomatis per santri: satu <b>pembuka</b>, satu–dua <b>apresiasi kelebihan</b> yang benar-benar dicapai santri, satu <b>dorongan</b>, dan satu <b>penutup</b>, dipilih acak di antara kalimat yang cocok sehingga catatan santri berbeda-beda. Wali kelas dapat menyusun ulang atau menyunting.</span></p>
-    <div v-if="kat === 'kehadiran'" class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1 sm:max-w-md" role="radiogroup" aria-label="Rapor">
-      <button v-for="j in ['wustha', 'sma']" :key="j" type="button" role="radio" :aria-checked="jenisKehadiran === j" @click="jenisKehadiran = j"
-        :class="['min-h-[40px] rounded-xl text-sm font-semibold', jenisKehadiran === j ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ JENIS_RAPOR[j].n }}</button>
+    <div v-if="kat === 'kehadiran'" class="bilah-tab kecil" role="tablist" aria-label="Rapor">
+      <button v-for="j in ['wustha', 'sma']" :key="j" type="button" role="tab" :aria-selected="jenisKehadiran === j" @click="jenisKehadiran = j"
+        :class="['tab-garis', jenisKehadiran === j && 'aktif']">{{ JENIS_RAPOR[j].n }}</button>
     </div>
 
     <section v-for="g in kelompok" :key="g.b" :class="['kartu p-4', 'w-' + KATEGORI_KALIMAT[kat].w]">

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/LembarCatatSurat.vue | v1.0 | Fase 10 – Tahap 1 Surat masuk dan disposisi | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/LembarCatatSurat.vue | v1.1 | Perbaikan 13.6.0: nama tab Setelan baru (Lembaga, Kalender, Logo, Nomor Surat) | 15/10/2026 -->
 <script setup>
 // Catat (atau ubah) surat masuk oleh Tata Usaha: data surat, sifat, pindaian (foto/PDF, beberapa berkas), dan pimpinan penerima.
 // Nomor agenda dibuat otomatis oleh server saat disimpan. Surat dapat langsung diarsipkan tanpa disposisi (mis. brosur).
@@ -78,7 +78,7 @@ async function simpan() {
   <LembarBawah v-model="buka" :judul="surat ? `Ubah surat ${surat.nomor_agenda}` : 'Catat surat masuk'" lebar>
     <div class="space-y-4 pb-2">
       <p v-if="!surat" class="flex items-start gap-2 rounded-xl bg-permukaan2 px-3 py-2 text-xs text-teks2"><PhInfo :size="16" class="mt-0.5 shrink-0" />
-        Nomor agenda dibuat otomatis saat disimpan (format dapat diubah di Setelan → Penomoran).</p>
+        Nomor agenda dibuat otomatis saat disimpan (format dapat diubah di Setelan → Nomor Surat).</p>
       <div class="grid gap-3 sm:grid-cols-3">
         <InputTanggal v-model="isi.tanggal_terima" label="Tanggal terima" wajib />
         <div><label class="label-isian" for="sm-cara">Cara diterima</label>

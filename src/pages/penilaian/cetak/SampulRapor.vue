@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/cetak/SampulRapor.vue | v1.1 | Tahap C: pas foto santri tampil di halaman identitas peserta didik | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/cetak/SampulRapor.vue | v1.2 | Perbaikan 13.6.0: logo rapor dari daftar logo terpusat | 15/10/2026 -->
 <script setup>
 // Halaman depan rapor:
 //   sampul   : logo, judul laporan, nama sekolah dan alamat, nama dan NIS/NISN santri, kementerian
@@ -18,7 +18,7 @@ const ket = computed(() => props.D.ketentuan || {})
 const idn = computed(() => ket.value.identitas || {})
 const jenjang = computed(() => props.D.kelas?.jenjang || props.D.kelompok?.jenjang)
 const sma = computed(() => jenjang.value === 'sma')
-const logo = computed(() => idn.value.logo_url || lembaga.identitas?.logo_url || '')
+const logo = computed(() => lembaga.urlLogo(idn.value.logo_url || 'logo:pondok'))   // daftar logo terpusat (Setelan → Logo)
 const daftar = computed(() => (props.D.santri || []).filter((s) => !props.pilih || props.pilih.includes(s.id)))
 const judulSampul = computed(() => (sma.value ? 'HASIL CAPAIAN KOMPETENSI PESERTA DIDIK' : 'PENCAPAIAN KOMPETENSI PESERTA DIDIK'))
 const BARIS_SEKOLAH = [['Nama Sekolah', 'nama_sekolah'], ['NPSN', 'npsn'], [null, 'nss'], ['Alamat Sekolah', 'alamat'], ['Kode Pos', 'kode_pos'], ['Telepon', 'telepon'],

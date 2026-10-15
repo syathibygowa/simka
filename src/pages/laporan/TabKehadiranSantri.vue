@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.4 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Laporan kehadiran santri (menu Dokumen → Kehadiran santri), absensi HISBAT.
 // Jenis: rekap ringkas, rekap matriks (F4 mendatar), laporan individu, daftar perhatian, kepatuhan pengisian (pemantau).
@@ -201,8 +201,10 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
           <input v-model.number="ambang" type="number" min="1" max="100" class="isian" /></label>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button v-for="p in PERIODE_CEPAT" :key="p.k" type="button" @click="pilihCepat(p.k)"
-          :class="['min-h-[40px] rounded-full border px-3.5 text-sm font-semibold', cepat === p.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2']">{{ p.n }}</button>
+        <div class="bilah-tab kecil" role="tablist" aria-label="Periode cepat">
+          <button v-for="p in PERIODE_CEPAT" :key="p.k" type="button" @click="pilihCepat(p.k)"
+          :class="['tab-garis', (cepat === p.k) && 'aktif']" role="tab" :aria-selected="cepat === p.k">{{ p.n }}</button>
+        </div>
       </div>
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
         <InputTanggal v-model="mulai" label="Dari tanggal" />
