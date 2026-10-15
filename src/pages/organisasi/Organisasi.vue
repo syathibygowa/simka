@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/organisasi/Organisasi.vue | v1.2 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/organisasi/Organisasi.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 import { computed, onMounted, ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
@@ -33,10 +33,10 @@ const induk = (u) => org.cariUnit(u.parent_id)?.nama || '–'
   <div>
     <div class="layar-saja">
       <div class="mb-4 flex flex-wrap items-center gap-2">
-        <nav class="-mx-4 flex flex-1 gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" role="tablist" aria-label="Bagian struktur organisasi">
+        <nav class="bilah-tab -mx-4 flex-1 px-4 lg:mx-0 lg:px-0" role="tablist" aria-label="Bagian struktur organisasi">
           <button v-for="t in TAB" :key="t.k" role="tab" :aria-selected="aktif.k === t.k" @click="router.replace(`/organisasi/${t.k}`)"
-            :class="['tab flex min-h-[44px] shrink-0 items-center gap-2.5 rounded-xl border px-3 text-sm font-semibold', 'w-' + t.w, aktif.k === t.k ? 'aktif text-teks' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">
-            <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="t.ikon" :size="20" weight="duotone" /></span><span class="whitespace-nowrap">{{ t.n }}</span>
+            :class="['tab-garis', 'w-' + t.w, aktif.k === t.k && 'aktif']">
+            <component :is="t.ikon" :size="20" weight="duotone" /><span>{{ t.n }}</span>
           </button>
         </nav>
         <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak</button>
@@ -80,7 +80,4 @@ const induk = (u) => org.cariUnit(u.parent_id)?.nama || '–'
     </div>
   </div>
 </template>
-<style scoped>
-.tab.aktif { border-color: color-mix(in srgb, var(--c) 35%, transparent); background: color-mix(in srgb, var(--c) 12%, rgb(var(--permukaan))); }
 
-</style>

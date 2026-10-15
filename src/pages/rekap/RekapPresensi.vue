@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/rekap/RekapPresensi.vue | v1.3 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/rekap/RekapPresensi.vue | v1.4 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Rekap presensi pegawai (admin dan superadmin): harian (semua sesi semua pegawai) dan periode
 // (ringkasan per pegawai), saring per bidang, ekspor Excel, dan cetak F4 dengan kop + tanda tangan.
@@ -99,10 +99,10 @@ const namaUnit = computed(() => unit.value ? org.cariUnit(unit.value)?.nama : 'S
 <template>
   <div class="w-rekap">
     <div class="layar-saja">
-      <nav v-if="!tertanam" class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" role="tablist" aria-label="Jenis rekap presensi">
+      <nav v-if="!tertanam" class="bilah-tab -mx-4 mb-4 px-4 lg:mx-0 lg:px-0" role="tablist" aria-label="Jenis rekap presensi">
         <button v-for="t in TAB" :key="t.k" role="tab" :aria-selected="aktif.k === t.k" @click="router.replace(`/rekap/${t.k}`)"
-          :class="['tab flex min-h-[44px] shrink-0 items-center gap-2.5 rounded-xl border px-3 text-sm font-semibold', 'w-' + t.w, aktif.k === t.k ? 'aktif text-teks' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">
-          <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="t.ikon" :size="20" weight="duotone" /></span><span class="whitespace-nowrap">{{ t.n }}</span>
+          :class="['tab-garis', 'w-' + t.w, aktif.k === t.k && 'aktif']">
+          <component :is="t.ikon" :size="20" weight="duotone" /><span>{{ t.n }}</span>
         </button>
       </nav>
 
@@ -236,6 +236,4 @@ const namaUnit = computed(() => unit.value ? org.cariUnit(unit.value)?.nama : 'S
     </DokumenCetak>
   </div>
 </template>
-<style scoped>
-.tab.aktif { border-color: color-mix(in srgb, var(--c) 35%, transparent); background: color-mix(in srgb, var(--c) 12%, rgb(var(--permukaan))); }
-</style>
+

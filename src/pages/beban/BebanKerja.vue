@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beban/BebanKerja.vue | v1.3 | Perbaikan: beban kerja tampil/tersembunyi di akun setiap pegawai (data sensitif) | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/beban/BebanKerja.vue | v1.4 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Ekuivalensi jam beban kerja per pekan.
 //   Beban saya   : rincian jam pegawai yang masuk, total, jam wajib, kelebihan/kekurangan.
@@ -120,10 +120,10 @@ const KELOMPOK = { struktural: 'Jabatan struktural', fungsional: 'Jabatan fungsi
 <template>
   <div class="w-gaji mx-auto max-w-6xl">
     <div class="layar-saja">
-      <nav class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" role="tablist" aria-label="Bagian beban kerja">
+      <nav class="bilah-tab -mx-4 mb-4 px-4 lg:mx-0 lg:px-0" role="tablist" aria-label="Bagian beban kerja">
         <button v-for="t in TAB" :key="t.k" role="tab" :aria-selected="aktif.k === t.k" @click="router.replace(`/beban-kerja/${t.k}`)"
-          :class="['tab flex min-h-[44px] shrink-0 items-center gap-2.5 rounded-xl border px-3 text-sm font-semibold', 'w-' + t.w, aktif.k === t.k ? 'aktif text-teks' : 'border-garis bg-permukaan text-teks2']">
-          <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="t.i" :size="20" weight="duotone" /></span><span class="whitespace-nowrap">{{ t.n }}</span></button>
+          :class="['tab-garis', 'w-' + t.w, aktif.k === t.k && 'aktif']">
+          <component :is="t.i" :size="20" weight="duotone" /><span>{{ t.n }}</span></button>
       </nav>
 
       <p v-if="aktif.k === 'tertutup'" class="kartu p-6 text-center text-sm text-teks2">Ekuivalensi jam beban kerja belum ditampilkan untuk akun Anda. Hubungi admin kepegawaian bila diperlukan.</p>
@@ -299,4 +299,4 @@ const KELOMPOK = { struktural: 'Jabatan struktural', fungsional: 'Jabatan fungsi
     </DokumenCetak>
   </div>
 </template>
-<style scoped>.tab.aktif { border-color: color-mix(in srgb, var(--c) 35%, transparent); background: color-mix(in srgb, var(--c) 12%, rgb(var(--permukaan))); }</style>
+

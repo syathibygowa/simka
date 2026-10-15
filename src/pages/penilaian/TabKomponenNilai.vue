@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabKomponenNilai.vue | v1.0 | Fase 12 – Tahap 1 Pengaturan penilaian | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabKomponenNilai.vue | v1.1 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Komponen isian nilai guru mapel per jenis rapor: kategori (Harian, Ulangan, UTS, UAS, …) beserta bobot (jumlah 100% per aspek),
 // "berulang" (guru boleh menambah Harian 1, Harian 2, … yang dirata-rata), dan cara menentukan nilai rapor
@@ -53,9 +53,9 @@ const contoh = computed(() => {
 </script>
 <template>
   <div class="space-y-4">
-    <div class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1 sm:max-w-md" role="radiogroup" aria-label="Jenis rapor">
-      <button v-for="j in ['sma', 'wustha']" :key="j" type="button" role="radio" :aria-checked="jenis === j" @click="jenis = j"
-        :class="['min-h-[44px] rounded-xl text-sm font-semibold', jenis === j ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ JENIS_RAPOR[j].n }}</button>
+    <div class="bilah-tab kecil" role="tablist" aria-label="Jenis rapor">
+      <button v-for="j in ['sma', 'wustha']" :key="j" type="button" role="tab" :aria-selected="jenis === j" @click="jenis = j"
+        :class="['tab-garis', jenis === j && 'aktif']">{{ JENIS_RAPOR[j].n }}</button>
     </div>
 
     <section class="kartu w-gurumapel p-4">

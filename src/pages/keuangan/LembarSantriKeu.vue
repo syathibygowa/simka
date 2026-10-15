@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/LembarSantriKeu.vue | v1.2 | Fase 13 – Penanda catatan pembayaran lama | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/LembarSantriKeu.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Rincian keuangan satu santri (dibuka dengan ?santri=<id> dari tab mana pun):
 // ringkasan, kontak wali (WA), tagihan (ubah/batalkan beralasan), pembayaran (kuitansi, WA konfirmasi, batalkan),
@@ -104,9 +104,9 @@ async function hapusSubsidi(x) {
       </ul>
       <p v-else class="flex items-center gap-1.5 text-sm text-teks3"><PhWarningCircle :size="16" /> Kontak wali belum diisi di Data Santri; WA tidak dapat dikirim.</p>
 
-      <div class="flex gap-1.5 overflow-x-auto" role="tablist" aria-label="Bagian rincian">
+      <div class="bilah-tab kecil" role="tablist" aria-label="Bagian rincian">
         <button v-for="b in BAGIAN" :key="b.k" role="tab" :aria-selected="bagian === b.k" @click="bagian = b.k"
-          :class="['min-h-[40px] shrink-0 rounded-full border px-3 text-sm font-semibold', bagian === b.k ? 'border-transparent bg-[#9A4F00] text-white dark:bg-[#FFB86B] dark:text-[#1A1206]' : 'border-garis text-teks2']">{{ b.n }} <span class="opacity-80">{{ b.j }}</span></button>
+          :class="['tab-garis', bagian === b.k && 'aktif']"><span>{{ b.n }}</span> <span class="angka-tab">{{ b.j }}</span></button>
       </div>
 
       <!-- Tagihan -->

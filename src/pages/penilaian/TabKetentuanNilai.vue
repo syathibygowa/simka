@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabKetentuanNilai.vue | v1.1 | Fase 12 – Tahap 5 Identitas sekolah per rapor | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabKetentuanNilai.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Ketentuan per jenis rapor: judul, kop (dari kop surat sistem), label ambang (KKM/KKTP) dan nilai bawaannya, pembulatan,
 // bagian rapor (keterampilan, sikap di rapor, kokurikuler, daftar TP, rata-rata, peringkat), fase per kelas (SMA),
@@ -51,9 +51,9 @@ const penanda = computed(() => lb.signatories.find((s) => s.id === f.value?.sign
 </script>
 <template>
   <div class="space-y-4">
-    <div class="grid grid-cols-3 gap-1 rounded-2xl bg-permukaan2 p-1 sm:max-w-xl" role="radiogroup" aria-label="Jenis rapor">
-      <button v-for="(j, k) in JENIS_RAPOR" :key="k" type="button" role="radio" :aria-checked="jenis === k" @click="jenis = k"
-        :class="['min-h-[44px] rounded-xl text-sm font-semibold', jenis === k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ j.n }}</button>
+    <div class="bilah-tab kecil" role="tablist" aria-label="Jenis rapor">
+      <button v-for="(j, k) in JENIS_RAPOR" :key="k" type="button" role="tab" :aria-selected="jenis === k" @click="jenis = k"
+        :class="['tab-garis', jenis === k && 'aktif']">{{ j.n }}</button>
     </div>
 
     <form v-if="f" class="grid gap-4 xl:grid-cols-2" novalidate @submit.prevent="simpan">

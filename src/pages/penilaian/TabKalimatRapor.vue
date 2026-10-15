@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabKalimatRapor.vue | v1.0 | Fase 12 – Tahap 1 Pengaturan penilaian | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabKalimatRapor.vue | v1.1 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Bank kalimat rapor: catatan wali kelas dan catatan muhaffizh disusun otomatis dari pembuka + apresiasi kelebihan santri
 // (dipicu data: mapel nilai tertinggi, kehadiran, hafalan, UTAS, pengembangan diri, sikap) + dorongan + penutup,
@@ -52,10 +52,10 @@ async function alihAktif(k) { try { await pn.simpanKalimat({ id: k.id, teks: k.t
 </script>
 <template>
   <div class="space-y-4">
-    <div class="flex flex-wrap gap-2" role="tablist" aria-label="Jenis catatan">
+    <div class="bilah-tab kecil" role="tablist" aria-label="Jenis catatan">
       <button v-for="(k, kode) in KATEGORI_KALIMAT" :key="kode" type="button" role="tab" :aria-selected="kat === kode" @click="kat = kode"
-        :class="['flex min-h-[40px] items-center gap-2 rounded-xl border px-3 text-sm font-semibold', kat === kode ? 'border-[color:var(--c)] bg-permukaan2 text-teks' : 'border-garis text-teks2']">
-        {{ k.n }} <span class="text-xs font-normal text-teks3">{{ jumlahKat(kode) }}</span></button>
+        :class="['tab-garis', kat === kode && 'aktif']">
+        <span>{{ k.n }}</span> <span class="angka-tab">{{ jumlahKat(kode) }}</span></button>
     </div>
     <p class="flex gap-2 rounded-2xl bg-permukaan2 p-3 text-sm text-teks2"><PhInfo :size="18" class="mt-0.5 shrink-0" />
       <span v-if="ambang">Kalimat dipilih menurut <b>persentase kehadiran</b>: yang dipakai adalah ambang tertinggi yang dicapai santri.</span>

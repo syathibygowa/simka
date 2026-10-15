@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabMapelRapor.vue | v1.0 | Fase 12 – Tahap 1 Pengaturan penilaian | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabMapelRapor.vue | v1.1 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Mapel rapor per jenis rapor × tingkat. Urutan, kelompok (judul di rapor), nama, singkatan, KKM/KKTP, dan SUMBER NILAI:
 // mapel ajar (satu atau gabungan berbobot), nilai UTAS tahfizh, atau diisi wali kelas. Contoh: PKn tidak diajarkan,
@@ -57,9 +57,9 @@ async function salinKe() {
 <template>
   <div class="space-y-4">
     <div class="kartu space-y-3 p-4">
-      <div class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1 sm:max-w-md" role="radiogroup" aria-label="Jenis rapor">
-        <button v-for="j in ['sma', 'wustha']" :key="j" type="button" role="radio" :aria-checked="jenis === j" @click="pilihJenis(j)"
-          :class="['min-h-[44px] rounded-xl text-sm font-semibold', jenis === j ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ JENIS_RAPOR[j].n }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Jenis rapor">
+        <button v-for="j in ['sma', 'wustha']" :key="j" type="button" role="tab" :aria-selected="jenis === j" @click="pilihJenis(j)"
+          :class="['tab-garis', jenis === j && 'aktif']">{{ JENIS_RAPOR[j].n }}</button>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <button v-for="t in JENIS_RAPOR[jenis].tingkat" :key="t" type="button" :aria-pressed="tingkat === t" @click="tingkat = t"

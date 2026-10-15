@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/hakakses/HakAkses.vue | v1.2 | Fase 11 – Tahap 6 Tab Fitur sensitif (gaji, keuangan) | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/hakakses/HakAkses.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Hak akses fitur tiga lapis (superadmin): per jabatan (dasar) → per bidang → per individu (tertinggi).
 // Tab "Fitur sensitif": gaji dan keuangan santri hanya untuk pegawai yang ditunjuk superadmin (bukan per jabatan).
@@ -78,10 +78,10 @@ const WARNA_TINGKAT = ['w-hakakses', 'w-pegawai', 'w-presensi', 'w-pengaturan']
 </script>
 <template>
   <div>
-    <nav class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" role="tablist" aria-label="Lapis hak akses">
+    <nav class="bilah-tab -mx-4 mb-4 px-4 lg:mx-0 lg:px-0" role="tablist" aria-label="Lapis hak akses">
       <button v-for="t in TAB" :key="t.k" role="tab" :aria-selected="aktif.k === t.k" @click="router.replace(`/hak-akses/${t.k}`)"
-        :class="['tab flex min-h-[44px] shrink-0 items-center gap-2.5 rounded-xl border px-3 text-sm font-semibold', 'w-' + t.w, aktif.k === t.k ? 'aktif text-teks' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">
-        <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="t.ikon" :size="20" weight="duotone" /></span><span class="whitespace-nowrap">{{ t.n }}</span>
+        :class="['tab-garis', 'w-' + t.w, aktif.k === t.k && 'aktif']">
+        <component :is="t.ikon" :size="20" weight="duotone" /><span>{{ t.n }}</span>
       </button>
     </nav>
     <p class="mb-4 flex gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" />{{ aktif.ket }} Semua aturan diperiksa di server, bukan sekadar menyembunyikan menu.</p>
@@ -153,6 +153,5 @@ const WARNA_TINGKAT = ['w-hakakses', 'w-pegawai', 'w-presensi', 'w-pengaturan']
   </div>
 </template>
 <style scoped>
-.tab.aktif { border-color: color-mix(in srgb, var(--c) 35%, transparent); background: color-mix(in srgb, var(--c) 12%, rgb(var(--permukaan))); }
 .pilih { background: color-mix(in srgb, var(--c) 13%, rgb(var(--permukaan))); }
 </style>

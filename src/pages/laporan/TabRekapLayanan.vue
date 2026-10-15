@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabRekapLayanan.vue | v1.1 | Fase 8 – Tahap 5 Terbitkan resmi (salinan beku, tanda tangan elektronik) | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabRekapLayanan.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Laporan periode modul layanan (menu Dokumen → Rekap layanan): Security, libur santri, pengajuan pegawai, klinik.
 // Pilihan laporan tampil sesuai hak (diperiksa server). Daftar santri berurutan NIS, Nama, JK. Data klinik tanpa diagnosis.
@@ -137,10 +137,10 @@ const ada = computed(() => !!d.value)
 <template>
   <div class="space-y-4">
     <fieldset :disabled="!!resmi" :class="['kartu min-w-0 space-y-4 p-4', resmi && 'opacity-60']">
-      <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Jenis laporan layanan">
-        <button v-for="j in JENIS" :key="j.k" type="button" role="radio" :aria-checked="jenis === j.k" @click="jenis = j.k"
-          :class="['flex min-h-[44px] items-center gap-2 rounded-xl border px-3 text-sm font-semibold', jenis === j.k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">
-          <component :is="j.ikon" :size="18" weight="duotone" /> {{ j.n }}</button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Jenis laporan layanan">
+        <button v-for="j in JENIS" :key="j.k" type="button" role="tab" :aria-selected="jenis === j.k" @click="jenis = j.k"
+          :class="['tab-garis w-laporan', jenis === j.k && 'aktif']">
+          <component :is="j.ikon" :size="18" weight="duotone" /><span>{{ j.n }}</span></button>
       </div>
       <p class="text-sm text-teks2">{{ info.ket }}.</p>
       <label v-if="jenis === 'pengajuan' && (sesi.isAdmin || sesi.pimpinanTinggi)" class="block max-w-md"><span class="label-isian">Bidang/unit</span>

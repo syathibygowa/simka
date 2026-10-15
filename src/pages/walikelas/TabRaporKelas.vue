@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabRaporKelas.vue | v1.1 | Fase 12 – Tahap 5 Cetak rapor, nilai wali kelas, kenaikan kelas | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabRaporKelas.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Wali Kelas → Rapor: isian wali kelas untuk rapor kelas terpilih.
 //   Catatan wali kelas : disusun otomatis per santri dari bank kalimat dan keunggulan santri (nilai tertinggi, kehadiran,
@@ -96,9 +96,9 @@ async function simpanKok() {
           :class="['min-h-[40px] rounded-xl px-3 text-sm font-semibold', semester === s ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ LABEL_SEMESTER[s] }}</button>
       </div>
       <p class="min-w-[200px] flex-1 text-xs text-teks3">Nilai mapel diisi guru mapel, pengembangan diri oleh pembina ekskul, dan UTAS oleh penguji; wali kelas melengkapi catatan{{ kokAktif ? ', kokurikuler' : '' }}{{ semester === 2 ? ', keputusan akhir tahun' : '' }}, lalu mencetak.</p>
-      <div class="flex w-full gap-1 overflow-x-auto rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Bagian rapor">
-        <button v-for="b in BAGIAN" :key="b.k" type="button" role="radio" :aria-checked="bagian === b.k" @click="bagian = b.k"
-          :class="['flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold', bagian === b.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']"><component :is="b.ikon" :size="18" weight="duotone" /> {{ b.n }}</button>
+      <div class="bilah-tab kecil w-full" role="tablist" aria-label="Bagian rapor">
+        <button v-for="b in BAGIAN" :key="b.k" type="button" role="tab" :aria-selected="bagian === b.k" @click="bagian = b.k"
+          :class="['tab-garis', bagian === b.k && 'aktif']"><component :is="b.ikon" :size="18" weight="duotone" /><span>{{ b.n }}</span></button>
       </div>
     </div>
     <div v-if="galat" class="kartu w-klinik p-5 text-sm font-semibold" style="color: var(--c)">Bahan rapor gagal dimuat: {{ galat }} Pastikan migrasi SQL 8500 sudah dijalankan.</div>

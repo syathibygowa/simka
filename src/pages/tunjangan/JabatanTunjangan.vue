@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tunjangan/JabatanTunjangan.vue | v1.1 | Fase 8 – Tahap 0 tanpa teks fase | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/tunjangan/JabatanTunjangan.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Jabatan dan tunjangan (superadmin): peta jabatan per pegawai beserta perkiraan tunjangan,
 // ringkasan per jabatan, dan tarif komponen gaji. Kelak dipakai modul Gaji (Fase 11) dan bendahara.
@@ -40,10 +40,10 @@ const hasil = computed(() => peg.daftar.filter((p) => (p.status_keaktifan || 'ak
 </script>
 <template>
   <div>
-    <nav class="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" role="tablist" aria-label="Bagian jabatan dan tunjangan">
+    <nav class="bilah-tab -mx-4 mb-3 px-4 lg:mx-0 lg:px-0" role="tablist" aria-label="Bagian jabatan dan tunjangan">
       <button v-for="t in TAB" :key="t.k" role="tab" :aria-selected="aktif.k === t.k" @click="router.replace(`/jabatan-tunjangan/${t.k}`)"
-        :class="['tab flex min-h-[44px] shrink-0 items-center gap-2.5 rounded-xl border px-3 text-sm font-semibold', 'w-' + t.w, aktif.k === t.k ? 'aktif text-teks' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">
-        <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="t.ikon" :size="20" weight="duotone" /></span><span class="whitespace-nowrap">{{ t.n }}</span>
+        :class="['tab-garis', 'w-' + t.w, aktif.k === t.k && 'aktif']">
+        <component :is="t.ikon" :size="20" weight="duotone" /><span>{{ t.n }}</span>
       </button>
     </nav>
     <p class="mb-4 flex gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" />
@@ -57,6 +57,4 @@ const hasil = computed(() => peg.daftar.filter((p) => (p.status_keaktifan || 'ak
     </div>
   </div>
 </template>
-<style scoped>
-.tab.aktif { border-color: color-mix(in srgb, var(--c) 35%, transparent); background: color-mix(in srgb, var(--c) 12%, rgb(var(--permukaan))); }
-</style>
+

@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/token.css | v2.9 | Fase 9: warna menu Portal Wali (merah mawar) | 15/10/2026 */
+/* SIMKA PRO | src/styles/token.css | v3.0 | Perbaikan 13.5.0: warna tab aktif (merah) | 15/10/2026 */
 /* =====================================================================
    SIMKA PRO · Token warna dan tema
    Semua warna teks sudah diuji kontrasnya (WCAG AA, ≥ 4,5:1) terhadap
@@ -17,10 +17,12 @@
   --bayang: 94 42 48;          /* marun untuk bayangan  */
   --gradasi-utama: linear-gradient(135deg, #8E1C19 0%, #C7332F 52%, #B4472A 100%);
   --gradasi-tipis: linear-gradient(135deg, #C7332F, #F39A4E);
+  --tab-aktif: #C7332F;        /* label + garis bawah tab aktif — 5,2:1 */
   color-scheme: light;
 }
 
 .dark {
+  --tab-aktif: #FF8A7A;        /* tab aktif tema gelap — 7:1 */
   --latar: 22 15 17;           /* #160F11 */
   --permukaan: 33 23 25;       /* #211719 */
   --permukaan-2: 43 31 34;     /* #2B1F22 */

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabPelajaranKelas.vue | v1.1 | Perbaikan: menu Roster menjadi Jadwal Pelajaran | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabPelajaranKelas.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Pelajaran di satu kelas berdasarkan jurnal mengajar guru: rekap keterlaksanaan per mapel/guru, materi per tanggal,
 // dan roster (jadwal pelajaran pekanan). Wali kelas dapat memantau mapel yang kosong; cetak F4 rekap keterlaksanaan.
@@ -35,9 +35,9 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
 <template>
   <div>
     <div class="mb-3 flex flex-wrap items-center gap-2">
-      <div class="flex rounded-xl bg-permukaan2 p-1" role="tablist" aria-label="Tampilan pelajaran">
+      <div class="bilah-tab kecil" role="tablist" aria-label="Tampilan pelajaran">
         <button v-for="t in TAMPILAN" :key="t.k" type="button" role="tab" :aria-selected="tampilan === t.k" @click="tampilan = t.k"
-          :class="['flex min-h-[40px] items-center gap-1.5 rounded-lg px-3 text-sm font-semibold', tampilan === t.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']"><component :is="t.ikon" :size="18" /> {{ t.n }}</button>
+          :class="['tab-garis', tampilan === t.k && 'aktif']"><component :is="t.ikon" :size="18" weight="duotone" /><span>{{ t.n }}</span></button>
       </div>
       <template v-if="tampilan !== 'roster'">
         <button v-for="x in PERIODE" :key="x.k" :class="['min-h-[36px] rounded-full border px-3 text-sm font-semibold', periode === x.k ? 'border-transparent bg-[var(--c)] text-white dark:text-[#10141A]' : 'border-garis bg-permukaan text-teks2']" @click="periode = x.k">{{ x.n }}</button>

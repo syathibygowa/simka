@@ -1,8 +1,8 @@
-<!-- SIMKA PRO | src/pages/wali/AkunWali.vue | v1.1 | Fase 9 – Tahap 13.3.0 Sakelar notifikasi HP | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/AkunWali.vue | v1.2 | Perbaikan 13.5.0: judul Tampilan dihapus (pilihan tema langsung) | 15/10/2026 -->
 <script setup>
 // Akun Portal Wali: daftar anak di perangkat ini (pindah, tambah, keluar), tema, dan keterangan privasi.
 import { onMounted, ref } from 'vue'
-import { PhCheckCircle, PhPlus, PhSignOut, PhShieldCheck, PhPaintBrush, PhStudent, PhBellRinging } from '@phosphor-icons/vue'
+import { PhCheckCircle, PhPlus, PhSignOut, PhShieldCheck, PhStudent, PhBellRinging } from '@phosphor-icons/vue'
 import { statusWali, aktifkanWali, matikanWali, dukungan } from '@/lib/dorongWali'
 import { usePortalWali } from '@/stores/portalWali'
 import { useUI } from '@/stores/ui'
@@ -72,11 +72,7 @@ async function keluarSemua() {
       </div>
     </section>
 
-    <section class="kartu w-pengaturan p-4 sm:p-5">
-      <div class="mb-3 flex items-center gap-3">
-        <span class="chip-ikon h-10 w-10"><PhPaintBrush :size="22" weight="duotone" /></span>
-        <h2 class="judul-bagian">Tampilan</h2>
-      </div>
+    <section class="kartu p-4 sm:p-5" aria-label="Tema">
       <PilihTema />
     </section>
 

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.1 | Perbaikan: menu Roster menjadi Jadwal Pelajaran | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Pantauan guru mapel (admin, superadmin, pimpinan sesuai cakupannya):
 //   Harian  : tanggal dengan tombol sebelum/sesudah; statistik jam pelajaran (terjadwal, terlaksana, belum diisi, tidak
@@ -70,9 +70,9 @@ function ekspor() {
 <template>
   <div>
     <div class="mb-3 flex flex-wrap items-center gap-2">
-      <div class="flex rounded-xl bg-permukaan2 p-1" role="tablist" aria-label="Tampilan pantauan">
+      <div class="bilah-tab kecil" role="tablist" aria-label="Tampilan pantauan">
         <button v-for="t in [{ k: 'harian', n: 'Harian', ikon: PhCalendarCheck }, { k: 'periode', n: 'Rekap periode', ikon: PhChartBar }]" :key="t.k" type="button" role="tab" :aria-selected="mode === t.k" @click="mode = t.k"
-          :class="['flex min-h-[40px] items-center gap-1.5 rounded-lg px-3 text-sm font-semibold', mode === t.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']"><component :is="t.ikon" :size="18" /> {{ t.n }}</button>
+          :class="['tab-garis', mode === t.k && 'aktif']"><component :is="t.ikon" :size="18" weight="duotone" /><span>{{ t.n }}</span></button>
       </div>
       <select v-model="jenjang" class="isian h-11 w-auto py-0 text-sm" aria-label="Saring jenjang"><option value="">Semua jenjang</option><option value="wustha">Wustha</option><option value="sma">SMA</option></select>
       <div class="relative min-w-[180px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabPredikatNilai.vue | v1.0 | Fase 12 – Tahap 1 Pengaturan penilaian | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabPredikatNilai.vue | v1.1 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Tabel predikat per kelompok: Mapel SMA, Mapel Wustha (pengetahuan + keterampilan), UTAS tahfizh (sebutan Arab/Indonesia
 // dengan tombol pilihan bahasa), Pengembangan diri (nilai huruf + templat deskripsi {kegiatan}), dan Sikap.
@@ -42,9 +42,9 @@ async function simpanBahasa(b) {
 </script>
 <template>
   <div class="space-y-4">
-    <div class="flex flex-wrap gap-2" role="tablist" aria-label="Kelompok predikat">
+    <div class="bilah-tab kecil" role="tablist" aria-label="Kelompok predikat">
       <button v-for="(k, kode) in KELOMPOK_PREDIKAT" :key="kode" type="button" role="tab" :aria-selected="kel === kode" @click="kel = kode"
-        :class="['min-h-[40px] rounded-xl border px-3 text-sm font-semibold', kel === kode ? 'border-[color:var(--c)] bg-permukaan2 text-teks' : 'border-garis text-teks2']">{{ k.n }}</button>
+        :class="['tab-garis', kel === kode && 'aktif']">{{ k.n }}</button>
     </div>
 
     <section v-if="kel === 'utas'" class="kartu w-tahfizh flex flex-wrap items-center gap-3 p-4">

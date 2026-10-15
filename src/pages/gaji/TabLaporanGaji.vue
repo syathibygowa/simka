@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/TabLaporanGaji.vue | v1.1 | Fase 11 – Tahap 6 Jabatan penanda tangan dari penunjukan superadmin | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/TabLaporanGaji.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Laporan atas satu periode gaji (jumlah yang benar-benar diterima, termasuk penyesuaian ketetapan yayasan):
 //   1. Rekap per bidang      : jumlah pegawai, menurut skema, penyesuaian, pendapatan, potongan, diterima per bidang induk
@@ -141,9 +141,9 @@ const ttdKanan = computed(() => ({ jabatan: gaji.jabatanSaya, nama: sesi.penggun
       <button class="tombol-garis" :disabled="!baris.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
       <button class="tombol-utama" :disabled="!baris.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Cetak</button>
     </div>
-    <div class="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Jenis laporan">
-      <button v-for="j in JENIS" :key="j.k" role="tab" :aria-selected="jenis === j.k" :class="['lencana min-h-[40px] px-3 text-sm', jenis === j.k ? 'w-rekap ring-2 ring-[var(--c)]' : 'bg-permukaan2 text-teks2']" @click="jenis = j.k">
-        <component :is="j.ikon" :size="18" weight="duotone" /> {{ j.n }}</button>
+    <div class="bilah-tab kecil mb-4" role="tablist" aria-label="Jenis laporan">
+      <button v-for="j in JENIS" :key="j.k" role="tab" :aria-selected="jenis === j.k" :class="['tab-garis w-rekap', jenis === j.k && 'aktif']" @click="jenis = j.k">
+        <component :is="j.ikon" :size="18" weight="duotone" /><span>{{ j.n }}</span></button>
     </div>
 
     <p v-if="!memuat && !periode.length" class="kartu p-8 text-center text-sm text-teks3">Belum ada periode gaji. Buat periode di tab Periode gaji.</p>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jadwal/GridJadwal.vue | v1.0 | Fase 4 – Tahap 5 Jadwal pelajaran dan jurnal mengajar | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/jadwal/GridJadwal.vue | v1.1 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Kisi jadwal pekanan (Senin–Sabtu; Jumat memakai jam pelajaran Jumat). Mode "kelas": sel berisi mapel dan guru;
 // mode "guru": sel berisi kelas dan mapel (gabungan jenjang Wustha dan SMA). Sel dapat diketuk bila boleh diubah.
@@ -35,9 +35,9 @@ function info(s) {
 </script>
 <template>
   <div>
-    <div class="mb-3 flex gap-1.5 overflow-x-auto pb-1 sm:hidden" role="tablist" aria-label="Pilih hari">
+    <div class="bilah-tab kecil mb-3 sm:hidden" role="tablist" aria-label="Pilih hari">
       <button v-for="h in HARI_SEKOLAH" :key="h" role="tab" :aria-selected="hariHP === h" @click="hariHP = h"
-        :class="['min-h-[40px] shrink-0 rounded-full border px-3.5 text-sm font-semibold', hariHP === h ? 'border-transparent bg-[#0F5E8C] text-white dark:bg-[#7DD3FC] dark:text-[#082F49]' : 'border-garis bg-permukaan text-teks2']">{{ HARI[h] }}</button>
+        :class="['tab-garis', hariHP === h && 'aktif']">{{ HARI[h] }}</button>
     </div>
     <div class="sm:overflow-x-auto">
       <div class="sm:grid sm:min-w-[760px] sm:grid-cols-6 sm:gap-2">

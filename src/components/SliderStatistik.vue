@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/SliderStatistik.vue | v1.0 | Fase 8 – Perbaikan beranda pimpinan: statistik bergeser per kelompok | 10/10/2026 -->
+<!-- SIMKA PRO | src/components/SliderStatistik.vue | v1.1 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Kelompok kartu statistik beranda ditampilkan satu per satu (slider), bukan menumpuk ke bawah.
 // Pindah kelompok: ketuk chip nama kelompok, tombol panah kiri/kanan, geser layar (HP), atau tombol panah papan ketik.
@@ -50,11 +50,10 @@ const tombol = (e) => { if (e.key === 'ArrowRight') ke(indeks.value + 1); else i
   <section class="space-y-3" aria-roledescription="slider" aria-label="Statistik beranda">
     <div v-show="terlihat.length > 1" class="flex items-center gap-2" @keydown="tombol">
       <button type="button" class="tombol-ikon shrink-0 border border-garis bg-permukaan" aria-label="Kelompok statistik sebelumnya" @click="ke(indeks - 1)"><PhCaretLeft :size="20" weight="bold" /></button>
-      <nav class="flex min-w-0 flex-1 gap-2 overflow-x-auto py-0.5" role="tablist" aria-label="Kelompok statistik">
+      <nav class="bilah-tab min-w-0 flex-1" role="tablist" aria-label="Kelompok statistik">
         <button v-for="p in terlihat" :id="'chip-' + p.k" :key="p.k" type="button" role="tab" :aria-selected="aktif === p.k" @click="pilih(p.k)"
-          :class="['chip flex min-h-[40px] shrink-0 items-center gap-2 rounded-xl border px-2.5 text-sm font-semibold', 'w-' + p.w, aktif === p.k ? 'aktif text-teks' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">
-          <span class="chip-ikon h-7 w-7 rounded-lg"><component :is="p.ikon" :size="17" weight="duotone" /></span>
-          <span class="whitespace-nowrap">{{ p.n }}</span>
+          :class="['tab-garis', 'w-' + p.w, aktif === p.k && 'aktif']">
+          <component :is="p.ikon" :size="19" weight="duotone" /><span>{{ p.n }}</span>
         </button>
       </nav>
       <span class="hidden shrink-0 text-xs font-semibold tabular-nums text-teks3 sm:inline">{{ indeks + 1 }}/{{ terlihat.length }}</span>
@@ -71,6 +70,5 @@ const tombol = (e) => { if (e.key === 'ArrowRight') ke(indeks.value + 1); else i
   </section>
 </template>
 <style scoped>
-.chip.aktif { border-color: color-mix(in srgb, var(--c) 35%, transparent); background: color-mix(in srgb, var(--c) 12%, rgb(var(--permukaan))); }
 .panel > :deep(*) + :deep(*) { margin-top: 1rem; }
 </style>

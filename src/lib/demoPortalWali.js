@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoPortalWali.js | v1.4 | Fase 9 – Tahap 13.4.0 Dokumen santri | 15/10/2026
+// SIMKA PRO | src/lib/demoPortalWali.js | v1.5 | Perbaikan 13.5.0: data grafik tren kehadiran dan hafalan | 15/10/2026
 // Data contoh Portal Wali untuk MODE DEMO (dibangun dari santri dan kelompok contoh). Semua nama fiktif.
 import { SANTRI_DEMO } from './demoSantri'
 import { dataKelompokDemo } from './demoKelompok'
@@ -75,6 +75,26 @@ function rentangDemo(p = {}) {
   const hari = hariIniISO(); const selesai = p.selesai && p.selesai < hari ? p.selesai : hari
   return { mulai: p.mulai || `${selesai.slice(0, 8)}01`, selesai }
 }
+/** 6 bulan terakhir (termasuk bulan berjalan): [{ bulan: 'YYYY-MM-01', mulai, selesai }] */
+function enamBulan() {
+  const hari = hariIniISO(); const d = new Date(hari.slice(0, 8) + '01T00:00:00'); const hasil = []
+  for (let i = 5; i >= 0; i--) {
+    const a = new Date(d.getFullYear(), d.getMonth() - i, 1); const z = new Date(d.getFullYear(), d.getMonth() - i + 1, 0)
+    const sel = isoTgl(z) < hari ? isoTgl(z) : hari
+    hasil.push({ bulan: isoTgl(a), mulai: isoTgl(a), selesai: sel })
+  }
+  return hasil
+}
+function trenDemo(s) {
+  const benih = Number(s.nis.slice(-3))
+  return {
+    tren_hadir: enamBulan().map((b) => ({ bulan: b.bulan, ...rekapDemo(sesiDemo(s, b.mulai, b.selesai)).pokok })),
+    tren_hafalan: enamBulan().map((b, i) => {
+      const tambah = Math.round(8 + acak(benih + i * 7) * 14) - (i === 5 ? 6 : 0)
+      return { bulan: b.bulan, tambah_hal: Math.max(2, tambah), hari_setor: Math.round(14 + acak(benih + i) * 9), juz_baru: i === 2 || i === 4 ? 1 : 0, target_hal: i < 5 ? 15 : null }
+    }),
+  }
+}
 const jamLalu = (hari, jam = 8) => { const d = new Date(); d.setDate(d.getDate() - hari); d.setHours(jam, 15, 0, 0); return d.toISOString() }
 
 export function dataDemo(nis, bagian, p = {}) {
@@ -147,6 +167,7 @@ export function dataDemo(nis, bagian, p = {}) {
     pengasuh,
     pengumuman_baru: PENGUMUMAN_DEMO.filter((p) => !p.dibaca_pada).length,
     bulan_ini: rekapDemo(sesiDemo(s, `${hariIniISO().slice(0, 8)}01`, hariIniISO())).pokok,
+    ...trenDemo(s),
     hari_ini: [
       { jenis: 'asrama', kelompok: nama('kamar') || 'Asrama', sesi: 'Asrama pagi', jam: '04.30', kode: 'H' },
       { jenis: 'halaqah', kelompok: nama('halaqah') || 'Halaqah', sesi: 'Halaqah subuh', jam: '05.15', kode: kodeHalaqah },

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jurnal/Jurnal.vue | v1.2 | Perbaikan: tab Jurnal mengajar tampil untuk setiap guru yang mengajar | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/Jurnal.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Jurnal harian pegawai. Tab: Jurnal saya (semua pegawai), Verval (admin ber-izin verval_jurnal),
 // Rekap (pegawai: dirinya; pimpinan: anggota unit; admin: semua), Template ceklist (admin ber-izin atur_jurnal).
@@ -26,10 +26,10 @@ onMounted(async () => { await nextTick(); document.querySelector('[role=tab][ari
 </script>
 <template>
   <div class="mx-auto max-w-5xl">
-    <nav class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" role="tablist" aria-label="Bagian jurnal harian">
+    <nav class="bilah-tab -mx-4 mb-4 px-4 lg:mx-0 lg:px-0" role="tablist" aria-label="Bagian jurnal harian">
       <button v-for="t in TAB" :key="t.k" role="tab" :aria-selected="aktif.k === t.k" @click="router.replace(`/jurnal/${t.k}`)"
-        :class="['tab flex min-h-[44px] shrink-0 items-center gap-2.5 rounded-xl border px-3 text-sm font-semibold', 'w-' + t.w, aktif.k === t.k ? 'aktif text-teks' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">
-        <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="t.ikon" :size="20" weight="duotone" /></span><span class="whitespace-nowrap">{{ t.n }}</span>
+        :class="['tab-garis', 'w-' + t.w, aktif.k === t.k && 'aktif']">
+        <component :is="t.ikon" :size="20" weight="duotone" /><span>{{ t.n }}</span>
       </button>
     </nav>
     <div :class="['harian', 'mengajar'].includes(aktif.k) && 'mx-auto max-w-3xl'">
@@ -41,6 +41,4 @@ onMounted(async () => { await nextTick(); document.querySelector('[role=tab][ari
     </div>
   </div>
 </template>
-<style scoped>
-.tab.aktif { border-color: color-mix(in srgb, var(--c) 35%, transparent); background: color-mix(in srgb, var(--c) 12%, rgb(var(--permukaan))); }
-</style>
+

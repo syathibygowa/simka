@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/BukuAgendaKeluar.vue | v1.2 | Fase 10 – Penutup: inventaris semua surat (Persuratan + modul lain) | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/BukuAgendaKeluar.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Buku agenda surat keluar = inventaris SEMUA surat yang terbit di SIMKA PRO per rentang tanggal surat:
 //   Persuratan (surat Tata Usaha, termasuk yang dicabut/direvisi), surat pengajuan pegawai, surat keterangan sakit (Klinik),
@@ -73,11 +73,11 @@ function ekspor() {
       </div>
     </div>
 
-    <div class="mb-3 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Sumber surat">
-      <button type="button" role="tab" :aria-selected="sumber === 'semua'" :class="['chip-sumber w-sistem', sumber === 'semua' && 'aktif']" @click="sumber = 'semua'">
-        Semua <span class="angka">{{ baris.length }}</span></button>
-      <button v-for="x in SUMBER" :key="x.k" type="button" role="tab" :aria-selected="sumber === x.k" :class="['chip-sumber', 'w-' + x.w, sumber === x.k && 'aktif']" @click="sumber = x.k">
-        <component :is="x.ikon" :size="16" weight="duotone" style="color: var(--c)" /> {{ x.n }} <span class="angka">{{ jumlah[x.k] }}</span></button>
+    <div class="bilah-tab kecil mb-3" role="tablist" aria-label="Sumber surat">
+      <button type="button" role="tab" :aria-selected="sumber === 'semua'" :class="['tab-garis w-sistem', sumber === 'semua' && 'aktif']" @click="sumber = 'semua'">
+        <span>Semua</span> <span class="angka-tab">{{ baris.length }}</span></button>
+      <button v-for="x in SUMBER" :key="x.k" type="button" role="tab" :aria-selected="sumber === x.k" :class="['tab-garis', 'w-' + x.w, sumber === x.k && 'aktif']" @click="sumber = x.k">
+        <component :is="x.ikon" :size="18" weight="duotone" /><span>{{ x.n }}</span> <span class="angka-tab">{{ jumlah[x.k] }}</span></button>
     </div>
 
     <!-- Ponsel: kartu -->
@@ -139,9 +139,3 @@ function ekspor() {
     </DokumenCetak>
   </div>
 </template>
-<style scoped>
-.chip-sumber { display: inline-flex; align-items: center; gap: 0.375rem; flex-shrink: 0; min-height: 40px; padding: 0 0.875rem; border-radius: 9999px;
-  border: 1px solid rgb(var(--garis)); font-size: 0.875rem; font-weight: 600; white-space: nowrap; }
-.chip-sumber.aktif { border-color: var(--c); border-width: 2px; background: color-mix(in srgb, var(--c) 14%, transparent); }
-.chip-sumber .angka { font-size: 0.75rem; font-weight: 700; opacity: 0.75; font-variant-numeric: tabular-nums; }
-</style>

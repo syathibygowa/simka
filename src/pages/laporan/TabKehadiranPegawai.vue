@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.2 | Fase 8 – Tahap 5 Terbitkan resmi (salinan beku, tanda tangan elektronik) | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Laporan kehadiran pegawai (menu Rekap → Kehadiran pegawai).
 // Jenis: rekap ringkas, rekap matriks (nama × tanggal, F4 mendatar), laporan individu, daftar perhatian.
@@ -159,10 +159,10 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
   <div class="space-y-4">
     <!-- Saringan -->
     <fieldset :disabled="!!resmi" :class="['kartu min-w-0 space-y-4 p-4', resmi && 'opacity-60']">
-      <div v-if="JENIS.length > 1" class="flex flex-wrap gap-2" role="radiogroup" aria-label="Jenis laporan">
-        <button v-for="k in JENIS" :key="k" type="button" role="radio" :aria-checked="jenis === k" @click="jenis = k"
-          :class="['flex min-h-[44px] items-center gap-2 rounded-xl border px-3 text-sm font-semibold', jenis === k ? 'border-transparent bg-[#C7332F] text-white' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">
-          <component :is="IKON_JENIS[k]" :size="18" weight="duotone" /> {{ JENIS_LAPORAN[k].n }}</button>
+      <div v-if="JENIS.length > 1" class="bilah-tab kecil" role="tablist" aria-label="Jenis laporan">
+        <button v-for="k in JENIS" :key="k" type="button" role="tab" :aria-selected="jenis === k" @click="jenis = k"
+          :class="['tab-garis w-laporan', jenis === k && 'aktif']">
+          <component :is="IKON_JENIS[k]" :size="18" weight="duotone" /><span>{{ JENIS_LAPORAN[k].n }}</span></button>
       </div>
       <p class="flex items-center gap-1.5 text-sm text-teks2"><PhInfo :size="16" /> {{ JENIS_LAPORAN[jenis].ket }}.</p>
 

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabPengaturanKeu.vue | v1.2 | Fase 13 – Tarif dan batas berlaku putra/putri | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabPengaturanKeu.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Pengaturan keuangan santri (satu tab, tiga bagian):
 //   Jenis biaya : kode, nama, siklus (bulanan/semesteran/tahunan/sekali), nominal standar, tarif khusus per jenjang/tingkat,
@@ -62,10 +62,10 @@ const tarifLabel = labelTarif
 </script>
 <template>
   <div>
-    <div class="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label="Bagian pengaturan">
+    <div class="bilah-tab kecil mb-4" role="tablist" aria-label="Bagian pengaturan">
       <button v-for="b in BAGIAN" :key="b.k" role="tab" :aria-selected="bagian === b.k" @click="bagian = b.k"
-        :class="['flex min-h-[44px] items-center gap-2 rounded-xl border px-3 text-sm font-semibold', bagian === b.k ? 'border-transparent bg-[#5E2A30] text-white dark:bg-[#E8A4AC] dark:text-[#2A1013]' : 'border-garis text-teks2']">
-        <component :is="b.ikon" :size="18" weight="duotone" /> {{ b.n }}</button>
+        :class="['tab-garis', bagian === b.k && 'aktif']">
+        <component :is="b.ikon" :size="18" weight="duotone" /><span>{{ b.n }}</span></button>
     </div>
 
     <!-- Jenis biaya -->

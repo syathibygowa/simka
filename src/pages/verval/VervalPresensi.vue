@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/verval/VervalPresensi.vue | v1.2 | Fase 3 – Tab Data presensi dipindah ke menu Data Presensi | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/verval/VervalPresensi.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Verval Presensi (admin ber-izin verval_presensi dan superadmin):
 //   Antrian verval (luar area, pulang luar area, izin sesi) → keputusan final beralasan
@@ -85,11 +85,11 @@ function tinjauC(c, status) {
 </script>
 <template>
   <div class="w-verval">
-    <nav class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" role="tablist" aria-label="Bagian verval presensi">
+    <nav class="bilah-tab -mx-4 mb-4 px-4 lg:mx-0 lg:px-0" role="tablist" aria-label="Bagian verval presensi">
       <button v-for="t in TAB" :key="t.k" role="tab" :aria-selected="aktif.k === t.k" @click="router.replace(`/verval-presensi/${t.k}`)"
-        :class="['tab flex min-h-[44px] shrink-0 items-center gap-2.5 rounded-xl border px-3 text-sm font-semibold', 'w-' + t.w, aktif.k === t.k ? 'aktif text-teks' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">
-        <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="t.ikon" :size="20" weight="duotone" /></span><span class="whitespace-nowrap">{{ t.n }}</span>
-        <span v-if="vv.jumlah[t.k === 'kecurigaan' ? 'curiga' : t.k]" class="grid h-6 min-w-[1.5rem] place-items-center rounded-full bg-[#C7332F] px-1.5 text-xs font-bold text-white">{{ vv.jumlah[t.k === 'kecurigaan' ? 'curiga' : t.k] }}</span>
+        :class="['tab-garis', 'w-' + t.w, aktif.k === t.k && 'aktif']">
+        <component :is="t.ikon" :size="20" weight="duotone" /><span>{{ t.n }}</span>
+        <span v-if="vv.jumlah[t.k === 'kecurigaan' ? 'curiga' : t.k]" class="lencana-tab">{{ vv.jumlah[t.k === 'kecurigaan' ? 'curiga' : t.k] }}</span>
       </button>
     </nav>
 
@@ -193,6 +193,4 @@ function tinjauC(c, status) {
     </LembarBawah>
   </div>
 </template>
-<style scoped>
-.tab.aktif { border-color: color-mix(in srgb, var(--c) 35%, transparent); background: color-mix(in srgb, var(--c) 12%, rgb(var(--permukaan))); }
-</style>
+

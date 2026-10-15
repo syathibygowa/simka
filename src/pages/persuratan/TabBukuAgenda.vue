@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/TabBukuAgenda.vue | v1.1 | Fase 10 – Tahap 2 Pilihan buku agenda surat keluar | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/TabBukuAgenda.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Buku agenda surat masuk per rentang tanggal terima (paling lama satu tahun): tabel, Excel, cetak F4 mendatar.
 // Surat rahasia yang tidak boleh dibaca ditampilkan perihalnya sebagai "(Rahasia)". Pilihan Surat keluar membuka BukuAgendaKeluar.
@@ -39,9 +39,9 @@ function ekspor() {
 </script>
 <template>
   <div>
-    <div class="mb-3 inline-flex rounded-xl border border-garis bg-permukaan p-1" role="tablist" aria-label="Jenis buku agenda">
+    <div class="bilah-tab kecil mb-3" role="tablist" aria-label="Jenis buku agenda">
       <button v-for="j in [{ k: 'masuk', n: 'Surat masuk' }, { k: 'keluar', n: 'Surat keluar' }]" :key="j.k" type="button" role="tab" :aria-selected="jenis === j.k"
-        :class="['min-h-[38px] rounded-lg px-4 text-sm font-semibold', jenis === j.k ? 'bg-[#C7332F] text-white' : 'text-teks2']" @click="jenis = j.k">{{ j.n }}</button>
+        :class="['tab-garis', jenis === j.k && 'aktif']" @click="jenis = j.k">{{ j.n }}</button>
     </div>
     <BukuAgendaKeluar v-if="jenis === 'keluar'" />
     <template v-else>

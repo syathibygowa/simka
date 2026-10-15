@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/main.css | v1.1 | Perbaikan: tampilan HP tidak meluber (anak grid boleh menyusut, isi utama dipangkas mendatar) | 14/10/2026 */
+/* SIMKA PRO | src/styles/main.css | v1.2 | Perbaikan 13.5.0: desain tab bergaris bawah seragam (tab dan sub-tab) | 15/10/2026 */
 @import './token.css';
 @import './cetak.css';
 @tailwind base;
@@ -58,6 +58,34 @@
     background: color-mix(in srgb, var(--c) 13%, rgb(var(--permukaan)));
   }
   .judul-bagian { @apply text-base font-bold text-teks; }
+
+  /* ---------- Tab bergaris bawah (seragam untuk semua tab dan sub-tab) ----------
+     Wadah .bilah-tab: garis tipis di bawah, menggulung mendatar bila tidak muat (bilah gulir disembunyikan).
+     Butir .tab-garis: ikon berwarna (warna dari kelas .w-*), label abu-abu; aktif → label merah + garis bawah merah tebal.
+     Sub-tab: tambahkan kelas .kecil pada wadah. Status aktif dari kelas .aktif atau aria-selected="true". */
+  .bilah-tab {
+    @apply flex items-end overflow-x-auto;
+    gap: .25rem;
+    border-bottom: 1px solid rgb(var(--garis));
+    scrollbar-width: none;
+  }
+  .bilah-tab::-webkit-scrollbar { display: none; }
+  .tab-garis {
+    @apply relative inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-3 text-sm font-semibold transition-colors;
+    min-height: 46px;
+    color: rgb(var(--teks-2));
+    margin-bottom: -1px;
+    border-bottom: 3px solid transparent;
+    border-top-left-radius: .5rem; border-top-right-radius: .5rem;
+  }
+  .tab-garis:hover { color: rgb(var(--teks)); background: rgb(var(--permukaan-2) / .6); }
+  .tab-garis > svg { color: var(--c, currentColor); flex-shrink: 0; }
+  .tab-garis.aktif, .tab-garis[aria-selected="true"] { color: var(--tab-aktif); border-bottom-color: var(--tab-aktif); }
+  .tab-garis.aktif:hover, .tab-garis[aria-selected="true"]:hover { background: transparent; }
+  .tab-garis .angka-tab { @apply rounded-full px-1.5 text-xs font-bold tabular-nums; color: rgb(var(--teks-2)); background: rgb(var(--permukaan-2)); }
+  .tab-garis .lencana-tab { @apply grid h-5 min-w-[1.25rem] place-items-center rounded-full px-1.5 text-[11px] font-bold text-white; background: #C7332F; }
+  .bilah-tab.kecil { gap: .125rem; }
+  .bilah-tab.kecil .tab-garis { min-height: 40px; padding-left: .75rem; padding-right: .75rem; font-size: .8125rem; border-bottom-width: 2.5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengajuan/Pengajuan.vue | v1.1 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengajuan/Pengajuan.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
 <script setup>
 // Pengajuan izin, sakit, dinas luar, dan cuti. Tab: Pengajuan saya (semua pegawai), Persetujuan (pejabat
 // penyetuju dan Plt), Semua (admin ber-izin lihat_pengajuan/superadmin: rekap, Excel, cetak F4), Ketentuan (dibaca semua).
@@ -79,13 +79,13 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
 <template>
   <div class="w-pengajuan mx-auto max-w-4xl">
     <div class="layar-saja">
-      <nav class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0" role="tablist" aria-label="Bagian pengajuan">
+      <nav class="bilah-tab -mx-4 mb-4 px-4 lg:mx-0 lg:px-0" role="tablist" aria-label="Bagian pengajuan">
         <button v-for="t in TAB" :key="t.k" role="tab" :aria-selected="tab === t.k" @click="tab = t.k"
-          :class="['tab flex min-h-[44px] shrink-0 items-center gap-2.5 rounded-xl border px-3 text-sm font-semibold', 'w-' + t.w, tab === t.k ? 'aktif text-teks' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">
-          <span class="chip-ikon h-8 w-8 rounded-lg"><component :is="t.ikon" :size="20" weight="duotone" /></span><span class="whitespace-nowrap">{{ t.n }}</span>
-          <span v-if="t.k === 'persetujuan' && pg.menungguSaya" class="rounded-full bg-[#C7332F] px-1.5 text-xs text-white">{{ pg.menungguSaya }}</span>
+          :class="['tab-garis', 'w-' + t.w, tab === t.k && 'aktif']">
+          <component :is="t.ikon" :size="20" weight="duotone" /><span>{{ t.n }}</span>
+          <span v-if="t.k === 'persetujuan' && pg.menungguSaya" class="lencana-tab">{{ pg.menungguSaya }}</span>
         </button>
-        <button class="tombol-utama ml-auto hidden shrink-0 lg:inline-flex" @click="formBuka = true"><PhPlus :size="20" weight="bold" /> Ajukan</button>
+        <button class="tombol-utama mb-1.5 ml-auto hidden shrink-0 lg:inline-flex" @click="formBuka = true"><PhPlus :size="20" weight="bold" /> Ajukan</button>
       </nav>
 
       <TabKetentuan v-if="tab === 'ketentuan'" />
@@ -170,7 +170,6 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
   </div>
 </template>
 <style scoped>
-.tab.aktif { border-color: color-mix(in srgb, var(--c) 35%, transparent); background: color-mix(in srgb, var(--c) 12%, rgb(var(--permukaan))); }
 .kartu-pj.perlu { box-shadow: inset 4px 0 0 #C7332F; }
 .kartu-kuota { background: color-mix(in srgb, var(--c) 8%, rgb(var(--permukaan))); }
 </style>
