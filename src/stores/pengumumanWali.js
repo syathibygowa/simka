@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/pengumumanWali.js | v1.0 | Fase 9 – Tahap 13.3.0 Pengumuman untuk wali | 15/10/2026
+// SIMKA PRO | src/stores/pengumumanWali.js | v1.1 | Perbaikan 13.9.0: admin perlu izin Kelola pengumuman | 16/10/2026
 // Pengumuman untuk wali santri (pengelola): daftar beserta jumlah dibaca, simpan/ubah, hapus, pembaca per santri,
 // pilihan sasaran (jenjang, tingkat, kelompok, santri tertentu, putra/putri) dan hitung penerima.
 // Pengirim: admin, superadmin, pemegang hak Pengumuman tingkat 2+, dan pimpinan (Kepala Bidang ke atas) — diperiksa di server.
@@ -18,7 +18,7 @@ export const usePengumumanWali = defineStore('pengumumanWali', {
   state: () => ({ daftar: [], pilihan: null, memuat: false, galat: '', dimuat: false }),
   actions: {
     /** Boleh membuat pengumuman wali (perkiraan di aplikasi; server tetap memeriksa). */
-    boleh() { const s = useSesi(); return s.isAdmin || s.tingkat('pengumuman') >= 2 || s.pimpinanTinggi },
+    boleh() { const s = useSesi(); return s.bolehAdmin('kelola_pengumuman') || s.tingkat('pengumuman') >= 2 || s.pimpinanTinggi },
 
     async muat() {
       this.memuat = true; this.galat = ''

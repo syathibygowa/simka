@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/pengumuman.js | v1.2 | Fase 3 – Perbaikan P3 (berkas dan WA) | 04/10/2026
+// SIMKA PRO | src/stores/pengumuman.js | v1.3 | Perbaikan 13.9.0: pembuat pengumuman = superadmin, admin ber-izin Kelola pengumuman, hak fitur Pengumuman ≥ 2 | 16/10/2026
 // Pengumuman: daftar untuk penerima, kelola (admin/superadmin/pemegang hak fitur), tanda dibaca, dan daftar pembaca.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -14,7 +14,7 @@ export const usePengumuman = defineStore('pengumuman', {
     belumDibaca: (s) => s.daftar.filter((p) => p.saya_penerima && !p.dibaca_pada).length,
   },
   actions: {
-    bolehKelola() { const s = useSesi(); return s.isAdmin || s.tingkat('pengumuman') >= 2 },
+    bolehKelola() { const s = useSesi(); return s.bolehAdmin('kelola_pengumuman') || s.tingkat('pengumuman') >= 2 },
 
     async muat() {
       this.memuat = true; this.galat = ''

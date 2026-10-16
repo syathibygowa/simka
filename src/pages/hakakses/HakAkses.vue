@@ -1,13 +1,16 @@
-<!-- SIMKA PRO | src/pages/hakakses/HakAkses.vue | v1.4 | Perbaikan 13.8.0: tab Rekap admin (matriks akses seluruh admin) | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/hakakses/HakAkses.vue | v1.5 | Perbaikan 13.9.0: katalog fitur berketerangan, tab Rekap jabatan/bidang | 16/10/2026 -->
 <script setup>
 // Hak akses fitur tiga lapis (superadmin): per jabatan (dasar) → per bidang → per individu (tertinggi).
+// v1.5: setiap fitur menampilkan menu yang dikendalikan dan arti tingkat terpilih; fitur lama yang tidak lagi diatur di sini
+//       dipisah di bagian bawah. Tab "Rekap jabatan": ceklist fitur per jabatan/bidang (bisa dicetak).
 // Tab "Rekap admin": matriks centang akses setiap admin (bisa dicetak).
 // Tab "Fitur sensitif": gaji dan keuangan santri hanya untuk pegawai yang ditunjuk superadmin (bukan per jabatan).
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhIdentificationBadge, PhTreeStructure, PhUser, PhInfo, PhListChecks, PhLockKey, PhUserGear } from '@phosphor-icons/vue'
+import { PhIdentificationBadge, PhTreeStructure, PhUser, PhInfo, PhListChecks, PhLockKey, PhUserGear, PhTable, PhCaretDown } from '@phosphor-icons/vue'
 import TabAksesSensitif from './TabAksesSensitif.vue'
 import TabRekapAdmin from './TabRekapAdmin.vue'
+import TabRekapJabatan from './TabRekapJabatan.vue'
 import { useAkses, TINGKAT } from '@/stores/akses'
 import { useOrganisasi } from '@/stores/organisasi'
 import { usePegawai } from '@/stores/pegawai'
@@ -25,6 +28,7 @@ const TAB = [
   { k: 'jabatan', n: 'Per jabatan', ikon: PhIdentificationBadge, w: 'presensi', ket: 'Lapis dasar: hak bawaan setiap jabatan fungsional dan struktural.' },
   { k: 'bidang', n: 'Per bidang', ikon: PhTreeStructure, w: 'santri', ket: 'Lapis kedua: menambah atau mencabut akses seluruh pegawai di bidang/unit beserta cabangnya.' },
   { k: 'individu', n: 'Per individu', ikon: PhUser, w: 'pengajuan', ket: 'Lapis tertinggi: pengecualian untuk pegawai tertentu. Akses superadmin tidak dapat dicabut.' },
+  { k: 'rekap', n: 'Rekap jabatan', ikon: PhTable, w: 'laporan', ket: 'Ceklist fitur yang dapat diakses setiap jabatan dan bidang.' },
   { k: 'admin', n: 'Rekap admin', ikon: PhUserGear, w: 'verifikasi', ket: 'Daftar akses setiap admin dalam satu tabel centang.' },
   { k: 'sensitif', n: 'Fitur sensitif', ikon: PhLockKey, w: 'gaji', ket: 'Gaji dan keuangan santri: hanya superadmin dan pegawai yang ditunjuk di sini.' },
 ]
@@ -77,6 +81,13 @@ const efektif = ref([])
 async function muatEfektif() { if (sasaran.value?.s === 'individu') { try { efektif.value = await akses.rincian(sasaran.value.id) } catch (e) { ui.toast(e.message, 'galat') } } }
 watch(pilihan, muatEfektif)
 const lapis = (n) => (n == null ? '–' : n < 0 ? `cabut ${TINGKAT[-n].toLowerCase()}` : TINGKAT[n])
+// Arti tingkat yang sedang berlaku untuk sasaran terpilih (jabatan: tingkat; bidang/individu: tambah/batasi)
+function artiPilihan(f) {
+  const v = nilai(f.kode); if (v === '' || v === 0) return ''
+  if (typeof v === 'number') return `${TINGKAT[v]}: ${f.arti?.[v] || ''}`
+  const t = Number(v.slice(1))
+  return v.startsWith('t') ? `Tambah ${TINGKAT[t].toLowerCase()}: ${f.arti?.[t] || ''}` : t === 1 ? 'Seluruh akses fitur ini dicabut' : `Dibatasi paling tinggi ${TINGKAT[t - 1].toLowerCase()}`
+}
 const WARNA_TINGKAT = ['w-hakakses', 'w-pegawai', 'w-presensi', 'w-pengaturan']
 </script>
 <template>
@@ -91,6 +102,7 @@ const WARNA_TINGKAT = ['w-hakakses', 'w-pegawai', 'w-presensi', 'w-pengaturan']
 
     <TabAksesSensitif v-if="aktif.k === 'sensitif'" />
     <TabRekapAdmin v-else-if="aktif.k === 'admin'" />
+    <TabRekapJabatan v-else-if="aktif.k === 'rekap'" />
     <p v-else-if="!siap" class="py-10 text-center text-teks3">Memuat hak akses…</p>
     <div v-else :class="['lg:grid lg:grid-cols-[300px_1fr] lg:gap-5', 'w-' + aktif.w]">
       <!-- Daftar sasaran -->
@@ -121,9 +133,11 @@ const WARNA_TINGKAT = ['w-hakakses', 'w-pegawai', 'w-presensi', 'w-pengaturan']
               <h3 class="mb-2 text-sm font-bold text-teks3">{{ kel }}</h3>
               <ul class="divide-y divide-garis">
                 <li v-for="f in fitur" :key="f.kode" class="flex flex-wrap items-center gap-2 py-2.5">
-                  <div class="min-w-[160px] flex-1"><p class="font-semibold">{{ f.nama }}</p><p v-if="f.fase > 8" class="text-xs text-teks3">Segera tersedia</p></div>
+                  <div class="min-w-[160px] flex-1"><p class="font-semibold">{{ f.nama }}</p>
+                    <p v-if="f.menu" class="text-xs text-teks3">Menu: {{ f.menu }}</p>
+                    <p v-if="artiPilihan(f)" class="mt-0.5 text-xs font-semibold" style="color: var(--c)">{{ artiPilihan(f) }}</p></div>
                   <div v-if="aktif.k === 'jabatan'" class="flex rounded-full bg-permukaan2 p-1" role="radiogroup" :aria-label="`Tingkat akses ${f.nama}`">
-                    <button v-for="t in [0, 1, 2, 3]" :key="t" role="radio" :aria-checked="nilai(f.kode) === t" :disabled="menyimpan === f.kode" @click="ubah(f.kode, t)"
+                    <button v-for="t in [0, 1, 2, 3]" :key="t" :title="t ? f.arti?.[t] : 'Tanpa akses'" role="radio" :aria-checked="nilai(f.kode) === t" :disabled="menyimpan === f.kode" @click="ubah(f.kode, t)"
                       :class="['min-h-[36px] rounded-full px-3 text-xs font-semibold', nilai(f.kode) === t ? (t ? 'bg-[#C7332F] text-white' : 'bg-permukaan text-teks shadow-kartu') : 'text-teks2']">{{ TINGKAT[t] }}</button>
                   </div>
                   <select v-else class="isian w-full text-sm sm:w-64" :value="nilai(f.kode)" :disabled="menyimpan === f.kode" @change="ubah(f.kode, $event.target.value)" :aria-label="`Pengecualian ${f.nama}`">
@@ -134,6 +148,14 @@ const WARNA_TINGKAT = ['w-hakakses', 'w-pegawai', 'w-presensi', 'w-pengaturan']
             </div>
           </div>
 
+          <!-- Fitur lama yang tidak diatur di sini -->
+          <details v-if="akses.fiturLama.length" class="kartu mt-4 p-4">
+            <summary class="flex cursor-pointer items-center gap-2 text-sm font-bold text-teks2"><PhCaretDown :size="16" /> {{ akses.fiturLama.length }} fitur lama tidak diatur di sini</summary>
+            <ul class="mt-2 divide-y divide-garis text-sm">
+              <li v-for="f in akses.fiturLama" :key="f.kode" class="py-2"><b>{{ f.nama }}</b><span class="block text-xs text-teks3">{{ f.keterangan }}</span></li>
+            </ul>
+          </details>
+
           <!-- Akses efektif individu -->
           <div v-if="aktif.k === 'individu' && efektif.length" class="kartu w-laporan mt-4 p-4">
             <div class="mb-2 flex items-center gap-2"><span class="chip-ikon h-9 w-9"><PhListChecks :size="20" weight="duotone" /></span><h3 class="judul-bagian">Akses efektif</h3></div>
@@ -142,7 +164,7 @@ const WARNA_TINGKAT = ['w-hakakses', 'w-pegawai', 'w-presensi', 'w-pengaturan']
               <table class="w-full min-w-[520px] text-left text-sm">
                 <thead class="border-b border-garis text-teks3"><tr><th class="py-2 pr-2 font-bold">Fitur</th><th class="px-2 font-bold">Jabatan</th><th class="px-2 font-bold">Bidang</th><th class="px-2 font-bold">Individu</th><th class="px-2 font-bold">Efektif</th></tr></thead>
                 <tbody class="divide-y divide-garis">
-                  <tr v-for="r in efektif" :key="r.kode">
+                  <tr v-for="r in efektif.filter((x) => akses.fitur.some((f) => f.kode === x.kode))" :key="r.kode">
                     <td class="py-2 pr-2 font-semibold">{{ r.nama }}</td><td class="px-2 text-teks2">{{ lapis(r.dari_jabatan || null) }}</td>
                     <td class="px-2 text-teks2">{{ lapis(r.dari_bidang) }}</td><td class="px-2 text-teks2">{{ lapis(r.dari_individu) }}</td>
                     <td class="px-2"><span :class="['lencana', WARNA_TINGKAT[r.efektif]]">{{ TINGKAT[r.efektif] }}</span></td>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/hakakses/TabRekapAdmin.vue | v1.0 | Perbaikan 13.8.0: rekap akses seluruh admin (matriks centang) dan cetak F4 | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/hakakses/TabRekapAdmin.vue | v1.1 | Perbaikan 13.9.0: izin Kelola pengumuman masuk kelompok administrasi | 16/10/2026 -->
 <script setup>
 // Rekap akses admin (khusus superadmin): baris = uraian akses, kolom = setiap admin, sel = centang bila admin memiliki akses itu.
 // Desktop: matriks lengkap. HP: kartu per admin. Cetak F4 mendatar berkop dengan kolom tanda tangan.
@@ -27,7 +27,7 @@ onMounted(async () => {
 const KELOMPOK = [
   ['Kepegawaian', ['verval_akun', 'kelola_pegawai', 'cetak_kartu', 'kelola_kelompok', 'kelola_berkas', 'atur_beban_kerja']],
   ['Presensi, jadwal, dan jurnal', ['kalender', 'verval_presensi', 'atur_presensi', 'atur_jurnal', 'verval_jurnal', 'atur_jadwal']],
-  ['Pengajuan dan administrasi', ['atur_pengajuan', 'lihat_pengajuan', 'kelola_agenda', 'kelola_persuratan', 'kelola_lapor']],
+  ['Pengajuan dan administrasi', ['atur_pengajuan', 'lihat_pengajuan', 'kelola_pengumuman', 'kelola_agenda', 'kelola_persuratan', 'kelola_lapor']],
   ['Santri', ['kelola_santri', 'kelompok_santri', 'absensi_atas_nama', 'kelola_izin_santri', 'kelola_libur']],
   ['Tahfizh dan penilaian', ['atur_tahfizh', 'validasi_tahfizh', 'atur_penilaian', 'kelola_nilai']],
   ['Layanan', ['kelola_klinik', 'kelola_security']],

@@ -1,9 +1,11 @@
-<!-- SIMKA PRO | src/pages/santri/KelengkapanSantri.vue | v1.0 | Perbaikan 13.8.0: identifikasi santri yang datanya belum lengkap (seluruh data) | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/KelengkapanSantri.vue | v1.1 | Perbaikan 13.9.0: kembali ke posisi semula dan pindah ke santri berikutnya | 16/10/2026 -->
 <script setup>
 // Kelengkapan data santri di seluruh basis data: identitas, alamat, orang tua/wali, masuk dan sekolah asal, kelompok pondok.
 // Kartu statistik langsung, kolom yang paling sering kosong (ketuk untuk menyaring), daftar santri beserta data yang belum diisi,
+// v1.1: saat kembali dari formulir, saringan dan posisi gulir dipulihkan serta santri terakhir ditandai; di formulir tersedia
+//       tombol Sebelumnya/Berikutnya mengikuti urutan daftar ini (NavKelengkapan).
 // tombol Lengkapi (ke formulir santri), ekspor Excel, dan cetak F4 berkop. Kolom yang diperiksa dapat diatur (tersimpan di peramban).
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
 import {
@@ -22,7 +24,18 @@ import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
 const san = useSantri(); const sesi = useSesi(); const lembaga = useLembaga(); const router = useRouter()
-onMounted(() => { san.muat(); lembaga.muat() })
+// Keadaan halaman (saringan, posisi gulir, santri terakhir dibuka) disimpan selama sesi peramban
+const KUNCI_KEADAAN = 'simka.kelengkapan.keadaan'
+const keadaan = (() => { try { return JSON.parse(sessionStorage.getItem(KUNCI_KEADAAN)) || {} } catch { return {} } })()
+const terakhir = ref(keadaan.terakhir || '')
+onMounted(async () => {
+  lembaga.muat(); await san.muat()
+  if (keadaan.y != null) {
+    await nextTick(); await new Promise((r) => setTimeout(r, 60))
+    const el = terakhir.value && [...document.querySelectorAll(`[data-santri="${terakhir.value}"]`)].find((x) => x.offsetParent)
+    if (el) el.scrollIntoView({ block: 'center' }); else window.scrollTo(0, keadaan.y)
+  }
+})
 const bolehUbah = computed(() => sesi.bolehAdmin('kelola_santri') || sesi.tingkat('data_santri') >= 2)
 
 // Kolom yang diperiksa (per pengguna, di peramban)
@@ -34,8 +47,10 @@ const togelKolom = (k) => { const i = aktif.value.indexOf(k); if (i >= 0) { if (
 const kolomAktif = computed(() => SEMUA_KOLOM.filter((c) => aktif.value.includes(c.k)))
 
 // Saringan
-const cari = ref(''); const jenjang = ref('semua'); const tingkat = ref(''); const jk = ref(''); const kategori = ref('semua'); const kolom = ref(''); const urut = ref('kurang')
-const hanyaKurang = ref(true)
+const sr = keadaan.saring || {}
+const cari = ref(sr.cari || ''); const jenjang = ref(sr.jenjang || 'semua'); const tingkat = ref(sr.tingkat || ''); const jk = ref(sr.jk || ''); const kategori = ref(sr.kategori || 'semua')
+const kolom = ref(sr.kolom || ''); const urut = ref(sr.urut || 'kurang')
+const hanyaKurang = ref(sr.hanyaKurang ?? true)
 const tingkatPilihan = computed(() => (jenjang.value === 'semua' ? [...TINGKAT.wustha, ...TINGKAT.sma] : TINGKAT[jenjang.value]))
 
 // Hasil pemeriksaan santri aktif dalam cakupan pengguna
@@ -73,7 +88,16 @@ const warnaKategori = (k) => KATEGORI_KELENGKAPAN.find((g) => g.k === k)?.w || '
 const namaKolom = computed(() => SEMUA_KOLOM.find((c) => c.k === kolom.value)?.n || '')
 function pilihKolom(k) { kolom.value = kolom.value === k ? '' : k; hanyaKurang.value = true }
 function reset() { cari.value = ''; jenjang.value = 'semua'; tingkat.value = ''; jk.value = ''; kategori.value = 'semua'; kolom.value = '' }
-const lengkapi = (s) => router.push(bolehUbah.value ? `/santri/${s.id}/ubah` : `/santri/${s.id}`)
+function lengkapi(s) {
+  terakhir.value = s.id
+  try {
+    sessionStorage.setItem(KUNCI_KEADAAN, JSON.stringify({ y: window.scrollY, terakhir: s.id,
+      saring: { cari: cari.value, jenjang: jenjang.value, tingkat: tingkat.value, jk: jk.value, kategori: kategori.value, kolom: kolom.value, urut: urut.value, hanyaKurang: hanyaKurang.value } }))
+    // Urutan santri untuk tombol Sebelumnya/Berikutnya di formulir
+    sessionStorage.setItem('simka.kelengkapan.urutan', JSON.stringify({ ids: tampil.value.map((h) => h.s.id), kolom: aktif.value, ubah: bolehUbah.value }))
+  } catch { /* abaikan */ }
+  router.push({ path: bolehUbah.value ? `/santri/${s.id}/ubah` : `/santri/${s.id}`, query: { dari: 'kelengkapan' } })
+}
 
 // Judul saringan untuk dokumen
 const judulSaringan = computed(() => [jenjang.value !== 'semua' && (jenjang.value === 'sma' ? 'SMA' : 'Kesetaraan Wustha'), tingkat.value && `Kelas ${tingkat.value}`,
@@ -157,7 +181,7 @@ const direktur = computed(() => lembaga.signatories?.find((s) => /^direktur$/i.t
                 <th class="w-10 px-3 py-3 text-center font-bold">No.</th><th class="px-3 py-3 font-bold">NIS</th><th class="px-3 py-3 font-bold">Nama</th><th class="px-3 py-3 text-center font-bold">L/P</th>
                 <th class="px-3 py-3 font-bold">Kelas</th><th class="w-36 px-3 py-3 font-bold">Kelengkapan</th><th class="px-3 py-3 font-bold">Data belum diisi</th><th class="w-24" /></tr></thead>
               <tbody class="divide-y divide-garis">
-                <tr v-for="(h, i) in tampil" :key="h.s.id" class="align-top hover:bg-permukaan2/50">
+                <tr v-for="(h, i) in tampil" :key="h.s.id" :data-santri="h.s.id" :class="['align-top hover:bg-permukaan2/50', terakhir === h.s.id && 'terakhir']">
                   <td class="px-3 py-3 text-center tabular-nums text-teks3">{{ i + 1 }}</td>
                   <td class="px-3 py-3 tabular-nums">{{ h.s.nis }}</td>
                   <td class="px-3 py-3 font-semibold"><router-link :to="`/santri/${h.s.id}`" class="hover:underline">{{ h.s.nama_lengkap }}</router-link></td>
@@ -176,7 +200,7 @@ const direktur = computed(() => lembaga.signatories?.find((s) => /^direktur$/i.t
 
           <!-- HP: kartu -->
           <ul class="mt-3 space-y-2 lg:hidden">
-            <li v-for="h in tampil" :key="h.s.id">
+            <li v-for="h in tampil" :key="h.s.id" :data-santri="h.s.id" :class="terakhir === h.s.id && 'terakhir rounded-[1.25rem]'">
               <button type="button" class="kartu flex w-full items-start gap-3 p-3.5 text-left" @click="lengkapi(h.s)">
                 <span :class="['chip-ikon h-11 w-11 shrink-0 text-sm font-extrabold', h.persen === 100 ? 'w-presensi' : h.persen >= 75 ? 'w-agenda' : 'w-klinik']">{{ h.persen }}%</span>
                 <span class="min-w-0 flex-1">
@@ -235,6 +259,7 @@ const direktur = computed(() => lembaga.signatories?.find((s) => /^direktur$/i.t
 <style scoped>
 .bar { display: block; height: 6px; flex: 1; overflow: hidden; border-radius: 9999px; background: rgb(var(--permukaan-2)); }
 .isi { display: block; height: 100%; border-radius: 9999px; background: var(--c, #C7332F); }
+.terakhir { box-shadow: inset 4px 0 0 #C7332F; background: color-mix(in srgb, #C7332F 6%, transparent); }
 .chip-kolom { display: inline-flex; min-height: 36px; align-items: center; gap: .4rem; border-radius: 9999px; border: 1px solid color-mix(in srgb, var(--c) 35%, rgb(var(--garis))); padding: 0 .75rem; font-size: .8125rem; color: rgb(var(--teks)); background: color-mix(in srgb, var(--c) 7%, rgb(var(--permukaan))); }
 .chip-kolom b { color: var(--c); }
 .chip-kolom.pilih { background: var(--c); border-color: transparent; color: #fff; }

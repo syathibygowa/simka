@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.9 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.10 | Perbaikan 13.9.0: navigasi dari Kelengkapan Data (kembali, sebelumnya, berikutnya) | 16/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Biodata santri: identitas, kontak orang tua/wali (tombol WA), riwayat status dan mutasi;
@@ -6,6 +6,7 @@ import { namaBerkas } from '@/lib/namaBerkas'
 // v1.7: foto santri (dipakai di kartu pelajar dan rapor), kartu pelajar berkode QR, bagian Prestasi, dan tombol Buat surat
 //       (Keterangan Aktif, Rekomendasi Sekolah, SKL, Keterangan Prestasi) yang membuka Persuratan dengan santri terpilih.
 import { computed, onMounted, ref, watch } from 'vue'
+import NavKelengkapan from '@/components/NavKelengkapan.vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   PhPencilSimple, PhTrash, PhEye, PhPrinter, PhClockCounterClockwise, PhArrowsLeftRight, PhSignOut, PhGraduationCap,
@@ -170,6 +171,7 @@ async function hapus() {
 const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
 </script>
 <template>
+  <NavKelengkapan v-if="s && route.query.dari === 'kelengkapan'" :id="route.params.id" />
   <div v-if="s" class="mx-auto max-w-4xl">
     <div class="layar-saja">
       <section class="kartu w-santri overflow-hidden">

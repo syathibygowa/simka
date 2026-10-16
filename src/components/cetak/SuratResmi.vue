@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/SuratResmi.vue | v1.4 | Perbaikan: nama satuan ({lembaga}) mengikuti kop surat | 16/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/SuratResmi.vue | v1.5 | Perbaikan 13.9.0: jarak antara kop surat dan baris nomor surat | 16/10/2026 -->
 <script setup>
 // Isi surat keluar resmi di dalam DokumenCetak (kop dari DokumenCetak): kepala surat (judul di tengah, atau nomor/lampiran/hal
 // di kiri dengan tempat-tanggal di kanan dan alamat tujuan), basmalah/salam/hamdalah/doa (Latin, miring), isi dari template,
@@ -101,7 +101,7 @@ const waktuEl = (p) => (p.waktu ? `${formatPendek(p.waktu)} ${formatJam(p.waktu)
   </div>
 </template>
 <style scoped>
-.surat { font-size: 11.5pt; line-height: 1.45; }
+.surat { font-size: 11.5pt; line-height: 1.45; padding-top: 12pt; }   /* jarak kop surat dengan baris nomor/judul */
 .surat p { margin: 0; }
 .lafaz { font-style: italic; margin: 2pt 0 4pt !important; }
 

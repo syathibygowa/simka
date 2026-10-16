@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengumuman/TabPengumumanWali.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengumuman/TabPengumumanWali.vue | v1.2 | Perbaikan 13.9.0: label "Tandai Penting" | 16/10/2026 -->
 <script setup>
 // Pengumuman → tab "Untuk wali": pengumuman yang tampil di Portal Wali (dan notifikasi HP wali yang berlangganan).
 // Sasaran: semua wali, jenjang, tingkat kelas, kelompok (kelas/kamar/halaqah/ekskul), santri tertentu, dan putra/putri.
@@ -139,7 +139,7 @@ const pesanIngat = (r) => `Assalamu'alaikum warahmatullahi wabarakatuh. Bapak/Ib
         <IsianTeksKaya v-model="form.isi" id="pw-isi" label="Isi pengumuman" wajib />
         <div class="grid gap-3 sm:grid-cols-2">
           <InputTanggal v-model="form.tampil_sampai" label="Tampil sampai (kosongkan bila tanpa batas)" bawaan-kosong />
-          <label class="flex min-h-[44px] items-center gap-2.5 self-end text-sm font-semibold"><input v-model="form.penting" type="checkbox" class="h-5 w-5 accent-[#C7332F]" /> Tandai penting (tampil paling atas)</label>
+          <label class="flex min-h-[44px] items-center gap-2.5 self-end text-sm font-semibold"><input v-model="form.penting" type="checkbox" class="h-5 w-5 accent-[#C7332F]" /> Tandai Penting</label>
         </div>
         <div class="grid gap-3 sm:grid-cols-[2fr_1fr]">
           <div><label class="label-isian" for="pw-tautan">Tautan (opsional)</label><input id="pw-tautan" v-model="form.tautan" class="isian" placeholder="https://…" inputmode="url" /></div>

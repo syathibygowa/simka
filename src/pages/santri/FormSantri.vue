@@ -1,6 +1,8 @@
-<!-- SIMKA PRO | src/pages/santri/FormSantri.vue | v1.3 | Fase 12 – Tahap 1 Biodata rapor santri | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/FormSantri.vue | v1.4 | Perbaikan 13.9.0: navigasi dari Kelengkapan Data (kembali, sebelumnya, berikutnya) | 16/10/2026 -->
 <script setup>
 // Tambah dan ubah data santri: identitas, pendidikan dan masuk (baru/pindahan), kontak ayah/ibu/wali.
+// v1.4: dibuka dari Kelengkapan Data (?dari=kelengkapan) → bilah navigasi santri sebelumnya/berikutnya; setelah simpan tetap di formulir,
+//       tombol "Simpan lalu berikutnya". Formulir dimuat ulang saat berpindah santri.
 // Fase 12: biodata rapor (agama, status dalam keluarga, telepon rumah, diterima di kelas, alamat orang tua dan wali).
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -10,6 +12,7 @@ import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 import { TINGKAT, JENJANG, HUBUNGAN, STATUS_KELUARGA, uraiNIS, nisBerikutnya, normalHP } from '@/lib/santri'
 import InputTanggal from '@/components/InputTanggal.vue'
+import NavKelengkapan from '@/components/NavKelengkapan.vue'
 
 const route = useRoute(); const router = useRouter()
 const san = useSantri(); const sesi = useSesi(); const ui = useUI()
@@ -17,7 +20,9 @@ const baru = computed(() => !route.params.id)
 const f = ref(null); const proses = ref(false); const kontakAwal = ref([])
 
 const kosongKontak = (h) => ({ hubungan: h, nama: '', no_hp: '', pekerjaan: '', alamat: '' })
-onMounted(async () => {
+const dariKelengkapan = computed(() => route.query.dari === 'kelengkapan' && !baru.value)
+async function isi() {
+  f.value = null
   await san.muat()
   // Wali kelas boleh memperbarui data santri kelasnya (tidak menambah santri baru)
   const wali = !baru.value && sesi.kelompokSaya.some((k) => k.jenis === 'kelas' && (san.cari(route.params.id)?.kelompok || []).some((x) => x.id === k.id))
@@ -43,7 +48,17 @@ onMounted(async () => {
       utama: (s.kontak || []).find((k) => k.utama)?.hubungan || 'ayah',
     }
   }
-})
+}
+onMounted(isi)
+watch(() => route.params.id, (v, lama) => { if (v && v !== lama) { window.scrollTo(0, 0); isi() } })
+// Santri berikutnya dalam urutan Kelengkapan Data
+function berikutnya() {
+  try {
+    const u = JSON.parse(sessionStorage.getItem('simka.kelengkapan.urutan')) || {}; const i = (u.ids || []).indexOf(route.params.id)
+    if (i >= 0 && u.ids[i + 1]) return router.replace({ path: `/santri/${u.ids[i + 1]}/ubah`, query: { dari: 'kelengkapan' } })
+  } catch { /* abaikan */ }
+  ui.toast('Ini santri terakhir dalam daftar kelengkapan.', 'info'); router.push('/santri/kelengkapan')
+}
 
 // Kelas mengikuti jenjang
 watch(() => f.value?.jenjang, (j) => { if (f.value && !TINGKAT[j].includes(Number(f.value.tingkat))) f.value.tingkat = TINGKAT[j][0] })
@@ -54,7 +69,7 @@ function isiNISBerikutnya() {
   if (n) f.value.nis = n; else ui.toast('Nomor urut untuk awalan ini sudah habis (999).', 'galat')
 }
 
-async function simpan() {
+async function simpan(lanjut = false) {
   const d = f.value
   if (!/^\d{7}$/.test(d.nis.trim())) return ui.toast('NIS harus 7 angka, contoh 2211010 (masuk 2022, angkatan 11, nomor 010).', 'galat')
   if (d.nama_lengkap.trim().length < 3) return ui.toast('Nama lengkap santri wajib diisi (minimal 3 huruf).', 'galat')
@@ -87,13 +102,15 @@ async function simpan() {
   try {
     const id = await san.simpan(isi)
     ui.toast(baru.value ? 'Data santri ditambahkan.' : 'Perubahan data santri disimpan.')
-    router.replace(`/santri/${id}`)
+    if (dariKelengkapan.value) { if (lanjut === true) berikutnya(); else await isi() }
+    else router.replace(`/santri/${id}`)
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
 </script>
 <template>
-  <form v-if="f" class="mx-auto max-w-4xl space-y-4" novalidate @submit.prevent="simpan">
+  <NavKelengkapan v-if="dariKelengkapan" :id="route.params.id" />
+  <form v-if="f" class="mx-auto max-w-4xl space-y-4" novalidate @submit.prevent="simpan()">
     <!-- Identitas -->
     <section class="kartu w-santri p-5">
       <div class="mb-4 flex items-center gap-3"><span class="chip-ikon h-10 w-10"><PhIdentificationCard :size="22" weight="duotone" /></span><h2 class="judul-bagian">Identitas santri</h2></div>
@@ -200,7 +217,8 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
     </section>
 
     <div class="flex flex-wrap justify-end gap-2 pb-4">
-      <button type="button" class="tombol-garis" @click="router.back()">Batal</button>
+      <button type="button" class="tombol-garis" @click="dariKelengkapan ? router.push('/santri/kelengkapan') : router.back()">{{ dariKelengkapan ? 'Kembali' : 'Batal' }}</button>
+      <button v-if="dariKelengkapan" type="button" class="tombol-garis w-santri" :disabled="proses" @click="simpan(true)"><PhFloppyDisk :size="20" weight="duotone" style="color: var(--c)" /> Simpan lalu berikutnya</button>
       <button class="tombol-utama" :disabled="proses"><PhFloppyDisk :size="20" weight="duotone" /> {{ proses ? 'Menyimpan…' : baru ? 'Simpan santri baru' : 'Simpan perubahan' }}</button>
     </div>
   </form>

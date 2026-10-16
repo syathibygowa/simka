@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.7 | Perbaikan 13.8.0: gaya garis bawah dan daftar otomatis; WA tanpa penanda garis bawah | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.8 | Perbaikan 13.9.0: label "Tandai Penting"; izin admin Kelola pengumuman | 16/10/2026 -->
 <script setup>
 // Pengumuman: semua pegawai membaca pengumuman yang ditujukan kepadanya (tanda dibaca/belum).
 // Admin, superadmin, dan pegawai yang diberi hak fitur "pengumuman" (tingkat 2+) dapat membuat,
@@ -200,7 +200,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
         <div class="grid gap-3 sm:grid-cols-2">
           <InputTanggal v-model="form.tampil_sampai" label="Tampil sampai (opsional)" bawaan-kosong />
           <label class="flex min-h-[48px] items-center gap-3 self-end rounded-xl border border-garis px-3 text-sm font-semibold">
-            <input v-model="form.penting" type="checkbox" class="h-5 w-5 accent-[#C7332F]" /> Tandai penting (disematkan di atas)</label>
+            <input v-model="form.penting" type="checkbox" class="h-5 w-5 accent-[#C7332F]" /> Tandai Penting</label>
         </div>
         <div>
           <p class="label-isian">Lampiran berkas (opsional, PDF atau foto maks. 5 MB)</p>

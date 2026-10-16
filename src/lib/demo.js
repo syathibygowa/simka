@@ -1,5 +1,6 @@
-// SIMKA PRO | src/lib/demo.js | v1.14 | Perbaikan 13.8.0: katalog izin admin lengkap untuk Rekap admin | 16/10/2026
+// SIMKA PRO | src/lib/demo.js | v1.15 | Perbaikan 13.9.0: katalog Hak Akses Fitur terkini dan izin Kelola pengumuman | 16/10/2026
 // Data contoh untuk MODE DEMO. Nama pegawai di bawah fiktif.
+import { KATALOG_FITUR } from './hakAkses'
 const menitLalu = (m) => new Date(Date.now() - m * 60000).toISOString()
 
 export const PENGGUNA_DEMO = {
@@ -173,19 +174,12 @@ export const ORGANISASI_DEMO = () => {
 }
 
 // ---------- Data contoh hak akses (mengikuti isi awal migrasi 0400) ----------
-export const FITUR_DEMO = [
-  ['data_pegawai', 'Data kepegawaian', 'Kepegawaian', 1], ['presensi', 'Presensi', 'Kepegawaian', 2], ['pengajuan', 'Pengajuan izin, sakit, cuti', 'Kepegawaian', 3],
-  ['jurnal_harian', 'Jurnal harian', 'Kepegawaian', 3], ['berkas_pegawai', 'Berkas pegawai', 'Kepegawaian', 3], ['kartu_pegawai', 'Kartu pegawai', 'Kepegawaian', 3],
-  ['data_santri', 'Data santri', 'Santri', 4], ['absensi_kelas', 'Absensi kelas', 'Santri', 4], ['absensi_halaqah', 'Absensi halaqah', 'Santri', 4],
-  ['absensi_asrama', 'Absensi asrama', 'Santri', 4], ['tahfizh', 'Tahfizh', 'Santri', 5], ['klinik', 'Klinik', 'Layanan', 6], ['gerbang', 'Gerbang dan izin keluar', 'Layanan', 7],
-  ['pantauan', 'Pantauan langsung', 'Layanan', 7], ['tata_usaha', 'Tata usaha', 'Administrasi', 10],
-  ['laporan', 'Laporan dan ekspor', 'Administrasi', 8], ['pengumuman', 'Pengumuman', 'Sistem', 3], ['pengaturan_lembaga', 'Pengaturan lembaga', 'Sistem', 1],
-  ['hak_akses', 'Hak akses', 'Sistem', 1],
-].map(([kode, nama, kelompok, fase], i) => ({ kode, nama, kelompok, fase, urutan: i }))
+export const FITUR_DEMO = KATALOG_FITUR.map((f) => ({ ...f, fase: 1 }))
 export const IZIN_ADMIN_DEMO = [
   { kode: 'verval_akun', nama: 'Verifikasi akun pegawai baru', urutan: 1 },
   { kode: 'kelola_pegawai', nama: 'Mengelola data kepegawaian dan impor Excel', urutan: 2 },
   { kode: 'kalender', nama: 'Mengelola hari libur dan kalender', urutan: 3 },
+  { kode: 'kelola_pengumuman', nama: 'Membuat dan mengelola pengumuman pegawai dan Portal Wali', urutan: 4 },
   { kode: 'verval_presensi', nama: 'Verval presensi di luar area dan permintaan koreksi', urutan: 5 },
   { kode: 'kelompok_santri', nama: 'Mengatur kelompok santri: kelas, kamar, halaqah, ekskul, pengasuh, dan anggota', urutan: 6 },
   { kode: 'absensi_atas_nama', nama: 'Input dan koreksi absensi santri atas nama pengampu', urutan: 7 },
