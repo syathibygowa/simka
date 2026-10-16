@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v3.26 | Perbaikan 13.6.0: Audit Log khusus superadmin | 15/10/2026
+// SIMKA PRO | src/lib/menu.js | v3.27 | Perbaikan 13.7.0: Libur Santri menjadi menu tersendiri | 16/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Fungsional, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -62,6 +62,8 @@ export const MENU = [
   { kode: 'klinik',     nama: 'Klinik',          ikon: PhFirstAidKit,    warna: 'klinik',     ke: '/klinik',            grup: 'Fungsional',
     syarat: (c) => c.kelompok || Number(c.fitur?.klinik ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 },
   { kode: 'izinsantri', nama: 'Perizinan', ikon: PhSignOut, warna: 'pengajuan', ke: '/izin-santri', grup: 'Layanan',
+    syarat: (c) => c.kelompok || Number(c.fitur?.perizinan_santri ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 || (c.izin || []).includes('kelola_izin_santri') },
+  { kode: 'libursantri', nama: 'Libur Santri', ikon: PhCalendarCheck, warna: 'libursantri', ke: '/libur-santri', grup: 'Layanan',
     syarat: (c) => c.kelompok || Number(c.fitur?.perizinan_santri ?? 0) >= 1 || Number(c.fitur?.data_santri ?? 0) >= 1 || (c.izin || []).includes('kelola_izin_santri') },
   { kode: 'lapor', nama: 'Laporan', ikon: PhMegaphone, warna: 'laporan', ke: '/lapor', grup: 'Layanan' },
   { kode: 'security',   nama: 'Security',        ikon: PhShieldCheck,    warna: 'security',   ke: '/security',          grup: 'Fungsional',

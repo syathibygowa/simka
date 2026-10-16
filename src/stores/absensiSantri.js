@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/absensiSantri.js | v1.4 | Santri perlu perhatian: sakit, izin, alfa, bolos, terlambat berulang | 15/10/2026
+// SIMKA PRO | src/stores/absensiSantri.js | v1.5 | Perbaikan 13.7.0: saringan kategori ekskul indoor/outdoor | 16/10/2026
 // Absensi santri HISBAT: sesi hari ini (pengasuh) atau semua kelompok (pantauan), detail sesi, simpan
 // (hanya pengecualian), rekap per santri, dan riwayat ketidakhadiran. Penulisan lewat fungsi SQL.
 // v1.2: detail() menyertakan "otomatis" — santri yang sedang sakit (Klinik → S) atau izin (Perizinan → I).
@@ -10,6 +10,9 @@ import { useSesi } from './sesi'
 import { useSantri } from './santri'
 import { useKlinik } from './klinik'
 import { useIzin } from './izin'
+
+/** Mode demo: jurnal rinci ekskul per sesi */
+const rincianDemo = {}
 
 export const useAbsensiSantri = defineStore('absensiSantri', {
   state: () => ({ sesiHari: [], memuat: false, galat: '', saluran: null }),
@@ -101,6 +104,28 @@ export const useAbsensiSantri = defineStore('absensiSantri', {
       const { data, error } = await supabase.rpc('simpan_absensi_santri', { p: isi })
       if (error) throw new Error(pesanGalat(error))
       return data
+    },
+
+    /** Pertemuan ekskul sepekan (7 hari mulai senin): [{ tanggal, sesi: [...] }] — sesi ekskul dari sesi_absensi per tanggal. */
+    async pekanEkskul(senin, semua = false) {
+      const tgl = Array.from({ length: 7 }, (_, i) => { const d = new Date(senin + 'T12:00:00+08:00'); d.setUTCDate(d.getUTCDate() + i); return d.toISOString().slice(0, 10) })
+      if (MODE_DEMO) { await useSantri().muat(); const peg = useSesi().peran === 'pegawai'; return tgl.map((t) => ({ tanggal: t, sesi: sesiAbsensiDemo(t, semua, peg).filter((s) => s.jenis === 'ekskul') })) }
+      const hasil = await Promise.all(tgl.map((t) => supabase.rpc('sesi_absensi', { p_tanggal: t, p_semua: semua })))
+      return tgl.map((t, i) => { if (hasil[i].error) throw new Error(pesanGalat(hasil[i].error)); return { tanggal: t, sesi: (hasil[i].data || []).filter((s) => s.jenis === 'ekskul') } })
+    },
+    /** Jurnal rinci pertemuan ekskul (isi tersimpan) dan jurnal pertemuan sebelumnya (isian awal). */
+    async rincianEkskul(sesiId, group, tanggal) {
+      if (MODE_DEMO) return { rincian: rincianDemo[sesiId] || null, terakhir: Object.values(rincianDemo).at(-1) ? { rincian: Object.values(rincianDemo).at(-1) } : null }
+      const [r, t] = await Promise.all([
+        sesiId ? supabase.from('extracurricular_journals').select('rincian').eq('session_id', sesiId).maybeSingle() : { data: null },
+        supabase.rpc('jurnal_ekskul_terakhir', { p_group: group, p_tanggal: tanggal }),
+      ])
+      return { rincian: r.data?.rincian || null, terakhir: t.data || null }
+    },
+    async simpanRincianEkskul(sesiId, rincian) {
+      if (MODE_DEMO) { rincianDemo[sesiId] = { ...rincian }; return }
+      const { error } = await supabase.rpc('simpan_rincian_jurnal_ekskul', { p_sesi: sesiId, p: rincian })
+      if (error) throw new Error(pesanGalat(error))
     },
 
     /** Baris rekap per santri per jenis. */

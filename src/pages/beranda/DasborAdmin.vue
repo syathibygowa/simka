@@ -1,6 +1,5 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.14 | Perbaikan: panel Tugas saya hari ini bila juga memegang tupoksi | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborAdmin.vue | v1.15 | Perbaikan 13.7.0: slider kartu statistik diganti grafik periodik (kartu pindah ke Layar Pantauan) | 16/10/2026 -->
 <script setup>
-import KartuPersuratanBeranda from '@/components/KartuPersuratanBeranda.vue'
 import { ref, computed, onMounted } from 'vue'
 import {
   PhUsersThree, PhHourglass, PhUserCircleDashed, PhGenderMale, PhGenderFemale, PhPulse,
@@ -13,27 +12,18 @@ import { formatPendek } from '@/lib/tanggal'
 import Sapaan from './Sapaan.vue'
 import TombolPantauan from '@/components/TombolPantauan.vue'
 import { PhSparkle } from '@phosphor-icons/vue'
-import SliderStatistik from '@/components/SliderStatistik.vue'
-import { panelBeranda } from '@/lib/panelBeranda'
+import GrafikPeriodik from './GrafikPeriodik.vue'
 import RingkasanPribadi from './RingkasanPribadi.vue'
-import RingkasanPimpinan from './RingkasanPimpinan.vue'
-import RingkasanKelola from './RingkasanKelola.vue'
 import { useBeranda } from '@/stores/beranda'
 import IndikatorLangsung from './IndikatorLangsung.vue'
-import StatistikPresensi from './StatistikPresensi.vue'
 import SebaranBidang from './SebaranBidang.vue'
 import TugasHariIni from '@/components/TugasHariIni.vue'
 import AksiCepat from './AksiCepat.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
-import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
-import KartuTahfizhBeranda from '@/components/KartuTahfizhBeranda.vue'
 import KartuPenilaianBeranda from '@/components/KartuPenilaianBeranda.vue'
-import KartuLayananBeranda from '@/components/KartuLayananBeranda.vue'
-import KartuSecurityBeranda from '@/components/KartuSecurityBeranda.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
-const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'penilaian', 'layanan', 'surat', 'security', 'kendali'])
 const stat = useStatistik(); const br = useBeranda(); const peg = usePegawai()
 const d = computed(() => stat.data || {}); const ch = computed(() => stat.berubah)
 const menunggu = computed(() => peg.daftar.filter((p) => p.status_akun === 'menunggu'))
@@ -63,24 +53,11 @@ const AKSI = [
       <RingkasanPribadi :d="br.data.pribadi" />
     </section>
 
-    <SliderStatistik :panel="PANEL" simpan="simka.beranda.admin">
-      <template #presensi><StatistikPresensi /></template>
-      <template #kelola>
-        <template v-if="br.data?.kelola">
-          <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="judul-bagian">Administrasi pegawai</h2><IndikatorLangsung :waktu="br.diperbarui" /></div>
-          <RingkasanKelola :d="br.data.kelola" />
-        </template>
-      </template>
-      <template #pimpinan>
-        <template v-if="br.data?.pimpinan"><h2 class="judul-bagian">Unit yang Anda pimpin</h2><RingkasanPimpinan :d="br.data.pimpinan" /></template>
-      </template>
-      <template #santri><KartuSantriBeranda /></template>
-      <template #tahfizh><KartuTahfizhBeranda /></template>
-      <template #penilaian><KartuPenilaianBeranda /></template>
-      <template #layanan><KartuLayananBeranda /></template>
-      <template #surat><KartuPersuratanBeranda /></template>
-      <template #security><KartuSecurityBeranda /></template>
-      <template #kendali>
+    <!-- Grafik periodik (kartu statistik harian presensi, administrasi, santri, tahfizh, dll. ada di Layar Pantauan) -->
+    <GrafikPeriodik />
+    <KartuPenilaianBeranda />
+
+    <section class="space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="judul-bagian">Kendali data pegawai</h2>
       <IndikatorLangsung :waktu="stat.diperbarui" />
@@ -121,8 +98,7 @@ const AKSI = [
       </section>
     </div>
 
-      </template>
-    </SliderStatistik>
+    </section>
 
     <TombolAksi label="Aksi cepat" :ikon="PhLightning" @klik="lembar = true" />
     <LembarBawah v-model="lembar" judul="Aksi cepat"><AksiCepat :daftar="AKSI" @pilih="lembar = false" /></LembarBawah>

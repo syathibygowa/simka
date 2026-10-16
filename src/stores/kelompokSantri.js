@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/kelompokSantri.js | v1.2 | Perbaikan: pemisahan putra/putri per jenis kelompok | 13/10/2026
+// SIMKA PRO | src/stores/kelompokSantri.js | v1.3 | Perbaikan 13.7.0: saringan kategori ekskul indoor/outdoor | 16/10/2026
 // v1.2: pengaturan pemisahan putra/putri (muatPengaturan, simpanPengaturan, pisahJk).
 // Kelompok santri (kelas, kamar, halaqah, ekskul, lainnya): daftar per tahun ajaran, anggota beserta riwayat,
 // pengasuh, impor pembagian. Penulisan lewat fungsi SQL (tabel tidak dapat ditulis langsung).
@@ -165,6 +165,14 @@ export const useKelompokSantri = defineStore('kelompokSantri', {
       if (error) throw new Error(pesanGalat(error))
       const peta = {}; for (const j of data) (peta[j.group_id] ||= []).push({ ...j, jam_mulai: j.jam_mulai.slice(0, 5), jam_selesai: j.jam_selesai.slice(0, 5) })
       this.jadwal = peta
+    },
+    /** Kategori ekskul: 'indoor' | 'outdoor' | null. */
+    async aturKategoriEkskul(group, kategori) {
+      if (!MODE_DEMO) {
+        const { error } = await supabase.rpc('atur_kategori_ekskul', { p_group: group, p_kategori: kategori || null })
+        if (error) throw new Error(pesanGalat(error))
+      }
+      const g = this.cari(group); if (g) g.kategori_ekskul = kategori || null
     },
     /** Ganti jadwal satu ekskul. Jadwal otomatis menjadi sesi presensi pembina/pelatihnya. */
     async simpanJadwal(group, baris) {

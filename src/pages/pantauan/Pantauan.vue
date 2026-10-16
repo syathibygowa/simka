@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.2 | Perbaikan: satu jam berjalan, 10 kartu per slide (5 kolom), baris jumlah dan penanda tangan per bidang pada rekap | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.3 | Perbaikan 13.7.0: slide Presensi Sesi, Santri Sesi, Ringkasan Tahfizh, Administrasi pindahan dari beranda | 16/10/2026 -->
 <script setup>
 // Layar Pantauan (Blueprint Bagian 28) berbentuk SLIDE layar penuh untuk presentasi dan SmartTV.
 //   Dibuka dari tombol "Layar Pantauan" di Beranda (bukan menu). Slide: Santri, Pegawai, SMP, SMA, Tahfizh, Hafalan, Asrama,
@@ -14,6 +14,10 @@ import { PhFunnel, PhArrowLeft, PhCaretLeft, PhCaretRight, PhPlay, PhPause, PhAr
 import { usePantauan } from '@/stores/pantauan'
 import { useSesi } from '@/stores/sesi'
 import { susunSlide } from '@/lib/slidePantauan'
+import { useRekapPresensi } from '@/stores/rekapPresensi'
+import { useTahunAjaran } from '@/stores/tahunAjaran'
+import { useTahfizh } from '@/stores/tahfizh'
+import { useBeranda } from '@/stores/beranda'
 import { JENJANG_PENDEK, penandaKelompok } from '@/lib/santri'
 import { formatJam, formatPanjang, formatPendek, hariIniISO, HARI } from '@/lib/tanggal'
 import LogoSimka from '@/components/LogoSimka.vue'
@@ -30,7 +34,10 @@ const admin = computed(() => ['admin', 'superadmin'].includes(sesi.peran))
 const simpanan = (() => { try { return JSON.parse(localStorage.getItem('simka.layar.saring') || '{}') } catch { return {} } })()
 const f = ref({ jk: simpanan.jk || '', jenjang: simpanan.jenjang || '', bidang: simpanan.bidang || '' })
 watch(f, (v) => { try { localStorage.setItem('simka.layar.saring', JSON.stringify(v)) } catch { /* abaikan */ } }, { deep: true })
-const slide = computed(() => (pt.data ? susunSlide(pt.data, f.value) : []))
+// Data slide pindahan dari beranda (Presensi Sesi, Santri Sesi, Ringkasan Tahfizh, Administrasi): langsung (Realtime), hari berjalan
+const rp = useRekapPresensi(); const ta = useTahunAjaran(); const tz = useTahfizh(); const br = useBeranda()
+const tambahan = computed(() => ({ presensi: rp.stat, santri: ta.statistik, tahfizh: tz.beranda, kelola: br.data?.kelola }))
+const slide = computed(() => (pt.data ? susunSlide(pt.data, f.value, tambahan.value) : []))
 const saringanTeks = computed(() => [f.value.jk === 'L' ? 'putra' : f.value.jk === 'P' ? 'putri' : '', f.value.jenjang ? JENJANG_PENDEK[f.value.jenjang] : '',
   f.value.bidang ? pt.data?.bidang.find((b) => b.id === f.value.bidang)?.nama : ''].filter(Boolean).join(', '))
 
@@ -102,10 +109,12 @@ const labelTgl = computed(() => { const d = new Date(`${tglPilih.value}T12:00:00
 
 onMounted(() => {
   pt.mulai(route.query.tgl && route.query.tgl < hariIniISO() ? route.query.tgl : null); detak = setInterval(() => (kini.value = new Date()), 1000)
+  if (admin.value) rp.mulai()
+  ta.muatStatistik().catch(() => {}); ta.dengarkan?.(); tz.muatBeranda().catch(() => {}); tz.dengarkanBeranda?.(); if (!br.data) br.muat()
   window.addEventListener('keydown', tombol); document.addEventListener('fullscreenchange', cekPenuh)
 })
 onBeforeUnmount(() => {
-  pt.berhenti(); clearInterval(detak); clearInterval(pewaktu); clearTimeout(jeda)
+  pt.berhenti(); clearInterval(detak); clearInterval(pewaktu); clearTimeout(jeda); if (admin.value) rp.berhenti()
   window.removeEventListener('keydown', tombol); document.removeEventListener('fullscreenchange', cekPenuh)
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
 })

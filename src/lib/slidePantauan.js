@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/slidePantauan.js | v1.4 | Slide unit kerja: Pondok, Wali Kelas, Guru Mapel, Dokumen, Persuratan, Keuangan, Administrasi Pegawai | 14/10/2026
+// SIMKA PRO | src/lib/slidePantauan.js | v1.5 | Perbaikan 13.7.0: slide Presensi Sesi, Santri Sesi, Ringkasan Tahfizh, Administrasi (pindahan dari beranda) | 16/10/2026
 // Penyusun slide Layar Pantauan dari muatan pantauan_langsung(): setiap slide berisi kartu statistik (dengan daftar
 // nama untuk detail admin/superadmin) dan grafik (batang/lingkaran). Saringan: jenis kelamin, jenjang, bidang.
 // Urutan slide: lihat URUT di akhir susunSlide (Pondok di depan).
@@ -11,6 +11,9 @@
 //       Keuangan (hanya pemegang hak lihat keuangan), Administrasi Pegawai. Urutan: Pondok, Santri, Pegawai, SMP, SMA,
 //       Wali Kelas, Guru Mapel, Tahfizh, Hafalan, Asrama, Kegiatan Santri, Medis, Security, Ekskul, Perizinan, Laporan
 //       dan Agenda, Dokumen, Persuratan, Keuangan, Administrasi Pegawai.
+// v1.5: empat slide pindahan dari slider beranda (masing-masing 10 kartu): Presensi Sesi (statistik_presensi), Santri Sesi
+//       (statistik_santri + sesi absensi), Ringkasan Tahfizh (ringkasan_tahfizh_beranda), Administrasi (ringkasan_beranda.kelola).
+//       Hanya hari berjalan; sumber data dikirim Pantauan.vue lewat parameter x.
 import {
   PhStudent, PhChalkboardTeacher, PhBookOpenText, PhBed, PhFirstAidKit, PhSignOut, PhSiren, PhUserCheck, PhClock, PhAirplaneTilt, PhUserMinus,
   PhHourglass, PhMoon, PhCalendarCheck, PhSignIn, PhProhibit, PhPackage, PhHandArrowDown, PhIdentificationBadge, PhUsersThree, PhGraduationCap,
@@ -18,7 +21,7 @@ import {
   PhBriefcase, PhHouse, PhTimer, PhEnvelopeSimpleOpen, PhCalendarStar, PhMegaphone, PhExam, PhNotebook,
   PhSun, PhUsersFour, PhCheckCircle, PhXCircle, PhPlayCircle, PhListChecks, PhPercent, PhUserList, PhBookBookmark, PhCalendarX, PhFlag, PhDoorOpen, PhQuestion,
   PhChalkboard, PhPresentationChart, PhNotePencil, PhChartLine, PhFileText, PhSealCheck, PhFiles, PhSignature, PhFolderOpen, PhEnvelopeSimple, PhTray,
-  PhArrowsLeftRight, PhPaperPlaneTilt, PhCashRegister, PhCoins, PhReceipt, PhInvoice, PhIdentificationCard, PhClockCounterClockwise, PhUserGear, PhCake,
+  PhTarget, PhArrowsLeftRight, PhPaperPlaneTilt, PhCashRegister, PhCoins, PhReceipt, PhInvoice, PhIdentificationCard, PhClockCounterClockwise, PhUserGear, PhCake,
 } from '@phosphor-icons/vue'
 import { formatJam, formatWaktu } from './tanggal'
 import { JENIS_TITIPAN, PENGAMBIL } from './security'
@@ -133,7 +136,7 @@ function slideSekolah(k, judul, jenjang, bidangKode, santriAll, pegawaiAll, sesi
 }
 
 /** Susun semua slide. d = muatan pantauan_langsung, f = { jk, jenjang, bidang } */
-export function susunSlide(d, f) {
+export function susunSlide(d, f, x = {}) {
   const cocokS = (x) => (!f.jk || x.jk === f.jk) && (!f.jenjang || x.jenjang === f.jenjang)
   const santri = d.santri.filter(cocokS); const santriJk = d.santri.filter((x) => !f.jk || x.jk === f.jk)
   const pegawai = d.pegawai.filter((p) => (!f.jk || p.jk === f.jk) && (!f.bidang || p.bidang_id === f.bidang)); const pegawaiJk = d.pegawai.filter((p) => !f.jk || p.jk === f.jk)
@@ -666,8 +669,11 @@ export function susunSlide(d, f) {
         { tipe: 'lingkaran', judul: 'Jurnal harian hari ini', satuan: 'pegawai', data: [{ n: 'Sudah mengisi', nilai: isi.length, warna: W.hijau }, { n: 'Belum mengisi', nilai: terjadwal.length - isi.length, warna: W.abu }] }] })
   }
 
+  // Slide pindahan dari beranda (hanya hari berjalan)
+  if (!d.lalu) slide.push(...slideBeranda(x, d, f))
+
   // Urutan slide: Pondok di depan, unit kerja menyusul sesuai alur
-  const URUT = ['pondok', 'santri', 'pegawai', 'smp', 'sma', 'walikelas', 'gurumapel', 'tahfizh', 'hafalan', 'musyrif', 'kegiatan', 'klinik', 'security', 'ekskul', 'perizinan', 'lapor', 'dokumen', 'surat', 'keuangan', 'adminpeg']
+  const URUT = ['pondok', 'santri', 'santrisesi', 'pegawai', 'presensisesi', 'smp', 'sma', 'walikelas', 'gurumapel', 'tahfizh', 'hafalan', 'tahfizhringkas', 'musyrif', 'kegiatan', 'klinik', 'security', 'ekskul', 'perizinan', 'lapor', 'dokumen', 'surat', 'keuangan', 'adminpeg', 'administrasi']
   slide.sort((a, b) => URUT.indexOf(a.k) - URUT.indexOf(b.k))
 
   // Hari sebelumnya: ungkapan "hari ini" menjadi "hari itu"
@@ -680,4 +686,120 @@ export function susunSlide(d, f) {
     }
   }
   return slide
+}
+
+/**
+ * Slide pindahan dari slider beranda (v1.5), masing-masing 10 kartu.
+ * x = { presensi: statistik_presensi(), kelola: ringkasan_beranda().kelola, santri: statistik_santri(), tahfizh: ringkasan_tahfizh_beranda() }
+ * Slide dilewati bila datanya tidak tersedia (mis. bukan admin).
+ */
+export function slideBeranda(x = {}, d = {}, f = {}) {
+  const hasil = []; const n = (v) => Number(v) || 0
+
+  // Presensi pegawai per sesi kerja
+  const p = x.presensi
+  if (p) {
+    const tercatat = n(p.sesi_tercatat); const wajib = n(p.sesi_wajib); const tanpa = n(p.terlewat_belum) + n(p.tanpa_keterangan)
+    const pola = p.per_pola || []
+    hasil.push({ k: 'presensisesi', judul: 'Presensi Sesi', ikon: PhUserCheck, w: 'presensi', sub: 'Presensi pegawai per sesi kerja hari ini (dihitung per sesi, bukan per orang)',
+      kartu: [
+        kartu('Pegawai hadir', `${n(p.pegawai_hadir)}/${n(p.pegawai_terjadwal)}`, PhUserCheck, 'presensi', `${pr(n(p.pegawai_hadir), n(p.pegawai_terjadwal))} pegawai terjadwal hadir minimal satu sesi`),
+        kartu('Tingkat kehadiran', p.persen_kehadiran == null ? '–' : `${String(p.persen_kehadiran).replace('.', ',')}%`, PhPercent, 'gaji', 'Dari sesi yang sudah tercatat atau lewat waktunya'),
+        kartu('Sesi tercatat', `${tercatat}/${wajib}`, PhListChecks, 'jadwal', `${pr(tercatat, wajib)} sesi wajib hari ini`),
+        kartu('Hadir tepat waktu', n(p.hadir), PhCheckCircle, 'presensi', `${pr(n(p.hadir), tercatat)} dari sesi tercatat`),
+        kartu('Terlambat', n(p.terlambat), PhClock, 'pengajuan', `${pr(n(p.terlambat), tercatat)} dari sesi tercatat`),
+        kartu('Dinas luar', n(p.dinas_luar), PhAirplaneTilt, 'jadwal', `${pr(n(p.dinas_luar), tercatat)} dari sesi tercatat`),
+        kartu('Izin, sakit, cuti', n(p.izin_sakit_cuti), PhUserMinus, 'klinik', `${n(p.izin)} izin · ${n(p.sakit)} sakit · ${n(p.izin_sakit_cuti) - n(p.izin) - n(p.sakit)} cuti`),
+        kartu('Sedang terbuka', n(p.terbuka_belum), PhPlayCircle, 'santri', `${n(p.akan_datang)} sesi akan datang`),
+        kartu('Terlewat / tanpa keterangan', tanpa, PhXCircle, 'beranda', `${pr(tanpa, wajib)} sesi wajib tanpa presensi`),
+        kartu('Perlu verval', n(p.verval_menunggu), PhSealCheck, 'verval', `${n(p.curiga_baru)} penanda kecurigaan perlu ditinjau`),
+      ],
+      grafik: [
+        { tipe: 'lingkaran', judul: 'Status sesi presensi hari ini', satuan: 'sesi', data: [
+          { n: 'Hadir tepat', nilai: n(p.hadir), warna: W.hijau }, { n: 'Terlambat', nilai: n(p.terlambat), warna: W.jingga }, { n: 'Dinas luar', nilai: n(p.dinas_luar), warna: W.biru },
+          { n: 'Izin/sakit/cuti', nilai: n(p.izin_sakit_cuti), warna: W.ungu }, { n: 'Terlewat/tanpa keterangan', nilai: tanpa, warna: W.merah },
+          { n: 'Terbuka/akan datang', nilai: n(p.terbuka_belum) + n(p.akan_datang), warna: W.abu }] },
+        { tipe: 'batang', judul: 'Kehadiran per pola tugas', sumbuY: 'Jumlah sesi', label: pola.map((q) => q.pola),
+          seri: [{ n: 'Hadir', warna: W.hijau, nilai: pola.map((q) => n(q.hadir)) }, { n: 'Belum/tidak hadir', warna: W.abu, nilai: pola.map((q) => n(q.wajib) - n(q.hadir)) }] },
+      ] })
+  }
+
+  // Santri per sesi program
+  const st = x.santri
+  if (st) {
+    const h = st.hari_ini || {}; const sesi = (d.sesi || []).filter((s) => !f.jk || !s.jk || s.jk === f.jk)
+    const per = (j) => { const s = sesi.filter((y) => y.jenis === j); const ok = s.filter((y) => y.status === 'terisi')
+      return { s, ok, h: ok.reduce((a, y) => a + n(y.hadir), 0), ang: ok.reduce((a, y) => a + n(y.anggota), 0) } }
+    const kls = per('kelas'); const hq = per('halaqah'); const asr = per('asrama'); const eks = per('ekskul')
+    const kartuP = (judul, o, ikon, w) => kartu(judul, `${o.ok.length}/${o.s.length}`, ikon, w, o.ang ? `${pr(o.h, o.ang)} santri hadir · ${o.s.length - o.ok.length} sesi belum terisi` : 'Belum ada sesi terisi', daftarSesi(`Sesi ${judul.toLowerCase()} hari ini`, o.s))
+    hasil.push({ k: 'santrisesi', judul: 'Santri Sesi', ikon: PhStudent, w: 'santri', sub: 'Kehadiran santri per sesi program pokok dan ekskul hari ini',
+      kartu: [
+        kartu('Santri aktif', n(st.aktif), PhStudent, 'santri', `${n(st.putra)} putra · ${n(st.putri)} putri · Wustha ${n(st.wustha)} · SMA ${n(st.sma)}`),
+        kartu('Kehadiran hari ini', h.anggota ? `${String(Math.round((n(h.hadir) * 1000) / n(h.anggota)) / 10).replace('.', ',')}%` : '–', PhPercent, 'absensi', `${n(h.sesi)} sesi program pokok terisi`),
+        kartuP('Sesi kelas', kls, PhChalkboardTeacher, 'jadwal'),
+        kartuP('Sesi halaqah', hq, PhBookOpenText, 'tahfizh'),
+        kartuP('Sesi asrama', asr, PhBed, 'musyrif'),
+        kartuP('Sesi ekskul', eks, PhPersonSimpleRun, 'ekskul'),
+        kartu('Izin', n(h.izin), PhEnvelopeSimpleOpen, 'pengajuan', `${pr(n(h.izin), n(h.anggota))} dari kehadiran tercatat`),
+        kartu('Sakit', n(h.sakit), PhFirstAidKit, 'klinik', `${pr(n(h.sakit), n(h.anggota))} dari kehadiran tercatat`),
+        kartu('Absen', n(h.absen), PhProhibit, 'beranda', `${pr(n(h.absen), n(h.anggota))} dari kehadiran tercatat`),
+        kartu('Data wajib kurang', n(st.data_kurang), PhWarningCircle, 'hakakses', 'NISN, tempat, atau tanggal lahir belum lengkap'),
+      ],
+      grafik: [
+        { tipe: 'batang', judul: 'Kehadiran santri per program (%)', sumbuY: 'Persen hadir', label: ['Kelas', 'Halaqah', 'Asrama', 'Ekskul'],
+          seri: [{ n: 'Hadir (%)', warna: W.hijau, nilai: [kls, hq, asr, eks].map((o) => persen(o.h, o.ang)) }] },
+        { tipe: 'lingkaran', judul: 'Kehadiran santri hari ini', satuan: 'kehadiran', data: [
+          { n: 'Hadir', nilai: n(h.hadir), warna: W.hijau }, { n: 'Izin', nilai: n(h.izin), warna: W.biru }, { n: 'Sakit', nilai: n(h.sakit), warna: W.ungu }, { n: 'Absen', nilai: n(h.absen), warna: W.merah }] },
+      ] })
+  }
+
+  // Ringkasan tahfizh
+  const t = x.tahfizh
+  if (t) {
+    const terdata = n(t.terdata); const capai = n(t.tercapai); const belum = n(t.tidak_tercapai)
+    hasil.push({ k: 'tahfizhringkas', judul: 'Ringkasan Tahfizh', ikon: PhBooks, w: 'tahfizh', sub: 'Setoran, capaian bulan berjalan, ujian, dan usulan juz',
+      kartu: [
+        kartu('Setoran hari ini', `${n(t.setoran_terisi)}/${n(t.setoran_dibuka)}`, PhNotebook, 'presensi', `Sesi terisi dari yang sudah dibuka · ${n(t.setoran_total)} sesi hari ini`),
+        kartu('Sesi setoran hari ini', n(t.setoran_total), PhCalendarCheck, 'jadwal', `${n(t.setoran_total) - n(t.setoran_dibuka)} belum dibuka`),
+        kartu('Capaian bulan ini', terdata ? `${pr(capai, terdata)}` : '–', PhTarget, 'tahfizh', `${capai} tercapai dari ${terdata} santri terdata`),
+        kartu('Mencapai target', capai, PhMedal, 'presensi', `${pr(capai, terdata)} dari santri terdata`),
+        kartu('Belum mencapai target', belum, PhWarningCircle, 'klinik', `${pr(belum, terdata)} · perlu pendampingan`),
+        kartu('Ujian menunggu', n(t.ujian_menunggu), PhExam, 'agenda', 'Menunggu penguji atau terjadwal'),
+        kartu('Usulan juz', n(t.usulan_menunggu), PhSealCheck, 'pengajuan', 'Menunggu validasi'),
+        kartu('Rata-rata hafalan', `${String(t.rata_juz ?? 0).replace('.', ',')} juz`, PhBookOpenText, 'santri', 'Hafalan resmi tervalidasi'),
+        kartu('Khatam 30 juz', n(t.khatam), PhTrophy, 'gaji', `${pr(n(t.khatam), n(t.santri))} dari santri tahfizh`),
+        kartu('Santri tahfizh', n(t.santri), PhUsersFour, 'santri', `${terdata} capaiannya terdata bulan ini`),
+      ],
+      grafik: [
+        { tipe: 'lingkaran', judul: 'Capaian target bulan ini', data: [{ n: 'Tercapai', nilai: capai, warna: W.hijau }, { n: 'Belum tercapai', nilai: belum, warna: W.merah },
+          { n: 'Belum terdata', nilai: Math.max(0, n(t.santri) - terdata), warna: W.abu }] },
+        { tipe: 'batang', judul: 'Sesi setoran hari ini', sumbuY: 'Jumlah sesi', label: ['Terisi', 'Dibuka', 'Seluruh sesi'],
+          seri: [{ n: 'Sesi', warna: W.teal, nilai: [n(t.setoran_terisi), n(t.setoran_dibuka), n(t.setoran_total)] }] },
+      ] })
+  }
+
+  // Administrasi pegawai (layanan kepegawaian)
+  const k = x.kelola
+  if (k) {
+    const akun = n(k.akun_aktif); const jurnal = n(k.jurnal_hari_ini)
+    hasil.push({ k: 'administrasi', judul: 'Administrasi', ikon: PhFileText, w: 'tatausaha', sub: 'Verval jurnal, pengajuan, agenda, pengumuman, berkas, dan kartu pegawai',
+      kartu: [
+        kartu('Jurnal menunggu verval', n(k.verval_jurnal), PhSealCheck, 'verval', 'Kegiatan jurnal yang perlu diverval'),
+        kartu('Pengajuan dalam proses', n(k.pengajuan_menunggu), PhFileText, 'pengajuan', `${n(k.pengajuan_bulan_ini)} disetujui bulan ini`),
+        kartu('Pegawai izin/cuti hari ini', n(k.sedang_izin), PhUserMinus, 'klinik', 'Izin, sakit, cuti, dinas luar'),
+        kartu('Mengisi jurnal hari ini', `${jurnal}/${akun}`, PhNotePencil, 'tatausaha', `${pr(jurnal, akun)} dari akun aktif`),
+        kartu('Agenda bulan ini', n(k.agenda_bulan_ini), PhCalendarStar, 'agenda', `${n(k.agenda_pekan_ini)} dalam 7 hari ke depan`),
+        kartu('Pengumuman aktif', n(k.pengumuman_aktif), PhMegaphone, 'pengumuman', 'Sedang tayang'),
+        kartu('Berkas belum dibuka', n(k.berkas_belum_dibuka), PhFolderOpen, 'berkas', 'Berkas yang belum dibuka penerima'),
+        kartu('Kartu pegawai terbit', n(k.kartu_terbit), PhIdentificationCard, 'profil', `${n(k.tanpa_foto)} akun belum berpas foto`),
+        kartu('Notifikasi HP aktif', n(k.perangkat_push), PhPaperPlaneTilt, 'notifikasi', `${pr(n(k.perangkat_push), akun)} dari akun aktif`),
+        kartu('Pegawai tanpa NIY', n(k.tanpa_niy), PhWarningCircle, 'beranda', 'Lengkapi sebelum cetak kartu'),
+      ],
+      grafik: [
+        { tipe: 'batang', judul: 'Antrean administrasi', sumbuY: 'Jumlah', label: ['Verval jurnal', 'Pengajuan', 'Berkas belum dibuka', 'Tanpa NIY', 'Tanpa pas foto'],
+          seri: [{ n: 'Menunggu', warna: W.jingga, nilai: [n(k.verval_jurnal), n(k.pengajuan_menunggu), n(k.berkas_belum_dibuka), n(k.tanpa_niy), n(k.tanpa_foto)] }] },
+        { tipe: 'lingkaran', judul: 'Jurnal harian hari ini', satuan: 'pegawai', data: [{ n: 'Sudah mengisi', nilai: jurnal, warna: W.hijau }, { n: 'Belum mengisi', nilai: Math.max(0, akun - jurnal), warna: W.abu }] },
+      ] })
+  }
+  return hasil
 }

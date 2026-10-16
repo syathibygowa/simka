@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.19 | Perbaikan: tombol cepat wajib Laporan, Perizinan, Rujuk | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.20 | Perbaikan 13.7.0: pimpinan melihat grafik periodik (kartu statistik di Layar Pantauan) | 16/10/2026 -->
 <script setup>
 import KartuPersuratanBeranda from '@/components/KartuPersuratanBeranda.vue'
 import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
@@ -27,6 +27,7 @@ import { useBeranda } from '@/stores/beranda'
 import ItemNotifikasi from '@/components/ItemNotifikasi.vue'
 import TugasHariIni from '@/components/TugasHariIni.vue'
 import AksiWajib from '@/components/AksiWajib.vue'
+import GrafikPeriodik from './GrafikPeriodik.vue'
 
 const PANEL = panelBeranda(['pimpinan', 'santri', 'tahfizh', 'penilaian', 'layanan', 'surat', 'security'])
 const notif = useNotifikasi(); const sesi = useSesi(); const router = useRouter(); const dp = useDataPresensi(); const br = useBeranda()
@@ -39,6 +40,8 @@ const ringkas = computed(() => {
   const b = dp.berikut
   return `${dp.selesaiWajib} dari ${dp.jumlahWajib} sesi tercatat${b ? ` · berikutnya ${b.nama_sesi} ${formatJam(b.mulai)}` : ''}`
 })
+// Pimpinan (berhak Layar Pantauan): slider kartu diganti grafik periodik; kartu statistik ada di Layar Pantauan
+const pimpinan = computed(() => sesi.ciriMenu.struktural || Number(sesi.ciriMenu.fitur?.pantauan ?? 0) >= 1)
 const menu = computed(() => menuUntuk(sesi.peran, sesi.ciriMenu).filter((m) => !['beranda', 'notifikasi', 'profil'].includes(m.kode)).slice(0, 8))
 </script>
 <template>
@@ -63,7 +66,15 @@ const menu = computed(() => menuUntuk(sesi.peran, sesi.ciriMenu).filter((m) => !
       <RingkasanPribadi :d="br.data.pribadi" />
     </section>
 
-    <SliderStatistik :panel="PANEL" simpan="simka.beranda.pimpinan">
+    <template v-if="pimpinan">
+      <GrafikPeriodik />
+      <section v-if="br.data?.pimpinan" class="space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="judul-bagian">Unit yang Anda pimpin</h2><IndikatorLangsung :waktu="br.diperbarui" /></div>
+        <RingkasanPimpinan :d="br.data.pimpinan" />
+      </section>
+      <KartuPenilaianBeranda />
+    </template>
+    <SliderStatistik v-else :panel="PANEL" simpan="simka.beranda.pimpinan">
       <template #pimpinan>
         <template v-if="br.data?.pimpinan">
           <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="judul-bagian">Unit yang Anda pimpin</h2><IndikatorLangsung :waktu="br.diperbarui" /></div>

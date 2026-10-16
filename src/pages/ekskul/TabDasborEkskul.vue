@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/ekskul/TabDasborEkskul.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/ekskul/TabDasborEkskul.vue | v1.2 | Perbaikan 13.7.0: saringan kategori ekskul indoor/outdoor | 16/10/2026 -->
 <script setup>
 // Dasbor ekskul: perkembangan setiap ekskul pada periode — pertemuan terjadwal vs terlaksana, kehadiran anggota,
 // jurnal materi terisi, dan pertemuan terakhir. Admin/pimpinan melihat semua ekskul; pembina melihat ekskul binaannya.
@@ -10,15 +10,22 @@ import { teksPersen } from '@/lib/absensi'
 import { awalPekan, awalBulanDari, akhirBulanDari, tambahHari, teksRentang } from '@/lib/musyrif'
 import { hariIniISO, formatPendek } from '@/lib/tanggal'
 import KartuStatistik from '@/components/KartuStatistik.vue'
+import { useKelompokSantri } from '@/stores/kelompokSantri'
+import { KATEGORI_EKSKUL } from '@/lib/ekskul'
 
 const emit = defineEmits(['rekap'])
+const props = defineProps({ kategori: { type: String, default: '' } })
+const kel = useKelompokSantri()
 const abs = useAbsensiSantri(); const ui = useUI(); const hari = hariIniISO()
 const PERIODE = [{ k: 'pekan', n: 'Pekan ini', m: awalPekan(hari), s: hari }, { k: 'bulan', n: 'Bulan ini', m: awalBulanDari(hari), s: hari },
   { k: 'lalu', n: 'Bulan lalu', m: awalBulanDari(tambahHari(awalBulanDari(hari), -1)), s: akhirBulanDari(tambahHari(awalBulanDari(hari), -1)) },
   { k: 'semester', n: '6 bulan', m: tambahHari(hari, -182), s: hari }]
-const periode = ref('bulan'); const data = ref([]); const memuat = ref(false)
+const periode = ref('bulan'); const semuaData = ref([]); const memuat = ref(false)
+// Saringan kategori indoor/outdoor dari menu Ekskul
+const katId = (id) => kel.cari(id)?.kategori_ekskul || ''
+const data = computed(() => semuaData.value.filter((x) => !props.kategori || katId(x.id) === props.kategori))
 const p = computed(() => PERIODE.find((x) => x.k === periode.value))
-async function muat() { memuat.value = true; try { data.value = await abs.ringkasanEkskul(p.value.m, p.value.s) } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false } }
+async function muat() { memuat.value = true; try { semuaData.value = await abs.ringkasanEkskul(p.value.m, p.value.s) } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false } }
 onMounted(muat)
 watch(periode, muat)
 const jumlah = (k) => data.value.reduce((a, x) => a + (Number(x[k]) || 0), 0)
@@ -46,7 +53,7 @@ const keterlaksanaan = (x) => (x.pertemuan_rencana ? Math.min(100, Math.round((x
       <li v-for="x in data" :key="x.id" class="kartu p-4" :class="warna(x.persen)">
         <div class="flex items-start gap-3">
           <span class="chip-ikon h-11 w-11 shrink-0"><PhMedal :size="24" weight="duotone" /></span>
-          <div class="min-w-0 flex-1"><b class="block truncate">{{ x.nama }}</b><span class="block truncate text-xs text-teks3">{{ x.anggota_aktif }} anggota · {{ x.pembina || 'belum ada pembina' }}</span></div>
+          <div class="min-w-0 flex-1"><b class="block truncate">{{ x.nama }}</b><span class="block truncate text-xs text-teks3">{{ KATEGORI_EKSKUL[katId(x.id)]?.n || 'Tanpa kategori' }} · {{ x.anggota_aktif }} anggota · {{ x.pembina || 'belum ada pembina' }}</span></div>
           <span class="text-2xl font-extrabold tabular-nums" style="color: var(--c)">{{ teksPersen(x.persen) }}</span>
         </div>
         <div class="mt-3 h-2 overflow-hidden rounded-full bg-permukaan2" role="img" :aria-label="`Keterlaksanaan pertemuan ${keterlaksanaan(x) ?? 0}%`">

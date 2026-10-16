@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/ekskul/TabRekapEkskul.vue | v1.0 | Fase 4 – Tahap 4 Ekskul | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/ekskul/TabRekapEkskul.vue | v1.1 | Perbaikan 13.7.0: saringan kategori ekskul indoor/outdoor | 16/10/2026 -->
 <script setup>
 // Rekap ekskul per periode: kehadiran anggota (HISBAT) dan jurnal materi setiap pertemuan.
 // Dapat dicetak oleh pembina, pimpinan, admin, dan superadmin (F4 mendatar, berkop pondok).
@@ -18,11 +18,12 @@ import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import FotoBerkas from '@/components/FotoBerkas.vue'
 
-defineProps({ semua: Boolean })
 const abs = useAbsensiSantri(); const kel = useKelompokSantri(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
 const mulai = ref(hariIniISO().slice(0, 8) + '01'); const selesai = ref(hariIniISO()); const groupId = ref('')
 const baris = ref([]); const jurnal = ref([]); const memuat = ref(false); const pratinjau = ref(false); const penanda = ref({ jabatan: '', nama: '', niy: '' })
-const pilihan = computed(() => kel.dariTA.filter((g) => g.jenis === 'ekskul'))
+const props = defineProps({ semua: Boolean, kategori: { type: String, default: '' } })
+// Saringan kategori indoor/outdoor dari menu Ekskul
+const pilihan = computed(() => kel.dariTA.filter((g) => g.jenis === 'ekskul' && (!props.kategori || g.kategori_ekskul === props.kategori)))
 const g = computed(() => kel.cari(groupId.value))
 onMounted(async () => {
   await Promise.all([kel.daftar.length ? null : kel.muat(), san.muat()])
@@ -37,6 +38,7 @@ async function muat() {
   } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false }
 }
 watch([groupId, mulai, selesai], muat)
+watch(() => props.kategori, () => { if (!pilihan.value.some((x) => x.id === groupId.value)) groupId.value = pilihan.value[0]?.id || '' })
 const peta = computed(() => susunRekap(baris.value))
 const data = computed(() => (kel.anggota[groupId.value]?.aktif || []).map((a) => san.cari(a.student_id)).filter(Boolean)
   .sort((a, b) => a.nama_lengkap.localeCompare(b.nama_lengkap, 'id')).map((s) => ({ s, r: peta.value[s.id]?.ekskul })))

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.27 | Perbaikan 13.6.0: Audit Log khusus superadmin | 15/10/2026
+// SIMKA PRO | src/router/index.js | v3.28 | Perbaikan 13.7.0: Libur Santri menjadi menu tersendiri | 16/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -51,6 +51,9 @@ const routes = [
       { path: 'guru-mapel/:tab?', component: () => import('@/pages/gurumapel/GuruMapel.vue'), props: true, meta: { judul: 'Guru Mapel', kembali: '/tugas' } },
       { path: 'penilaian/:tab?', component: () => import('@/pages/penilaian/Penilaian.vue'), props: true, meta: { judul: 'Penilaian', kembali: '/tugas' } },
       { path: 'musyrif/:tab?', component: () => import('@/pages/musyrif/Musyrif.vue'), props: true, meta: { judul: 'Musyrif', kembali: '/tugas' } },
+      // Libur santri menjadi menu tersendiri; tautan lama (notifikasi) diarahkan ke menu baru
+      { path: 'izin-santri/libur', redirect: '/libur-santri' },
+      { path: 'libur-santri', component: () => import('@/pages/izin/LiburSantri.vue'), meta: { judul: 'Libur Santri', kembali: '/tugas' } },
       { path: 'izin-santri/:tab?', component: () => import('@/pages/izin/IzinSantri.vue'), props: true, meta: { judul: 'Perizinan', kembali: '/tugas' } },
       { path: 'persuratan/:tab?', component: () => import('@/pages/persuratan/Persuratan.vue'), props: true, meta: { judul: 'Persuratan', kembali: '/tugas' } },
       { path: 'segera/tatausaha', redirect: '/persuratan' },

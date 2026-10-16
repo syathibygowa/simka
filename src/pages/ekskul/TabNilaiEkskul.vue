@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/ekskul/TabNilaiEkskul.vue | v1.2 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/ekskul/TabNilaiEkskul.vue | v1.3 | Perbaikan 13.7.0: saringan kategori ekskul indoor/outdoor | 16/10/2026 -->
 <script setup>
 // Ekskul → Nilai rapor: pembina mengisi nilai Pengembangan Diri (predikat A–D) per santri anggota ekskul.
 // Acuan: persentase kehadiran ekskul semester ini (usulan otomatis: ≥ 90% A, ≥ 75% B, ≥ 60% C, selain itu D).
@@ -7,6 +7,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { PhMedal, PhMagicWand, PhFloppyDisk, PhPrinter, PhInfo } from '@phosphor-icons/vue'
 import { useRapor } from '@/stores/rapor'
+import { useKelompokSantri } from '@/stores/kelompokSantri'
+import { KATEGORI_EKSKUL } from '@/lib/ekskul'
+import { watch } from 'vue'
 import { usePenilaian } from '@/stores/penilaian'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
@@ -17,7 +20,11 @@ import { formatPanjang, hariIniISO } from '@/lib/tanggal'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
-const rp = useRapor(); const pn = usePenilaian(); const sesi = useSesi(); const ui = useUI()
+const props = defineProps({ kategori: { type: String, default: '' } })
+const rp = useRapor(); const pn = usePenilaian(); const sesi = useSesi(); const ui = useUI(); const kel = useKelompokSantri()
+// Saringan kategori indoor/outdoor dari menu Ekskul
+const katId = (id) => kel.cari(id)?.kategori_ekskul || ''
+const daftarTampil = computed(() => daftar.value.filter((g) => !props.kategori || katId(g.group_id) === props.kategori))
 const semester = ref(null); const daftar = ref([]); const pilih = ref(''); const D = ref(null); const galat = ref(''); const proses = ref(false)
 async function muat(s) {
   galat.value = ''
@@ -30,7 +37,9 @@ async function muat(s) {
   } catch (e) { galat.value = e.message }
 }
 async function muatNilai() { D.value = pilih.value ? await rp.nilaiEkskul(pilih.value, semester.value) : null; salin() }
-onMounted(() => muat())
+onMounted(() => { kel.muat().catch(() => {}); muat() })
+// Kategori berganti: buka ekskul pertama pada kategori itu
+watch(() => props.kategori, () => { if (daftarTampil.value.length && !daftarTampil.value.some((g) => g.group_id === pilih.value)) bukaEkskul(daftarTampil.value[0].group_id) })
 async function bukaEkskul(id) { pilih.value = id; D.value = null; try { await muatNilai() } catch (e) { galat.value = e.message } }
 
 const isi = ref({}); const ubah = ref(new Set())
@@ -70,12 +79,14 @@ const pembina = computed(() => daftar.value.find((g) => g.group_id === pilih.val
     <div v-if="galat" class="kartu w-klinik p-5 text-sm font-semibold" style="color: var(--c)">Nilai ekskul gagal dimuat: {{ galat }} Pastikan migrasi SQL 8500 sudah dijalankan.</div>
     <p v-else-if="semester && !daftar.length" class="kartu p-6 text-center text-sm text-teks3">Belum ada ekskul yang dapat Anda nilai. Pembina ditetapkan di Kelompok Santri → Ekskul.</p>
     <template v-else-if="semester">
-      <ul class="flex gap-2 overflow-x-auto pb-1">
-        <li v-for="g in daftar" :key="g.group_id" class="shrink-0">
-          <button type="button" :class="['flex min-h-[48px] items-center gap-2 rounded-2xl border px-3 text-left text-sm', g.group_id === pilih ? 'border-[color:var(--c)] bg-permukaan shadow-kartu' : 'border-garis text-teks2']" @click="bukaEkskul(g.group_id)">
-            <PhMedal :size="20" weight="duotone" style="color: var(--c)" />
-            <span><b class="block">{{ g.nama }}</b><span class="text-xs text-teks3 tabular-nums">{{ g.terisi }}/{{ g.santri }} dinilai{{ g.asuhan_saya ? ' · binaan saya' : '' }}</span></span>
+      <!-- Daftar ekskul: kisi berlipat (tidak memanjang ke samping), tersaring kategori indoor/outdoor -->
+      <ul class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <li v-for="g in daftarTampil" :key="g.group_id">
+          <button type="button" :class="['pilih-ekskul flex h-full min-h-[56px] w-full items-center gap-2 rounded-2xl border px-3 py-2 text-left text-sm', 'w-' + (KATEGORI_EKSKUL[katId(g.group_id)]?.w || 'ekskul'), g.group_id === pilih ? 'aktif' : 'border-garis text-teks2 hover:bg-permukaan2']" @click="bukaEkskul(g.group_id)">
+            <component :is="KATEGORI_EKSKUL[katId(g.group_id)]?.ikon || PhMedal" :size="20" weight="duotone" class="shrink-0" style="color: var(--c)" />
+            <span class="min-w-0"><b class="block truncate">{{ g.nama }}</b><span class="block truncate text-xs text-teks3 tabular-nums">{{ g.terisi }}/{{ g.santri }} dinilai{{ g.asuhan_saya ? ' · binaan saya' : '' }}</span></span>
           </button></li>
+        <li v-if="!daftarTampil.length" class="col-span-full kartu p-4 text-center text-sm text-teks3">Tidak ada ekskul pada kategori ini.</li>
       </ul>
       <template v-if="D">
         <p v-if="tertutup" class="flex gap-2 rounded-2xl bg-permukaan2 p-3 text-sm text-teks2"><PhInfo :size="18" class="mt-0.5 shrink-0" />
@@ -126,3 +137,6 @@ const pembina = computed(() => daftar.value.find((g) => g.group_id === pilih.val
     </DokumenCetak>
   </div>
 </template>
+<style scoped>
+.pilih-ekskul.aktif { border-color: var(--c); background: color-mix(in srgb, var(--c) 10%, rgb(var(--permukaan))); box-shadow: 0 0 0 1px var(--c); color: rgb(var(--teks)); }
+</style>

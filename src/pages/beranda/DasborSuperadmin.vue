@@ -1,6 +1,5 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.13 | Perbaikan: panel Tugas saya hari ini bila juga memegang tupoksi | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborSuperadmin.vue | v1.14 | Perbaikan 13.7.0: slider kartu statistik diganti grafik periodik (kartu pindah ke Layar Pantauan) | 16/10/2026 -->
 <script setup>
-import KartuPersuratanBeranda from '@/components/KartuPersuratanBeranda.vue'
 import { ref, computed } from 'vue'
 import {
   PhUsersThree, PhUserCheck, PhHourglass, PhUserCircleDashed, PhKey, PhTreeStructure, PhCloudArrowUp,
@@ -12,27 +11,18 @@ import { formatRelatif, formatWaktu } from '@/lib/tanggal'
 import Sapaan from './Sapaan.vue'
 import TombolPantauan from '@/components/TombolPantauan.vue'
 import { PhSparkle } from '@phosphor-icons/vue'
-import SliderStatistik from '@/components/SliderStatistik.vue'
-import { panelBeranda } from '@/lib/panelBeranda'
+import GrafikPeriodik from './GrafikPeriodik.vue'
 import RingkasanPribadi from './RingkasanPribadi.vue'
-import RingkasanPimpinan from './RingkasanPimpinan.vue'
-import RingkasanKelola from './RingkasanKelola.vue'
 import { useBeranda } from '@/stores/beranda'
 import IndikatorLangsung from './IndikatorLangsung.vue'
-import StatistikPresensi from './StatistikPresensi.vue'
 import SebaranBidang from './SebaranBidang.vue'
 import TugasHariIni from '@/components/TugasHariIni.vue'
 import AksiCepat from './AksiCepat.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
-import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
-import KartuTahfizhBeranda from '@/components/KartuTahfizhBeranda.vue'
 import KartuPenilaianBeranda from '@/components/KartuPenilaianBeranda.vue'
-import KartuLayananBeranda from '@/components/KartuLayananBeranda.vue'
-import KartuSecurityBeranda from '@/components/KartuSecurityBeranda.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
-const PANEL = panelBeranda(['presensi', 'kelola', 'pimpinan', 'santri', 'tahfizh', 'penilaian', 'layanan', 'surat', 'security', 'pondok'])
 const stat = useStatistik(); const br = useBeranda()
 const d = computed(() => stat.data || {})
 const ch = computed(() => stat.berubah)
@@ -71,24 +61,11 @@ const AKSI = [
       <RingkasanPribadi :d="br.data.pribadi" />
     </section>
 
-    <SliderStatistik :panel="PANEL" simpan="simka.beranda.superadmin">
-      <template #presensi><StatistikPresensi /></template>
-      <template #kelola>
-        <template v-if="br.data?.kelola">
-          <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="judul-bagian">Administrasi pegawai</h2><IndikatorLangsung :waktu="br.diperbarui" /></div>
-          <RingkasanKelola :d="br.data.kelola" />
-        </template>
-      </template>
-      <template #pimpinan>
-        <template v-if="br.data?.pimpinan"><h2 class="judul-bagian">Unit yang Anda pimpin</h2><RingkasanPimpinan :d="br.data.pimpinan" /></template>
-      </template>
-      <template #santri><KartuSantriBeranda /></template>
-      <template #tahfizh><KartuTahfizhBeranda /></template>
-      <template #penilaian><KartuPenilaianBeranda /></template>
-      <template #layanan><KartuLayananBeranda /></template>
-      <template #surat><KartuPersuratanBeranda /></template>
-      <template #security><KartuSecurityBeranda /></template>
-      <template #pondok>
+    <!-- Grafik periodik (kartu statistik harian presensi, administrasi, santri, tahfizh, dll. ada di Layar Pantauan) -->
+    <GrafikPeriodik />
+    <KartuPenilaianBeranda />
+
+    <section class="space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="judul-bagian">Ringkasan pondok</h2>
       <IndikatorLangsung :waktu="stat.diperbarui" />
@@ -145,8 +122,7 @@ const AKSI = [
       </div>
     </div>
 
-      </template>
-    </SliderStatistik>
+    </section>
 
     <section class="hidden lg:block">
       <h2 class="judul-bagian mb-3">Akses cepat superadmin</h2>

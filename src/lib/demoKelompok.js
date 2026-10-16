@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoKelompok.js | v1.2 | Fase 6 – Tahap M1 Menu Musyrif | 06/10/2026
+// SIMKA PRO | src/lib/demoKelompok.js | v1.3 | Perbaikan 13.7.0: saringan kategori ekskul indoor/outdoor | 16/10/2026
 // Kelompok santri contoh untuk MODE DEMO (dibangun dari data santri contoh). Pengasuh memakai id pegawai contoh (p1 = Ust. Hasan Basri).
 const TA = { id: 'ta1', nama: '2026/2027', mulai: '2026-07-13', selesai: '2027-06-30', aktif: true, terkunci: false }
 const hariIni = () => new Date().toISOString().slice(0, 10)
@@ -22,8 +22,8 @@ export function dataKelompokDemo(santri) {
     g('g-kai', 'kamar', 'Kamar Aisyah', { jenis_kelamin: 'P', keterangan: 'Asrama Putri' }),
     g('g-hhb', 'halaqah', 'Halaqah Ust. Hasan', { jenis_kelamin: 'L' }),
     g('g-hkh', 'halaqah', 'Halaqah Ustzh. Khadijah', { jenis_kelamin: 'P' }),
-    g('g-epn', 'ekskul', 'Panahan', { keterangan: 'Selasa dan Kamis sore' }),
-    g('g-epr', 'ekskul', 'Pramuka', { keterangan: 'Sabtu pagi' }),
+    g('g-epn', 'ekskul', 'Panahan', { keterangan: 'Selasa dan Kamis sore', kategori_ekskul: 'outdoor' }),
+    g('g-epr', 'ekskul', 'Pramuka', { keterangan: 'Sabtu pagi', kategori_ekskul: 'outdoor' }),
   ]
   const pengasuh = {
     'g-7a': [['p1', 'utama']], 'g-7b': [['p2', 'utama']], 'g-8a': [['p12', 'utama']], 'g-10a': [['p6', 'utama']],

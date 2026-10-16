@@ -1,9 +1,11 @@
-<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.5 | Fase 8 – Perbaikan: musyrif mengabsen tanpa presensi diri lebih dulu | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.6 | Perbaikan 13.7.0: jurnal latihan ekskul rinci dan wajib | 16/10/2026 -->
 <script setup>
 // Pengisian absensi satu sesi: semua santri bawaan Hadir, ketuk kode HISBAT bagi yang tidak.
 // Pengampu halaqah/ekskul diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi (asrama tidak).
 // Admin ber-izin absensi_atas_nama dapat mengisi atas nama pengampu (tercatat di riwayat).
 // Halaqah: tab Absensi | Setoran (setoran terbuka setelah absensi tersimpan; ?tab=setoran membuka tab Setoran).
+// v1.6: ekskul — jurnal latihan rinci dan wajib seperti jurnal mengajar guru (materi pokok, sub-materi, uraian kegiatan,
+//       metode, media, capaian, kendala/tindak lanjut); materi/metode/media terisi otomatis dari pertemuan sebelumnya.
 // v1.4: santri yang sedang sakit (Klinik) atau izin (Perizinan) otomatis S/I dan terkunci dengan labelnya.
 //       Santri yang ditandai Sakit wajib diberi keluhan singkat; saat disimpan otomatis dirujuk ke klinik.
 import { ref, computed, onMounted } from 'vue'
@@ -24,6 +26,7 @@ import LembarBawah from '@/components/LembarBawah.vue'
 import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
 import FormSetoran from '@/pages/tahfizh/FormSetoran.vue'
 import BilahTab from '@/components/BilahTab.vue'
+import { METODE_EKSKUL, MEDIA_EKSKUL, JURNAL_KOSONG, kurangJurnal } from '@/lib/ekskul'
 
 const route = useRoute(); const router = useRouter()
 const abs = useAbsensiSantri(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
@@ -32,6 +35,11 @@ const atasNama = ref(''); const cari = ref(''); const lembarWA = ref(false); con
 const periksa = ref({}) // santri Sakit → waktu periksa klinik (hari_ini/besok)
 // Ekskul: jurnal materi per pertemuan (topik wajib, uraian, foto opsional)
 const jurnal = ref({ topik: '', uraian: '', foto_id: null }); const fotoBaru = ref(null); const pratinjauFoto = ref('')
+const rinci = ref(JURNAL_KOSONG()); const sebelumnya = ref(null); const metodeLain = ref(''); const mediaLain = ref('')
+const pilihanMetode = computed(() => [...new Set([...METODE_EKSKUL, ...(rinci.value.metode || [])])])
+const pilihanMedia = computed(() => [...new Set([...MEDIA_EKSKUL, ...(rinci.value.media || [])])])
+const togel = (arr, v) => { const i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v) }
+function tambahPilihan(arr, teks) { const v = teks.value.trim(); if (v.length >= 2 && !arr.includes(v)) arr.push(v); teks.value = '' }
 const ekskul = computed(() => d.value?.jenis === 'ekskul')
 const halaqah = computed(() => d.value?.jenis === 'halaqah')
 const tab = ref(route.query.tab === 'setoran' ? 'setoran' : 'absensi')
@@ -49,8 +57,16 @@ async function muat() {
     for (const o of x.otomatis || []) { if (o.student_id in isian.value) { isian.value[o.student_id] = o.kode; ket.value[o.student_id] = o.keterangan } }
     catatan.value = x.sesi_tercatat?.catatan || ''
     jurnal.value = { topik: x.jurnal?.topik || '', uraian: x.jurnal?.uraian || '', foto_id: x.jurnal?.foto_id || null }; fotoBaru.value = null; pratinjauFoto.value = ''
+    if (x.jenis === 'ekskul') {
+      // Jurnal rinci tersimpan; bila belum ada, isian awal dari pertemuan sebelumnya (materi, metode, media)
+      const rr = await abs.rincianEkskul(x.sesi_tercatat?.id, route.params.group, route.params.tanggal).catch(() => ({}))
+      sebelumnya.value = rr.terakhir || null
+      const t = rr.terakhir?.rincian || {}
+      rinci.value = rr.rincian ? { ...JURNAL_KOSONG(), ...rr.rincian, metode: [...(rr.rincian.metode || [])], media: [...(rr.rincian.media || [])] }
+        : { ...JURNAL_KOSONG(), materi: t.materi || (x.jurnal?.topik || ''), submateri: '', kegiatan: x.jurnal?.uraian || '', metode: [...(t.metode || [])], media: [...(t.media || [])] }
+    }
     atasNama.value = x.pengasuh.find((p) => p.peran === 'utama')?.employee_id || x.pengasuh[0]?.employee_id || ''
-    awal.value = JSON.stringify([isian.value, ket.value, catatan.value, jurnal.value])
+    awal.value = JSON.stringify([isian.value, ket.value, catatan.value, jurnal.value, rinci.value])
   } catch (e) { galat.value = e.message }
 }
 onMounted(muat)
@@ -70,7 +86,7 @@ const perluPresensi = computed(() => d.value?.perlu_presensi && d.value.pengasuh
 const tampil = computed(() => { const q = cari.value.toLowerCase().trim(); return (d.value?.anggota || []).filter((a) => !q || `${a.nama} ${a.nis}`.toLowerCase().includes(q)) })
 const hitung = computed(() => Object.fromEntries(URUT_KODE.map((k) => [k, Object.values(isian.value).filter((v) => v === k).length])))
 const hadirDihitung = computed(() => (d.value?.anggota.length || 0) - hitung.value.I - hitung.value.S - hitung.value.A)
-const berubah = computed(() => JSON.stringify([isian.value, ket.value, catatan.value, jurnal.value]) !== awal.value || !!fotoBaru.value)
+const berubah = computed(() => JSON.stringify([isian.value, ket.value, catatan.value, jurnal.value, rinci.value]) !== awal.value || !!fotoBaru.value)
 
 function setel(id, k) { if (oto.value[id]) return; isian.value[id] = k; if (k === 'H') delete ket.value[id]; if (k === 'S' && !periksa.value[id]) periksa.value[id] = 'hari_ini' }
 function semuaHadir() { for (const k of Object.keys(isian.value)) if (!oto.value[k]) { isian.value[k] = 'H'; delete ket.value[k] } }
@@ -78,7 +94,7 @@ function presensiDulu() { router.push({ path: '/presensi', query: { lanjut: rout
 
 async function simpan() {
   if (!bolehIsi.value) return
-  if (ekskul.value && jurnal.value.topik.trim().length < 3) return ui.toast('Isi topik/materi pertemuan ekskul (minimal 3 huruf).', 'galat')
+  if (ekskul.value) { const k = kurangJurnal(rinci.value); if (k) return ui.toast(k, 'galat') }
   const tanpaKeluhan = (d.value?.anggota || []).find((a) => perluKeluhan(a.id) && (ket.value[a.id] || '').trim().length < 3)
   if (tanpaKeluhan) return ui.toast(`Tuliskan keluhan singkat untuk ${tanpaKeluhan.nama} (Sakit) agar dirujuk ke klinik.`, 'galat')
   proses.value = true
@@ -93,7 +109,8 @@ async function simpan() {
     const dirujuk = (d.value?.anggota || []).filter((a) => perluKeluhan(a.id)).length
     await abs.simpan({ group_id: route.params.group, tanggal: route.params.tanggal, sesi: route.params.sesi, pengecualian, catatan: catatan.value.trim() || null,
       atas_nama_id: modeAtasNama.value ? atasNama.value || null : null,
-      jurnal: ekskul.value ? { topik: jurnal.value.topik.trim(), uraian: jurnal.value.uraian.trim() || null, foto_id: fotoId || null } : undefined })
+      jurnal: ekskul.value ? { topik: `${rinci.value.materi.trim()} – ${rinci.value.submateri.trim()}`, uraian: rinci.value.kegiatan.trim(), foto_id: fotoId || null } : undefined })
+      .then(async (id) => { if (ekskul.value) await abs.simpanRincianEkskul(id, { ...rinci.value }); return id })
     ui.toast(`Absensi ${d.value.nama_sesi.toLowerCase()} ${judulKelompok(d.value.kelompok)} tersimpan: ${hadirDihitung.value}/${d.value.anggota.length} hadir.${dirujuk ? ` ${dirujuk} santri sakit dirujuk ke klinik.` : ''}`)
     await muat()
     if (penerimaWA.value.length) lembarWA.value = true
@@ -155,21 +172,47 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
         <p class="mt-1 text-xs text-teks3">Tercatat "diinput oleh {{ sesi.pengguna?.nama_lengkap }} atas nama …".</p>
       </div>
 
-      <!-- Jurnal materi ekskul -->
+      <!-- Jurnal latihan ekskul (rinci dan wajib, setara jurnal mengajar guru) -->
       <section v-if="ekskul && !perluPresensi" class="kartu w-ekskul mt-4 p-4">
-        <p class="mb-3 flex items-center gap-2 font-bold"><PhNotebook :size="20" weight="duotone" style="color: var(--c)" /> Jurnal materi pertemuan</p>
-        <div class="space-y-3">
-          <div><label class="label-isian" for="jr-topik">Topik/materi <span class="text-merah">*</span></label>
-            <input id="jr-topik" v-model="jurnal.topik" :disabled="!bolehIsi || lewatBatas" class="isian" placeholder="Contoh: Teknik menarik busur dan membidik" /></div>
-          <div><label class="label-isian" for="jr-uraian">Uraian materi</label>
-            <textarea id="jr-uraian" v-model="jurnal.uraian" :disabled="!bolehIsi || lewatBatas" class="isian min-h-[80px]" rows="3" placeholder="Ringkasan kegiatan dan capaian pertemuan" /></div>
+        <p class="mb-1 flex items-center gap-2 font-bold"><PhNotebook :size="20" weight="duotone" style="color: var(--c)" /> Jurnal latihan pertemuan</p>
+        <p class="mb-3 text-xs text-teks3">Wajib diisi agar materi yang diajarkan kepada santri dapat dipantau. <span class="text-merah">*</span> = wajib.
+          <template v-if="sebelumnya"> Pertemuan sebelumnya: <b>{{ sebelumnya.topik }}</b>.</template></p>
+        <fieldset class="space-y-3" :disabled="!bolehIsi || lewatBatas">
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div><label class="label-isian" for="jr-materi">Materi pokok <span class="text-merah">*</span></label>
+              <input id="jr-materi" v-model="rinci.materi" class="isian" placeholder="Contoh: Teknik dasar memanah" /></div>
+            <div><label class="label-isian" for="jr-sub">Sub-materi/pembahasan <span class="text-merah">*</span></label>
+              <input id="jr-sub" v-model="rinci.submateri" class="isian" placeholder="Contoh: Posisi berdiri dan menarik busur" /></div>
+          </div>
+          <div><label class="label-isian" for="jr-keg">Uraian kegiatan latihan <span class="text-merah">*</span></label>
+            <textarea id="jr-keg" v-model="rinci.kegiatan" class="isian min-h-[80px]" rows="3" placeholder="Pemanasan, demonstrasi pelatih, latihan berpasangan 10 anak panah per santri, evaluasi" /></div>
+          <div>
+            <p class="label-isian">Metode latihan <span class="text-merah">*</span></p>
+            <div class="flex flex-wrap gap-1.5">
+              <button v-for="m in pilihanMetode" :key="m" type="button" :aria-pressed="rinci.metode.includes(m)" :class="['pil-isian', rinci.metode.includes(m) && 'aktif']" @click="togel(rinci.metode, m)">{{ m }}</button>
+              <input v-model="metodeLain" class="isian h-9 min-h-0 w-40 py-0 text-sm" placeholder="Metode lain…" aria-label="Metode lain" @keydown.enter.prevent="tambahPilihan(rinci.metode, metodeLain)" @blur="tambahPilihan(rinci.metode, metodeLain)" />
+            </div>
+          </div>
+          <div>
+            <p class="label-isian">Media/sarana</p>
+            <div class="flex flex-wrap gap-1.5">
+              <button v-for="m in pilihanMedia" :key="m" type="button" :aria-pressed="rinci.media.includes(m)" :class="['pil-isian', rinci.media.includes(m) && 'aktif']" @click="togel(rinci.media, m)">{{ m }}</button>
+              <input v-model="mediaLain" class="isian h-9 min-h-0 w-40 py-0 text-sm" placeholder="Media lain…" aria-label="Media lain" @keydown.enter.prevent="tambahPilihan(rinci.media, mediaLain)" @blur="tambahPilihan(rinci.media, mediaLain)" />
+            </div>
+          </div>
+          <div><label class="label-isian" for="jr-capai">Capaian/hasil latihan santri <span class="text-merah">*</span></label>
+            <input id="jr-capai" v-model="rinci.capaian" class="isian" placeholder="Contoh: 80% santri tepat sasaran pada jarak 10 meter" /></div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div><label class="label-isian" for="jr-kendala">Kendala</label><input id="jr-kendala" v-model="rinci.kendala" class="isian" placeholder="Opsional" /></div>
+            <div><label class="label-isian" for="jr-tl">Tindak lanjut pertemuan berikutnya</label><input id="jr-tl" v-model="rinci.tindak_lanjut" class="isian" placeholder="Opsional" /></div>
+          </div>
           <div class="flex flex-wrap items-center gap-3">
             <img v-if="pratinjauFoto" :src="pratinjauFoto" alt="Foto kegiatan baru" class="h-24 w-32 rounded-xl object-cover" />
             <FotoBerkas v-else-if="jurnal.foto_id" :id="jurnal.foto_id" alt="Foto kegiatan ekskul" ukuran="h-24 w-32" />
             <label v-if="bolehIsi && !lewatBatas" class="tombol-garis cursor-pointer"><PhCamera :size="20" weight="duotone" /> {{ jurnal.foto_id || pratinjauFoto ? 'Ganti foto' : 'Foto kegiatan (opsional)' }}
               <input type="file" accept="image/*" capture="environment" class="sr-only" @change="pilihFoto" /></label>
           </div>
-        </div>
+        </fieldset>
       </section>
 
       <!-- Daftar santri -->
@@ -249,6 +292,9 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
   </div>
 </template>
 <style scoped>
+.pil-isian { min-height: 36px; padding: 0 .75rem; border-radius: 9999px; border: 1px solid rgb(var(--garis)); font-size: .8125rem; font-weight: 600; color: rgb(var(--teks-2)); }
+.pil-isian.aktif { border-color: transparent; color: #fff; background: var(--c); }
+:global(.dark) .pil-isian.aktif { color: rgb(var(--latar)); }
 .kepala { background: linear-gradient(135deg, color-mix(in srgb, var(--c) 70%, #000) 0%, color-mix(in srgb, var(--c) 92%, #000) 60%, color-mix(in srgb, var(--c2) 80%, #000) 100%); }
 :global(html.dark) .kepala { background: linear-gradient(135deg, color-mix(in srgb, var(--c) 30%, #000) 0%, color-mix(in srgb, var(--c) 42%, #000) 60%, color-mix(in srgb, var(--c2) 36%, #000) 100%); }
 .bilah-simpan { bottom: calc(68px + env(safe-area-inset-bottom)); }
