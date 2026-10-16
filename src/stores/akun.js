@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/akun.js | v1.1 | Perbaikan: ganti sandi berulang terus-menerus | 05/10/2026
+// SIMKA PRO | src/stores/akun.js | v1.2 | Perbaikan 13.8.0: data contoh rekap akses admin | 16/10/2026
 // Pendaftaran, verifikasi, kelola akun, peran admin, lupa sandi, dan ganti sandi.
 // Semua aksi berwenang dijalankan oleh Edge Function (daftar, kelola-akun, reset-sandi).
 import { defineStore } from 'pinia'
@@ -52,7 +52,15 @@ export const useAkun = defineStore('akun', {
     },
 
     async muatIzin() {
-      if (MODE_DEMO) { this.izinTersedia = IZIN_ADMIN_DEMO; return }
+      if (MODE_DEMO) {
+        this.izinTersedia = IZIN_ADMIN_DEMO
+        // Contoh dua admin untuk Rekap akses admin
+        const peg = usePegawai(); if (!peg.daftar.length) await peg.muat()
+        const contoh = { p8: ['verval_akun', 'kelola_pegawai', 'kalender', 'lihat_pengajuan', 'atur_pengajuan', 'kelola_berkas', 'cetak_kartu', 'atur_beban_kerja', 'kelola_persuratan'],
+          p11: ['kelola_santri', 'kelompok_santri', 'absensi_atas_nama', 'atur_jadwal', 'atur_tahfizh', 'validasi_tahfizh', 'kelola_izin_santri', 'kelola_libur', 'atur_penilaian', 'kelola_nilai'] }
+        for (const [id, kode] of Object.entries(contoh)) { const p = peg.cari(id); if (p && !p.peran) { p.peran = 'admin'; this.izinAdmin[id] ||= kode } }
+        return
+      }
       const [a, b] = await Promise.all([
         supabase.from('admin_capabilities').select('*').order('urutan'),
         supabase.from('admin_permissions').select('employee_id, kode'),

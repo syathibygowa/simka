@@ -1,16 +1,18 @@
-<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.6 | Perbaikan 13.7.0: jurnal latihan ekskul rinci dan wajib | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.7 | Perbaikan 13.8.0: laporan ke grup WhatsApp bidang | 16/10/2026 -->
 <script setup>
 // Pengisian absensi satu sesi: semua santri bawaan Hadir, ketuk kode HISBAT bagi yang tidak.
 // Pengampu halaqah/ekskul diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi (asrama tidak).
 // Admin ber-izin absensi_atas_nama dapat mengisi atas nama pengampu (tercatat di riwayat).
 // Halaqah: tab Absensi | Setoran (setoran terbuka setelah absensi tersimpan; ?tab=setoran membuka tab Setoran).
+// v1.7: tombol "Lapor ke grup WA" setelah absensi tersimpan — teks laporan (kelompok, pengasuh, hari, tanggal, sesi,
+//       daftar santri bertanda ✅/❌ atau dipisah per kehadiran, ringkasan; ekskul memuat jurnal latihan) siap kirim ke grup bidang.
 // v1.6: ekskul — jurnal latihan rinci dan wajib seperti jurnal mengajar guru (materi pokok, sub-materi, uraian kegiatan,
 //       metode, media, capaian, kendala/tindak lanjut); materi/metode/media terisi otomatis dari pertemuan sebelumnya.
 // v1.4: santri yang sedang sakit (Klinik) atau izin (Perizinan) otomatis S/I dan terkunci dengan labelnya.
 //       Santri yang ditandai Sakit wajib diberi keluhan singkat; saat disimpan otomatis dirujuk ke klinik.
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { PhFingerprint, PhCheckCircle, PhFloppyDisk, PhClockCounterClockwise, PhWarningCircle, PhCrown, PhUserSwitch, PhWhatsappLogo, PhArrowCounterClockwise, PhMagnifyingGlass, PhNotebook, PhCamera, PhMapPin, PhListChecks, PhBookOpenText, PhFirstAidKit, PhSignOut, PhLockSimple } from '@phosphor-icons/vue'
+import { PhFingerprint, PhCheckCircle, PhFloppyDisk, PhClockCounterClockwise, PhWarningCircle, PhCrown, PhUserSwitch, PhWhatsappLogo, PhArrowCounterClockwise, PhMagnifyingGlass, PhNotebook, PhCamera, PhMapPin, PhListChecks, PhBookOpenText, PhFirstAidKit, PhSignOut, PhLockSimple, PhUsersThree } from '@phosphor-icons/vue'
 import { useAbsensiSantri } from '@/stores/absensiSantri'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
@@ -27,6 +29,9 @@ import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
 import FormSetoran from '@/pages/tahfizh/FormSetoran.vue'
 import BilahTab from '@/components/BilahTab.vue'
 import { METODE_EKSKUL, MEDIA_EKSKUL, JURNAL_KOSONG, kurangJurnal } from '@/lib/ekskul'
+import { laporanAbsensi, FORMAT_ABSENSI } from '@/lib/laporanGrup'
+import { useKelompokSantri } from '@/stores/kelompokSantri'
+import LembarLaporanGrup from '@/components/LembarLaporanGrup.vue'
 
 const route = useRoute(); const router = useRouter()
 const abs = useAbsensiSantri(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
@@ -124,6 +129,27 @@ const penerimaWA = computed(() => (d.value?.anggota || []).filter((a) => (isian.
   return { employee_id: a.id, nama: a.nama, no_hp: k?.no_hp || null, unit: `${KODE[isian.value[a.id]].n}${ket.value[a.id] ? ' · ' + ket.value[a.id] : ''}`,
     keterangan: k ? `wali: ${k.nama || '–'}` : 'kontak wali belum ada', santri: s, kontak: k, kode: isian.value[a.id] }
 }))
+// ---------- Laporan ke grup WA (kepala bidang) ----------
+const kel = useKelompokSantri()
+const lembarGrup = ref(false)
+const formatLap = ref((() => { try { return localStorage.getItem('simka.laporan.format') || 'tanda' } catch { return 'tanda' } })())
+watch(formatLap, (v) => { try { localStorage.setItem('simka.laporan.format', v) } catch { /* abaikan */ } })
+const tautanGrup = ref('')
+async function bukaLaporan() {
+  lembarGrup.value = true
+  try { if (!kel.daftar.length) await kel.muat(); tautanGrup.value = kel.cari(route.params.group)?.wa_internal || '' } catch { tautanGrup.value = '' }
+}
+const teksLaporan = computed(() => {
+  const x = d.value; if (!x) return ''
+  const utama = x.pengasuh.filter((p) => p.peran !== 'pengganti')
+  return laporanAbsensi({
+    jenis: x.jenis, kelompok: judulKelompok(x.kelompok), tanggal: x.tanggal, sesi: x.nama_sesi, jam: `${jam(x.jam_mulai)}–${jam(x.jam_selesai)}`, tempat: x.tempat,
+    pengasuh: x.sesi_tercatat?.atas_nama ? [x.sesi_tercatat.pengampu] : (utama.length ? utama : x.pengasuh).map((p) => p.nama),
+    anggota: x.anggota.map((a) => ({ nama: a.nama, kode: isian.value[a.id] || 'H', ket: ket.value[a.id] || '' })),
+    catatan: catatan.value.trim(), format: formatLap.value,
+    jurnal: ekskul.value ? rinci.value : null,
+  })
+})
 const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama_santri: p.nama, kelas: p.santri ? labelRombel(p.santri) : '', status: KODE[p.kode].n.toUpperCase(),
   kegiatan: `${d.value.nama_sesi.toLowerCase()} (${judulKelompok(d.value.kelompok)})`, tanggal: formatHari(d.value.tanggal), keterangan: ket.value[p.employee_id] ? `Keterangan: ${ket.value[p.employee_id]}` : '' })
 </script>
@@ -144,6 +170,13 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
         </div>
         <p v-if="d.sesi_tercatat" class="border-t border-garis px-5 py-2.5 text-xs text-teks3">Terakhir diisi {{ formatWaktu(d.sesi_tercatat.diisi_pada) }} WITA oleh {{ d.sesi_tercatat.diinput_oleh }}{{ d.sesi_tercatat.atas_nama ? ` atas nama ${d.sesi_tercatat.pengampu}` : '' }}{{ d.sesi_tercatat.diisi_terlambat ? ' · diisi setelah jendela sesi' : '' }}.</p>
       </section>
+
+      <!-- Laporan ke grup WA -->
+      <div v-if="d.sesi_tercatat && !berubah && !(halaqah && tab === 'setoran')" class="kartu w-presensi mt-3 flex flex-wrap items-center gap-3 p-3">
+        <span class="chip-ikon h-10 w-10 shrink-0"><PhUsersThree :size="22" weight="duotone" /></span>
+        <p class="min-w-[180px] flex-1 text-sm"><b>Lapor ke grup WhatsApp</b><span class="block text-xs text-teks3">Ringkasan kehadiran {{ ekskul ? 'dan kegiatan latihan ' : '' }}untuk kepala bidang, siap kirim.</span></p>
+        <button class="tombol-utama min-h-[42px] px-4 text-sm" @click="bukaLaporan"><PhWhatsappLogo :size="20" weight="duotone" /> Buat laporan</button>
+      </div>
 
       <!-- Tab halaqah: Absensi | Setoran -->
       <BilahTab v-if="halaqah" class="mt-4" :tepi="false" :model-value="tab" label="Isi halaqah" @update:model-value="gantiTab"
@@ -279,6 +312,9 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
       </div>
 
       </template>
+
+      <LembarLaporanGrup v-model="lembarGrup" v-model:format="formatLap" :judul="`Laporan ${jenis.n.toLowerCase()} ke grup WhatsApp`" :teks="teksLaporan"
+        :pilihan-format="FORMAT_ABSENSI" :tautan-grup="tautanGrup" nama-grup="grup internal pengasuh" />
 
       <LembarBawah v-model="lembarWA" judul="Kabari wali santri">
         <div class="pb-2">

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.6 | Fase 9 – Perbaikan: tombol Portal Wali dipindah ke menu Portal Wali tersendiri | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.7 | Perbaikan 13.8.0: tombol Kelengkapan data (seluruh data santri) | 16/10/2026 -->
 <script setup>
 // Daftar santri sesuai cakupan pengguna (RLS): kartu statistik langsung, cari dan saring,
 // ekspor Excel, cetak daftar F4 berkop jenjang. v1.4: cetak kartu pelajar massal (santri aktif yang tampil, per rombel).
@@ -7,7 +7,7 @@ import { useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
 import {
   PhMagnifyingGlass, PhStudent, PhUserPlus, PhFileXls, PhDownloadSimple, PhEye, PhSlidersHorizontal, PhPrinter, PhCaretRight,
-  PhGenderMale, PhGenderFemale, PhBooks, PhGraduationCap, PhUserMinus, PhCards,
+  PhGenderMale, PhGenderFemale, PhBooks, PhGraduationCap, PhUserMinus, PhCards, PhListMagnifyingGlass,
 } from '@phosphor-icons/vue'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
@@ -132,6 +132,7 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
       <!-- Aksi -->
       <div class="-mx-4 mb-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
         <router-link v-if="bolehImpor" to="/santri/impor" class="w-gaji tombol-garis shrink-0 px-4 text-sm"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Impor Excel</router-link>
+        <router-link to="/santri/kelengkapan" class="w-klinik tombol-garis shrink-0 px-4 text-sm"><PhListMagnifyingGlass :size="20" weight="duotone" style="color: var(--c)" /> Kelengkapan data</router-link>
         <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="eksporExcel"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor Excel</button>
         <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="bukaPratinjau"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau cetak</button>
         <button class="w-tatausaha tombol-garis shrink-0 px-4 text-sm" @click="opsiCetak = true"><PhSlidersHorizontal :size="20" weight="duotone" style="color: var(--c)" /> Atur dan cetak</button>

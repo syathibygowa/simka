@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.28 | Perbaikan 13.7.0: Libur Santri menjadi menu tersendiri | 16/10/2026
+// SIMKA PRO | src/router/index.js | v3.29 | Perbaikan 13.8.0: halaman Kelengkapan Data Santri | 16/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -33,6 +33,7 @@ const routes = [
       { path: 'pegawai/:id', component: () => import('@/pages/pegawai/DetailPegawai.vue'), meta: { judul: 'Biodata Pegawai', peran: ADMIN, cetak: true, kembali: '/pegawai' } },
       { path: 'santri', component: () => import('@/pages/santri/DaftarSantri.vue'), meta: { judul: 'Data Santri', cetak: true, kembali: '/tugas' } },
       { path: 'santri/baru', component: () => import('@/pages/santri/FormSantri.vue'), meta: { judul: 'Tambah Santri', kembali: '/santri' } },
+      { path: 'santri/kelengkapan', component: () => import('@/pages/santri/KelengkapanSantri.vue'), meta: { judul: 'Kelengkapan Data Santri', cetak: true, kembali: '/santri' } },
       { path: 'santri/impor', component: () => import('@/pages/santri/ImporSantri.vue'), meta: { judul: 'Impor Data Santri', peran: ADMIN, kembali: '/santri' } },
       { path: 'santri/portal-wali', redirect: '/portal-wali' },
       { path: 'portal-wali/:tab?', component: () => import('@/pages/santri/KelolaPortalWali.vue'), props: true, meta: { judul: 'Portal Wali', peran: ADMIN, kembali: '/tugas' } },

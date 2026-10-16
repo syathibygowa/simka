@@ -1,6 +1,8 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabMengajar.vue | v2.0 | Jurnal mengajar sepekan tanpa memilih tanggal, isian rinci ringan, absensi santri per pelajaran | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabMengajar.vue | v2.1 | Perbaikan 13.8.0: laporan jurnal mengajar harian ke grup WhatsApp | 16/10/2026 -->
 <script setup>
-// Jurnal mengajar (sepaket dengan Jurnal Harian). v2.0:
+// Jurnal mengajar (sepaket dengan Jurnal Harian).
+// v2.1: tombol "Lapor" per hari menyusun laporan jurnal mengajar hari itu (materi, metode, kehadiran santri) untuk grup WA bidang.
+// v2.0:
 //  * Tanpa memilih tanggal: langsung tampil semua pertemuan sepekan (Senin–Sabtu) sesuai jadwal mengajar; tanggal otomatis.
 //    Jam berurutan dengan mapel dan kelas sama digabung menjadi satu pertemuan.
 //  * Isian rinci tetapi ringan: Bab/materi pokok, sub-bab/pembahasan, metode, media (pilihan ketuk), catatan opsional.
@@ -11,7 +13,7 @@
 import { ref, computed, onMounted } from 'vue'
 import {
   PhChalkboardTeacher, PhCheckCircle, PhLightning, PhFloppyDisk, PhListNumbers, PhXCircle, PhClock, PhCaretLeft, PhCaretRight, PhLockSimple,
-  PhGear, PhUsersThree, PhCaretDown, PhNotePencil, PhHourglass,
+  PhGear, PhUsersThree, PhCaretDown, PhNotePencil, PhHourglass, PhWhatsappLogo,
 } from '@phosphor-icons/vue'
 import { useJadwal } from '@/stores/jadwal'
 import { useSesi } from '@/stores/sesi'
@@ -19,6 +21,8 @@ import { useUI } from '@/stores/ui'
 import { blokMengajar, jamPendek } from '@/lib/jadwal'
 import { hariIniISO, formatHari, formatPendek, HARI } from '@/lib/tanggal'
 import LembarBawah from '@/components/LembarBawah.vue'
+import LembarLaporanGrup from '@/components/LembarLaporanGrup.vue'
+import { laporanMengajar } from '@/lib/laporanGrup'
 
 const jd = useJadwal(); const sesi = useSesi(); const ui = useUI()
 const hari = hariIniISO()
@@ -112,6 +116,26 @@ async function simpanAtur() {
     ui.toast('Pengaturan jurnal mengajar disimpan.'); lembarA.value = false; await muat()
   } catch (e) { ui.toast(e.message, 'galat') }
 }
+// ---------- Laporan harian ke grup WA ----------
+const lembarGrup = ref(false); const teksLaporan = ref(''); const menyusun = ref('')
+const adaJurnal = (h) => h.blok.some((x) => ['terisi', 'tidak'].includes(x.st))
+async function laporHari(h) {
+  menyusun.value = h.tanggal
+  try {
+    const blok = h.blok.filter((x) => ['terisi', 'tidak'].includes(x.st))
+    const pertemuan = []
+    for (const x of blok) {
+      const j = x.jurnal || {}; const kode = Object.entries(j.absen || {}).filter(([, k]) => k && k !== 'H')
+      let nama = {}
+      if (kode.length) { try { nama = Object.fromEntries((await jd.peserta(x.assignment_id, x.tanggal)).map((p) => [p.id, p.nama])) } catch { /* nama tidak tersedia */ } }
+      pertemuan.push({ mapel: x.mapel, kelas: x.kelas, jp: `${jpLabel(x)} (${x.slot.length} JP)`, jam: `${jamPendek(x.jam_mulai)}–${jamPendek(x.jam_selesai)}`,
+        status: j.status, materi: j.materi || [j.bab, j.subbab].filter(Boolean).join(' – '), metode: j.metode, media: j.media, keterangan: j.keterangan,
+        hadir: j.jumlah_hadir, jumlah: j.jumlah_anggota, tidakHadir: kode.map(([id, k]) => ({ nama: nama[id] || 'Santri', kode: k })) })
+    }
+    teksLaporan.value = laporanMengajar({ guru: sesi.pengguna?.nama_lengkap, tanggal: h.tanggal, pertemuan })
+    lembarGrup.value = true
+  } catch (e) { ui.toast(e.message, 'galat') } finally { menyusun.value = '' }
+}
 const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.slot.length - 1].jam_ke.replace(/^Jam ke-?/, '')}` : x.jam_ke)
 </script>
 <template>
@@ -134,6 +158,8 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
         <h3 class="mb-2 flex flex-wrap items-center gap-2 px-1 text-sm font-bold">
           {{ h.nama }}, {{ formatPendek(h.tanggal) }}<span v-if="h.tanggal === hari" class="lencana w-presensi">Hari ini</span>
           <span class="ml-auto text-xs font-normal text-teks3">{{ h.libur ? 'Libur sekolah' : h.blok.length ? `${h.blok.length} pertemuan` : 'Tidak ada jadwal' }}</span>
+          <button v-if="adaJurnal(h)" class="tombol-garis w-presensi h-9 min-h-0 px-3 text-xs" :disabled="menyusun === h.tanggal" :title="`Laporan jurnal ${h.nama} ke grup WhatsApp`" @click="laporHari(h)">
+            <PhWhatsappLogo :size="16" weight="duotone" style="color: var(--c)" /> {{ menyusun === h.tanggal ? 'Menyusun…' : 'Lapor' }}</button>
         </h3>
         <ul v-if="h.blok.length" class="space-y-2">
           <li v-for="x in h.blok" :key="x.kunci">
@@ -224,6 +250,8 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
         </dl>
       </div>
     </LembarBawah>
+
+    <LembarLaporanGrup v-model="lembarGrup" judul="Laporan jurnal mengajar ke grup WhatsApp" :teks="teksLaporan" />
 
     <LembarBawah v-model="lembarR" :judul="bR ? `Rencana materi ${bR.mapel} · ${bR.kelas}` : ''">
       <div class="space-y-3 pb-2">

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/agenda/Agenda.vue | v1.5 | Perbaikan 13.6.0: nama tab Setelan baru (Lembaga, Kalender, Logo, Nomor Surat) | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/agenda/Agenda.vue | v1.6 | Perbaikan 13.8.0: keterangan agenda dengan gaya teks (tebal, miring, garis bawah, daftar otomatis) | 16/10/2026 -->
 <script setup>
 // Agenda dan kalender pondok. Semua pegawai melihat agenda yang ditujukan kepadanya beserta hari libur pondok
 // dalam kalender bulanan. Admin ber-izin kelola_agenda membuat agenda dengan sasaran dan pengingat H-n;
@@ -23,6 +23,8 @@ import TombolAksi from '@/components/TombolAksi.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import PilihSasaran from '@/components/PilihSasaran.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
+import IsianTeksKaya from '@/components/IsianTeksKaya.vue'
+import { teksKaya, teksWA } from '@/lib/teksKaya'
 import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
@@ -149,7 +151,7 @@ async function hapus(a) {
 // ---------- WA ----------
 const wa = ref(null)
 async function bukaWA(a) { try { wa.value = { a, daftar: await ag.penerima(a.id) } } catch (e) { ui.toast(e.message, 'galat') } }
-const pesan = (a, p) => pesanWA('undangan_agenda', { nama: p.nama, judul: a.judul, tanggal: tanggal(a), waktu: waktu(a), lokasi: a.lokasi, keterangan: [a.keterangan, a.tautan && `${a.nama_tautan || 'Tautan'}: ${a.tautan}`].filter(Boolean).join('\n'), tautan: a.tautan || halamanAplikasi(`/agenda/${a.id}`), unit: p.unit })
+const pesan = (a, p) => pesanWA('undangan_agenda', { nama: p.nama, judul: a.judul, tanggal: tanggal(a), waktu: waktu(a), lokasi: a.lokasi, keterangan: [teksWA(a.keterangan), a.tautan && `${a.nama_tautan || 'Tautan'}: ${a.tautan}`].filter(Boolean).join('\n'), tautan: a.tautan || halamanAplikasi(`/agenda/${a.id}`), unit: p.unit })
 
 // ---------- Cetak ----------
 const pratinjau = ref(false); const opsiCetak = ref(null)
@@ -235,7 +237,8 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
           <li v-if="terpilih.ulang" class="flex gap-2"><PhRepeat :size="20" class="shrink-0 text-teks3" />{{ terpilih.ringkasan_ulang }} (mulai {{ formatPendek(terpilih.mulai_seri) }})</li>
           <li v-if="terpilih.pengingat_menit?.length" class="flex gap-2"><PhBell :size="20" class="shrink-0 text-teks3" />Pengingat {{ terpilih.pengingat_menit.map(labelMenit).join(', ') }}{{ terpilih.jam_mulai ? '' : ' (acuan pukul 06.00 WITA)' }}</li>
         </ul>
-        <p v-if="terpilih.keterangan" class="mt-3 whitespace-pre-line">{{ terpilih.keterangan }}</p>
+        <!-- eslint-disable-next-line vue/no-v-html -- teks sudah di-escape oleh teksKaya() -->
+        <p v-if="terpilih.keterangan" class="mt-3 whitespace-pre-line" v-html="teksKaya(terpilih.keterangan)" />
         <div v-if="terpilih.tautan || terpilih.lampiran_id" class="mt-3 space-y-2">
           <a v-if="terpilih.tautan" :href="terpilih.tautan" target="_blank" rel="noopener" class="flex items-center gap-3 rounded-xl border border-garis p-3 hover:bg-permukaan2">
             <span class="chip-ikon h-10 w-10 shrink-0"><PhLink :size="20" weight="duotone" /></span>
@@ -304,7 +307,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
             </div>
             <p class="mt-1 text-xs text-teks3">Hari libur ditulis ke kalender pondok, sehingga sesi presensi pada tanggal tersebut tidak dibuka bagi tugas yang diliburkan.</p></fieldset>
         </template>
-        <div><label class="label-isian" for="ag-ket">Keterangan</label><textarea id="ag-ket" v-model="form.keterangan" class="isian min-h-[4.5rem] py-2" placeholder="Hal yang perlu disiapkan peserta" /></div>
+        <IsianTeksKaya id="ag-ket" v-model="form.keterangan" label="Keterangan" tinggi="5.5rem" :petunjuk="false" placeholder="Hal yang perlu disiapkan peserta" />
         <div class="grid gap-3 sm:grid-cols-[1fr_12rem]">
           <div><label class="label-isian" for="ag-tautan">Tautan/Link</label><input id="ag-tautan" v-model="form.tautan" class="isian" inputmode="url" placeholder="https://" /></div>
           <div><label class="label-isian" for="ag-ntautan">Nama tautan</label><input id="ag-ntautan" v-model="form.nama_tautan" class="isian" placeholder="Contoh: Zoom rapat" /></div>

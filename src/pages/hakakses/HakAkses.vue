@@ -1,11 +1,13 @@
-<!-- SIMKA PRO | src/pages/hakakses/HakAkses.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/hakakses/HakAkses.vue | v1.4 | Perbaikan 13.8.0: tab Rekap admin (matriks akses seluruh admin) | 16/10/2026 -->
 <script setup>
 // Hak akses fitur tiga lapis (superadmin): per jabatan (dasar) → per bidang → per individu (tertinggi).
+// Tab "Rekap admin": matriks centang akses setiap admin (bisa dicetak).
 // Tab "Fitur sensitif": gaji dan keuangan santri hanya untuk pegawai yang ditunjuk superadmin (bukan per jabatan).
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhIdentificationBadge, PhTreeStructure, PhUser, PhInfo, PhListChecks, PhLockKey } from '@phosphor-icons/vue'
+import { PhIdentificationBadge, PhTreeStructure, PhUser, PhInfo, PhListChecks, PhLockKey, PhUserGear } from '@phosphor-icons/vue'
 import TabAksesSensitif from './TabAksesSensitif.vue'
+import TabRekapAdmin from './TabRekapAdmin.vue'
 import { useAkses, TINGKAT } from '@/stores/akses'
 import { useOrganisasi } from '@/stores/organisasi'
 import { usePegawai } from '@/stores/pegawai'
@@ -23,6 +25,7 @@ const TAB = [
   { k: 'jabatan', n: 'Per jabatan', ikon: PhIdentificationBadge, w: 'presensi', ket: 'Lapis dasar: hak bawaan setiap jabatan fungsional dan struktural.' },
   { k: 'bidang', n: 'Per bidang', ikon: PhTreeStructure, w: 'santri', ket: 'Lapis kedua: menambah atau mencabut akses seluruh pegawai di bidang/unit beserta cabangnya.' },
   { k: 'individu', n: 'Per individu', ikon: PhUser, w: 'pengajuan', ket: 'Lapis tertinggi: pengecualian untuk pegawai tertentu. Akses superadmin tidak dapat dicabut.' },
+  { k: 'admin', n: 'Rekap admin', ikon: PhUserGear, w: 'verifikasi', ket: 'Daftar akses setiap admin dalam satu tabel centang.' },
   { k: 'sensitif', n: 'Fitur sensitif', ikon: PhLockKey, w: 'gaji', ket: 'Gaji dan keuangan santri: hanya superadmin dan pegawai yang ditunjuk di sini.' },
 ]
 const aktif = computed(() => TAB.find((t) => t.k === props.tab) || TAB[0])
@@ -87,6 +90,7 @@ const WARNA_TINGKAT = ['w-hakakses', 'w-pegawai', 'w-presensi', 'w-pengaturan']
     <p class="mb-4 flex gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" />{{ aktif.ket }} Semua aturan diperiksa di server, bukan sekadar menyembunyikan menu.</p>
 
     <TabAksesSensitif v-if="aktif.k === 'sensitif'" />
+    <TabRekapAdmin v-else-if="aktif.k === 'admin'" />
     <p v-else-if="!siap" class="py-10 text-center text-teks3">Memuat hak akses…</p>
     <div v-else :class="['lg:grid lg:grid-cols-[300px_1fr] lg:gap-5', 'w-' + aktif.w]">
       <!-- Daftar sasaran -->

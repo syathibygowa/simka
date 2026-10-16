@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/LembarRincianSurat.vue | v1.1 | Perbaikan: hapus surat salah catat dan rapikan nomor agenda | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/LembarRincianSurat.vue | v1.2 | Perbaikan 13.8.0: ringkasan dan catatan disposisi tampil dengan gaya teks | 16/10/2026 -->
 <script setup>
 // Rincian surat masuk: data surat, pindaian, alur disposisi berjenjang, dan tindakan sesuai peran:
 //   pimpinan penerima : Disposisikan, Cukup diketahui (tutup tanpa disposisi)
@@ -16,6 +16,7 @@ import { SIFAT_SURAT, STATUS_SURAT, STATUS_DISPOSISI, namaCara, pohonDisposisi }
 import { formatPanjang, formatPendek, formatWaktu } from '@/lib/tanggal'
 import { MODE_DEMO } from '@/lib/supabase'
 import { ambilBerkasUrl } from '@/lib/penyimpanan'
+import { teksKaya } from '@/lib/teksKaya'
 import LembarBawah from '@/components/LembarBawah.vue'
 import FormDisposisi from './FormDisposisi.vue'
 import CetakDisposisi from './CetakDisposisi.vue'
@@ -90,7 +91,7 @@ const JUDUL_TEKS = { selesai: 'Tandai disposisi selesai', tutup: 'Cukup diketahu
         <div><dt class="text-xs text-teks3">Tanggal surat</dt><dd>{{ s.tanggal_surat ? formatPanjang(s.tanggal_surat) : '–' }}</dd></div>
         <div><dt class="text-xs text-teks3">Diterima</dt><dd>{{ formatPanjang(s.tanggal_terima) }} · {{ namaCara(s.cara) }}</dd></div>
         <div><dt class="text-xs text-teks3">Lampiran</dt><dd>{{ s.lampiran || '–' }}</dd></div>
-        <div class="sm:col-span-2" v-if="s.ringkasan"><dt class="text-xs text-teks3">Ringkasan</dt><dd class="whitespace-pre-line">{{ s.ringkasan }}</dd></div>
+        <div class="sm:col-span-2" v-if="s.ringkasan"><dt class="text-xs text-teks3">Ringkasan</dt><dd class="whitespace-pre-line" v-html="teksKaya(s.ringkasan)" /></div>
         <div><dt class="text-xs text-teks3">Diteruskan kepada</dt><dd>{{ s.tujuan ? `${s.tujuan} (${s.tujuan_jabatan})` : 'Diarsipkan tanpa disposisi' }}
           <span v-if="s.tujuan" class="block text-xs text-teks3">{{ s.dibaca_tujuan ? 'Dibaca ' + formatWaktu(s.dibaca_tujuan) : 'Belum dibaca' }}</span></dd></div>
         <div><dt class="text-xs text-teks3">Dicatat oleh</dt><dd>{{ s.dicatat_oleh || '–' }} <span class="block text-xs text-teks3">{{ formatWaktu(s.created_at) }}</span></dd></div>
@@ -118,7 +119,7 @@ const JUDUL_TEKS = { selesai: 'Tandai disposisi selesai', tutup: 'Cukup diketahu
               <span v-if="d.lewat" class="lencana w-klinik">Lewat batas</span></p>
             <p class="text-xs text-teks3">{{ d.kepada_jabatan }} · {{ formatWaktu(d.created_at) }}<template v-if="d.batas"> · batas {{ formatPendek(d.batas) }}</template></p>
             <p v-if="d.instruksi?.length" class="mt-1.5 flex flex-wrap gap-1"><span v-for="t in d.instruksi" :key="t" class="lencana w-shift">{{ t }}</span></p>
-            <p v-if="d.catatan" class="mt-1 whitespace-pre-line">{{ d.catatan }}</p>
+            <p v-if="d.catatan" class="mt-1 whitespace-pre-line" v-html="teksKaya(d.catatan)" />
             <p v-if="d.laporan" class="mt-2 rounded-lg bg-permukaan2 px-2.5 py-1.5 text-xs"><b>Tindak lanjut ({{ formatWaktu(d.selesai_pada) }}):</b> {{ d.laporan }}</p>
             <div v-if="(d.saya_penerima && d.status !== 'selesai') || d.boleh_tarik" class="mt-2 flex flex-wrap gap-2">
               <template v-if="d.saya_penerima && d.status !== 'selesai'">

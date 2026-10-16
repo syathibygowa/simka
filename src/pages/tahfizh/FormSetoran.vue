@@ -1,10 +1,11 @@
-<!-- SIMKA PRO | src/pages/tahfizh/FormSetoran.vue | v1.0 | Fase 5 – Tahap 2 Setoran per sesi halaqah | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/FormSetoran.vue | v1.1 | Perbaikan 13.8.0: laporan perkembangan hafalan ke grup WhatsApp | 16/10/2026 -->
 <script setup>
 // Setoran satu sesi halaqah. Bawaan semua santri "Sama"; ketuk "Bertambah" pada Sabaq/Sabqi/Manzil lalu atur posisi
 // barunya (Juz + Halaman). Santri yang Izin/Sakit/Bolos/Absen pada absensi sesi ini otomatis "Tidak setor".
+// v1.1: setelah setoran tersimpan, muhaffizh dapat membuat laporan perkembangan hafalan untuk grup WA bidang.
 // Peringatan janggal tampil langsung (posisi turun, lonjakan, sabqi/manzil melebihi sabaq) dan tetap boleh disimpan.
 import { ref, computed, watch } from 'vue'
-import { PhCheckCircle, PhFloppyDisk, PhArrowCounterClockwise, PhMagnifyingGlass, PhWarning, PhCaretDown, PhTrendUp, PhProhibit, PhNotePencil, PhLockSimple } from '@phosphor-icons/vue'
+import { PhCheckCircle, PhFloppyDisk, PhArrowCounterClockwise, PhMagnifyingGlass, PhWarning, PhCaretDown, PhTrendUp, PhProhibit, PhNotePencil, PhLockSimple, PhWhatsappLogo, PhUsersThree } from '@phosphor-icons/vue'
 import { useTahfizh } from '@/stores/tahfizh'
 import { useUI } from '@/stores/ui'
 import { KODE } from '@/lib/absensi'
@@ -12,6 +13,11 @@ import { inisial } from '@/lib/santri'
 import { formatPosisi, periksaIsian, TANDA_JANGGAL, JENIS_POSISI } from '@/lib/tahfizh'
 import { formatWaktu } from '@/lib/tanggal'
 import InputPosisi from '@/components/InputPosisi.vue'
+import LembarLaporanGrup from '@/components/LembarLaporanGrup.vue'
+import { laporanSetoran } from '@/lib/laporanGrup'
+import { judulKelompok } from '@/lib/santri'
+import { jam } from '@/lib/absensi'
+import { useKelompokSantri } from '@/stores/kelompokSantri'
 
 const props = defineProps({ group: String, tanggal: String, sesi: String, absensi: Object, atasNamaId: String, tertutup: Boolean })
 const emit = defineEmits(['tersimpan'])
@@ -71,6 +77,23 @@ async function simpan() {
     await muat(); emit('tersimpan')
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
+// ---------- Laporan ke grup WA ----------
+const kel = useKelompokSantri(); const lembarGrup = ref(false); const tautanGrup = ref('')
+async function bukaLaporan() {
+  lembarGrup.value = true
+  try { if (!kel.daftar.length) await kel.muat(); tautanGrup.value = kel.cari(props.group)?.wa_internal || '' } catch { tautanGrup.value = '' }
+}
+const teksLaporan = computed(() => {
+  const a = props.absensi; if (!d.value || !a) return ''
+  const utama = (a.pengasuh || []).filter((p) => p.peran !== 'pengganti')
+  return laporanSetoran({
+    kelompok: judulKelompok(a.kelompok), tanggal: props.tanggal, sesi: a.nama_sesi, jam: `${jam(a.jam_mulai)}–${jam(a.jam_selesai)}`,
+    pengasuh: a.sesi_tercatat?.atas_nama ? [a.sesi_tercatat.pengampu] : (utama.length ? utama : a.pengasuh || []).map((p) => p.nama),
+    santri: d.value.santri.map((s) => { const v = isian.value[s.id] || {}
+      return { nama: s.nama, kehadiran: s.kehadiran, tidakSetor: tidakSetor(s), sabaq_lama: s.sabaq_lama, sabaq: v.sabaq, sabqi: v.sabqi, manzil: v.manzil, catatan: v.catatan } }),
+    catatan: catatan.value.trim(),
+  })
+})
 defineExpose({ berubah })
 </script>
 <template>
@@ -90,7 +113,12 @@ defineExpose({ berubah })
           <div class="w-klinik p-2.5"><p class="text-xl font-extrabold tabular-nums" style="color: var(--c)">{{ ringkas.tidak }}</p><p class="text-xs text-teks3">Tidak setor</p></div>
         </section>
         <p v-if="d.session_id" class="mt-2 text-xs text-teks3">Setoran terakhir disimpan {{ formatWaktu(d.diisi_pada) }} WITA oleh {{ d.diinput_oleh }}{{ d.atas_nama ? ` atas nama ${d.pengampu}` : '' }}{{ d.diisi_terlambat ? ' · diisi setelah jendela sesi' : '' }}.</p>
-        <p v-else-if="bolehIsi" class="mt-2 text-xs text-teks3">Belum disimpan. Bila semua santri sama, cukup tekan "Simpan setoran" agar tercatat sudah diisi.</p>
+        <div v-if="d.session_id && !berubah" class="kartu w-presensi mt-3 flex flex-wrap items-center gap-3 p-3">
+          <span class="chip-ikon h-10 w-10 shrink-0"><PhUsersThree :size="22" weight="duotone" /></span>
+          <p class="min-w-[180px] flex-1 text-sm"><b>Lapor perkembangan hafalan</b><span class="block text-xs text-teks3">Ringkasan setoran sesi ini untuk grup WhatsApp bidang tahfizh.</span></p>
+          <button class="tombol-utama min-h-[42px] px-4 text-sm" @click="bukaLaporan"><PhWhatsappLogo :size="20" weight="duotone" /> Buat laporan</button>
+        </div>
+        <p v-if="!d.session_id && bolehIsi" class="mt-2 text-xs text-teks3">Belum disimpan. Bila semua santri sama, cukup tekan "Simpan setoran" agar tercatat sudah diisi.</p>
 
         <section class="kartu mt-4 p-4">
           <div class="mb-3 flex flex-wrap items-center gap-2">
@@ -161,6 +189,7 @@ defineExpose({ berubah })
       </template>
     </template>
     <p v-else class="py-16 text-center text-teks3">Memuat setoran…</p>
+    <LembarLaporanGrup v-model="lembarGrup" judul="Laporan setoran hafalan ke grup WhatsApp" :teks="teksLaporan" :tautan-grup="tautanGrup" nama-grup="grup internal pengasuh" />
   </div>
 </template>
 <style scoped>

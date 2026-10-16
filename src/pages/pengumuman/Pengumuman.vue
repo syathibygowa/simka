@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.6 | Fase 9 – Tahap 13.3.0 Tab Untuk wali (pengumuman Portal Wali) | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.7 | Perbaikan 13.8.0: gaya garis bawah dan daftar otomatis; WA tanpa penanda garis bawah | 16/10/2026 -->
 <script setup>
 // Pengumuman: semua pegawai membaca pengumuman yang ditujukan kepadanya (tanda dibaca/belum).
 // Admin, superadmin, dan pegawai yang diberi hak fitur "pengumuman" (tingkat 2+) dapat membuat,
@@ -11,7 +11,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { PhMegaphone, PhPlus, PhMagnifyingGlass, PhPushPin, PhPencilSimple, PhTrash, PhPrinter, PhUsers, PhEnvelopeSimpleOpen, PhTray, PhListChecks, PhPaperclip, PhLink, PhX, PhDownloadSimple } from '@phosphor-icons/vue'
 import { usePengumuman } from '@/stores/pengumuman'
 import IsianTeksKaya from '@/components/IsianTeksKaya.vue'
-import { teksKaya, teksPolos } from '@/lib/teksKaya'
+import { teksKaya, teksPolos, teksWA } from '@/lib/teksKaya'
 import { useLembaga } from '@/stores/lembaga'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
@@ -105,7 +105,7 @@ async function hapus(p) {
 async function lihatPembaca(p) {
   try { pembaca.value = { p, daftar: await pg.pembaca(p.id) }; saringBaca.value = 'semua' } catch (e) { ui.toast(e.message, 'galat') }
 }
-const pesanPengumuman = (r) => pesanWA('pengumuman', { nama: r.nama, unit: r.unit, judul: pembaca.value.p.judul, isi_singkat: pembaca.value.p.isi.length > 280 ? pembaca.value.p.isi.slice(0, 277) + '…' : pembaca.value.p.isi, tautan: halamanAplikasi(`/pengumuman/${pembaca.value.p.id}`) })
+const pesanPengumuman = (r) => pesanWA('pengumuman', { nama: r.nama, unit: r.unit, judul: pembaca.value.p.judul, isi_singkat: teksWA(pembaca.value.p.isi.length > 280 ? pembaca.value.p.isi.slice(0, 277) + '…' : pembaca.value.p.isi), tautan: halamanAplikasi(`/pengumuman/${pembaca.value.p.id}`) })
 const persen = (p) => (p.penerima ? Math.round((100 * (p.sudah_dibaca || 0)) / p.penerima) : 0)
 const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.test(s.jabatan_tertulis)) || lembaga.signatories[0] || {})
 </script>

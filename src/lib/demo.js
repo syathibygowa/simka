@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demo.js | v1.13 | Perbaikan 13.6.0: Audit Log khusus superadmin | 15/10/2026
+// SIMKA PRO | src/lib/demo.js | v1.14 | Perbaikan 13.8.0: katalog izin admin lengkap untuk Rekap admin | 16/10/2026
 // Data contoh untuk MODE DEMO. Nama pegawai di bawah fiktif.
 const menitLalu = (m) => new Date(Date.now() - m * 60000).toISOString()
 
@@ -183,10 +183,34 @@ export const FITUR_DEMO = [
   ['hak_akses', 'Hak akses', 'Sistem', 1],
 ].map(([kode, nama, kelompok, fase], i) => ({ kode, nama, kelompok, fase, urutan: i }))
 export const IZIN_ADMIN_DEMO = [
-  { kode: 'verval_akun', nama: 'Verifikasi akun pegawai baru', urutan: 1 }, { kode: 'kelola_pegawai', nama: 'Mengelola data kepegawaian dan impor Excel', urutan: 2 },
-  { kode: 'kalender', nama: 'Mengelola hari libur dan kalender', urutan: 3 }, 
+  { kode: 'verval_akun', nama: 'Verifikasi akun pegawai baru', urutan: 1 },
+  { kode: 'kelola_pegawai', nama: 'Mengelola data kepegawaian dan impor Excel', urutan: 2 },
+  { kode: 'kalender', nama: 'Mengelola hari libur dan kalender', urutan: 3 },
   { kode: 'verval_presensi', nama: 'Verval presensi di luar area dan permintaan koreksi', urutan: 5 },
+  { kode: 'kelompok_santri', nama: 'Mengatur kelompok santri: kelas, kamar, halaqah, ekskul, pengasuh, dan anggota', urutan: 6 },
+  { kode: 'absensi_atas_nama', nama: 'Input dan koreksi absensi santri atas nama pengampu', urutan: 7 },
+  { kode: 'atur_pengajuan', nama: 'Mengatur jenis, kuota, jenjang pengajuan, dan Plt', urutan: 8 },
   { kode: 'atur_presensi', nama: 'Mengatur pola sesi, jadwal pegawai, dan shift presensi', urutan: 8 },
+  { kode: 'lihat_pengajuan', nama: 'Melihat dan mencetak semua pengajuan pegawai', urutan: 9 },
+  { kode: 'atur_jurnal', nama: 'Mengatur template ceklist jurnal harian', urutan: 10 },
+  { kode: 'verval_jurnal', nama: 'Verval kegiatan jurnal dan melihat rekap jurnal', urutan: 11 },
+  { kode: 'kelola_berkas', nama: 'Mengirim berkas pegawai (info, formulir, surat, SK) dan melihat pembukaannya', urutan: 12 },
+  { kode: 'cetak_kartu', nama: 'Mencetak kartu pegawai secara massal', urutan: 13 },
+  { kode: 'kelola_agenda', nama: 'Membuat dan mengelola agenda beserta pengingatnya', urutan: 14 },
+  { kode: 'kelola_kelompok', nama: 'Mengatur kelompok pegawai (Pengurus Harian, Pengurus Inti, panitia, dll.)', urutan: 15 },
+  { kode: 'atur_beban_kerja', nama: 'Mengatur ekuivalensi jam beban kerja dan mengunci rekap bulanan', urutan: 16 },
+  { kode: 'kelola_santri', nama: 'Mengelola data santri, kontak wali, status, dan mutasi', urutan: 17 },
+  { kode: 'atur_jadwal', nama: 'Mengatur mata pelajaran, jam pelajaran, penugasan mengajar, dan jadwal pelajaran', urutan: 18 },
+  { kode: 'atur_tahfizh', nama: 'Mengatur tahfizh: KKM, target, predikat, pekan efektif, dan penguji', urutan: 19 },
+  { kode: 'validasi_tahfizh', nama: 'Memvalidasi capaian hafalan dan mengisi data hafalan awal santri', urutan: 20 },
+  { kode: 'kelola_klinik', nama: 'Mengelola klinik: ketentuan, petugas, seluruh catatan pemeriksaan', urutan: 30 },
+  { kode: 'kelola_izin_santri', nama: 'Mengelola perizinan santri: lihat semua izin dan ketentuan', urutan: 31 },
+  { kode: 'kelola_lapor', nama: 'Mengelola Lapor ke Bidang: lihat semua laporan, kategori, rekap', urutan: 32 },
+  { kode: 'kelola_security', nama: 'Mengelola Security: gerbang, titipan, buku tamu, kunjungan, ketentuan', urutan: 34 },
+  { kode: 'kelola_libur', nama: 'Mengelola libur santri: periode, syarat, penilaian, perubahan keputusan', urutan: 35 },
+  { kode: 'kelola_persuratan', nama: 'Mengelola persuratan: mencatat surat masuk, meneruskan ke pimpinan, buku agenda, ketentuan', urutan: 40 },
+  { kode: 'atur_penilaian', nama: 'Mengatur penilaian dan rapor: periode, mapel rapor, komponen dan bobot, KKM, predikat, catatan', urutan: 50 },
+  { kode: 'kelola_nilai', nama: 'Mengelola nilai: mengisi atas nama guru, menyetujui perubahan nilai, mencetak semua rapor', urutan: 51 },
 ]
 
 // ---------- Data contoh tarif tunjangan (mengikuti isi awal migrasi 1100) ----------

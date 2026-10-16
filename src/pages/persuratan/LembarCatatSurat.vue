@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/LembarCatatSurat.vue | v1.1 | Perbaikan 13.6.0: nama tab Setelan baru (Lembaga, Kalender, Logo, Nomor Surat) | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/LembarCatatSurat.vue | v1.2 | Perbaikan 13.8.0: ringkasan surat masuk dengan gaya teks dan daftar otomatis | 16/10/2026 -->
 <script setup>
 // Catat (atau ubah) surat masuk oleh Tata Usaha: data surat, sifat, pindaian (foto/PDF, beberapa berkas), dan pimpinan penerima.
 // Nomor agenda dibuat otomatis oleh server saat disimpan. Surat dapat langsung diarsipkan tanpa disposisi (mis. brosur).
@@ -12,6 +12,7 @@ import { MODE_DEMO } from '@/lib/supabase'
 import { unggahKeDrive, kompresGambar, namaRapi } from '@/lib/penyimpanan'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import IsianTeksKaya from '@/components/IsianTeksKaya.vue'
 
 const buka = defineModel({ type: Boolean, default: false })
 const props = defineProps({ surat: { type: Object, default: null } })
@@ -94,8 +95,7 @@ async function simpan() {
         <div><label class="label-isian" for="sm-alamat">Alamat pengirim</label><input id="sm-alamat" v-model="isi.alamat_pengirim" class="isian" /></div>
       </div>
       <div><label class="label-isian" for="sm-hal">Perihal <span class="text-merah">*</span></label><input id="sm-hal" v-model="isi.perihal" class="isian" /></div>
-      <div><label class="label-isian" for="sm-ring">Ringkasan isi</label>
-        <textarea id="sm-ring" v-model="isi.ringkasan" rows="2" class="isian py-2.5" placeholder="Pokok isi surat, mis. waktu dan tempat kegiatan" /></div>
+      <IsianTeksKaya id="sm-ring" v-model="isi.ringkasan" label="Ringkasan isi" tinggi="5rem" :petunjuk="false" placeholder="Pokok isi surat, mis. waktu dan tempat kegiatan" />
 
       <div><p class="label-isian">Sifat surat</p>
         <div class="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Sifat surat">

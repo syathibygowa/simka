@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/berkas/Berkas.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/berkas/Berkas.vue | v1.4 | Perbaikan 13.8.0: keterangan/informasi berkas dengan gaya teks dan daftar otomatis | 16/10/2026 -->
 <script setup>
 // Berkas Saya: berkas untuk pegawai dengan kategori yang dapat dibuat sendiri. Berkas tersimpan di Google Drive pondok
 // dan dibuka lewat tautan sementara (tidak publik); setiap pembukaan tercatat. Tanpa masa berlaku: berkas tetap ada
@@ -20,6 +20,8 @@ import TombolAksi from '@/components/TombolAksi.vue'
 import PilihSasaran from '@/components/PilihSasaran.vue'
 import IkonDinamis, { IKON_KATEGORI } from '@/components/IkonDinamis.vue'
 import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
+import IsianTeksKaya from '@/components/IsianTeksKaya.vue'
+import { teksKaya } from '@/lib/teksKaya'
 
 const props = defineProps({ id: String })
 const router = useRouter(); const bp = useBerkasPegawai(); const pg = usePengumuman(); const ui = useUI()
@@ -146,7 +148,8 @@ async function simpanKat(k, baru) {
         <span class="lencana">{{ bp.kat(terpilih.kategori).nama }}</span>
         <h3 class="mt-2 text-xl font-extrabold leading-snug">{{ terpilih.judul }}</h3>
         <p class="mt-1 text-sm text-teks3">Dikirim {{ formatPanjang(terpilih.created_at) }} oleh {{ terpilih.pembuat || 'Pengelola' }}</p>
-        <p v-if="terpilih.keterangan" class="mt-3 whitespace-pre-line text-teks">{{ terpilih.keterangan }}</p>
+        <!-- eslint-disable-next-line vue/no-v-html -- teks sudah di-escape oleh teksKaya() -->
+        <p v-if="terpilih.keterangan" class="mt-3 whitespace-pre-line text-teks" v-html="teksKaya(terpilih.keterangan)" />
         <p v-if="terpilih.nama_berkas" class="mt-3 flex items-center gap-2 rounded-xl bg-permukaan2 p-3 text-sm"><PhPaperclip :size="18" /> {{ terpilih.nama_berkas }}{{ terpilih.ukuran ? ' · ' + ukuran(terpilih.ukuran) : '' }}</p>
         <p v-if="kelola" class="mt-3 text-sm text-teks2">Sasaran: {{ terpilih.ringkasan_sasaran }}<template v-if="terpilih.penerima != null"> · {{ terpilih.sudah_buka || 0 }} dari {{ terpilih.penerima }} sudah membuka</template></p>
         <div class="mt-4 flex flex-wrap gap-2">
@@ -168,7 +171,7 @@ async function simpanKat(k, baru) {
         <div><label class="label-isian" for="bp-judul">Judul</label><input id="bp-judul" v-model="form.judul" class="isian" maxlength="150" placeholder="Contoh: SK Penugasan Musyrif TA 2026/2027" /></div>
         <div><label class="label-isian" for="bp-kat">Kategori</label>
           <select id="bp-kat" v-model="form.kategori" class="isian"><option v-for="k in bp.kategoriAktif" :key="k.kode" :value="k.kode">{{ k.nama }}</option></select></div>
-        <div><label class="label-isian" for="bp-ket">Keterangan (opsional)</label><textarea id="bp-ket" v-model="form.keterangan" class="isian min-h-[4.5rem] py-2" /></div>
+        <IsianTeksKaya id="bp-ket" v-model="form.keterangan" label="Keterangan/informasi (opsional)" tinggi="5.5rem" :petunjuk="false" />
         <div>
           <p class="label-isian">Berkas (PDF atau foto, maks. 5 MB)</p>
           <div v-if="berkas || form.nama_berkas" class="flex items-center gap-3 rounded-xl border border-garis p-3"><PhPaperclip :size="22" class="text-teks2" />

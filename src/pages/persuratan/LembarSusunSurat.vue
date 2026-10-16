@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/LembarSusunSurat.vue | v1.3 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/LembarSusunSurat.vue | v1.4 | Perbaikan 13.8.0: naskah surat keluar dengan bilah gaya teks dan daftar otomatis | 16/10/2026 -->
 <script setup>
 import { namaBerkas, periodeBulan, subjekSurat } from '@/lib/namaBerkas'
 // Susun surat keluar dari template: pilih template → isi data surat (tanggal, kop, D/K, perihal, tujuan, lampiran), isian
@@ -20,6 +20,7 @@ import InputTanggal from '@/components/InputTanggal.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import SuratResmi from '@/components/cetak/SuratResmi.vue'
 import IsianSurat from './IsianSurat.vue'
+import IsianTeksKaya from '@/components/IsianTeksKaya.vue'
 
 const buka = defineModel({ type: Boolean, default: false })
 const props = defineProps({ surat: { type: Object, default: null }, awal: { type: Object, default: null } })
@@ -196,7 +197,7 @@ async function simpan() {
         <button type="button" class="flex w-full items-center gap-2 text-left text-sm font-semibold" @click="suntingNaskah = !suntingNaskah">
           <PhPencilSimpleLine :size="18" /> {{ suntingNaskah ? 'Tutup penyuntingan naskah' : 'Sunting naskah surat ini' }}<span class="font-normal text-teks3">(tidak mengubah template)</span></button>
         <div v-if="suntingNaskah" class="mt-2">
-          <textarea v-model="naskah" rows="12" class="isian py-2.5 font-mono text-sm" aria-label="Naskah surat" />
+          <IsianTeksKaya id="sk-naskah" v-model="naskah" tinggi="18rem" kelas="font-mono text-sm" />
           <button type="button" class="tombol-teks -ml-3 mt-1 px-3 text-sm" @click="naskah = t.isi">Kembalikan seperti template</button>
         </div>
       </section>

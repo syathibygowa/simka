@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/main.css | v1.2 | Perbaikan 13.5.0: desain tab bergaris bawah seragam (tab dan sub-tab) | 15/10/2026 */
+/* SIMKA PRO | src/styles/main.css | v1.3 | Perbaikan 13.8.0: gaya butir daftar teks kaya (penomoran dan simbol otomatis) | 16/10/2026 */
 @import './token.css';
 @import './cetak.css';
 @tailwind base;
@@ -91,3 +91,8 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Teks kaya (Perbaikan 13.8.0): butir daftar bernomor/simbol dengan indentasi gantung, tampil di layar dan cetakan */
+.tk-butir { display: flex; gap: .45em; padding-left: calc(var(--tk-i, 0) * 1.4em); white-space: normal; }
+.tk-tanda { flex: none; min-width: 1.35em; text-align: right; font-variant-numeric: tabular-nums; }
+.tk-isi { flex: 1 1 auto; min-width: 0; white-space: pre-line; }

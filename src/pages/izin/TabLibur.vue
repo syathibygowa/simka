@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/izin/TabLibur.vue | v1.0 | Fase 7 – Tahap 3 Libur santri | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabLibur.vue | v1.1 | Perbaikan 13.8.0: periode yang dibatalkan dapat dihapus | 16/10/2026 -->
 <script setup>
 // Penentuan libur santri (Blueprint Bagian 23).
 //   Daftar periode → pilih periode → nilai otomatis (boleh / tidak / perlu pertimbangan, lengkap dengan angka)
@@ -8,7 +8,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import * as XLSX from 'xlsx'
 import { PhCalendarPlus, PhCalculator, PhSealCheck, PhProhibit, PhPencilSimple, PhWhatsappLogo, PhEye, PhDownloadSimple, PhMagnifyingGlass,
-  PhArrowLeft, PhUsersThree, PhCheckCircle, PhXCircle, PhHourglass, PhFloppyDisk, PhInfo, PhCalendarCheck } from '@phosphor-icons/vue'
+  PhArrowLeft, PhUsersThree, PhCheckCircle, PhXCircle, PhHourglass, PhFloppyDisk, PhInfo, PhCalendarCheck, PhTrash } from '@phosphor-icons/vue'
 import { useLibur } from '@/stores/libur'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
@@ -55,6 +55,14 @@ const lembarBatal = ref(false); const alasanBatal = ref('')
 async function batalkan() {
   if (alasanBatal.value.trim().length < 5) return ui.toast('Tuliskan alasan pembatalan.', 'galat')
   await jalankan(() => lb.batalkan(pilih.value, alasanBatal.value.trim()), 'Periode libur dibatalkan.'); lembarBatal.value = false
+}
+// v1.1: periode yang sudah dibatalkan dapat dihapus permanen (yang pernah disahkan: hanya pejabat pengesah)
+const bolehHapus = computed(() => detail.value?.status === 'batal' && (lb.hak.kelola || lb.hak.sahkan) && (!detail.value.disahkan_pada || lb.hak.sahkan))
+async function hapus() {
+  const h = detail.value
+  if (!(await ui.konfirmasi({ judul: 'Hapus periode libur', pesan: `"${h.nama}" beserta hasil penilaian santrinya akan dihapus permanen. Izin libur yang sudah dibatalkan tetap tersimpan di Perizinan sebagai riwayat. Lanjutkan?`, ya: 'Hapus', bahaya: true }))) return
+  proses.value = true
+  try { await lb.hapus(h.id); ui.toast('Periode libur dihapus.'); tutupDetail(); await muat() } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 
 // ---------- Hasil santri ----------
@@ -168,6 +176,7 @@ async function simpanSyarat() {
             <p class="text-xs text-teks3">Syarat: {{ syaratTeks || 'tidak ada' }}</p>
             <p v-if="detail.pengesah" class="text-xs text-teks2">Disahkan oleh {{ detail.pengesah }}{{ detail.disahkan_pada ? ', ' + formatWaktu(detail.disahkan_pada) : '' }}</p>
           </div>
+          <button v-if="bolehHapus" class="tombol-garis w-klinik min-h-[40px] px-3 text-sm" :disabled="proses" @click="hapus"><PhTrash :size="18" style="color: var(--c)" /> Hapus periode</button>
           <div v-if="lb.hak.kelola && detail.status !== 'batal'" class="flex flex-wrap gap-2">
             <button v-if="['draf', 'dinilai'].includes(detail.status)" class="tombol-garis min-h-[40px] px-3 text-sm" @click="ubah"><PhPencilSimple :size="18" /> Ubah</button>
             <button v-if="['draf', 'dinilai'].includes(detail.status)" class="tombol-garis w-agenda min-h-[40px] px-3 text-sm" :disabled="proses" @click="nilai"><PhCalculator :size="18" style="color: var(--c)" /> {{ detail.status === 'draf' ? 'Nilai santri' : 'Nilai ulang' }}</button>

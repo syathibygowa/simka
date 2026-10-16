@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/libur.js | v1.0 | Fase 7 – Tahap 3 Libur santri | 06/10/2026
+// SIMKA PRO | src/stores/libur.js | v1.1 | Perbaikan 13.8.0: hapus periode libur yang dibatalkan | 16/10/2026
 // Penentuan libur santri (Blueprint Bagian 23): hak, syarat bawaan, periode, penilaian otomatis, ubah keputusan
 // beralasan, pengesahan (izin libur otomatis ke gerbang), pembatalan, detail per santri. Mode demo memakai data tiruan.
 import { defineStore } from 'pinia'
@@ -36,8 +36,10 @@ async function nilaiDemo(h) {
       permit_id: null, status_izin: null, wali: { nama: 'Orang tua ' + s.nama_lengkap.split(' ')[0], no_hp: '081234567890' } }
   })
 }
+let demoDiisi = false
 function isiDemo() {
-  if (PERIODE_DEMO.length) return
+  if (demoDiisi) return
+  demoDiisi = true
   const t = new Date(); const besok = new Date(t.getTime() + 2 * 86400000)
   const iso = (d, j) => `${d.toISOString().slice(0, 10)}T${j}:00+08:00`
   PERIODE_DEMO.push({ id: 'lb1', nama: 'Libur Bulanan Oktober 2026', jenis: 'bulanan', pulang_pada: iso(besok, '08:00'), kembali_batas: iso(new Date(besok.getTime() + 2 * 86400000), '17:00'),
@@ -97,6 +99,13 @@ export const useLibur = defineStore('libur', {
       if (!MODE_DEMO) return rpc('batalkan_libur', { p_id: id, p_alasan: alasan })
       if ((alasan || '').trim().length < 5) throw new Error('Tuliskan alasan pembatalan (minimal 5 huruf).')
       PERIODE_DEMO.find((x) => x.id === id).status = 'batal'
+    },
+    /** Hapus permanen periode yang sudah dibatalkan (hasil penilaian ikut terhapus; izin yang dibatalkan tetap sebagai riwayat). */
+    async hapus(id) {
+      if (!MODE_DEMO) return rpc('hapus_periode_libur', { p_id: id })
+      const i = PERIODE_DEMO.findIndex((x) => x.id === id)
+      if (i < 0 || PERIODE_DEMO[i].status !== 'batal') throw new Error('Hanya periode yang sudah dibatalkan yang dapat dihapus.')
+      PERIODE_DEMO.splice(i, 1); delete HASIL_DEMO[id]
     },
   },
 })

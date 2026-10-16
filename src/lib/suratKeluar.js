@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/suratKeluar.js | v1.4 | Perbaikan: {lembaga} mengikuti kop surat (Pondok/SMAS/Kesetaraan Wustha/Yayasan); jabatan + lembaga tidak berulang | 16/10/2026
+// SIMKA PRO | src/lib/suratKeluar.js | v1.5 | Perbaikan 13.8.0: garis bawah (__teks__) dan daftar dalam isian surat | 16/10/2026
 // Mesin template surat keluar (template sistem, bukan Word). Isi template ditulis sebagai teks biasa:
 //   {kunci}, {kunci.bagian}   isian (lihat ISIAN_GLOBAL dan isian template), mis. {santri.nama}, {pegawai.jabatan}, {lembaga}
 //   *tebal*  _miring_          gaya teks (seperti WhatsApp)
@@ -127,7 +127,7 @@ export function susunKonteks(k) {
 
 /** Ganti {kunci} pada satu baris. mode 'pratinjau' menandai isian kosong; 'final' mengosongkan dengan titik-titik. */
 function sebaris(baris, ktx, mode) {
-  return teksKaya(baris).replace(/\{([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)?)\}/g, (m, kunci) => {
+  return teksKaya(baris, { daftar: false }).replace(/\{([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)?)\}/g, (m, kunci) => {
     const v = ktx.teks[kunci]
     if (v != null && String(v).trim() !== '') return teksKaya(String(v)).replace(/\n/g, '<br>')
     if (mode === 'final') return '…'

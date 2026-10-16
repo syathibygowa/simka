@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/FormDisposisi.vue | v1.0 | Fase 10 – Tahap 1 Surat masuk dan disposisi | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/FormDisposisi.vue | v1.1 | Perbaikan 13.8.0: catatan disposisi dengan gaya teks dan daftar otomatis | 16/10/2026 -->
 <script setup>
 // Formulir disposisi (tampil di dalam rincian surat): penerima (boleh lebih dari satu; pimpinan di atas), instruksi (pilihan dari
 // Ketentuan), catatan, dan batas waktu (bawaan hari ini + N hari dari Ketentuan; boleh tanpa batas).
@@ -10,6 +10,7 @@ import { useUI } from '@/stores/ui'
 import { hariIniISO } from '@/lib/tanggal'
 import { tambahHari } from '@/lib/persuratan'
 import InputTanggal from '@/components/InputTanggal.vue'
+import IsianTeksKaya from '@/components/IsianTeksKaya.vue'
 
 const props = defineProps({ surat: { type: Object, required: true }, induk: { type: Object, default: null } })
 const emit = defineEmits(['batal', 'selesai'])
@@ -65,8 +66,7 @@ async function kirim() {
           :class="['inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold w-shift', instruksi.includes(t) ? 'pilih' : 'border-garis text-teks2']">
           <PhCheck v-if="instruksi.includes(t)" :size="16" weight="bold" style="color: var(--c)" />{{ t }}</button>
       </div></div>
-    <div><label class="label-isian" for="dp-cat">Catatan disposisi</label>
-      <textarea id="dp-cat" v-model="catatan" rows="3" class="isian py-2.5" placeholder="Arahan tambahan untuk penerima" /></div>
+    <IsianTeksKaya id="dp-cat" v-model="catatan" label="Catatan disposisi" tinggi="5rem" :petunjuk="false" placeholder="Arahan tambahan untuk penerima" />
     <div class="grid items-end gap-3 sm:grid-cols-2">
       <InputTanggal v-if="pakaiBatas" v-model="batas" label="Batas waktu" />
       <label class="flex min-h-[46px] items-center gap-2 text-sm"><input v-model="pakaiBatas" type="checkbox" class="h-5 w-5" /> Pakai batas waktu</label>

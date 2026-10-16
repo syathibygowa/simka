@@ -1,10 +1,11 @@
-<!-- SIMKA PRO | src/pages/persuratan/CetakDisposisi.vue | v1.0 | Fase 10 – Tahap 1 Surat masuk dan disposisi | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/CetakDisposisi.vue | v1.1 | Perbaikan 13.8.0: ringkasan dan catatan disposisi tercetak dengan gaya teks | 16/10/2026 -->
 <script setup>
 // Lembar Disposisi F4: data surat, daftar pilihan instruksi (dicentang sesuai disposisi pimpinan), alur disposisi berjenjang
 // beserta tindak lanjutnya. Bila belum ada disposisi, tersedia baris kosong untuk ditulis tangan.
 // Tanda tangan: kiri pimpinan penerima surat, kanan petugas Tata Usaha pencatat.
 import { computed } from 'vue'
 import { usePersuratan } from '@/stores/persuratan'
+import { teksKaya } from '@/lib/teksKaya'
 import { useSesi } from '@/stores/sesi'
 import { SIFAT_SURAT, namaCara, pohonDisposisi } from '@/lib/persuratan'
 import { formatPanjang, formatPendek } from '@/lib/tanggal'
@@ -29,7 +30,7 @@ const kosong = computed(() => Math.max(0, 4 - alur.value.length))
         <tr><td>Tanggal diterima</td><td>{{ formatPanjang(surat.tanggal_terima) }}</td><td>Cara diterima</td><td>{{ namaCara(surat.cara) }}</td></tr>
         <tr><td>Sifat</td><td>{{ SIFAT_SURAT[surat.sifat].n }}</td><td>Lampiran</td><td>{{ surat.lampiran || '–' }}</td></tr>
         <tr><td>Perihal</td><td colspan="3">{{ surat.perihal }}</td></tr>
-        <tr v-if="surat.ringkasan"><td>Ringkasan</td><td colspan="3">{{ surat.ringkasan }}</td></tr>
+        <tr v-if="surat.ringkasan"><td>Ringkasan</td><td colspan="3" style="white-space: pre-line" v-html="teksKaya(surat.ringkasan)" /></tr>
         <tr><td>Diteruskan kepada</td><td colspan="3">{{ surat.tujuan ? `${surat.tujuan} (${surat.tujuan_jabatan})` : 'Diarsipkan tanpa disposisi' }}</td></tr>
       </tbody>
     </table>
@@ -49,7 +50,7 @@ const kosong = computed(() => Math.max(0, 4 - alur.value.length))
           <td class="tengah">{{ i + 1 }}</td>
           <td :style="{ paddingLeft: 3 + d.tingkat * 8 + 'pt' }">{{ d.dari }}<br><span style="font-size: 9pt">{{ d.dari_jabatan }}</span></td>
           <td>{{ d.kepada }}<br><span style="font-size: 9pt">{{ d.kepada_jabatan }}</span></td>
-          <td>{{ [ (d.instruksi || []).join(', '), d.catatan ].filter(Boolean).join('. ') }}<br><span style="font-size: 9pt">{{ formatPendek(d.created_at) }}</span></td>
+          <td><span style="white-space: pre-line" v-html="teksKaya([(d.instruksi || []).join(', '), d.catatan].filter(Boolean).join('. '))" /><br><span style="font-size: 9pt">{{ formatPendek(d.created_at) }}</span></td>
           <td class="tengah">{{ d.batas ? formatPendek(d.batas) : '–' }}</td>
           <td>{{ d.status === 'selesai' ? `Selesai ${formatPendek(d.selesai_pada)}: ${d.laporan}` : d.status === 'dibaca' ? 'Dibaca, belum selesai' : 'Belum dibaca' }}</td>
         </tr>
