@@ -1,12 +1,14 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/LembarKelompok.vue | v1.1 | Perbaikan: putra/putri wajib mengikuti pengaturan pemisahan | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/LembarKelompok.vue | v1.2 | Perbaikan 13.7.1: pilihan kategori ekskul (Indoor/Outdoor) saat tambah/ubah ekskul | 16/10/2026 -->
 <script setup>
 // v1.1: putra/putri wajib bila pemisahan putra/putri aktif untuk jenis kelompok ini (pengaturan admin); selain itu boleh campuran.
+// v1.2: kelompok berjenis ekskul memiliki pilihan kategori Indoor/Outdoor (dipakai sebagai kelompok dan saringan di menu Ekskul).
 // Lembar tambah/ubah kelompok santri: nama, tingkat (kelas), putra/putri, keterangan, tautan grup WA, urutan, aktif.
 import { ref, watch, computed } from 'vue'
 import { PhFloppyDisk, PhWhatsappLogo } from '@phosphor-icons/vue'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import { useUI } from '@/stores/ui'
 import { JENIS_KELOMPOK } from '@/lib/santri'
+import { KATEGORI_EKSKUL } from '@/lib/ekskul'
 import LembarBawah from '@/components/LembarBawah.vue'
 
 const buka = defineModel({ type: Boolean, default: false })
@@ -20,8 +22,8 @@ watch(buka, (v) => {
   kel.muatPengaturan().catch(() => {})
   const g = props.kelompok
   f.value = g ? { id: g.id, jenis: g.jenis, nama: g.nama, tingkat: g.tingkat || '', jenis_kelamin: g.jenis_kelamin || '', keterangan: g.keterangan || '',
-    wa_wali: g.wa_wali || '', wa_internal: g.wa_internal || '', urutan: g.urutan || 0, aktif: g.aktif, naqib_id: g.naqib_id || '' }
-    : { jenis: props.jenis, nama: '', tingkat: props.jenis === 'kelas' ? 7 : '', jenis_kelamin: '', keterangan: '', wa_wali: '', wa_internal: '', urutan: 0, aktif: true }
+    wa_wali: g.wa_wali || '', wa_internal: g.wa_internal || '', urutan: g.urutan || 0, aktif: g.aktif, naqib_id: g.naqib_id || '', kategori_ekskul: g.kategori_ekskul || '' }
+    : { jenis: props.jenis, nama: '', tingkat: props.jenis === 'kelas' ? 7 : '', jenis_kelamin: '', keterangan: '', wa_wali: '', wa_internal: '', urutan: 0, aktif: true, kategori_ekskul: '' }
 })
 const wajibJK = computed(() => !!f.value && kel.pisahJk(f.value.jenis))
 async function simpan() {
@@ -31,7 +33,8 @@ async function simpan() {
   for (const t of [d.wa_wali, d.wa_internal]) if (t && !/^https?:\/\//i.test(t.trim())) return ui.toast('Tautan grup WA harus diawali https:// (salin dari "Undang via tautan" di WhatsApp).', 'galat')
   proses.value = true
   try {
-    const id = await kel.simpan({ ...d, tingkat: d.jenis === 'kelas' ? Number(d.tingkat) : null })
+    const { kategori_ekskul, ...isi } = d
+    const id = await kel.simpan({ ...isi, tingkat: d.jenis === 'kelas' ? Number(d.tingkat) : null, ...(d.jenis === 'ekskul' ? { kategori_ekskul: kategori_ekskul || null } : {}) })
     ui.toast(d.id ? 'Perubahan kelompok disimpan.' : `${JENIS_KELOMPOK[d.jenis].n} ${d.nama.trim()} ditambahkan.`)
     buka.value = false; emit('tersimpan', id)
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
@@ -48,6 +51,14 @@ async function simpan() {
             :class="['min-h-[44px] rounded-xl text-sm font-semibold tabular-nums', Number(f.tingkat) === t ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ t }}</button>
         </div>
         <p class="mt-1 text-xs text-teks3">7–9 Kesetaraan Wustha, 10–12 SMA. Hanya santri dengan kelas yang sama yang dapat dimasukkan.</p></div>
+      <div v-if="f.jenis === 'ekskul'"><p class="label-isian">Kategori ekskul</p>
+        <div class="grid grid-cols-3 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Kategori ekskul">
+          <button v-for="k in [...Object.entries(KATEGORI_EKSKUL).map(([k, v]) => ({ k, ...v })), { k: '', n: 'Belum diatur' }]" :key="k.k" type="button" role="radio"
+            :aria-checked="f.kategori_ekskul === k.k" @click="f.kategori_ekskul = k.k"
+            :class="['flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl text-sm font-semibold', k.w && 'w-' + k.w, f.kategori_ekskul === k.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">
+            <component :is="k.ikon" v-if="k.ikon" :size="18" weight="duotone" style="color: var(--c)" />{{ k.n }}</button>
+        </div>
+        <p class="mt-1 text-xs text-teks3">{{ f.kategori_ekskul ? KATEGORI_EKSKUL[f.kategori_ekskul].ket : 'Ekskul tanpa kategori tampil di kelompok "Belum diatur" pada menu Ekskul.' }}</p></div>
       <div><p class="label-isian">Santri <span v-if="wajibJK" class="text-merah">*</span></p>
         <div class="grid grid-cols-3 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Jenis kelamin anggota">
           <button v-for="j in [{ k: 'L', n: 'Putra' }, { k: 'P', n: 'Putri' }, ...(wajibJK ? [] : [{ k: '', n: 'Campuran' }])]" :key="j.k" type="button" role="radio"
