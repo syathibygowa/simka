@@ -1,14 +1,16 @@
-<!-- SIMKA PRO | src/pages/organisasi/TabJabatan.vue | v1.0 | Fase 1 – Struktur organisasi | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/organisasi/TabJabatan.vue | v1.1 | Perbaikan 14.0.0: tombol ubah hanya bagi pemegang Organisasi tingkat Input/ubah | 17/10/2026 -->
 <script setup>
 // Jabatan fungsional (P1, boleh rangkap) dan jabatan struktural (P2, satu per orang).
 import { ref, computed } from 'vue'
 import { PhPlus, PhPencilSimple, PhFloppyDisk } from '@phosphor-icons/vue'
 import { useOrganisasi } from '@/stores/organisasi'
+import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 import LembarBawah from '@/components/LembarBawah.vue'
 
 const props = defineProps({ jenis: { type: String, required: true } }) // 'fungsional' | 'struktural'
 const org = useOrganisasi(); const ui = useUI()
+const sesi = useSesi(); const bolehUbah = computed(() => sesi.isSuperadmin || sesi.tingkat('organisasi') >= 2)
 const P1 = computed(() => props.jenis === 'fungsional')
 const daftar = computed(() => [...org[props.jenis]].sort((a, b) => P1.value ? a.urutan - b.urutan : a.tingkat - b.tingkat))
 const jumlah = (id) => (P1.value ? org.jumlahFungsional : org.jumlahStruktural)[id] || 0
@@ -42,7 +44,7 @@ async function ubahAktif(j, ev) {
           <template v-if="P1">Jabatan fungsional menentukan menu kerja dan pola presensi. Satu pegawai boleh memegang beberapa jabatan fungsional, kecuali jabatan bertanda <strong class="font-semibold text-teks2">tidak rangkap</strong>.</template>
           <template v-else>Satu pegawai hanya memegang satu jabatan struktural. Tingkat makin kecil makin tinggi; tingkat 20 ke bawah melihat seluruh pondok.</template>
         </p>
-        <button class="tombol-garis" @click="buka()"><PhPlus :size="18" weight="bold" /> Tambah jabatan</button>
+        <button v-if="bolehUbah" class="tombol-garis" @click="buka()"><PhPlus :size="18" weight="bold" /> Tambah jabatan</button>
       </div>
       <ul class="divide-y divide-garis">
         <li v-for="j in daftar" :key="j.id" :class="['flex flex-wrap items-center gap-3 py-3', !j.aktif && 'opacity-60']">
@@ -58,8 +60,8 @@ async function ubahAktif(j, ev) {
             </div>
           </div>
           <label class="flex min-h-[44px] items-center gap-2 text-sm font-semibold text-teks2">
-            <input type="checkbox" :checked="j.aktif" class="h-5 w-5 accent-[#C7332F]" @change="ubahAktif(j, $event)" /> Aktif</label>
-          <button class="tombol-ikon" @click="buka(j)" :aria-label="`Ubah ${j.nama}`"><PhPencilSimple :size="20" /></button>
+            <input type="checkbox" :checked="j.aktif" :disabled="!bolehUbah" class="h-5 w-5 accent-[#C7332F]" @change="ubahAktif(j, $event)" /> Aktif</label>
+          <button v-if="bolehUbah" class="tombol-ikon" @click="buka(j)" :aria-label="`Ubah ${j.nama}`"><PhPencilSimple :size="20" /></button>
         </li>
       </ul>
     </section>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabRekapLayanan.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabRekapLayanan.vue | v1.4 | Perbaikan 14.0.0: pemantau termasuk pemegang Dokumen tingkat Input/ubah | 17/10/2026 -->
 <script setup>
 // Laporan periode modul layanan (menu Dokumen → Rekap layanan): Security, libur santri, pengajuan pegawai, klinik.
 // Pilihan laporan tampil sesuai hak (diperiksa server). Daftar santri berurutan NIS, Nama, JK. Data klinik tanpa diagnosis.
@@ -25,19 +25,20 @@ import PanelResmi from '@/components/PanelResmi.vue'
 const ll = useLaporanLayanan(); const org = useOrganisasi(); const sesi = useSesi(); const ui = useUI()
 const route = useRoute(); const router = useRouter(); const dr = useDokumenResmi()
 const resmi = ref(null) // versi resmi (salinan beku) yang sedang ditampilkan
-const pantauSantri = computed(() => sesi.isAdmin || sesi.pimpinanTinggi || sesi.tingkat('gerbang') >= 1 || sesi.tingkat('pantauan') >= 1)
+const pemantau = computed(() => sesi.isAdmin || sesi.pimpinanTinggi || sesi.tingkat('laporan') >= 2)
+const pantauSantri = computed(() => pemantau.value || sesi.tingkat('gerbang') >= 1 || sesi.tingkat('pantauan') >= 1)
 const JENIS = computed(() => [
   pantauSantri.value && { k: 'security', n: 'Security', ikon: PhShieldCheck, ket: 'Gerbang keluar/kembali, titipan, tamu, kunjungan' },
   pantauSantri.value && { k: 'libur', n: 'Libur santri', ikon: PhAirplaneTilt, ket: 'Periode libur: peserta, pulang, kembali tepat/terlambat' },
-  { k: 'pengajuan', n: sesi.isAdmin || sesi.pimpinanTinggi ? 'Pengajuan pegawai' : 'Pengajuan saya', ikon: PhFileText, ket: 'Izin, sakit, cuti, dinas luar per pegawai (kali dan hari)' },
-  (sesi.isAdmin || sesi.pimpinanTinggi || (sesi.tugas?.klinik || []).length) && { k: 'klinik', n: 'Klinik', ikon: PhFirstAidKit, ket: 'Kasus, pemeriksaan, tindak lanjut (tanpa diagnosis)' },
+  { k: 'pengajuan', n: pemantau.value ? 'Pengajuan pegawai' : 'Pengajuan saya', ikon: PhFileText, ket: 'Izin, sakit, cuti, dinas luar per pegawai (kali dan hari)' },
+  (pemantau.value || (sesi.tugas?.klinik || []).length) && { k: 'klinik', n: 'Klinik', ikon: PhFirstAidKit, ket: 'Kasus, pemeriksaan, tindak lanjut (tanpa diagnosis)' },
 ].filter(Boolean))
 const jenis = ref(JENIS.value[0].k)
 const info = computed(() => JENIS.value.find((j) => j.k === jenis.value) || { n: JUDUL[jenis.value] || '', ket: 'Versi resmi' })
 const awal = periodeCepat('bulan'); const mulai = ref(awal.mulai); const selesai = ref(awal.selesai); const cepat = ref('bulan')
 const unit = ref(''); const cari = ref('')
 onMounted(async () => {
-  if (sesi.isAdmin || sesi.pimpinanTinggi) await org.muat()
+  if (pemantau.value) await org.muat()
   if (route.query.resmi) { try { terapkanResmi(await dr.ambil(String(route.query.resmi))); return } catch (e) { ui.toast(e.message, 'galat') } }
   muat()
 })
@@ -122,7 +123,7 @@ async function cetak() {
 // ---------- Terbitkan resmi ----------
 const namaUnit = computed(() => (resmi.value ? resmi.value.isi?.param?.namaUnit : unit.value ? org.cariUnit(unit.value)?.nama : ''))
 const kunci = computed(() => (d.value && !resmi.value
-  ? ['layanan', jenis.value, jenis.value === 'pengajuan' && !(sesi.isAdmin || sesi.pimpinanTinggi) ? sesi.pengguna?.id : unit.value || '-', mulai.value, selesai.value].join('|') : ''))
+  ? ['layanan', jenis.value, jenis.value === 'pengajuan' && !pemantau.value ? sesi.pengguna?.id : unit.value || '-', mulai.value, selesai.value].join('|') : ''))
 const isiBeku = () => ({ versi: 1, param: { jenis: jenis.value, unit: unit.value, mulai: mulai.value, selesai: selesai.value, namaUnit: namaUnit.value || '' }, data: d.value })
 function terapkanResmi(x) {
   const p = x.isi?.param; if (!p) return ui.toast('Salinan beku dokumen tidak dapat dibaca.', 'galat')
@@ -143,7 +144,7 @@ const ada = computed(() => !!d.value)
           <component :is="j.ikon" :size="18" weight="duotone" /><span>{{ j.n }}</span></button>
       </div>
       <p class="text-sm text-teks2">{{ info.ket }}.</p>
-      <label v-if="jenis === 'pengajuan' && (sesi.isAdmin || sesi.pimpinanTinggi)" class="block max-w-md"><span class="label-isian">Bidang/unit</span>
+      <label v-if="jenis === 'pengajuan' && pemantau" class="block max-w-md"><span class="label-isian">Bidang/unit</span>
         <select v-model="unit" class="isian"><option value="">Semua yang dapat Anda lihat</option>
           <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ ' '.repeat(u.tingkat * 2) }}{{ u.nama }}</option></select></label>
       <div class="flex flex-wrap gap-2">

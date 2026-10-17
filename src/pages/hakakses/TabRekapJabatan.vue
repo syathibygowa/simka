@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/hakakses/TabRekapJabatan.vue | v1.0 | Perbaikan 13.9.0: ceklist fitur per jabatan fungsional, struktural, dan bidang (cetak F4) | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/hakakses/TabRekapJabatan.vue | v2.0 | Perbaikan 14.0.0: kolom Semua pegawai, sel bawaan dan Tidak ada, semua fitur yang dapat diatur | 17/10/2026 -->
 <script setup>
 // Rekap hak akses fitur dalam satu tabel centang (khusus superadmin):
 //   baris = fitur (dengan menu yang dikendalikan), kolom = jabatan fungsional / jabatan struktural / bidang,
@@ -8,7 +8,7 @@
 // (wali kelas, musyrif, muhaffizh, pembina, guru mapel pada kelompok/penugasan masing-masing).
 import { ref, computed, onMounted } from 'vue'
 import { PhIdentificationBadge, PhCrown, PhTreeStructure, PhMagnifyingGlass, PhPrinter, PhCaretDown, PhCheckCircle, PhMinus, PhProhibit } from '@phosphor-icons/vue'
-import { useAkses, TINGKAT } from '@/stores/akses'
+import { useAkses, TINGKAT, SEMUA_ID } from '@/stores/akses'
 import { useOrganisasi } from '@/stores/organisasi'
 import { useLembaga } from '@/stores/lembaga'
 import { useSesi } from '@/stores/sesi'
@@ -31,22 +31,31 @@ const MODE = [
 const mode = ref('fungsional'); const cari = ref(''); const ringkas = ref(true)
 const SINGKAT = { 1: 'L', 2: 'U', 3: 'K' }
 
+const SEMUA = { id: SEMUA_ID, n: 'Semua pegawai (bawaan)', semua: true }
 const semuaSasaran = computed(() => {
-  if (mode.value === 'fungsional') return org.fungsional.filter((j) => j.aktif).map((j) => ({ id: j.id, n: j.nama }))
-  if (mode.value === 'struktural') return [...org.struktural].filter((j) => j.aktif).sort((a, b) => a.tingkat - b.tingkat).map((j) => ({ id: j.id, n: j.nama }))
+  if (mode.value === 'fungsional') return [SEMUA, ...org.fungsional.filter((j) => j.aktif).map((j) => ({ id: j.id, n: j.nama }))]
+  if (mode.value === 'struktural') return [SEMUA, ...[...org.struktural].filter((j) => j.aktif).sort((a, b) => a.tingkat - b.tingkat).map((j) => ({ id: j.id, n: j.nama }))]
   return org.datar.filter((u) => u.aktif).map((u) => ({ id: u.id, n: u.nama }))
 })
-const aturan = (id, kode) => akses.grants[`${mode.value}:${id}:${kode}`] || null
-const jumlah = (id) => akses.fitur.filter((f) => { const g = aturan(id, f.kode); return g && g.mode === 'tambah' }).length
+/** Isi sel: aturan sendiri, atau bawaan Semua pegawai bagi jabatan tanpa aturan (bawaan: true). Tingkat 0 = Tidak ada. */
+function sel(x, kode) {
+  if (x.semua) { const g = akses.grants[`semua:${SEMUA_ID}:${kode}`]; return g ? { ...g, bawaan: false } : null }
+  const g = akses.grants[`${mode.value}:${x.id}:${kode}`]
+  if (g) return { ...g, bawaan: false }
+  const b = mode.value === 'bidang' ? 0 : akses.bawaan(kode)
+  return b ? { tingkat: b, mode: 'tambah', bawaan: true } : null
+}
+const punya = (g) => !!g && g.mode === 'tambah' && g.tingkat > 0
+const jumlah = (x) => akses.fiturAtur.filter((f) => punya(sel(x, f.kode))).length
 const sasaran = computed(() => {
   const q = cari.value.toLowerCase().trim()
-  return semuaSasaran.value.filter((x) => (!q || x.n.toLowerCase().includes(q)) && (!ringkas.value || akses.fitur.some((f) => aturan(x.id, f.kode))))
+  return semuaSasaran.value.filter((x) => (!q || x.n.toLowerCase().includes(q)) && (!ringkas.value || x.semua || akses.jumlahAturan(mode.value, x.id) > 0))
 })
-const grup = computed(() => { let no = 0; const k = {}; for (const f of akses.fitur) (k[f.kelompok] ||= []).push({ ...f, no: ++no }); return Object.entries(k) })
-const pemegang = (kode) => sasaran.value.filter((x) => aturan(x.id, kode)?.mode === 'tambah').length
+const grup = computed(() => { let no = 0; const k = {}; for (const f of akses.fiturAtur) (k[f.kelompok] ||= []).push({ ...f, no: ++no }); return Object.entries(k) })
+const pemegang = (kode) => sasaran.value.filter((x) => !x.semua && punya(sel(x, kode))).length
 /** Teks sel: tambah t → "Lihat"/"Input/ubah"/"Kelola"; cabut t → batasan */
-const teksSel = (g) => (!g ? '' : g.mode === 'tambah' ? TINGKAT[g.tingkat] : g.tingkat === 1 ? 'Dicabut' : `Maks. ${TINGKAT[g.tingkat - 1].toLowerCase()}`)
-const cetakSel = (g) => (!g ? '' : g.mode === 'tambah' ? `✓ ${SINGKAT[g.tingkat]}` : `✕${g.tingkat > 1 ? ' ≤' + SINGKAT[g.tingkat - 1] : ''}`)
+const teksSel = (g) => (!g ? '' : g.mode === 'tambah' ? TINGKAT[g.tingkat] + (g.bawaan ? ' (bawaan)' : '') : g.tingkat === 1 ? 'Dicabut' : `Maks. ${TINGKAT[g.tingkat - 1].toLowerCase()}`)
+const cetakSel = (g) => (!g ? '' : g.mode === 'tambah' ? (g.tingkat ? `✓ ${SINGKAT[g.tingkat]}${g.bawaan ? '*' : ''}` : '✕') : `✕${g.tingkat > 1 ? ' ≤' + SINGKAT[g.tingkat - 1] : ''}`)
 const WARNA = { 1: 'w-pegawai', 2: 'w-presensi', 3: 'w-pengaturan' }
 
 const buka = ref({})
@@ -71,7 +80,7 @@ const lebarKol = computed(() => (sasaran.value.length ? Math.max(3.5, Math.min(1
         <label class="tombol-garis cursor-pointer px-3 text-sm"><input v-model="ringkas" type="checkbox" class="h-4 w-4 accent-[#C7332F]" /> Hanya yang punya aturan</label>
         <button class="tombol-utama min-h-[44px] px-4 text-sm" :disabled="!sasaran.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak ceklist</button>
       </div>
-      <p class="mt-2 text-xs text-teks3">L = Lihat · U = Input/ubah · K = Kelola. {{ mode === 'bidang' ? 'Aturan bidang menambah (✓) atau membatasi (✕) akses seluruh pegawai di bidang/unit tersebut beserta cabangnya.' : 'Akses ini dimiliki setiap pegawai yang memegang jabatan tersebut.' }}
+      <p class="mt-2 text-xs text-teks3">L = Lihat · U = Input/ubah · K = Kelola. {{ mode === 'bidang' ? 'Aturan bidang menambah (✓) atau membatasi (✕) akses seluruh pegawai di bidang/unit tersebut beserta cabangnya.' : 'Akses ini dimiliki setiap pegawai yang memegang jabatan tersebut. Sel bertanda (bawaan) mengikuti kolom Semua pegawai; ✕ Tidak ada berarti bawaan ditimpa.' }}
         Tugas yang ditetapkan (wali kelas, musyrif, muhaffizh, pembina, guru mapel) otomatis dapat mengisi kelompok/penugasannya sendiri.</p>
 
       <p v-if="!sasaran.length" class="kartu mt-4 p-8 text-center text-sm text-teks3">{{ ringkas ? 'Belum ada aturan untuk ' + namaMode.toLowerCase() + '. Matikan "Hanya yang punya aturan" untuk melihat semua.' : 'Tidak ada data.' }}</p>
@@ -90,10 +99,10 @@ const lebarKol = computed(() => (sasaran.value.length ? Math.max(3.5, Math.min(1
                 <td class="sticky left-0 bg-permukaan px-3 py-2 text-center tabular-nums text-teks3">{{ f.no }}</td>
                 <td class="sticky left-10 bg-permukaan px-3 py-2"><b class="block">{{ f.nama }}</b><span class="text-xs text-teks3">{{ f.menu }}</span></td>
                 <td v-for="x in sasaran" :key="x.id" class="px-2 py-2 text-center">
-                  <template v-if="aturan(x.id, f.kode)">
-                    <span v-if="aturan(x.id, f.kode).mode === 'tambah'" :class="['sel', WARNA[aturan(x.id, f.kode).tingkat]]" :title="f.arti?.[aturan(x.id, f.kode).tingkat]">
-                      <PhCheckCircle :size="16" weight="fill" /> {{ teksSel(aturan(x.id, f.kode)) }}</span>
-                    <span v-else class="sel w-klinik"><PhProhibit :size="16" weight="bold" /> {{ teksSel(aturan(x.id, f.kode)) }}</span>
+                  <template v-if="sel(x, f.kode)">
+                    <span v-if="punya(sel(x, f.kode))" :class="['sel', WARNA[sel(x, f.kode).tingkat], sel(x, f.kode).bawaan && 'bawaan']" :title="f.arti?.[sel(x, f.kode).tingkat]">
+                      <PhCheckCircle :size="16" weight="fill" /> {{ teksSel(sel(x, f.kode)) }}</span>
+                    <span v-else class="sel w-klinik"><PhProhibit :size="16" weight="bold" /> {{ teksSel(sel(x, f.kode)) }}</span>
                   </template>
                   <PhMinus v-else :size="16" class="mx-auto text-teks3/50" />
                 </td>
@@ -101,7 +110,7 @@ const lebarKol = computed(() => (sasaran.value.length ? Math.max(3.5, Math.min(1
             </tbody>
             <tfoot><tr class="border-t-2 border-garis bg-permukaan2 font-bold">
               <td class="sticky left-0 bg-permukaan2" /><td class="sticky left-10 bg-permukaan2 px-3 py-2.5">Jumlah fitur</td>
-              <td v-for="x in sasaran" :key="x.id" class="px-2 py-2.5 text-center tabular-nums">{{ jumlah(x.id) }}</td>
+              <td v-for="x in sasaran" :key="x.id" class="px-2 py-2.5 text-center tabular-nums">{{ jumlah(x) }}</td>
             </tr></tfoot>
           </table>
         </div>
@@ -112,19 +121,19 @@ const lebarKol = computed(() => (sasaran.value.length ? Math.max(3.5, Math.min(1
             <button type="button" class="flex w-full items-center gap-3 p-4 text-left" :aria-expanded="!!buka[x.id]" @click="buka[x.id] = !buka[x.id]">
               <span class="chip-ikon h-11 w-11 shrink-0"><component :is="MODE.find((m) => m.k === mode).ikon" :size="22" weight="duotone" /></span>
               <b class="min-w-0 flex-1">{{ x.n }}</b>
-              <span class="shrink-0 text-right"><b class="block text-lg tabular-nums" style="color: var(--c)">{{ jumlah(x.id) }}</b><span class="text-xs text-teks3">fitur</span></span>
+              <span class="shrink-0 text-right"><b class="block text-lg tabular-nums" style="color: var(--c)">{{ jumlah(x) }}</b><span class="text-xs text-teks3">fitur</span></span>
               <PhCaretDown :size="18" :class="['shrink-0 text-teks3 transition', buka[x.id] && 'rotate-180']" />
             </button>
             <div v-if="buka[x.id]" class="border-t border-garis px-4 pb-3">
               <template v-for="[kel, daftar] in grup" :key="kel">
                 <p class="mt-3 text-xs font-bold uppercase tracking-wide text-teks3">{{ kel }}</p>
                 <ul class="mt-1 space-y-1.5">
-                  <li v-for="f in daftar" :key="f.kode" class="flex items-start gap-2 text-sm" :class="aturan(x.id, f.kode) ? 'text-teks' : 'text-teks3'">
-                    <PhCheckCircle v-if="aturan(x.id, f.kode)?.mode === 'tambah'" :size="20" weight="fill" class="mt-0.5 shrink-0 text-[#1E7D4F] dark:text-[#6FD19A]" />
-                    <PhProhibit v-else-if="aturan(x.id, f.kode)" :size="20" class="mt-0.5 shrink-0 text-merah" />
+                  <li v-for="f in daftar" :key="f.kode" class="flex items-start gap-2 text-sm" :class="sel(x, f.kode) ? 'text-teks' : 'text-teks3'">
+                    <PhCheckCircle v-if="punya(sel(x, f.kode))" :size="20" weight="fill" class="mt-0.5 shrink-0 text-[#1E7D4F] dark:text-[#6FD19A]" />
+                    <PhProhibit v-else-if="sel(x, f.kode)" :size="20" class="mt-0.5 shrink-0 text-merah" />
                     <PhMinus v-else :size="20" class="mt-0.5 shrink-0 opacity-50" />
                     <span class="min-w-0 flex-1"><span class="tabular-nums">{{ f.no }}.</span> {{ f.nama }}
-                      <span v-if="aturan(x.id, f.kode)" class="block text-xs font-semibold">{{ teksSel(aturan(x.id, f.kode)) }}<template v-if="aturan(x.id, f.kode).mode === 'tambah'">: {{ f.arti?.[aturan(x.id, f.kode).tingkat] }}</template></span></span>
+                      <span v-if="sel(x, f.kode)" class="block text-xs font-semibold">{{ teksSel(sel(x, f.kode)) }}<template v-if="punya(sel(x, f.kode))">: {{ f.arti?.[sel(x, f.kode).tingkat] }}</template></span></span>
                   </li>
                 </ul>
               </template>
@@ -144,13 +153,13 @@ const lebarKol = computed(() => (sasaran.value.length ? Math.max(3.5, Math.min(1
             <tr><td /><td :colspan="sasaran.length + 1"><i>{{ kel }}</i></td></tr>
             <tr v-for="f in daftar" :key="f.kode">
               <td class="tengah">{{ f.no }}</td><td>{{ f.nama }}<br><span style="font-size: 8pt">{{ f.menu }}</span></td>
-              <td v-for="x in sasaran" :key="x.id" class="tengah">{{ cetakSel(aturan(x.id, f.kode)) }}</td>
+              <td v-for="x in sasaran" :key="x.id" class="tengah">{{ cetakSel(sel(x, f.kode)) }}</td>
             </tr>
           </template>
-          <tr><td /><td>Jumlah fitur</td><td v-for="x in sasaran" :key="x.id" class="tengah">{{ jumlah(x.id) }}</td></tr>
+          <tr><td /><td>Jumlah fitur</td><td v-for="x in sasaran" :key="x.id" class="tengah">{{ jumlah(x) }}</td></tr>
         </tbody>
       </table>
-      <p style="margin-top: 6pt; font-size: 9pt">✓ L = Lihat, ✓ U = Input/ubah, ✓ K = Kelola{{ mode === 'bidang' ? '; ✕ = akses dicabut, ✕ ≤L/≤U = dibatasi paling tinggi lihat/input' : '' }}. Tugas yang ditetapkan (wali kelas, musyrif, muhaffizh, pembina, guru mapel) otomatis mengisi kelompok/penugasannya sendiri.</p>
+      <p style="margin-top: 6pt; font-size: 9pt">✓ L = Lihat, ✓ U = Input/ubah, ✓ K = Kelola{{ mode === 'bidang' ? '; ✕ = akses dicabut, ✕ ≤L/≤U = dibatasi paling tinggi lihat/input' : '; * = mengikuti bawaan Semua pegawai; ✕ = Tidak ada (bawaan ditimpa)' }}. Tugas yang ditetapkan (wali kelas, musyrif, muhaffizh, pembina, guru mapel) otomatis mengisi kelompok/penugasannya sendiri.</p>
       <template #ttd>
         <TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: direktur.jabatan_tertulis || 'Direktur', nama: direktur.nama || '', niy: direktur.niy }"
           :kanan="{ jabatan: 'Superadmin SIMKA PRO', nama: sesi.pengguna?.nama_lengkap || '', niy: sesi.pengguna?.niy }" />
@@ -159,6 +168,7 @@ const lebarKol = computed(() => (sasaran.value.length ? Math.max(3.5, Math.min(1
   </div>
 </template>
 <style scoped>
+.sel.bawaan { opacity: .7; font-weight: 600; font-style: italic; }
 .sel { display: inline-flex; align-items: center; gap: .25rem; border-radius: 9999px; padding: .15rem .5rem; font-size: .75rem; font-weight: 700; white-space: nowrap;
   color: var(--c); background: color-mix(in srgb, var(--c) 13%, rgb(var(--permukaan))); }
 </style>

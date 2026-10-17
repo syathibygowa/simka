@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/shift/JadwalShift.vue | v1.2 | Perbaikan 13.6.0: tab pola bergaris bawah, NIY di cetakan | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/shift/JadwalShift.vue | v1.3 | Perbaikan 14.0.0: pemegang Penjadwalan (Lihat) melihat jadwal shift semua petugas | 17/10/2026 -->
 <script setup>
 // Jadwal shift pekanan (medis, security). Admin ber-izin atur_presensi menyusun jadwal
 // (manual per sel atau pembuat jadwal bergilir); petugas melihat jadwal dan mengajukan tukar shift.
@@ -29,14 +29,14 @@ const bolehUbah = computed(() => atur.boleh('atur_presensi'))
 
 onMounted(async () => {
   try {
-    await Promise.all([lembaga.muat(), sesiPengguna.isAdmin && !peg.daftar.length ? peg.muat() : null])
+    await Promise.all([lembaga.muat(), (sesiPengguna.isAdmin || sesiPengguna.tingkat('atur_presensi') >= 1) && !peg.daftar.length ? peg.muat() : null])
     await atur.muat()
     polaId.value = polaShift.value[0]?.id || ''
   } catch (e) { galat.value = e.message }
   siap.value = true
 })
 const polaShift = computed(() => atur.pola.filter((p) => p.jenis === 'shift' && p.aktif
-  && (sesiPengguna.isAdmin || atur.jadwal.some((j) => j.pattern_id === p.id && j.employee_id === saya.value && j.aktif))))
+  && ((sesiPengguna.isAdmin || sesiPengguna.tingkat('atur_presensi') >= 1) || atur.jadwal.some((j) => j.pattern_id === p.id && j.employee_id === saya.value && j.aktif))))
 const pola = computed(() => atur.cariPola(polaId.value))
 const sesi = computed(() => atur.sesiPola(polaId.value).filter((s) => s.aktif))
 const hari = computed(() => tanggalPekan(senin.value))

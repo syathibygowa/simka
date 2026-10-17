@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menuCepat.js | v1.7 | Perbaikan: tombol Beban Kerja hanya bila ditampilkan untuk pegawai | 16/10/2026
+// SIMKA PRO | src/lib/menuCepat.js | v1.8 | Perbaikan 14.0.0: menu umum mengikuti Hak Akses (fitur yang dicabut tidak ditampilkan) | 17/10/2026
 // Menu cepat beranda pegawai fungsional: tombol langsung ke menu kerja sesuai tupoksi masing-masing
 // (musyrif → Musyrif, muhaffizh → Setoran Tahfizh, wali kelas → Absensi Kelas, medis → Klinik, security → Gerbang, dst.).
 // Tupoksi didahulukan, lalu dilengkapi menu umum sampai 8 tombol (2 baris × 4 kolom).
@@ -7,7 +7,7 @@ import {
   PhGraduationCap, PhCalendarStar, PhSignOut, PhUsersThree, PhFileText, PhMegaphone, PhCalendarCheck, PhFolderOpen, PhClockCountdown, PhNotebook, PhEnvelopeSimple, PhWallet, PhCashRegister, PhChalkboard, PhPresentationChart,
 } from '@phosphor-icons/vue'
 
-/** @param {object} t profil tugas (sesi.tugas), @param {object} c ciri tambahan: { shift, persuratan, gaji } */
+/** @param {object} t profil tugas (sesi.tugas), @param {object} c ciri tambahan: { shift, persuratan, gaji, tingkat(kode) } */
 export function menuCepat(t = {}, c = {}) {
   const fungsi = new Set(t.fungsional || []); const kel = new Set(t.kelompok || [])
   const d = []
@@ -38,13 +38,13 @@ export function menuCepat(t = {}, c = {}) {
   if (c.shift) tambah({ kode: 'shift', label: 'Jadwal Shift', ket: 'Giliran tugas', ikon: PhCalendarStar, warna: 'shift', ke: '/jadwal-shift' })
   // ---------- Menu umum setiap pegawai ----------
   const umum = [
-    { kode: 'pengajuan', label: 'Pengajuan', ket: 'Izin, sakit, cuti', ikon: PhFileText, warna: 'pengajuan', ke: '/pengajuan' },
-    { kode: 'lapor', label: 'Laporan', ket: 'Sampaikan laporan', ikon: PhMegaphone, warna: 'laporan', ke: '/lapor' },
-    { kode: 'jurnal', label: 'Jurnal Harian', ket: 'Ceklist tugas', ikon: PhNotebook, warna: 'tatausaha', ke: '/jurnal' },
-    { kode: 'agenda', label: 'Agenda', ket: 'Kegiatan pondok', ikon: PhCalendarCheck, warna: 'agenda', ke: '/agenda' },
-    { kode: 'berkas', label: 'Berkas Saya', ket: 'SK, formulir', ikon: PhFolderOpen, warna: 'berkas', ke: '/berkas' },
+    { kode: 'pengajuan', label: 'Pengajuan', ket: 'Izin, sakit, cuti', ikon: PhFileText, warna: 'pengajuan', ke: '/pengajuan', fitur: 'pengajuan' },
+    { kode: 'lapor', label: 'Laporan', ket: 'Sampaikan laporan', ikon: PhMegaphone, warna: 'laporan', ke: '/lapor', fitur: 'lapor_bidang' },
+    { kode: 'jurnal', label: 'Jurnal Harian', ket: 'Ceklist tugas', ikon: PhNotebook, warna: 'tatausaha', ke: '/jurnal', fitur: 'jurnal_harian' },
+    { kode: 'agenda', label: 'Agenda', ket: 'Kegiatan pondok', ikon: PhCalendarCheck, warna: 'agenda', ke: '/agenda', fitur: 'agenda' },
+    { kode: 'berkas', label: 'Berkas Saya', ket: 'SK, formulir', ikon: PhFolderOpen, warna: 'berkas', ke: '/berkas', fitur: 'berkas_pegawai' },
     c.beban?.saya && { kode: 'beban', label: 'Beban Kerja', ket: 'Jam per pekan', ikon: PhClockCountdown, warna: 'gaji', ke: '/beban-kerja' },
-  ].filter(Boolean)
+  ].filter((u) => u && (!u.fitur || !c.tingkat || c.tingkat(u.fitur) >= 1))
   // Tombol tupoksi tidak pernah dipotong; menu umum melengkapi sampai kelipatan 4 (sedikitnya 8 tombol)
   const target = Math.max(8, Math.ceil(d.length / 4) * 4)
   for (const u of umum) { if (d.length >= target) break; tambah(u) }

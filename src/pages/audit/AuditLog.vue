@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/audit/AuditLog.vue | v2.0 | Perbaikan 13.6.0: khusus superadmin, kartu statistik kategori sebagai saringan | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/audit/AuditLog.vue | v2.1 | Perbaikan 14.0.0: dapat dibuka pemegang fitur Audit log di Hak Akses | 17/10/2026 -->
 <script setup>
 // Audit log 30 hari terakhir, KHUSUS SUPERADMIN (server juga menolak akun lain).
 // Kartu statistik per kategori aktivitas sekaligus menjadi saringan; saring tanggal, pelaku, dan jenis data;
@@ -19,7 +19,7 @@ import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
 const audit = useAudit(); const peg = usePegawai(); const sesi = useSesi(); const ui = useUI()
-const semua = computed(() => sesi.isSuperadmin)
+const semua = computed(() => sesi.isSuperadmin || sesi.tingkat('audit_log') >= 1)
 const mulai = ref(tambahHari(hariIniISO(), -6)); const akhir = ref(hariIniISO())
 const pelaku = ref(''); const tabel = ref(''); const kategori = ref(''); const cari = ref(''); const pilih = ref(null); const pratinjau = ref(false)
 

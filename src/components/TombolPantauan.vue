@@ -1,12 +1,12 @@
-<!-- SIMKA PRO | src/components/TombolPantauan.vue | v1.1 | Fase 8 – Perbaikan: tombol ringkas tanpa teks keterangan | 10/10/2026 -->
+<!-- SIMKA PRO | src/components/TombolPantauan.vue | v1.2 | Perbaikan 14.0.0: tampil mengikuti fitur Layar Pantauan di Hak Akses | 17/10/2026 -->
 <script setup>
 // Tombol menonjol di Beranda untuk membuka Layar Pantauan (slide presentasi/SmartTV).
-// Tampil bagi admin, superadmin, jabatan struktural (pimpinan, termasuk Direktur/Wadir), dan pemegang hak pantauan (yayasan).
+// Tampil bagi admin, superadmin, dan pemegang fitur Layar Pantauan di Hak Akses (bawaan: semua jabatan struktural).
 import { computed } from 'vue'
 import { PhPresentationChart, PhArrowRight } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 const sesi = useSesi()
-const boleh = computed(() => sesi.isAdmin || sesi.ciriMenu.struktural || Number(sesi.ciriMenu.fitur?.pantauan ?? 0) >= 1)
+const boleh = computed(() => sesi.isAdmin || sesi.tingkat('pantauan') >= 1)
 </script>
 <template>
   <router-link v-if="boleh" to="/pantauan" class="tombol-layar group relative flex items-center gap-3 overflow-hidden rounded-2xl px-4 py-3 text-white" aria-label="Buka Layar Pantauan">

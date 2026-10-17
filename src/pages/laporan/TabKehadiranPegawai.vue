@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.4 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.5 | Perbaikan 14.0.0: pemegang Dokumen tingkat Input/ubah melihat seluruh pegawai | 17/10/2026 -->
 <script setup>
 // Laporan kehadiran pegawai (menu Rekap → Kehadiran pegawai).
 // Jenis: rekap ringkas, rekap matriks (nama × tanggal, F4 mendatar), laporan individu, daftar perhatian.
@@ -28,7 +28,7 @@ import { useDokumenResmi } from '@/stores/dokumenResmi'
 const lk = useLaporanKehadiran(); const peg = usePegawai(); const org = useOrganisasi(); const sesi = useSesi(); const ui = useUI()
 const route = useRoute(); const router = useRouter(); const dr = useDokumenResmi()
 const resmi = ref(null) // versi resmi (salinan beku) yang sedang ditampilkan
-const pemantau = computed(() => sesi.isAdmin || sesi.pimpinanTinggi)
+const pemantau = computed(() => sesi.isAdmin || sesi.pimpinanTinggi || sesi.tingkat('laporan') >= 2)
 const JENIS = computed(() => (pemantau.value ? ['ringkas', 'matriks', 'individu', 'perhatian'] : ['individu']))
 const IKON_JENIS = { ringkas: PhListBullets, matriks: PhGridNine, individu: PhUser, perhatian: PhFlag }
 

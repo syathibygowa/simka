@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.4 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.5 | Perbaikan 14.0.0: pemegang Dokumen tingkat Input/ubah melihat seluruh santri | 17/10/2026 -->
 <script setup>
 // Laporan kehadiran santri (menu Dokumen → Kehadiran santri), absensi HISBAT.
 // Jenis: rekap ringkas, rekap matriks (F4 mendatar), laporan individu, daftar perhatian, kepatuhan pengisian (pemantau).
@@ -28,7 +28,7 @@ import { useDokumenResmi } from '@/stores/dokumenResmi'
 const ls = useLaporanSantri(); const kel = useKelompokSantri(); const st = useSantri(); const sesi = useSesi(); const ui = useUI()
 const route = useRoute(); const router = useRouter(); const dr = useDokumenResmi()
 const resmi = ref(null) // versi resmi (salinan beku) yang sedang ditampilkan
-const pemantau = computed(() => sesi.isAdmin || sesi.luas('data_santri') || sesi.pimpinanTinggi)
+const pemantau = computed(() => sesi.isAdmin || sesi.luas('data_santri') || sesi.pimpinanTinggi || sesi.tingkat('laporan') >= 2)
 const JENIS_LAP = { ringkas: { n: 'Rekap ringkas', ikon: PhListBullets, ket: 'Jumlah setiap status HISBAT per santri dan persentase' },
   matriks: { n: 'Rekap matriks', ikon: PhGridNine, ket: 'Nama × tanggal, kertas mendatar' },
   individu: { n: 'Laporan individu', ikon: PhUser, ket: 'Rincian per tanggal dan kegiatan untuk satu santri' },

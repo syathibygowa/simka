@@ -1,4 +1,4 @@
-// SIMKA PRO | supabase/functions/kelola-akun/index.ts | v1.1 | Fase 1 – Akun dan hak akses | 03/10/2026
+// SIMKA PRO | supabase/functions/kelola-akun/index.ts | v1.2 | Perbaikan 14.0.0: izin verifikasi akun dan reset sandi juga dari hak fitur (Hak Akses) | 17/10/2026
 // Versi satu berkas (modul bersama sudah digabung) agar dapat ditempel di editor dashboard Supabase.
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
@@ -84,6 +84,10 @@ export async function pemanggil(req: Request, admin: SupabaseClient): Promise<Pe
 
 export async function bolehAdmin(admin: SupabaseClient, p: Pegawai, izin: string): Promise<boolean> {
   if (p.peran === "superadmin") return true;
+  // 14.0.0: izin admin juga dapat diperoleh dari hak fitur di menu Hak Akses (diperiksa di database).
+  const { data: boleh, error } = await admin.rpc("admin_boleh_pegawai", { p_emp: p.id, p_kode: izin });
+  if (!error) return boleh === true;
+  // Cadangan bila migrasi 14.0.0 belum dijalankan: hanya admin yang dicentang superadmin
   if (p.peran !== "admin") return false;
   const { data } = await admin.from("admin_permissions").select("kode")
     .eq("employee_id", p.id).eq("kode", izin).maybeSingle();

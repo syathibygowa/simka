@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/KelolaPortalWali.vue | v1.2 | Fase 9 – Tahap 13.4.0 Pilihan jenis dokumen santri di portal | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/KelolaPortalWali.vue | v1.3 | Perbaikan 14.0.0: dapat dikelola pemegang fitur Kelola Portal Wali | 17/10/2026 -->
 <script setup>
 // Menu Portal Wali (superadmin; admin ber-izin Kelola santri). v1.1: menu tersendiri, tab di alamat #/portal-wali/:tab.
 // Tab: Ringkasan (kesiapan, tautan portal), Data belum lengkap, Sesi aktif (cabut), Percobaan gagal (buka kunci),
@@ -22,7 +22,7 @@ import KartuStatistik from '@/components/KartuStatistik.vue'
 
 const props = defineProps({ tab: { type: String, default: '' } })
 const kp = useKelolaPortalWali(); const sesi = useSesi(); const ui = useUI(); const router = useRouter()
-const boleh = computed(() => sesi.bolehAdmin('kelola_santri'))
+const boleh = computed(() => sesi.isSuperadmin || (sesi.peran === 'admin' && sesi.bolehAdmin('kelola_santri')) || sesi.tingkat('portal_wali') >= 1)
 const tab = computed({ get: () => props.tab || 'ringkasan', set: (k) => router.replace(`/portal-wali/${k}`) })
 onMounted(() => { if (boleh.value) kp.muat() })
 

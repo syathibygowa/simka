@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborFungsional.vue | v1.7 | Perbaikan: tombol Beban Kerja mengikuti pengaturan tampil per pegawai | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborFungsional.vue | v1.8 | Perbaikan 14.0.0: tombol Layar Pantauan bagi pemegang hak, kartu presensi mengikuti Hak Akses | 17/10/2026 -->
 <script setup>
 // Beranda pegawai fungsional (wali kelas, guru mapel, musyrif, muhaffizh, pembina, medis, security, staf, dll.),
 // yaitu semua pegawai di luar pimpinan tinggi, admin, dan superadmin. Tanpa kartu statistik (hasil evaluasi pondok):
@@ -12,6 +12,7 @@ import { useDataPresensi } from '@/stores/presensi'
 import { formatJam } from '@/lib/tanggal'
 import { menuCepat } from '@/lib/menuCepat'
 import Sapaan from './Sapaan.vue'
+import TombolPantauan from '@/components/TombolPantauan.vue'
 import RingkasanPribadi from './RingkasanPribadi.vue'
 import TugasPenilaianBeranda from '@/components/TugasPenilaianBeranda.vue'
 import TugasHariIni from '@/components/TugasHariIni.vue'
@@ -26,12 +27,12 @@ const ringkas = computed(() => {
   const b = dp.berikut
   return `${dp.selesaiWajib} dari ${dp.jumlahWajib} sesi tercatat${b ? ` · berikutnya ${b.nama_sesi} ${formatJam(b.mulai)}` : ''}`
 })
-const menu = computed(() => menuCepat(sesi.tugas, { shift: sesi.punyaShift, persuratan: sesi.persuratan, gaji: sesi.gaji, beban: sesi.beban }))
+const menu = computed(() => menuCepat(sesi.tugas, { shift: sesi.punyaShift, persuratan: sesi.persuratan, gaji: sesi.gaji, beban: sesi.beban, tingkat: (k) => sesi.tingkat(k) }))
 </script>
 <template>
   <div class="space-y-5 lg:space-y-6">
     <Sapaan>
-      <router-link to="/presensi" class="mt-5 flex items-center gap-4 rounded-2xl bg-white p-3.5 pr-4 text-[#1F1416] shadow-apung">
+      <router-link v-if="sesi.tingkat('presensi') >= 1" to="/presensi" class="mt-5 flex items-center gap-4 rounded-2xl bg-white p-3.5 pr-4 text-[#1F1416] shadow-apung">
         <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[#E2F1E8] text-[#1E7D4F]"><PhFingerprint :size="32" weight="duotone" /></span>
         <span class="min-w-0 flex-1">
           <span class="block text-lg font-extrabold leading-tight">Presensi hari ini</span>
@@ -40,6 +41,7 @@ const menu = computed(() => menuCepat(sesi.tugas, { shift: sesi.punyaShift, pers
         <PhCaretRight :size="22" class="text-[#705E61]" />
       </router-link>
     </Sapaan>
+    <TombolPantauan />
 
     <AksiWajib />
     <TugasHariIni />

@@ -1,3 +1,4 @@
+// SIMKA PRO | supabase/functions/_shared/mod.ts | v1.1 | Perbaikan 14.0.0: bolehAdmin membaca izin dari hak fitur (admin_boleh_pegawai) | 17/10/2026
 // SIMKA PRO · modul bersama Edge Functions
 // Rahasia dibaca dari Supabase Secrets (tidak pernah ada di repo):
 //   SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY (otomatis tersedia)
@@ -80,6 +81,10 @@ export async function pemanggil(req: Request, admin: SupabaseClient): Promise<Pe
 
 export async function bolehAdmin(admin: SupabaseClient, p: Pegawai, izin: string): Promise<boolean> {
   if (p.peran === "superadmin") return true;
+  // 14.0.0: izin admin juga dapat diperoleh dari hak fitur di menu Hak Akses (diperiksa di database).
+  const { data: boleh, error } = await admin.rpc("admin_boleh_pegawai", { p_emp: p.id, p_kode: izin });
+  if (!error) return boleh === true;
+  // Cadangan bila migrasi 14.0.0 belum dijalankan: hanya admin yang dicentang superadmin
   if (p.peran !== "admin") return false;
   const { data } = await admin.from("admin_permissions").select("kode")
     .eq("employee_id", p.id).eq("kode", izin).maybeSingle();

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/Laporan.vue | v1.5 | Fase 8 – Tahap 5 tab Tanda tangan | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/Laporan.vue | v1.6 | Perbaikan 14.0.0: pemantau termasuk pemegang Dokumen tingkat Input/ubah | 17/10/2026 -->
 <script setup>
 // Menu Dokumen: satu menu bertab untuk semua rekap dan laporan resmi (hemat menu sidebar).
 // Tab: Presensi harian (admin/superadmin; dahulu menu Rekap Presensi), Kehadiran pegawai (semua pegawai: dirinya;
@@ -20,11 +20,14 @@ import TabTandaTangan from './TabTandaTangan.vue'
 const props = defineProps({ tab: { type: String, default: '' } })
 const router = useRouter(); const sesi = useSesi(); const dr = useDokumenResmi()
 onMounted(() => dr.muatMasuk().catch(() => {}))
+// Pemantau seluruh pegawai/santri: admin, pimpinan (anggota unitnya), dan pemegang Dokumen tingkat Input/ubah (Hak Akses)
+const pantau = computed(() => sesi.isAdmin || sesi.pimpinanTinggi || sesi.tingkat('laporan') >= 2)
+const lihatPresensi = computed(() => sesi.isAdmin || ['verval_presensi', 'atur_presensi', 'data_pegawai'].some((k) => sesi.tingkat(k) >= 1) || sesi.tingkat('laporan') >= 2)
 const TAB = computed(() => [
-  ...(sesi.isAdmin ? [{ k: 'harian', n: 'Presensi harian', ikon: PhCalendarCheck, w: 'presensi' }] : []),
-  { k: 'pegawai', n: sesi.isAdmin || sesi.pimpinanTinggi ? 'Kehadiran pegawai' : 'Kehadiran saya', ikon: PhUsersThree, w: 'pegawai' },
+  ...(lihatPresensi.value ? [{ k: 'harian', n: 'Presensi harian', ikon: PhCalendarCheck, w: 'presensi' }] : []),
+  { k: 'pegawai', n: pantau.value ? 'Kehadiran pegawai' : 'Kehadiran saya', ikon: PhUsersThree, w: 'pegawai' },
   // Kehadiran santri: pemantau (admin, pimpinan, pemegang hak data santri) dan pengasuh kelompok
-  ...(sesi.isAdmin || sesi.pimpinanTinggi || sesi.luas('data_santri') || sesi.kelompokSaya.length ? [{ k: 'santri', n: 'Kehadiran santri', ikon: PhStudent, w: 'santri' }] : []),
+  ...(pantau.value || sesi.luas('data_santri') || sesi.kelompokSaya.length ? [{ k: 'santri', n: 'Kehadiran santri', ikon: PhStudent, w: 'santri' }] : []),
   // Rekap layanan: Security, libur santri, pengajuan pegawai, klinik (pilihan sesuai hak)
   { k: 'layanan', n: 'Rekap layanan', ikon: PhSquaresFour, w: 'security' },
   { k: 'dokumen', n: 'Dokumen resmi', ikon: PhSealCheck, w: 'verifikasi' },

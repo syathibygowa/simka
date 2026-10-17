@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.20 | Perbaikan 13.7.0: pimpinan melihat grafik periodik (kartu statistik di Layar Pantauan) | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/beranda/DasborPegawai.vue | v1.21 | Perbaikan 14.0.0: grafik periodik mengikuti hak Layar Pantauan, kartu presensi mengikuti Hak Akses | 17/10/2026 -->
 <script setup>
 import KartuPersuratanBeranda from '@/components/KartuPersuratanBeranda.vue'
 import KartuSantriBeranda from '@/components/KartuSantriBeranda.vue'
@@ -41,13 +41,13 @@ const ringkas = computed(() => {
   return `${dp.selesaiWajib} dari ${dp.jumlahWajib} sesi tercatat${b ? ` · berikutnya ${b.nama_sesi} ${formatJam(b.mulai)}` : ''}`
 })
 // Pimpinan (berhak Layar Pantauan): slider kartu diganti grafik periodik; kartu statistik ada di Layar Pantauan
-const pimpinan = computed(() => sesi.ciriMenu.struktural || Number(sesi.ciriMenu.fitur?.pantauan ?? 0) >= 1)
+const pimpinan = computed(() => sesi.isAdmin || sesi.tingkat('pantauan') >= 1)
 const menu = computed(() => menuUntuk(sesi.peran, sesi.ciriMenu).filter((m) => !['beranda', 'notifikasi', 'profil'].includes(m.kode)).slice(0, 8))
 </script>
 <template>
   <div class="space-y-5 lg:space-y-6">
     <Sapaan>
-      <router-link to="/presensi" class="mt-5 flex items-center gap-4 rounded-2xl bg-white p-3.5 pr-4 text-[#1F1416] shadow-apung">
+      <router-link v-if="sesi.tingkat('presensi') >= 1" to="/presensi" class="mt-5 flex items-center gap-4 rounded-2xl bg-white p-3.5 pr-4 text-[#1F1416] shadow-apung">
         <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[#E2F1E8] text-[#1E7D4F]"><PhFingerprint :size="32" weight="duotone" /></span>
         <span class="flex-1">
           <span class="block text-lg font-extrabold leading-tight">Presensi hari ini</span>

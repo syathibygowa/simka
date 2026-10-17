@@ -1,12 +1,12 @@
-// SIMKA PRO | src/router/index.js | v3.29 | Perbaikan 13.8.0: halaman Kelengkapan Data Santri | 16/10/2026
+// SIMKA PRO | src/router/index.js | v3.30 | Perbaikan 14.0.0: halaman admin dibuka mengikuti Hak Akses (meta.menu, meta.izin, meta.boleh) | 17/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
-// di bilah atas; meta.peran membatasi halaman untuk peran tertentu.
+// di bilah atas; meta.peran membatasi halaman untuk peran tertentu; meta.menu/meta.izin/meta.boleh mengikuti Hak Akses.
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useSesi } from '@/stores/sesi'
 import TataLetakAplikasi from '@/layouts/TataLetakAplikasi.vue'
 import { adaSesiWali } from '@/lib/portalWali'
+import { menuTerlihat, cariMenu } from '@/lib/menu'
 
-const ADMIN = ['admin', 'superadmin']
 const routes = [
   { path: '/masuk', component: () => import('@/pages/auth/Masuk.vue'), meta: { publik: true, judul: 'Masuk' } },
   { path: '/daftar', component: () => import('@/pages/auth/Daftar.vue'), meta: { publik: true, judul: 'Daftar akun' } },
@@ -15,7 +15,7 @@ const routes = [
   { path: '/atur-sandi', component: () => import('@/pages/auth/AturSandi.vue'), meta: { publik: true, bebas: true, judul: 'Atur kata sandi' } },
   { path: '/wali/:bagian?', component: () => import('@/pages/wali/PortalWali.vue'), props: true, meta: { publik: true, bebas: true, judul: 'Portal Wali' } },
   { path: '/cek/:kode?', component: () => import('@/pages/cek/CekDokumen.vue'), props: true, meta: { publik: true, bebas: true, judul: 'Cek Keabsahan Dokumen' } },
-  { path: '/pantauan', component: () => import('@/pages/pantauan/Pantauan.vue'), meta: { judul: 'Layar Pantauan' } },
+  { path: '/pantauan', component: () => import('@/pages/pantauan/Pantauan.vue'), meta: { judul: 'Layar Pantauan', boleh: (s) => s.isAdmin || s.tingkat('pantauan') >= 1 } },
   { path: '/ganti-sandi', component: () => import('@/pages/auth/GantiSandi.vue'), meta: { judul: 'Ganti kata sandi' } },
   {
     path: '/', component: TataLetakAplikasi,
@@ -25,25 +25,25 @@ const routes = [
       { path: 'tugas', component: () => import('@/pages/umum/Tugas.vue'), meta: { judul: 'Tugas dan menu' } },
       { path: 'profil', component: () => import('@/pages/profil/Profil.vue'), meta: { judul: 'Profil' } },
       { path: 'profil/data', component: () => import('@/pages/profil/DataSaya.vue'), meta: { judul: 'Data Kepegawaian Saya', kembali: '/profil' } },
-      { path: 'pegawai', component: () => import('@/pages/pegawai/DaftarPegawai.vue'), meta: { judul: 'Data Pegawai', peran: ADMIN, cetak: true, kembali: '/tugas' } },
-      { path: 'pegawai/baru', component: () => import('@/pages/pegawai/FormPegawai.vue'), meta: { judul: 'Tambah Pegawai', peran: ADMIN, kembali: '/pegawai' } },
-      { path: 'pegawai/impor', component: () => import('@/pages/pegawai/ImporPegawai.vue'), meta: { judul: 'Impor Data Pegawai', peran: ADMIN, kembali: '/pegawai' } },
-      { path: 'pegawai/rekap', component: () => import('@/pages/pegawai/RekapPegawai.vue'), meta: { judul: 'Rekap Kepegawaian', peran: ADMIN, cetak: true, kembali: '/pegawai' } },
-      { path: 'pegawai/:id/ubah', component: () => import('@/pages/pegawai/FormPegawai.vue'), meta: { judul: 'Ubah Data Pegawai', peran: ADMIN, kembali: '/pegawai' } },
-      { path: 'pegawai/:id', component: () => import('@/pages/pegawai/DetailPegawai.vue'), meta: { judul: 'Biodata Pegawai', peran: ADMIN, cetak: true, kembali: '/pegawai' } },
+      { path: 'pegawai', component: () => import('@/pages/pegawai/DaftarPegawai.vue'), meta: { judul: 'Data Pegawai', menu: 'pegawai', cetak: true, kembali: '/tugas' } },
+      { path: 'pegawai/baru', component: () => import('@/pages/pegawai/FormPegawai.vue'), meta: { judul: 'Tambah Pegawai', menu: 'pegawai', izin: 'kelola_pegawai', kembali: '/pegawai' } },
+      { path: 'pegawai/impor', component: () => import('@/pages/pegawai/ImporPegawai.vue'), meta: { judul: 'Impor Data Pegawai', menu: 'pegawai', izin: 'kelola_pegawai', kembali: '/pegawai' } },
+      { path: 'pegawai/rekap', component: () => import('@/pages/pegawai/RekapPegawai.vue'), meta: { judul: 'Rekap Kepegawaian', menu: 'pegawai', cetak: true, kembali: '/pegawai' } },
+      { path: 'pegawai/:id/ubah', component: () => import('@/pages/pegawai/FormPegawai.vue'), meta: { judul: 'Ubah Data Pegawai', menu: 'pegawai', izin: 'kelola_pegawai', kembali: '/pegawai' } },
+      { path: 'pegawai/:id', component: () => import('@/pages/pegawai/DetailPegawai.vue'), meta: { judul: 'Biodata Pegawai', menu: 'pegawai', cetak: true, kembali: '/pegawai' } },
       { path: 'santri', component: () => import('@/pages/santri/DaftarSantri.vue'), meta: { judul: 'Data Santri', cetak: true, kembali: '/tugas' } },
       { path: 'santri/baru', component: () => import('@/pages/santri/FormSantri.vue'), meta: { judul: 'Tambah Santri', kembali: '/santri' } },
       { path: 'santri/kelengkapan', component: () => import('@/pages/santri/KelengkapanSantri.vue'), meta: { judul: 'Kelengkapan Data Santri', cetak: true, kembali: '/santri' } },
-      { path: 'santri/impor', component: () => import('@/pages/santri/ImporSantri.vue'), meta: { judul: 'Impor Data Santri', peran: ADMIN, kembali: '/santri' } },
+      { path: 'santri/impor', component: () => import('@/pages/santri/ImporSantri.vue'), meta: { judul: 'Impor Data Santri', izin: 'kelola_santri', kembali: '/santri' } },
       { path: 'santri/portal-wali', redirect: '/portal-wali' },
-      { path: 'portal-wali/:tab?', component: () => import('@/pages/santri/KelolaPortalWali.vue'), props: true, meta: { judul: 'Portal Wali', peran: ADMIN, kembali: '/tugas' } },
+      { path: 'portal-wali/:tab?', component: () => import('@/pages/santri/KelolaPortalWali.vue'), props: true, meta: { judul: 'Portal Wali', menu: 'portalwali', kembali: '/tugas' } },
       { path: 'santri/:id/ubah', component: () => import('@/pages/santri/FormSantri.vue'), meta: { judul: 'Ubah Data Santri', kembali: '/santri' } },
       { path: 'santri/:id', component: () => import('@/pages/santri/DetailSantri.vue'), meta: { judul: 'Biodata Santri', cetak: true, kembali: '/santri' } },
       { path: 'absensi-santri/isi/:group/:tanggal/:sesi', component: () => import('@/pages/absensisantri/IsiAbsensi.vue'), meta: { judul: 'Isi Absensi Santri', kembali: '/absensi-santri' } },
       { path: 'prestasi-santri', component: () => import('@/pages/prestasi/PrestasiSantri.vue'), meta: { judul: 'Prestasi Santri', cetak: true, kembali: '/tugas' } },
       { path: 'absensi-santri/:tab?', component: () => import('@/pages/absensisantri/AbsensiSantri.vue'), props: true, meta: { judul: 'Absensi Santri', kembali: '/tugas' } },
       { path: 'statistik-santri', component: () => import('@/pages/santri/StatistikSantri.vue'), meta: { judul: 'Statistik Santri', cetak: true, kembali: '/tugas' } },
-      { path: 'tahun-ajaran-baru', component: () => import('@/pages/santri/PergantianTA.vue'), meta: { judul: 'Naik Kelas', peran: ADMIN, kembali: '/tugas' } },
+      { path: 'tahun-ajaran-baru', component: () => import('@/pages/santri/PergantianTA.vue'), meta: { judul: 'Naik Kelas', menu: 'tahunajaran', kembali: '/tugas' } },
       { path: 'jadwal-pelajaran/:tab?', component: () => import('@/pages/jadwal/JadwalPelajaran.vue'), props: true, meta: { judul: 'Jadwal Pelajaran', kembali: '/tugas' } },
       { path: 'tahfizh/impor', component: () => import('@/pages/tahfizh/ImporHafalan.vue'), meta: { judul: 'Impor Hafalan Awal', kembali: '/tahfizh' } },
       { path: 'tahfizh/:tab?', component: () => import('@/pages/tahfizh/Tahfizh.vue'), props: true, meta: { judul: 'Tahfizh', kembali: '/tugas' } },
@@ -71,14 +71,14 @@ const routes = [
       { path: 'segera/gaji', redirect: '/gaji' },
       { path: 'keuangan/:tab?', component: () => import('@/pages/keuangan/Keuangan.vue'), props: (r) => ({ tab: r.params.tab || '' }), meta: { judul: 'Keuangan Santri', kembali: '/tugas' } },
       { path: 'presensi', component: () => import('@/pages/presensi/Presensi.vue'), meta: { judul: 'Presensi' } },
-      { path: 'atur-presensi/:tab?', component: () => import('@/pages/presensi/AturPresensi.vue'), props: true, meta: { judul: 'Penjadwalan', peran: ADMIN, kembali: '/tugas' } },
-      { path: 'data-presensi/:tab?', component: () => import('@/pages/presensi/DataPresensi.vue'), props: true, meta: { judul: 'Data Presensi', peran: ADMIN, kembali: '/tugas' } },
+      { path: 'atur-presensi/:tab?', component: () => import('@/pages/presensi/AturPresensi.vue'), props: true, meta: { judul: 'Penjadwalan', menu: 'aturpresensi', kembali: '/tugas' } },
+      { path: 'data-presensi/:tab?', component: () => import('@/pages/presensi/DataPresensi.vue'), props: true, meta: { judul: 'Data Presensi', menu: 'datapresensi', kembali: '/tugas' } },
       { path: 'verval-presensi/data', redirect: '/data-presensi' },
-      { path: 'verval-presensi/:tab?', component: () => import('@/pages/verval/VervalPresensi.vue'), props: true, meta: { judul: 'Verval Presensi', peran: ADMIN, kembali: '/tugas' } },
+      { path: 'verval-presensi/:tab?', component: () => import('@/pages/verval/VervalPresensi.vue'), props: true, meta: { judul: 'Verval Presensi', menu: 'vervalpresensi', kembali: '/tugas' } },
       { path: 'rekap-presensi/:tab?', redirect: (to) => ({ path: `/rekap/${to.params.tab || 'harian'}`, query: to.query }) },
       { path: 'jadwal-shift', component: () => import('@/pages/shift/JadwalShift.vue'), meta: { judul: 'Jadwal Shift', kembali: '/tugas' } },
-      { path: 'verifikasi/:tab?', component: () => import('@/pages/akun/Verifikasi.vue'), props: true, meta: { judul: 'Verifikasi dan Akun', peran: ADMIN, kembali: '/tugas' } },
-      { path: 'organisasi/:tab?', component: () => import('@/pages/organisasi/Organisasi.vue'), props: true, meta: { judul: 'Organisasi', peran: ['superadmin'], cetak: true, kembali: '/tugas' } },
+      { path: 'verifikasi/:tab?', component: () => import('@/pages/akun/Verifikasi.vue'), props: true, meta: { judul: 'Verifikasi dan Akun', menu: 'verifikasi', kembali: '/tugas' } },
+      { path: 'organisasi/:tab?', component: () => import('@/pages/organisasi/Organisasi.vue'), props: true, meta: { judul: 'Organisasi', menu: 'organisasi', cetak: true, kembali: '/tugas' } },
       { path: 'hak-akses/:tab?', component: () => import('@/pages/hakakses/HakAkses.vue'), props: true, meta: { judul: 'Hak Akses Fitur', peran: ['superadmin'], kembali: '/tugas' } },
       { path: 'pengaturan/:tab?', component: () => import('@/pages/pengaturan/Pengaturan.vue'), props: true, meta: { judul: 'Setelan', peran: ['superadmin'], kembali: '/tugas' } },
       { path: 'pengumuman/:id?', component: () => import('@/pages/pengumuman/Pengumuman.vue'), props: true, meta: { judul: 'Pengumuman', kembali: '/' } },
@@ -89,7 +89,7 @@ const routes = [
       { path: 'agenda/:id?', component: () => import('@/pages/agenda/Agenda.vue'), props: true, meta: { judul: 'Agenda', kembali: '/' } },
       { path: 'kelompok-pegawai', redirect: { path: '/pegawai', query: { tab: 'tim' } } },   // Tim Kerja kini tab di Data Pegawai
       { path: 'beban-kerja/:tab?', component: () => import('@/pages/beban/BebanKerja.vue'), props: true, meta: { judul: 'Ekuivalensi Jam Beban Kerja', kembali: '/tugas' } },
-      { path: 'audit-log', component: () => import('@/pages/audit/AuditLog.vue'), meta: { judul: 'Audit Log', peran: ['superadmin'], kembali: '/tugas' } },
+      { path: 'audit-log', component: () => import('@/pages/audit/AuditLog.vue'), meta: { judul: 'Audit Log', menu: 'auditlog', kembali: '/tugas' } },
       { path: 'rekap/:tab?', component: () => import('@/pages/laporan/Laporan.vue'), props: true, meta: { judul: 'Dokumen', cetak: true, kembali: '/tugas' } },
       { path: 'laporan/:tab?', redirect: (to) => ({ path: `/rekap/${to.params.tab || ''}`, query: to.query }) },
       { path: 'segera/:kode', component: () => import('@/pages/umum/Segera.vue'), props: true, meta: { judul: 'Segera hadir', kembali: '/tugas' } },
@@ -110,6 +110,10 @@ router.beforeEach(async (to) => {
   // Akun dengan sandi sementara wajib mengganti sandi lebih dulu
   if (sesi.wajibGantiSandi && to.path !== '/ganti-sandi') return '/ganti-sandi'
   if (to.meta.peran && !to.meta.peran.includes(sesi.peran)) return '/'
+  // Hak Akses (14.0.0): halaman mengikuti hak menu, izin admin efektif, atau syarat khusus; keamanan tetap di server
+  if (to.meta.menu && !menuTerlihat(cariMenu(to.meta.menu), sesi.peran, sesi.ciriMenu)) return '/'
+  if (to.meta.izin && !sesi.bolehAdmin(to.meta.izin)) return '/'
+  if (to.meta.boleh && !to.meta.boleh(sesi)) return '/'
   return true
 })
 router.afterEach((to) => { document.title = `${to.meta.judul || 'SIMKA PRO'} – SIMKA PRO` })

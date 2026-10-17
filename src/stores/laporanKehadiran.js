@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/laporanKehadiran.js | v1.0 | Fase 8 – Tahap 2 Laporan kehadiran pegawai | 10/10/2026
+// SIMKA PRO | src/stores/laporanKehadiran.js | v1.1 | Perbaikan 14.0.0: pemegang Dokumen tingkat Input/ubah memantau laporan kehadiran | 17/10/2026
 // Memuat laporan kehadiran pegawai dari server (hak cakupan diperiksa server) atau data contoh pada mode demo.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -49,4 +49,4 @@ export const useLaporanKehadiran = defineStore('laporanKehadiran', {
     },
   },
 })
-export const bolehPantau = () => { const s = useSesi(); return s.isAdmin || s.pimpinanTinggi }
+export const bolehPantau = () => { const s = useSesi(); return s.isAdmin || s.pimpinanTinggi || s.tingkat('laporan') >= 2 }

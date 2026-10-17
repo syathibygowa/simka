@@ -1,12 +1,15 @@
-<!-- SIMKA PRO | src/pages/organisasi/SimpulUnit.vue | v1.0 | Fase 1 – Struktur organisasi | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/organisasi/SimpulUnit.vue | v1.1 | Perbaikan 14.0.0: tombol ubah hanya bagi pemegang Organisasi tingkat Input/ubah | 17/10/2026 -->
 <script setup>
 // Satu simpul pohon bidang/unit beserta anak-anaknya (rekursif).
 import { PhCrown, PhBuildings, PhUsersFour, PhPlus, PhPencilSimple, PhStar } from '@phosphor-icons/vue'
+import { computed } from 'vue'
 import { useOrganisasi } from '@/stores/organisasi'
+import { useSesi } from '@/stores/sesi'
 defineOptions({ name: 'SimpulUnit' })
 const props = defineProps({ unit: Object, tingkat: { type: Number, default: 0 } })
 const emit = defineEmits(['tambah', 'ubah'])
 const org = useOrganisasi()
+const sesi = useSesi(); const bolehUbah = computed(() => sesi.isSuperadmin || sesi.tingkat('organisasi') >= 2)
 const GAYA = { pimpinan: { ikon: PhCrown, w: 'pengaturan', n: 'Pimpinan' }, bidang: { ikon: PhBuildings, w: 'santri', n: 'Bidang' }, unit: { ikon: PhUsersFour, w: 'tahfizh', n: 'Unit' } }
 </script>
 <template>
@@ -21,8 +24,8 @@ const GAYA = { pimpinan: { ikon: PhCrown, w: 'pengaturan', n: 'Pimpinan' }, bida
         </p>
         <p class="text-xs text-teks3">{{ GAYA[unit.jenis].n }} – kode {{ unit.kode }} – {{ org.jumlahCabang(unit.id) }} pegawai</p>
       </div>
-      <button class="tombol-ikon h-10 w-10" @click="emit('tambah', unit)" :aria-label="`Tambah unit di bawah ${unit.nama}`" title="Tambah di bawahnya"><PhPlus :size="20" /></button>
-      <button class="tombol-ikon h-10 w-10" @click="emit('ubah', unit)" :aria-label="`Ubah ${unit.nama}`" title="Ubah"><PhPencilSimple :size="20" /></button>
+      <button v-if="bolehUbah" class="tombol-ikon h-10 w-10" @click="emit('tambah', unit)" :aria-label="`Tambah unit di bawah ${unit.nama}`" title="Tambah di bawahnya"><PhPlus :size="20" /></button>
+      <button v-if="bolehUbah" class="tombol-ikon h-10 w-10" @click="emit('ubah', unit)" :aria-label="`Ubah ${unit.nama}`" title="Ubah"><PhPencilSimple :size="20" /></button>
     </div>
     <ul v-if="org.anak(unit.id).length" class="cabang ml-5 border-l-2 border-garis pl-3">
       <SimpulUnit v-for="a in org.anak(unit.id)" :key="a.id" :unit="a" :tingkat="tingkat + 1" @tambah="(x) => emit('tambah', x)" @ubah="(x) => emit('ubah', x)" />

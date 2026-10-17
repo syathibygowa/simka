@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/PergantianTA.vue | v1.0 | Fase 4 – Tahap 6 Tahun ajaran, statistik, laporan | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/PergantianTA.vue | v1.1 | Perbaikan 14.0.0: Naik Kelas bagi pemegang Kelompok santri tingkat Kelola | 17/10/2026 -->
 <script setup>
 // Pergantian tahun ajaran bertahap: (1) tentukan tahun ajaran baru, (2) periksa keputusan naik/tinggal/lulus per santri,
 // (3) buat DRAF (kelas naik otomatis, kamar/halaqah/ekskul disalin), (4) atur draf di Kelompok Santri, (5) aktifkan.
@@ -16,7 +16,7 @@ import { formatPanjang } from '@/lib/tanggal'
 import InputTanggal from '@/components/InputTanggal.vue'
 
 const router = useRouter(); const ta = useTahunAjaran(); const kel = useKelompokSantri(); const sesi = useSesi(); const ui = useUI()
-const boleh = computed(() => sesi.isSuperadmin || (sesi.bolehAdmin('kelola_santri') && sesi.bolehAdmin('kelompok_santri')))
+const boleh = computed(() => sesi.isSuperadmin || (sesi.bolehAdmin('kelola_santri') && sesi.bolehAdmin('kelompok_santri')) || sesi.tingkat('kelompok_santri') >= 3)
 const daftar = ref([]); const keputusan = ref({}); const draf = ref([]); const proses = ref(false); const saring = ref('')
 const f = ref({ nama: '', mulai: '', selesai: '', salin_kelompok: true })
 const tambahHari = (iso, n) => { const d = new Date(`${iso}T12:00:00+08:00`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) }
