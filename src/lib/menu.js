@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v4.0 | Perbaikan 14.0.0: setiap menu dibuka lewat Hak Akses (fitur/tingkat), tugas, atau izin admin | 17/10/2026
+// SIMKA PRO | src/lib/menu.js | v4.1 | 14.1.0: Persuratan juga terbuka bagi pemegang Surat teguran | 17/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Fungsional, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -80,7 +80,7 @@ export const MENU = [
   { kode: 'rekap',      nama: 'Dokumen',         ikon: PhFiles,    warna: 'rekap',      ke: '/rekap',             grup: 'Administrasi', fitur: 'laporan' },
   // Persuratan: Tata Usaha/pengelola, pimpinan penerima surat, dan pegawai yang pernah menerima disposisi
   { kode: 'persuratan', nama: 'Persuratan',      ikon: PhEnvelopeSimple, warna: 'tatausaha',  ke: '/persuratan',        grup: 'Administrasi', fitur: 'tata_usaha', admin: true, izin: 'kelola_persuratan',
-    otomatis: (c) => !!c.persuratan },
+    otomatis: (c) => !!c.persuratan || t(c, 'surat_teguran') >= 1 || (c.izin || []).includes('kelola_teguran') },
   // Gaji: pengelola/pembaca gaji (superadmin dan yang ditunjuk superadmin) dan pegawai bila slip ditampilkan di akun pegawai
   { kode: 'gaji',       nama: 'Gaji',            ikon: PhWallet,         warna: 'gaji',       ke: '/gaji',              grup: 'Administrasi', sensitif: true, otomatis: (c) => !!c.gaji },
   { kode: 'bebankerja', nama: 'Beban Kerja',     ikon: PhClockCountdown, warna: 'gaji',       ke: '/beban-kerja',       grup: 'Administrasi', fitur: 'beban_kerja', izin: 'atur_beban_kerja',

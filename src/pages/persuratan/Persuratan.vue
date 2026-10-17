@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/Persuratan.vue | v1.3 | Tahap C: ?templat=…&santri=…&nis=… membuka susun surat santri | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/Persuratan.vue | v1.4 | 14.1.0: tab Surat teguran (SP1–SP3); ?sp=<id> membuka rinciannya | 17/10/2026 -->
 <script setup>
 // Persuratan (Blueprint Bagian 35), satu menu bertab:
 //   Untuk saya  : surat yang perlu saya disposisikan dan disposisi yang ditujukan kepada saya
@@ -6,12 +6,13 @@
 //   Surat masuk : seluruh surat masuk (Tata Usaha dan pimpinan puncak); TU mencatat dan meneruskan ke pimpinan
 //   Buku agenda : surat masuk, dan inventaris SEMUA surat keluar (Persuratan + surat dari modul lain) per rentang tanggal; Excel, cetak F4
 //   Template    : template surat (isi awal pedoman Wahdah Islamiyah; TU menyunting, menyalin, menambah)
+//   Surat teguran: usulan SP1–SP3 (Kepala Bidang), proses TU, SP aktif/berakhir, rekap, ketentuan (14.1.0)
 //   Ketentuan   : pilihan instruksi disposisi dan batas waktu bawaan
 // ?surat=<id> membuka rincian surat (dipakai notifikasi); pada tab Surat keluar ?resmi=<id dokumen> dari kotak Tanda tangan.
 // ?templat=<kode>&santri=<id>&nis=<nis>[&prestasi=<teks>] membuka susun surat dengan template dan santri terpilih (dari biodata santri).
 import { computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { PhTray, PhEnvelopeOpen, PhBookBookmark, PhListChecks, PhHandPointing, PhPaperPlaneTilt, PhStamp, PhWarningCircle, PhCheckCircle, PhCalendarBlank, PhPaperPlaneRight, PhFileText, PhSignature, PhNotePencil, PhSealCheck } from '@phosphor-icons/vue'
+import { PhTray, PhEnvelopeOpen, PhBookBookmark, PhListChecks, PhHandPointing, PhPaperPlaneTilt, PhStamp, PhWarningCircle, PhCheckCircle, PhCalendarBlank, PhPaperPlaneRight, PhFileText, PhSignature, PhNotePencil, PhSealCheck, PhWarningOctagon } from '@phosphor-icons/vue'
 import { usePersuratan } from '@/stores/persuratan'
 import { useUI } from '@/stores/ui'
 import BilahTab from '@/components/BilahTab.vue'
@@ -23,6 +24,7 @@ import LembarRincianSurat from './LembarRincianSurat.vue'
 import LembarCatatSurat from './LembarCatatSurat.vue'
 import TabSuratKeluar from './TabSuratKeluar.vue'
 import TabTemplateSurat from './TabTemplateSurat.vue'
+import TabSuratTeguran from './TabSuratTeguran.vue'
 import LembarSusunSurat from './LembarSusunSurat.vue'
 import LembarRincianKeluar from './LembarRincianKeluar.vue'
 
@@ -33,8 +35,11 @@ const TAB = computed(() => [
   { k: 'keluar', n: 'Surat keluar', ikon: PhPaperPlaneRight, w: 'shift', lencana: (ringkas.value.ttd_saya || 0) + (ringkas.value.keluar_diperiksa || 0) },
   ...(ps.bolehAgenda ? [{ k: 'masuk', n: 'Surat masuk', ikon: PhEnvelopeOpen, w: 'tatausaha' }, { k: 'agenda', n: 'Buku agenda', ikon: PhBookBookmark, w: 'rekap' }] : []),
   ...(ps.hak.susun ? [{ k: 'template', n: 'Template', ikon: PhFileText, w: 'pengumuman' }] : []),
+  // Surat Teguran SP1–SP3 (14.1.0): pemegang fitur Surat teguran, Tata Usaha, atasan langsung, dan pengusul
+  ...(bolehTeguran.value ? [{ k: 'teguran', n: 'Surat teguran', ikon: PhWarningOctagon, w: 'klinik' }] : []),
   { k: 'ketentuan', n: 'Ketentuan', ikon: PhListChecks, w: 'pengaturan' },
 ])
+const bolehTeguran = computed(() => { const h = ps.hak.teguran || {}; return !!(h.lihat || h.usul || h.kelola || h.tu || h.atasan || h.punya) })
 const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : ps.hak.kelola ? 'masuk' : 'untuk-saya'))
 
 // ---------- Ringkasan langsung ----------
@@ -101,7 +106,7 @@ function ubah(s) { suratUbah.value = s; bukaRincian.value = false; lembarUbah.va
 <template>
   <div v-if="ps.hakDimuat">
     <BilahTab class="mb-4" :tab="TAB" :model-value="aktif" label="Bagian persuratan" @update:model-value="(k) => router.replace(`/persuratan/${k}`)" />
-    <div v-if="!['ketentuan', 'template'].includes(aktif)" class="-mx-4 mb-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:overflow-visible sm:px-0"
+    <div v-if="!['ketentuan', 'template', 'teguran'].includes(aktif)" class="-mx-4 mb-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:overflow-visible sm:px-0"
       :class="kartu.length > 4 ? 'sm:grid-cols-3 xl:grid-cols-6' : kartu.length > 2 ? 'sm:grid-cols-4' : 'sm:grid-cols-2 sm:max-w-xl'">
       <KartuStatistik v-for="k in kartu" :key="k.judul" class="w-[44%] shrink-0 snap-start sm:w-auto" :judul="k.judul" :nilai="k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket" />
     </div>
@@ -109,6 +114,7 @@ function ubah(s) { suratUbah.value = s; bukaRincian.value = false; lembarUbah.va
     <TabSuratKeluar v-else-if="aktif === 'keluar'" :versi="versi" @pilih="pilih" @susun="susun(null, true)" />
     <TabBukuAgenda v-else-if="aktif === 'agenda'" />
     <TabTemplateSurat v-else-if="aktif === 'template'" />
+    <TabSuratTeguran v-else-if="aktif === 'teguran'" :versi="versi" />
     <TabKetentuanSurat v-else />
     <LembarRincianSurat v-model="bukaRincian" :id="suratId" :versi="versi" @berubah="segarkan" @ubah="ubah" />
     <LembarCatatSurat v-model="lembarUbah" :surat="suratUbah" @selesai="(id) => { segarkan(); pilih(id) }" />

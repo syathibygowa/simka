@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoSurat.js | v1.3 | Perbaikan: nama satuan per kop (konteks demo) | 16/10/2026
+// SIMKA PRO | src/lib/demoSurat.js | v1.4 | 14.1.0: template Surat Teguran SP1–SP3 (mode demo) | 17/10/2026
 // Data contoh mode demo: sebagian template isi awal (salinan dari migrasi 6800) dan konteks lembaga.
 export const KONTEKS_DEMO = {
   lembaga: "Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa",
@@ -142,6 +142,61 @@ Surat keterangan ini diberikan sebagai bentuk penghargaan atas prestasi tersebut
 Demikian surat keterangan ini dibuat dengan sebenarnya untuk dipergunakan sebagaimana mestinya.`,
     isian: [{ kunci: 'santri', label: 'Santri', jenis: 'santri', wajib: true }, { kunci: 'prestasi', label: 'Prestasi', jenis: 'daftar', gaya: 'angka', wajib: true },
       { kunci: 'keperluan', label: 'Keperluan', jenis: 'teks', wajib: true }] }),
+  // Surat Teguran SP1–SP3 (14.1.0; salinan migrasi 11400)
+  T({ kode: 'teguran_1', nama: 'Surat Teguran Pertama (SP-1)', kategori: 'pegawai', perihal_kode: 'IZ', bentuk: 'tengah', judul: 'SURAT TEGURAN PERTAMA (SP-1)', hal_bawaan: 'Surat Teguran Pertama (SP-1)', urutan: 21,
+    opsi: { salam: true, salam_penutup: true, tembusan: true, penerima: true },
+    isi: `Dengan ini kami memberikan *Surat Teguran Pertama (SP-1)* kepada:
+
+Nama : {pegawai.nama}
+NIY : {pegawai.niy}
+Jabatan : {pegawai.jabatan}
+Unit kerja : {pegawai.unit}
+
+Teguran ini diberikan karena yang bersangkutan:
+{pelanggaran}
+
+{uraian}
+
+Sehubungan dengan hal tersebut, yang bersangkutan diminta untuk {harapan}. Surat teguran ini berlaku selama {masa_berlaku} sejak tanggal surat ini. Apabila dalam masa tersebut pelanggaran serupa terulang, akan diberikan Surat Teguran Kedua (SP-2) sesuai ketentuan yang berlaku di lingkungan {lembaga}.
+
+Demikian surat teguran ini disampaikan untuk diperhatikan dan dilaksanakan dengan penuh tanggung jawab.`,
+    isian: [{ kunci: 'pegawai', label: 'Pegawai yang ditegur', jenis: 'pegawai', wajib: true }, { kunci: 'pelanggaran', label: 'Pelanggaran', jenis: 'daftar', gaya: 'angka', wajib: true }, { kunci: 'uraian', label: 'Uraian pelanggaran', jenis: 'panjang', wajib: true }, { kunci: 'harapan', label: 'Harapan perbaikan', jenis: 'panjang', wajib: true, bawaan: 'segera memperbaiki kedisiplinan dan kinerjanya' }, { kunci: 'masa_berlaku', label: 'Masa berlaku', jenis: 'teks', wajib: true, bawaan: '6 (enam) bulan' }] }),
+  T({ kode: 'teguran_2', nama: 'Surat Teguran Kedua (SP-2)', kategori: 'pegawai', perihal_kode: 'IZ', bentuk: 'tengah', judul: 'SURAT TEGURAN KEDUA (SP-2)', hal_bawaan: 'Surat Teguran Kedua (SP-2)', urutan: 22,
+    opsi: { salam: true, salam_penutup: true, tembusan: true, penerima: true },
+    isi: `Dengan ini kami memberikan *Surat Teguran Kedua (SP-2)* kepada:
+
+Nama : {pegawai.nama}
+NIY : {pegawai.niy}
+Jabatan : {pegawai.jabatan}
+Unit kerja : {pegawai.unit}
+
+Sebelumnya yang bersangkutan telah menerima {sp_sebelumnya}. Namun yang bersangkutan masih:
+{pelanggaran}
+
+{uraian}
+
+Sehubungan dengan hal tersebut, yang bersangkutan diminta dengan sungguh-sungguh untuk {harapan}. Surat teguran ini berlaku selama {masa_berlaku} sejak tanggal surat ini. Apabila dalam masa tersebut pelanggaran serupa terulang, akan diberikan Surat Teguran Ketiga (SP-3) sesuai ketentuan yang berlaku di lingkungan {lembaga}.
+
+Demikian surat teguran ini disampaikan untuk diperhatikan dan dilaksanakan dengan penuh tanggung jawab.`,
+    isian: [{ kunci: 'pegawai', label: 'Pegawai yang ditegur', jenis: 'pegawai', wajib: true }, { kunci: 'pelanggaran', label: 'Pelanggaran', jenis: 'daftar', gaya: 'angka', wajib: true }, { kunci: 'uraian', label: 'Uraian pelanggaran', jenis: 'panjang', wajib: true }, { kunci: 'sp_sebelumnya', label: 'Surat teguran sebelumnya', jenis: 'teks', wajib: true }, { kunci: 'harapan', label: 'Harapan perbaikan', jenis: 'panjang', wajib: true, bawaan: 'segera memperbaiki kedisiplinan dan kinerjanya' }, { kunci: 'masa_berlaku', label: 'Masa berlaku', jenis: 'teks', wajib: true, bawaan: '6 (enam) bulan' }] }),
+  T({ kode: 'teguran_3', nama: 'Surat Teguran Ketiga (SP-3)', kategori: 'pegawai', perihal_kode: 'IZ', bentuk: 'tengah', judul: 'SURAT TEGURAN KETIGA (SP-3)', hal_bawaan: 'Surat Teguran Ketiga (SP-3)', urutan: 23,
+    opsi: { salam: true, salam_penutup: true, tembusan: true, penerima: true },
+    isi: `Dengan ini kami memberikan *Surat Teguran Ketiga (SP-3)* sebagai teguran terakhir kepada:
+
+Nama : {pegawai.nama}
+NIY : {pegawai.niy}
+Jabatan : {pegawai.jabatan}
+Unit kerja : {pegawai.unit}
+
+Sebelumnya yang bersangkutan telah menerima {sp_sebelumnya}. Namun yang bersangkutan masih:
+{pelanggaran}
+
+{uraian}
+
+Sehubungan dengan hal tersebut, yang bersangkutan diminta dengan sungguh-sungguh untuk {harapan}. Surat teguran ini berlaku selama {masa_berlaku} sejak tanggal surat ini. Apabila dalam masa tersebut pelanggaran serupa terulang, pimpinan akan mengambil tindakan tegas sesuai ketentuan kepegawaian yang berlaku di lingkungan {lembaga}.
+
+Demikian surat teguran ini disampaikan untuk diperhatikan dan dilaksanakan dengan penuh tanggung jawab.`,
+    isian: [{ kunci: 'pegawai', label: 'Pegawai yang ditegur', jenis: 'pegawai', wajib: true }, { kunci: 'pelanggaran', label: 'Pelanggaran', jenis: 'daftar', gaya: 'angka', wajib: true }, { kunci: 'uraian', label: 'Uraian pelanggaran', jenis: 'panjang', wajib: true }, { kunci: 'sp_sebelumnya', label: 'Surat teguran sebelumnya', jenis: 'teks', wajib: true }, { kunci: 'harapan', label: 'Harapan perbaikan', jenis: 'panjang', wajib: true, bawaan: 'segera memperbaiki kedisiplinan dan kinerjanya' }, { kunci: 'masa_berlaku', label: 'Masa berlaku', jenis: 'teks', wajib: true, bawaan: '6 (enam) bulan' }] }),
 ]
 export const SANTRI_SURAT_DEMO = [
   { id: 's-1', nama: 'Muhammad Fathir Al-Ghifari', nis: '2411001', nisn: '0112233445', jk: 'L', tempat_lahir: 'Makassar', tanggal_lahir: '2012-03-14', jenjang: 'wustha', tingkat: 8, kelas: '8A', wali: 'Ahmad Syarifuddin', alamat: 'Jl. Malino No. 12, Gowa', ayah: 'Ahmad Syarifuddin', ibu: 'Nurhayati', hafalan: 6, tanggal_masuk: '2024-07-15', prestasi: ['Juara 1 MTQ Cabang Tahfizh 5 Juz tingkat Kabupaten/Kota (LPTQ Kabupaten Gowa, 2026)'] },

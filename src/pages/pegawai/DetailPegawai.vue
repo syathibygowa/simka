@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/DetailPegawai.vue | v1.5 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/DetailPegawai.vue | v1.6 | 14.1.0: riwayat surat teguran (bagi yang berhak melihat) | 17/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Biodata pegawai: kepala profil (foto, nama, NIY, status akun), ringkasan jabatan, profil lengkap per bagian
@@ -8,7 +8,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   PhIdentificationCard, PhBriefcase, PhCalendarBlank, PhBuildings, PhEye, PhPencilSimple, PhTrash, PhClockCounterClockwise, PhUser, PhAddressBook,
-  PhUsersThree, PhFileText,
+  PhUsersThree, PhFileText, PhWarningOctagon,
 } from '@phosphor-icons/vue'
 import { useUI } from '@/stores/ui'
 import { useOrganisasi } from '@/stores/organisasi'
@@ -19,6 +19,8 @@ import { usePegawai } from '@/stores/pegawai'
 import { formatPanjang, formatPendek } from '@/lib/tanggal'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import { useSesi } from '@/stores/sesi'
+import { useTeguran } from '@/stores/teguran'
+import { TINGKAT_SP, KEADAAN_SP } from '@/lib/teguran'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
@@ -34,6 +36,9 @@ const p = computed(() => peg.cari(route.params.id))
 // Foto dibaca ulang dari data pegawai (foto yang baru diunggah lewat Profil/Kartu langsung tampil); cadangan lewat fungsi berkas
 watch(() => [route.params.id, p.value?.foto_id], async ([id]) => { if (!id) return; try { foto.value = (await peg.foto(id)) || '' } catch { foto.value = '' } }, { immediate: true })
 const riwayat = computed(() => peg.riwayat[route.params.id] || [])
+// Surat teguran pegawai ini (server hanya mengembalikan yang boleh dilihat: atasan, pemegang fitur Surat teguran, Tata Usaha)
+const teguran = ref([])
+watch(() => route.params.id, async (id) => { teguran.value = []; if (!id) return; try { teguran.value = await useTeguran().daftar(null, null, id) } catch { teguran.value = [] } }, { immediate: true })
 const JENIS_RIWAYAT = { status_kepegawaian: 'Status kepegawaian', status_keaktifan: 'Status keaktifan', pendidikan: 'Pendidikan', level_muhaffizh: 'Level muhaffizh',
   kategori_honorer: 'Kategori honorer', tmt: 'TMT tugas', unit: 'Bidang/unit', jabatan_fungsional: 'Jabatan fungsional', jabatan_struktural: 'Jabatan struktural' }
 function nilaiRiwayat(r, v) {
@@ -133,6 +138,20 @@ const baris = computed(() => BAGIAN.value.flatMap((b) => b.isi).filter(([k]) => 
           </li>
         </ol>
         <p v-else class="py-3 text-sm text-teks3">Belum ada perubahan tercatat.</p>
+      </section>
+
+      <section v-if="teguran.length" class="kartu w-klinik mt-4 p-5">
+        <div class="mb-3 flex items-center gap-3"><span class="chip-ikon h-10 w-10"><PhWarningOctagon :size="22" weight="duotone" /></span>
+          <div class="min-w-0 flex-1"><h3 class="judul-bagian">Surat teguran</h3><p class="text-sm text-teks3">Terbatas: hanya terlihat oleh atasan, pengelola yang berwenang, dan pegawai yang bersangkutan.</p></div>
+          <router-link :to="{ path: '/persuratan/teguran' }" class="tombol-teks hidden text-sm sm:inline-flex">Buka</router-link></div>
+        <ul class="divide-y divide-garis">
+          <li v-for="x in teguran" :key="x.id" class="flex flex-wrap items-center gap-2 py-2.5 text-sm">
+            <span :class="['lencana', 'w-' + TINGKAT_SP[x.tingkat].w]">{{ TINGKAT_SP[x.tingkat].singkat }}</span>
+            <span class="min-w-0 flex-1"><span class="font-semibold">{{ x.nomor || 'Diproses Tata Usaha' }}</span>
+              <span class="block truncate text-xs text-teks3">{{ x.kategori.join(', ') }}</span></span>
+            <span :class="['lencana', 'w-' + KEADAAN_SP[x.keadaan].w]">{{ KEADAAN_SP[x.keadaan].n }}{{ x.keadaan === 'aktif' ? ' s.d. ' + formatPendek(x.berlaku_sampai) : '' }}</span>
+          </li>
+        </ul>
       </section>
     </div>
 

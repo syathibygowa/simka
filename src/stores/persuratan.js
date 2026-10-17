@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/persuratan.js | v1.5 | Tahap C: santri demo untuk surat diambil juga dari Data Santri | 16/10/2026
+// SIMKA PRO | src/stores/persuratan.js | v1.6 | 14.1.0: hak Surat Teguran (hak_persuratan.teguran), surat SP contoh mode demo | 17/10/2026
 // Persuratan: hak, ketentuan, surat masuk (catat, ubah, batal), disposisi berantai (beri, tarik, selesai), ringkasan, buku agenda;
 // template surat (simpan, hapus) dan surat keluar (simpan draf, kirim ke TU, ajukan tanda tangan, batalkan, arsip, revisi);
 // buku agenda surat keluar = inventaris semua surat (Persuratan + surat dari modul lain).
@@ -7,12 +7,14 @@ import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { pesanGalat } from './lembaga'
 import { useSesi } from './sesi'
 import { useSantri } from './santri'
+import { useTeguran } from './teguran'
 import { hariIniISO } from '@/lib/tanggal'
 import { tambahHari } from '@/lib/persuratan'
 import { TEMPLATE_DEMO, KONTEKS_DEMO, PENANDA_DEMO, SANTRI_SURAT_DEMO } from '@/lib/demoSurat'
 
 const rpc = async (nama, arg) => { const { data, error } = await supabase.rpc(nama, arg); if (error) throw new Error(pesanGalat(error)); return data }
-const HAK_KOSONG = { kelola: false, superadmin: false, pimpinan: false, puncak: false, susun: false, tampil: false, pengaturan: { instruksi: [], batas_bawaan_hari: 3 } }
+const HAK_KOSONG = { kelola: false, superadmin: false, pimpinan: false, puncak: false, susun: false, tampil: false, pengaturan: { instruksi: [], batas_bawaan_hari: 3 },
+  teguran: { lihat: false, usul: false, kelola: false, tu: false, atasan: false, punya: false } }
 const INSTRUKSI = ['Tindak lanjuti', 'Pelajari dan laporkan', 'Hadiri/wakili', 'Koordinasikan', 'Siapkan jawaban', 'Untuk diketahui', 'Edarkan', 'Arsipkan']
 
 // ---------------------------------------------------------------------------------------------- mode demo
@@ -78,6 +80,17 @@ function demo() {
       nilai: { pegawai: { id: 'd-pg', nama: 'Ust. Hasan Basri, Lc.', niy: '2019070101', jabatan: 'Muhaffizh', unit: 'Bidang Tahfizh' }, maksud: 'Mengikuti Daurah Tahfizh Nasional', tujuan: 'Makassar', tanggal_berangkat: hari(4), tanggal_kembali: hari(6) },
       tampilan: potret(tp('perjalanan_dinas')), penanda: [{ posisi: 'kanan', signatory_id: 'sg-dir', employee_id: 'e-dir', nama: PENANDA_DEMO[0].nama, niy: PENANDA_DEMO[0].niy, jabatan: 'Direktur' }] }),
   ]
+  // Surat Teguran contoh (14.1.0): SP-1 untuk Ust. Hasan Basri, sudah terbit
+  keluar.push(k({ id: 'sk-sp1', template_id: tp('teguran_1').id, jenis_nama: 'Surat Teguran Pertama (SP-1)', kategori: 'pegawai', dk: 'D', perihal_kode: 'IZ', format_nomor: 'surat',
+    tanggal_surat: hari(-20), tanggal_hijriah: '8 Rabiul Akhir 1448 H', perihal: 'Surat Teguran Pertama (SP-1) – Ust. Hasan Basri, Lc.', kepada: 'Ust. Hasan Basri, Lc.', status: 'terbit',
+    nomor: 'D.004/IZ/PPTQ-IAS/IV/1448', document_id: 'dk-sp1', terbit_pada: jam(-480), tembusan: ['Ketua Yayasan', 'Kepala Tahfizh', 'Arsip'],
+    disusun_oleh: 'Ust. Hamzah Ridwan, Lc.', disusun_oleh_id: 'e-thf', pemohon: 'Ust. Hamzah Ridwan, Lc.', pemohon_id: 'e-thf',
+    nilai: { pegawai: { id: 'd-pg', nama: 'Ust. Hasan Basri, Lc.', niy: '2019070101', jabatan: 'Muhaffizh', unit: 'Bidang Tahfizh' },
+      pelanggaran: ['Terlambat berulang kali', 'Tidak mengisi jurnal harian atau jurnal mengajar'],
+      uraian: 'Terlambat hadir di halaqah subuh lebih dari lima kali dalam sebulan dan tidak mengisi jurnal harian selama dua pekan.',
+      harapan: 'segera memperbaiki kedisiplinan dan kinerjanya serta menaati tata tertib yang berlaku', masa_berlaku: '6 (enam) bulan' },
+    tampilan: potret(tp('teguran_1')), penanda: [{ posisi: 'kanan', signatory_id: 'sg-dir', employee_id: 'e-dir', nama: PENANDA_DEMO[0].nama, niy: PENANDA_DEMO[0].niy, jabatan: 'Direktur' }],
+    kode_validasi: 'SP1D-7XQ4', status_dokumen: 'sah', ttd: [{ urutan: 1, posisi: 'kanan', nama: PENANDA_DEMO[0].nama, jabatan: 'Direktur', status: 'ditandatangani', waktu: jam(-480) }] }))
   DEMO = { surat, disposisi, keluar, templat: TEMPLATE_DEMO.map((x) => ({ ...x })), pengaturan: { instruksi: [...INSTRUKSI], batas_bawaan_hari: 3 } }
   return DEMO
 }
@@ -114,7 +127,8 @@ export const usePersuratan = defineStore('persuratan', {
     async muatHak() {
       if (MODE_DEMO) {
         const p = useSesi().peran; const D = demo()
-        this.hak = { kelola: p !== 'pegawai', superadmin: p === 'superadmin', pimpinan: p === 'superadmin', puncak: p === 'superadmin', susun: p !== 'pegawai', tampil: true, pengaturan: D.pengaturan }
+        this.hak = { kelola: p !== 'pegawai', superadmin: p === 'superadmin', pimpinan: p === 'superadmin', puncak: p === 'superadmin', susun: p !== 'pegawai', tampil: true, pengaturan: D.pengaturan,
+          teguran: useTeguran().hakDemo() }
       } else this.hak = { ...HAK_KOSONG, ...((await rpc('hak_persuratan')) || {}) }
       this.hakDimuat = true; return this.hak
     },

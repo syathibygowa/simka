@@ -1,4 +1,4 @@
--- SIMKA PRO | supabase/migrations/20261020011200_hak_akses_semua_fitur.sql | v1.0 | Perbaikan 14.0.0: semua menu dapat diatur di Hak Akses (Tidak ada, Lihat, Input/ubah, Kelola) | 17/10/2026
+-- SIMKA PRO | supabase/migrations/20261020011200_hak_akses_semua_fitur.sql | v1.1 | Perbaikan 14.0.0: semua menu dapat diatur di Hak Akses (Tidak ada, Lihat, Input/ubah, Kelola) | 17/10/2026
 -- =====================================================================
 -- SIMKA PRO · Migrasi 112: Hak akses untuk SEMUA fitur
 --   1. Setiap menu SIMKA kini memiliki baris di Hak Akses → Fitur. Yang tidak dapat diatur ditandai "kunci" beserta alasannya
@@ -548,8 +548,8 @@ end $$;
 -- ---------------------------------------------------------------------
 -- 11. PEMERIKSAAN — hasil yang benar: semua baris "Sesuai"
 -- ---------------------------------------------------------------------
-select '1. Katalog: setiap menu punya fitur (39)' as pemeriksaan,
-       case when (select count(*) from public.features where dipakai) = 39 then 'Sesuai' else 'Periksa' end as hasil
+select '1. Katalog: setiap menu punya fitur (39 atau lebih)' as pemeriksaan,
+       case when (select count(*) from public.features where dipakai) >= 39 then 'Sesuai' else 'Periksa' end as hasil
 union all
 select '2. Lapis Semua pegawai tersedia (8 bawaan)',
        case when (select count(*) from public.feature_grants where sasaran = 'semua') >= 8 then 'Sesuai' else 'Periksa' end

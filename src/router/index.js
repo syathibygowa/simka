@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.30 | Perbaikan 14.0.0: halaman admin dibuka mengikuti Hak Akses (meta.menu, meta.izin, meta.boleh) | 17/10/2026
+// SIMKA PRO | src/router/index.js | v3.31 | 14.1.0: halaman Surat Teguran Saya (Profil) | 17/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu; meta.menu/meta.izin/meta.boleh mengikuti Hak Akses.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -25,6 +25,7 @@ const routes = [
       { path: 'tugas', component: () => import('@/pages/umum/Tugas.vue'), meta: { judul: 'Tugas dan menu' } },
       { path: 'profil', component: () => import('@/pages/profil/Profil.vue'), meta: { judul: 'Profil' } },
       { path: 'profil/data', component: () => import('@/pages/profil/DataSaya.vue'), meta: { judul: 'Data Kepegawaian Saya', kembali: '/profil' } },
+      { path: 'profil/teguran', component: () => import('@/pages/profil/TeguranSaya.vue'), meta: { judul: 'Surat Teguran Saya', cetak: false, kembali: '/profil' } },
       { path: 'pegawai', component: () => import('@/pages/pegawai/DaftarPegawai.vue'), meta: { judul: 'Data Pegawai', menu: 'pegawai', cetak: true, kembali: '/tugas' } },
       { path: 'pegawai/baru', component: () => import('@/pages/pegawai/FormPegawai.vue'), meta: { judul: 'Tambah Pegawai', menu: 'pegawai', izin: 'kelola_pegawai', kembali: '/pegawai' } },
       { path: 'pegawai/impor', component: () => import('@/pages/pegawai/ImporPegawai.vue'), meta: { judul: 'Impor Data Pegawai', menu: 'pegawai', izin: 'kelola_pegawai', kembali: '/pegawai' } },

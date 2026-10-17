@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/suratKeluar.js | v1.5 | Perbaikan 13.8.0: garis bawah (__teks__) dan daftar dalam isian surat | 16/10/2026
+// SIMKA PRO | src/lib/suratKeluar.js | v1.6 | 14.1.0: opsi kolom tanda tangan penerima (Surat Teguran) | 17/10/2026
 // Mesin template surat keluar (template sistem, bukan Word). Isi template ditulis sebagai teks biasa:
 //   {kunci}, {kunci.bagian}   isian (lihat ISIAN_GLOBAL dan isian template), mis. {santri.nama}, {pegawai.jabatan}, {lembaga}
 //   *tebal*  _miring_          gaya teks (seperti WhatsApp)
@@ -24,6 +24,7 @@ export const OPSI_SURAT = [
   { k: 'basmalah', n: 'Basmalah di atas surat' }, { k: 'salam', n: 'Salam pembuka' }, { k: 'hamdalah', n: 'Hamdalah sesudah salam' },
   { k: 'doa', n: 'Doa jazakumullahu khairan' }, { k: 'salam_penutup', n: 'Salam penutup' }, { k: 'tembusan', n: 'Tembusan' },
   { k: 'narahubung', n: 'Narahubung' }, { k: 'ditetapkan', n: '"Ditetapkan di … pada tanggal …" (SK)' }, { k: 'pas_foto', n: 'Kotak pas foto 3 × 4 di samping tanda tangan' },
+  { k: 'penerima', n: 'Kolom tanda tangan "Yang menerima" (pegawai pada isian Pilih pegawai) di kanan' },
 ]
 export const JENIS_ISIAN = [
   { k: 'teks', n: 'Teks singkat' }, { k: 'panjang', n: 'Teks panjang' }, { k: 'tanggal', n: 'Tanggal' }, { k: 'hari_tanggal', n: 'Hari dan tanggal' },

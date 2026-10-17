@@ -1,9 +1,11 @@
-<!-- SIMKA PRO | src/components/cetak/SuratResmi.vue | v1.5 | Perbaikan 13.9.0: jarak antara kop surat dan baris nomor surat | 16/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/SuratResmi.vue | v1.6 | 14.1.0: kolom tanda tangan penerima (pegawai) di kanan, pimpinan di kiri | 17/10/2026 -->
 <script setup>
 // Isi surat keluar resmi di dalam DokumenCetak (kop dari DokumenCetak): kepala surat (judul di tengah, atau nomor/lampiran/hal
 // di kiri dengan tempat-tanggal di kanan dan alamat tujuan), basmalah/salam/hamdalah/doa (Latin, miring), isi dari template,
 // tempat dan tanggal ganda (Hijriah bergaris bawah, Masehi tepat di bawahnya rata kanan), satu atau dua penanda tangan (QR bila ditandatangani elektronik), tembusan,
 // narahubung, dan catatan validasi (di kaki halaman). surat = data surat; ttd = baris tanda tangan registri (bila sudah diajukan).
+// 14.1.0: opsi "penerima" (mis. Surat Teguran) menambah kolom "Yang menerima" berisi pegawai pada isian jenis pegawai, di KANAN;
+// penanda tangan pimpinan pindah ke KIRI. diterima = waktu pegawai menyatakan menerima secara elektronik.
 import { computed } from 'vue'
 import { LAFAZ, susunKonteks, renderIsi, renderBaris } from '@/lib/suratKeluar'
 import { formatPanjang, formatPendek, formatJam } from '@/lib/tanggal'
@@ -17,6 +19,7 @@ const props = defineProps({
   kode: { type: String, default: '' },
   statusDokumen: { type: String, default: '' },
   mode: { type: String, default: 'pratinjau' }, // pratinjau | final
+  diterima: { type: String, default: '' },      // waktu penerima menyatakan menerima (Surat Teguran)
 })
 const t = computed(() => props.surat.tampilan || {})
 const opsi = computed(() => t.value.opsi || {})
@@ -39,6 +42,13 @@ const tembusan = computed(() => (props.surat.tembusan || []).filter((x) => Strin
 const draf = computed(() => props.statusDokumen === 'draf' || (!props.kode && props.mode !== 'final'))
 const qr = (p) => (props.kode && p.status === 'ditandatangani' && !p.basah ? svgQR(alamatCek(props.kode)) : '')
 const waktuEl = (p) => (p.waktu ? `${formatPendek(p.waktu)} ${formatJam(p.waktu)} WITA` : '')
+// Penerima: pegawai pada isian jenis pegawai pertama (opsi.penerima)
+const penerima = computed(() => {
+  if (!opsi.value.penerima) return null
+  const i = (t.value.isian || []).find((x) => x.jenis === 'pegawai')
+  const v = i ? (props.surat.nilai || {})[i.kunci] : null
+  return { nama: v?.nama || '', niy: v?.niy || '' }
+})
 </script>
 <template>
   <div class="surat">
@@ -75,7 +85,7 @@ const waktuEl = (p) => (p.waktu ? `${formatPendek(p.waktu)} ${formatJam(p.waktu)
         <tr><td>Pada tanggal</td><td class="tt">:</td><td><span class="tg-ganda"><span class="tg-h">{{ hijri || masehi }}</span><span v-if="hijri && masehi" class="tg-m">{{ masehi }}</span></span></td></tr>
       </table>
       <p v-else-if="t.bentuk === 'tengah'" class="tgl-ttd">{{ kota }}, <span class="tg-ganda"><span class="tg-h">{{ hijri || masehi }}</span><span v-if="hijri && masehi" class="tg-m">{{ masehi }}</span></span></p>
-      <div :class="['blok-ttd', penanda.length > 1 || opsi.pas_foto ? 'dua' : 'satu']">
+      <div :class="['blok-ttd', penanda.length > 1 || opsi.pas_foto || penerima ? 'dua' : 'satu']">
         <div v-if="opsi.pas_foto" class="pas-foto">Pas foto<br>3 × 4</div>
         <div v-for="(p, i) in penanda" :key="i" class="ttd-surat">
           <p v-if="p.pengantar">{{ p.pengantar }}</p>
@@ -86,6 +96,12 @@ const waktuEl = (p) => (p.waktu ? `${formatPendek(p.waktu)} ${formatJam(p.waktu)
           </div>
           <p class="nama-ttd">{{ p.nama || '……………………' }}</p>
           <p v-if="p.niy">NIY. {{ p.niy }}</p>
+        </div>
+        <div v-if="penerima" class="ttd-surat">
+          <p>Yang menerima,</p>
+          <div class="ruang-ttd"><span v-if="diterima" class="ket-terima">Diterima secara elektronik<br>{{ formatPendek(diterima) }} {{ formatJam(diterima) }} WITA</span></div>
+          <p class="nama-ttd">{{ penerima.nama || '……………………' }}</p>
+          <p v-if="penerima.niy">NIY. {{ penerima.niy }}</p>
         </div>
       </div>
     </div>
@@ -147,6 +163,7 @@ const waktuEl = (p) => (p.waktu ? `${formatPendek(p.waktu)} ${formatJam(p.waktu)
 .ttd-qr .qr { display: block; width: 19mm; height: 19mm; flex-shrink: 0; }
 .ttd-qr .qr :deep(svg) { width: 100%; height: 100%; }
 .ttd-qr .ket { font-size: 8pt; line-height: 1.25; }
+.ket-terima { font-size: 8pt; line-height: 1.25; font-style: italic; }
 .tembusan { margin-top: 6pt !important; font-size: 9.5pt; line-height: 1.3; }
 .kaki { display: flex; gap: 8mm; align-items: flex-start; }
 .kaki > * { flex: 1; }

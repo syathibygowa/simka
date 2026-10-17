@@ -1,8 +1,8 @@
-<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.10 | Perbaikan 13.6.0: keterangan versi diringkas | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.11 | 14.1.0: tautan Surat Teguran (hanya bila pegawai memiliki SP) | 17/10/2026 -->
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhSignOut, PhPalette, PhBell, PhInfo, PhLockKey, PhCamera, PhIdentificationCard, PhIdentificationBadge } from '@phosphor-icons/vue'
+import { PhSignOut, PhPalette, PhBell, PhInfo, PhLockKey, PhCamera, PhIdentificationCard, PhIdentificationBadge, PhWarningOctagon } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import { useNotifikasi } from '@/stores/notifikasi'
 import { MODE_DEMO } from '@/lib/supabase'
@@ -15,6 +15,7 @@ import { usePengumuman } from '@/stores/pengumuman'
 import { usePengajuan } from '@/stores/pengajuan'
 import { useKartu } from '@/stores/kartu'
 import { useUI } from '@/stores/ui'
+import { useTeguran } from '@/stores/teguran'
 import { VERSI_APLIKASI, KETERANGAN_VERSI, WAKTU_BUILD } from '@/lib/versi'
 import { formatPendek, formatJam } from '@/lib/tanggal'
 
@@ -22,6 +23,9 @@ const sesi = useSesi(); const notif = useNotifikasi(); const router = useRouter(
 const PERAN = { superadmin: 'Superadmin', admin: 'Admin', pegawai: 'Pegawai' }
 async function keluar() { notif.berhenti(); pengumuman.berhenti(); pengajuan.berhenti(); await sesi.keluar(); router.replace('/masuk') }
 const kt = useKartu(); const uiP = useUI(); const unggahFoto = ref(false)
+// Surat teguran milik akun ini (tautan hanya tampil bila ada)
+const teguran = ref([])
+onMounted(async () => { if (!sesi.isSuperadmin) { try { teguran.value = await useTeguran().saya() } catch { teguran.value = [] } } })
 async function gantiFoto(e) {
   const b = e.target.files?.[0]; e.target.value = ''
   if (!b) return
@@ -62,6 +66,11 @@ function ganti(p) { sesi.masukDemo(p); notif.berhenti(); pengumuman.berhenti(); 
     </router-link>
 
     <KartuSlipProfil v-if="!sesi.isSuperadmin" />
+
+    <router-link v-if="teguran.length" to="/profil/teguran" class="kartu w-klinik flex items-center gap-3 p-5 hover:bg-permukaan2">
+      <span class="chip-ikon h-10 w-10"><PhWarningOctagon :size="22" weight="duotone" /></span>
+      <span class="flex-1"><span class="block font-bold">Surat teguran</span><span class="block text-sm text-teks3">{{ teguran.some((x) => x.status === 'terbit' && !x.diterima_pada) ? 'Ada surat teguran yang belum Anda nyatakan diterima' : `${teguran.length} surat tercatat` }}</span></span>
+    </router-link>
 
     <router-link to="/notifikasi" class="kartu w-notifikasi flex items-center gap-3 p-5 hover:bg-permukaan2">
       <span class="chip-ikon h-10 w-10"><PhBell :size="22" weight="duotone" /></span>

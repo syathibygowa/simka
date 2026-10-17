@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.5 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.6 | 14.1.0: penanda SP aktif pada baris gaji (tanpa potongan otomatis) | 17/10/2026 -->
 <script setup>
 // Rincian satu periode gaji: ringkasan, daftar pegawai (skema, penyesuaian, pendapatan, potongan, diterima),
 // hitung ulang, impor jumlah diterima dari Excel, ekspor Excel, cetak Daftar Gaji F4 mendatar.
@@ -11,6 +11,7 @@ import { useGaji } from '@/stores/gaji'
 import { useLembaga } from '@/stores/lembaga'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
+import { useTeguran } from '@/stores/teguran'
 import { formatPendek, formatPanjang, formatWaktu } from '@/lib/tanggal'
 import { namaPeriode, STATUS_PERIODE, KOLOM_DAFTAR, perKolom, rupiah, angka, bacaRupiah } from '@/lib/gaji'
 import KartuStatistik from '@/components/KartuStatistik.vue'
@@ -31,6 +32,9 @@ async function muat() {
   catch (e) { ui.toast(e.message, 'galat'); emit('tutup') } finally { memuat.value = false }
 }
 onMounted(muat)
+// Penanda surat teguran yang masih berlaku (informasi bagi bendahara; tidak memotong gaji secara otomatis)
+const spAktif = ref({})
+onMounted(async () => { spAktif.value = await useTeguran().spAktif() })
 watch(() => props.id, muat)
 const pr = computed(() => r.value?.periode || {})
 const baris = computed(() => r.value?.baris || [])
@@ -263,6 +267,7 @@ const jumlahKolom = computed(() => Object.fromEntries(KOLOM_DAFTAR.map(([c]) => 
                 <span v-if="b.dalam_revisi" class="lencana w-klinik mb-0.5">Sedang direvisi</span>
                 <span v-else-if="b.revisi_ke" class="lencana w-shift mb-0.5">Revisi ke-{{ b.revisi_ke }}</span>
                 <span v-if="b.dibuka_pegawai" class="lencana w-presensi mb-0.5">Dibuka untuk pegawai</span>
+                <span v-if="spAktif[b.employee_id]" class="lencana w-klinik mb-0.5" title="Surat teguran masih berlaku">SP-{{ spAktif[b.employee_id] }} aktif</span>
                 <p v-if="b.data.catatan?.length" class="w-klinik font-semibold" style="color: var(--c)">{{ b.data.catatan[0] }}<template v-if="b.data.catatan.length > 1"> (+{{ b.data.catatan.length - 1 }})</template></p>
               </td>
             </tr>
@@ -289,6 +294,7 @@ const jumlahKolom = computed(() => Object.fromEntries(KOLOM_DAFTAR.map(([c]) => 
               <span v-if="Number(b.total_penyesuaian)" :class="['lencana', Number(b.total_penyesuaian) < 0 ? 'w-klinik' : 'w-presensi']">Penyesuaian {{ Number(b.total_penyesuaian) > 0 ? '+' : '' }}{{ rupiah(b.total_penyesuaian) }}</span>
               <span v-if="b.item.some((i) => i.sumber === 'manual' && i.kategori !== 'penyesuaian')" class="lencana w-pengajuan">Diubah</span>
               <span v-if="b.data.catatan?.length" class="lencana w-klinik"><PhWarningCircle :size="12" /> {{ b.data.catatan.length }} data kurang</span>
+              <span v-if="spAktif[b.employee_id]" class="lencana w-klinik">SP-{{ spAktif[b.employee_id] }} aktif</span>
               <span v-if="beda(b)" :class="['lencana', beda(b) > 0 ? 'w-presensi' : 'w-pengajuan']">{{ teksBeda(b) }} dari {{ b.bulan_lalu.periode }}</span>
             </div>
           </button>

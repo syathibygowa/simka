@@ -1,6 +1,6 @@
-// SIMKA PRO | src/lib/hakAkses.js | v2.0 | Perbaikan 14.0.0: semua menu SIMKA masuk katalog hak akses, lapis "Semua pegawai", izin admin dipetakan ke fitur | 17/10/2026
+// SIMKA PRO | src/lib/hakAkses.js | v2.2 | 14.1.0: fitur Surat teguran (SP1–SP3) dan izin admin Kelola teguran | 17/10/2026
 // Katalog Hak Akses Fitur: SATU fitur untuk setiap menu (atau sekelompok menu yang tidak terpisahkan), dikelompokkan sesuai
-// grup menu di sidebar. Isi ini sama dengan migrasi 20261020011200_hak_akses_semua_fitur.sql dan dipakai sebagai cadangan bila
+// grup menu di sidebar. Isi ini sama dengan migrasi 20261020011200_hak_akses_semua_fitur.sql (+ 20261021011300, 20261022011400) dan dipakai sebagai cadangan bila
 // kolom keterangan belum ada di database serta sebagai data mode demo.
 //   arti    : makna tingkat 1 (lihat), 2 (input/ubah), 3 (kelola) sesuai pemeriksaan di server
 //   kunci   : bila diisi, fitur tidak dapat diatur di matriks (alasannya ditampilkan)
@@ -60,7 +60,7 @@ export const KATALOG_FITUR = [
 
   // ---------- Santri ----------
   { kode: 'data_santri', nama: 'Data santri', kelompok: 'Santri', urutan: 1, menu: 'Data Santri, Kelengkapan Data',
-    arti: { 1: 'Melihat data seluruh santri', 2: 'Menambah dan mengubah data santri', 3: 'Juga mengimpor, memutasi keluar, dan mengubah status santri' },
+    arti: { 1: 'Melihat data seluruh santri', 2: 'Menambah dan mengubah data santri', 3: 'Juga mengimpor, memutasi keluar, mengubah status, dan mencetak kartu pelajar santri' },
     keterangan: 'Juga membuka menu Tahfizh, Klinik, Perizinan, dan Libur Santri untuk dilihat.', izin: [{ kode: 'kelola_santri', min: 3 }] },
   { kode: 'statistik_santri', nama: 'Statistik santri', kelompok: 'Santri', urutan: 2, menu: 'Statistik Santri',
     arti: { 1: 'Melihat statistik santri seluruh pondok', 2: 'Sama dengan lihat', 3: 'Sama dengan lihat' },
@@ -69,8 +69,8 @@ export const KATALOG_FITUR = [
     arti: { 1: 'Melihat semua kelompok (kelas, kamar, halaqah, ekskul)', 2: 'Mengatur kelompok, pengasuh, anggota, dan kategori ekskul', 3: 'Juga menjalankan Naik Kelas dan pergantian tahun ajaran' },
     izin: [{ kode: 'kelompok_santri', min: 2 }] },
   { kode: 'prestasi', nama: 'Prestasi santri', kelompok: 'Santri', urutan: 4, menu: 'Prestasi Santri',
-    arti: { 1: 'Melihat prestasi seluruh santri', 2: 'Mencatat dan mengubah prestasi santri', 3: 'Sama dengan input/ubah' },
-    keterangan: 'Pengasuh kelompok otomatis melihat prestasi santri asuhannya. Bawaan disalin dari Data santri dan jabatan pimpinan.' },
+    arti: { 1: 'Melihat prestasi seluruh santri', 2: 'Mencatat, mengubah, dan menghapus prestasi santri', 3: 'Sama dengan input/ubah' },
+    keterangan: 'Pengasuh kelompok dan pimpinan unit otomatis untuk santrinya. Santri yang dapat dipilih saat mencatat mengikuti Data santri. Bawaan disalin dari Data santri dan jabatan pimpinan.' },
   { kode: 'nilai', nama: 'Penilaian dan rapor', kelompok: 'Santri', urutan: 5, menu: 'Penilaian',
     arti: { 1: 'Belum berpengaruh (nilai diisi di menu kerja penilai)', 2: 'Belum berpengaruh (nilai diisi di menu kerja penilai)', 3: 'Membuka menu Penilaian: mengatur penilaian, mengelola nilai, dan mencetak rapor' },
     keterangan: 'Pengisian nilai tetap di menu kerja penilai (Guru Mapel, Tahfizh, Ekskul, Wali Kelas).', izin: [{ kode: 'atur_penilaian', min: 3 }, { kode: 'kelola_nilai', min: 3 }] },
@@ -119,14 +119,18 @@ export const KATALOG_FITUR = [
   { kode: 'tata_usaha', nama: 'Persuratan', kelompok: 'Administrasi', urutan: 2, menu: 'Persuratan',
     arti: { 1: 'Membuka menu Persuratan', 2: 'Mengelola surat masuk, surat keluar, dan buku agenda', 3: 'Sama dengan input/ubah' },
     keterangan: 'Pimpinan penerima surat dan penerima disposisi otomatis dapat membuka.', izin: [{ kode: 'kelola_persuratan', min: 2 }] },
-  { kode: 'beban_kerja', nama: 'Beban kerja', kelompok: 'Administrasi', urutan: 3, menu: 'Beban Kerja',
-    arti: { 1: 'Melihat beban kerjanya sendiri', 2: 'Melihat rekap beban kerja seluruh pegawai', 3: 'Juga mengatur jam tupoksi dan tugas tambahan' },
-    keterangan: 'Pimpinan tetap melihat beban kerja anggota unitnya.', izin: [{ kode: 'atur_beban_kerja', min: 3 }] },
-  { kode: 'gaji', nama: 'Gaji', kelompok: 'Administrasi', urutan: 4, menu: 'Gaji', arti: {}, sensitif: true,
+  { kode: 'surat_teguran', nama: 'Surat teguran', kelompok: 'Administrasi', urutan: 3, menu: 'Persuratan → Surat Teguran (SP1–SP3)',
+    arti: { 1: 'Melihat semua surat teguran dan rekapnya', 2: 'Mengusulkan surat teguran bagi pegawai di bidang/unit yang dipimpinnya', 3: 'Mengusulkan bagi semua pegawai, mencabut surat teguran, dan mengatur ketentuannya' },
+    keterangan: 'Surat diproses Tata Usaha dan ditandatangani Direktur (paling tinggi Ketua Yayasan). Penerima, pengusul, dan atasan langsung otomatis melihat surat terkait.',
+    izin: [{ kode: 'kelola_teguran', min: 3 }] },
+  { kode: 'beban_kerja', nama: 'Beban kerja', kelompok: 'Administrasi', urutan: 4, menu: 'Beban Kerja',
+    arti: { 1: 'Melihat beban kerjanya sendiri', 2: 'Melihat rekap beban kerja seluruh pegawai', 3: 'Juga mengatur jam tupoksi, tugas tambahan, dan tampilan di akun pegawai' },
+    keterangan: 'Pimpinan tetap melihat beban kerja anggota unitnya. Pegawai yang dinyalakan "tampil di akun pegawai" tetap melihat beban kerjanya sendiri.', izin: [{ kode: 'atur_beban_kerja', min: 3 }] },
+  { kode: 'gaji', nama: 'Gaji', kelompok: 'Administrasi', urutan: 5, menu: 'Gaji', arti: {}, sensitif: true,
     kunci: 'Fitur sensitif: diatur per orang di tab Fitur sensitif sesuai keputusan yayasan.' },
-  { kode: 'tunjangan', nama: 'Tunjangan', kelompok: 'Administrasi', urutan: 5, menu: 'Tunjangan', arti: {}, sensitif: true,
+  { kode: 'tunjangan', nama: 'Tunjangan', kelompok: 'Administrasi', urutan: 6, menu: 'Tunjangan', arti: {}, sensitif: true,
     kunci: 'Fitur sensitif: mengikuti hak Gaji di tab Fitur sensitif.' },
-  { kode: 'keuangan', nama: 'Keuangan santri', kelompok: 'Administrasi', urutan: 6, menu: 'Keuangan', arti: {}, sensitif: true,
+  { kode: 'keuangan', nama: 'Keuangan santri', kelompok: 'Administrasi', urutan: 7, menu: 'Keuangan', arti: {}, sensitif: true,
     kunci: 'Fitur sensitif: diatur per orang di tab Fitur sensitif sesuai keputusan yayasan.' },
 
   // ---------- Sistem ----------
