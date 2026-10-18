@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoKeuangan.js | v1.3 | 14.2.0: subsidi beririsan periode dan langsung menyesuaikan tagihan | 17/10/2026
+// SIMKA PRO | src/lib/demoKeuangan.js | v1.4 | 14.7.0: rekening/kas, pengeluaran, pindah dana, buku kas, laporan, bebas tunggakan | 18/10/2026
 // Meniru migrasi 7600–8000 agar menu Keuangan dapat dicoba tanpa Supabase. Semua nama fiktif.
 // Hasil baca selalu salinan (seperti hasil server) agar tampilan menyegar setelah perubahan.
 import { SANTRI_DEMO } from '@/lib/demoSantri'
@@ -11,11 +11,12 @@ const id = () => 'k' + urut++
 const kode = () => { const h = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 8; i++) s += h[(urut * 7 + i * 13 + s.length * 5) % h.length]; urut++; return s.slice(0, 4) + '-' + s.slice(4) }
 const tambahHari = (iso, n) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) }
 const ROMAWI = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII']
-const nomorDok = { kuitansi: 0, tagihan: 0 }
-const nomor = (j, tgl) => `${j === 'kuitansi' ? 'KWT' : 'TGH'}.${String(++nomorDok[j]).padStart(3, '0')}/PPTQ-IAS/${ROMAWI[Number(tgl.slice(5, 7)) - 1]}/${tgl.slice(0, 4)}`
+const nomorDok = { kuitansi: 0, tagihan: 0, keluar: 0, masuk: 0, bebas: 0 }
+const AWALAN = { kuitansi: 'KWT', tagihan: 'TGH', keluar: 'BKK', masuk: 'BKM', bebas: 'SKBT' }
+const nomor = (j, tgl) => `${AWALAN[j]}.${String(++nomorDok[j]).padStart(3, '0')}/PPTQ-IAS/${ROMAWI[Number(tgl.slice(5, 7)) - 1]}/${tgl.slice(0, 4)}`
 const BENDAHARA = { nama: 'Ust. Arief Muharief, S.E.', jabatan: 'Bendahara Pondok', niy: '2015070112' }
 
-const D = { siap: false, santri: [], jenis: [], subsidi: [], tagihan: [], bayar: [], surat: [], pengaturan: {} }
+const D = { siap: false, santri: [], jenis: [], subsidi: [], tagihan: [], bayar: [], surat: [], pengaturan: {}, akun: [], entri: [], pindah: [], bebas: [] }
 
 function siapkan() {
   if (D.siap) return
@@ -25,7 +26,24 @@ function siapkan() {
     { bank: 'BRI', nomor: '0123-01-000456-30-1', atas_nama: 'Yayasan Imam Asy-Syathiby Gowa', keterangan: null }],
     jatuh_tempo_hari: 10, batas_surat_hari: 7, pengingat_hari: 3,
     catatan_kuitansi: 'Simpan kuitansi ini sebagai bukti pembayaran yang sah.',
-    catatan_tagihan: 'Apabila sudah melakukan pembayaran, mohon abaikan surat ini dan kirimkan bukti transfer kepada Bendahara.' }
+    catatan_tagihan: 'Apabila sudah melakukan pembayaran, mohon abaikan surat ini dan kirimkan bukti transfer kepada Bendahara.',
+    catatan_bebas: 'Surat keterangan ini berlaku untuk keperluan yang disebutkan dan tidak menghapus kewajiban yang timbul setelah tanggal surat.',
+    kategori_keluar: ['Konsumsi dan dapur', 'Honor dan insentif', 'Listrik, air, dan internet', 'Perlengkapan kebersihan', 'Alat tulis dan administrasi', 'Kegiatan santri', 'Pemeliharaan sarana', 'Transportasi', 'Kesehatan/klinik', 'Setoran ke yayasan', 'Lain-lain'],
+    kategori_masuk: ['Donasi/infak', 'Bantuan pemerintah', 'Penjualan', 'Pengembalian dana', 'Bunga/bagi hasil bank', 'Lain-lain'] }
+  // 14.7.0: rekening dan kas
+  const awalKas = '2026-07-01'
+  D.akun = [
+    { id: 'ak-kas', nama: 'Kas Tunai Bendahara', jenis: 'kas', bank: null, nomor: null, atas_nama: null, keterangan: 'Uang tunai yang dipegang Bendahara Pondok', saldo_awal: 3500000, tanggal_saldo_awal: awalKas, tampil_wali: false, aktif: true, urutan: 0 },
+    { id: 'ak-bsi', nama: 'BSI Operasional Pondok', jenis: 'bank', bank: 'BSI', nomor: '7123456789', atas_nama: 'Pondok Pesantren Imam Asy-Syathiby', keterangan: 'SPP dan biaya rutin', saldo_awal: 25000000, tanggal_saldo_awal: awalKas, tampil_wali: true, aktif: true, urutan: 1 },
+    { id: 'ak-bri', nama: 'BRI Yayasan', jenis: 'bank', bank: 'BRI', nomor: '0123-01-000456-30-1', atas_nama: 'Yayasan Imam Asy-Syathiby Gowa', keterangan: 'Uang pangkal dan pembangunan', saldo_awal: 12000000, tanggal_saldo_awal: awalKas, tampil_wali: true, aktif: true, urutan: 2 },
+  ]
+  const contohKeluar = [[-28, 'ak-kas', 'Konsumsi dan dapur', 'Belanja bahan makanan pekan ke-1', 4250000, 'Pasar Sungguminasa'], [-21, 'ak-bsi', 'Listrik, air, dan internet', 'Tagihan listrik dan internet', 3180000, 'PLN dan Indihome'],
+    [-14, 'ak-kas', 'Konsumsi dan dapur', 'Belanja bahan makanan pekan ke-3', 4120000, 'Pasar Sungguminasa'], [-10, 'ak-bsi', 'Honor dan insentif', 'Insentif muhaffizh halaqah sore', 6500000, 'Para muhaffizh'],
+    [-6, 'ak-kas', 'Perlengkapan kebersihan', 'Sabun, pel, dan kantong sampah', 845000, 'Toko Berkah'], [-3, 'ak-bsi', 'Kegiatan santri', 'Konsumsi lomba pidato bahasa Arab', 1250000, 'Panitia OSIS'],
+    [-2, 'ak-bri', 'Pemeliharaan sarana', 'Perbaikan pompa air asrama putra', 2100000, 'CV Tirta Gowa']]
+  for (const [n, a, k, u, jml, ph] of contohKeluar) { const t = tambahHari(hari, n); D.entri.push({ id: id(), arah: 'keluar', tanggal: t, account_id: a, kategori: k, uraian: u, jumlah: jml, pihak: ph, nomor_bukti: null, bukti_id: null, nomor: nomor('keluar', t), status: 'sah', alasan_batal: null, pencatat: BENDAHARA.nama, dibuat: new Date(Date.now() + n * 864e5).toISOString() }) }
+  { const t = tambahHari(hari, -12); D.entri.push({ id: id(), arah: 'masuk', tanggal: t, account_id: 'ak-bsi', kategori: 'Donasi/infak', uraian: 'Infak pembangunan masjid dari alumni', jumlah: 5000000, pihak: 'Ikatan Alumni', nomor_bukti: null, bukti_id: null, nomor: nomor('masuk', t), status: 'sah', alasan_batal: null, pencatat: BENDAHARA.nama, dibuat: new Date().toISOString() }) }
+  D.pindah.push({ id: id(), tanggal: tambahHari(hari, -7), dari_id: 'ak-kas', ke_id: 'ak-bsi', jumlah: 5000000, keterangan: 'Setor tunai SPP ke bank', status: 'sah', alasan_batal: null, pencatat: BENDAHARA.nama, dibuat: new Date().toISOString() })
   D.santri = SANTRI_DEMO().map((s) => ({ id: s.id, nis: s.nis, nama: s.nama_lengkap, jk: s.jenis_kelamin, jenjang: s.jenjang, tingkat: s.tingkat, status: s.status,
     tahun_masuk: s.tahun_masuk, kelas: `${s.tingkat}${s.jenis_kelamin === 'L' ? 'A' : 'B'}`,
     kamar: s.jenis_kelamin === 'L' ? ['Kamar Umar', 'Kamar Ali', 'Kamar Utsman'][s.tingkat % 3] : ['Kamar Aisyah', 'Kamar Khadijah'][s.tingkat % 2],
@@ -128,8 +146,8 @@ const barisBayar = (py) => { const st = s(py.student_id)
 const terbuka = (b) => ['belum', 'sebagian'].includes(b.status)
 
 export const demo = {
-  hak: () => { siapkan(); return { kelola: true, lihat: true, superadmin: true, penanda_tangan: true, jabatan_ttd: BENDAHARA.jabatan, ada_penanda_tangan: true, pengaturan: salin(D.pengaturan) } },
-  simpanPengaturan(p) { siapkan(); Object.assign(D.pengaturan, salin(p)); return salin(D.pengaturan) },
+  hak: () => { siapkan(); return { kelola: true, lihat: true, superadmin: true, penanda_tangan: true, jabatan_ttd: BENDAHARA.jabatan, ada_penanda_tangan: true, pengaturan: pengaturanDemo() } },
+  simpanPengaturan(p) { siapkan(); const x = salin(p); delete x.rekening; Object.assign(D.pengaturan, x); return pengaturanDemo() },
   jenis() { siapkan(); return salin(D.jenis.map((f) => ({ ...f, jumlah_tagihan: D.tagihan.filter((b) => b.fee_type_id === f.id && b.status !== 'batal').length }))) },
   simpanJenis(p) {
     siapkan()
@@ -197,7 +215,8 @@ export const demo = {
       if (sisa > 0) throw new Error(`Jumlah melebihi seluruh sisa tagihan santri ini; kelebihan Rp${sisa.toLocaleString('id-ID')}.`) }
     const total = alok.reduce((a, x) => a + x.jumlah, 0); if (!total) throw new Error('Tidak ada tagihan yang dibayar.')
     const tgl = p.tanggal || hariIniISO()
-    const py = { id: id(), student_id: st.id, tanggal: tgl, cara: p.cara, rekening_tujuan: p.rekening_tujuan || null, penyetor: p.penyetor || null, keterangan: p.keterangan || null,
+    const akun = p.riwayat ? null : (p.account_id || (p.cara === 'transfer' ? 'ak-bsi' : 'ak-kas')); const ak = D.akun.find((a) => a.id === akun)
+    const py = { id: id(), student_id: st.id, tanggal: tgl, cara: p.cara, account_id: akun, rekening_tujuan: p.rekening_tujuan || (ak?.jenis === 'bank' ? `${ak.bank} ${ak.nomor}` : null), penyetor: p.penyetor || null, keterangan: p.keterangan || null,
       jumlah: total, bukti_id: null, nomor: p.riwayat ? null : nomor('kuitansi', tgl), kode_validasi: p.riwayat ? null : kode(), riwayat: !!p.riwayat, status: 'sah', created_at: new Date().toISOString(), dicatat: BENDAHARA.nama, items: [] }
     if (p.riwayat && !py.keterangan) py.keterangan = 'Catatan pembayaran lama'
     for (const x of alok) { x.b.dibayar += x.jumlah; segarkan(x.b); py.items.push({ bill_id: x.b.id, jumlah: x.jumlah, sisa: x.b.nominal - x.b.dibayar }) }
@@ -306,7 +325,110 @@ export const demo = {
       per_jenis: D.jenis.map((f) => { const b = aktif.filter((x) => x.fee_type_id === f.id); return { fee_type_id: f.id, jenis: f.nama, siklus: f.siklus, tagihan: jumlah(b.map((x) => x.nominal)), dibayar: jumlah(b.map((x) => x.dibayar)), sisa: jumlah(b.filter(terbuka).map((x) => x.nominal - x.dibayar)) } }).filter((x) => x.tagihan > 0),
       per_bulan: bulan.map((m) => ({ bulan: m, masuk: jumlah(sah.filter((py) => py.tanggal.slice(0, 7) === m).map((py) => py.jumlah)) })),
       tempo_terdekat: tb.filter((b) => b.jatuh_tempo >= h).sort((a, b) => a.jatuh_tempo.localeCompare(b.jatuh_tempo)).slice(0, 8).map((b) => ({ bill_id: b.id, student_id: b.student_id, nama: s(b.student_id).nama, nis: s(b.student_id).nis, kelas: s(b.student_id).kelas, tagihan: b.nama, jatuh_tempo: b.jatuh_tempo, sisa: b.nominal - b.dibayar })),
-      ada_penanda_tangan: true, jenis_biaya: D.jenis.filter((f) => f.aktif).length })
+      ada_penanda_tangan: true, jenis_biaya: D.jenis.filter((f) => f.aktif).length,
+      saldo: D.akun.filter((a) => a.aktif).reduce((x, a) => x + saldo(a.id), 0),
+      keluar_bulan_ini: jumlah(D.entri.filter((e) => e.status === 'sah' && e.arah === 'keluar' && e.tanggal.slice(0, 7) === h.slice(0, 7)).map((e) => e.jumlah)),
+      masuk_lain_bulan_ini: jumlah(D.entri.filter((e) => e.status === 'sah' && e.arah === 'masuk' && e.tanggal.slice(0, 7) === h.slice(0, 7)).map((e) => e.jumlah)) })
   },
   beranda() { const r = demo.ringkasan(); return { masuk_hari_ini: r.masuk_hari_ini, transaksi_hari_ini: r.transaksi_hari_ini, santri_menunggak: r.santri_menunggak, tempo_pekan: r.tempo_pekan, ada_penanda_tangan: true } },
+  // ---------- 14.7.0: rekening/kas, transaksi lain, pindah dana, buku kas, laporan, bebas tunggakan ----------
+  rekening() { siapkan(); return salin(D.akun.map((a) => akunJson(a)).sort((a, b) => b.aktif - a.aktif || a.urutan - b.urutan)) },
+  simpanRekening(p) {
+    siapkan(); if (String(p.nama || '').trim().length < 3) throw new Error('Isi nama rekening/kas (minimal 3 huruf).')
+    if (p.jenis === 'bank' && (!p.bank || !/^[0-9 .-]{5,30}$/.test(p.nomor || '') || String(p.atas_nama || '').trim().length < 3)) throw new Error('Lengkapi nama bank, nomor rekening (angka), dan atas nama.')
+    const x = { ...salin(p), saldo_awal: Number(p.saldo_awal) || 0 }
+    const i = D.akun.findIndex((a) => a.id === p.id); if (i >= 0) Object.assign(D.akun[i], x); else D.akun.push({ ...x, id: id(), aktif: p.aktif ?? true, urutan: D.akun.length })
+  },
+  hapusRekening(aid) { siapkan(); const a = D.akun.find((x) => x.id === aid); if (akunJson(a).dipakai) { a.aktif = false; return 'nonaktif' } D.akun = D.akun.filter((x) => x.id !== aid); return 'dihapus' },
+  catatTransaksi(p) {
+    siapkan(); const j = Math.round(Number(p.jumlah) || 0); if (j <= 0) throw new Error('Isi jumlah transaksi.'); if (!p.account_id) throw new Error('Pilih rekening/kas yang aktif.')
+    if (!p.kategori) throw new Error('Pilih kategori.'); if (String(p.uraian || '').trim().length < 3) throw new Error('Isi uraian transaksi.')
+    const t = p.tanggal || hariIniISO(); const e = { id: id(), arah: p.arah, tanggal: t, account_id: p.account_id, kategori: p.kategori, uraian: p.uraian.trim(), jumlah: j, pihak: p.pihak || null, nomor_bukti: p.nomor_bukti || null,
+      bukti_id: null, nomor: nomor(p.arah === 'keluar' ? 'keluar' : 'masuk', t), status: 'sah', alasan_batal: null, pencatat: BENDAHARA.nama, dibuat: new Date().toISOString() }
+    D.entri.push(e); return { id: e.id, nomor: e.nomor, saldo: saldo(p.account_id) }
+  },
+  batalTransaksi(eid, alasan) { const e = D.entri.find((x) => x.id === eid); e.status = 'batal'; e.alasan_batal = alasan },
+  catatPindah(p) { siapkan(); if (!p.dari_id || !p.ke_id || p.dari_id === p.ke_id) throw new Error('Pilih rekening asal dan tujuan yang berbeda.'); const j = Math.round(Number(p.jumlah) || 0); if (j <= 0) throw new Error('Isi jumlah yang dipindahkan.')
+    D.pindah.push({ id: id(), tanggal: p.tanggal || hariIniISO(), dari_id: p.dari_id, ke_id: p.ke_id, jumlah: j, keterangan: p.keterangan || null, status: 'sah', alasan_batal: null, pencatat: BENDAHARA.nama, dibuat: new Date().toISOString() }) },
+  batalPindah(tid, alasan) { const t = D.pindah.find((x) => x.id === tid); t.status = 'batal'; t.alasan_batal = alasan },
+  transaksi(p = {}) {
+    siapkan(); const nama = (a) => D.akun.find((x) => x.id === a)?.nama
+    const e = D.entri.filter((x) => x.tanggal >= p.mulai && x.tanggal <= p.selesai && (!p.arah || x.arah === p.arah) && (!p.account_id || x.account_id === p.account_id))
+      .map((x) => ({ ...x, jenis: x.arah, akun: nama(x.account_id) }))
+    const t = D.pindah.filter((x) => x.tanggal >= p.mulai && x.tanggal <= p.selesai && (!p.arah || p.arah === 'pindah') && (!p.account_id || [x.dari_id, x.ke_id].includes(p.account_id)))
+      .map((x) => ({ ...x, jenis: 'pindah', account_id: x.dari_id, akun: nama(x.dari_id), akun_tujuan: nama(x.ke_id), kategori: 'Pindah dana', uraian: x.keterangan || 'Pindah dana' }))
+    return salin([...e, ...t].sort((a, b) => b.tanggal.localeCompare(a.tanggal) || b.dibuat.localeCompare(a.dibuat)))
+  },
+  bukuKas(p = {}) {
+    siapkan(); const mulai = p.mulai; const selesai = p.selesai; const akunPilih = D.akun.filter((a) => (p.account_id ? a.id === p.account_id : a.aktif))
+    const akun = akunPilih.map((a) => { const m = mutasi(mulai, selesai, a.id); return { id: a.id, nama: a.nama, jenis: a.jenis, bank: a.bank, nomor: a.nomor, atas_nama: a.atas_nama,
+      saldo_awal: saldo(a.id, tambahHari(mulai, -1)), masuk: m.reduce((x, y) => x + y.masuk, 0), keluar: m.reduce((x, y) => x + y.keluar, 0), saldo_akhir: saldo(a.id, selesai) } })
+    let awal = akun.reduce((x, a) => x + a.saldo_awal, 0)
+    const m = akunPilih.filter((a) => a.saldo_awal > 0 && a.tanggal_saldo_awal >= mulai && a.tanggal_saldo_awal <= selesai)
+      .map((a) => ({ tanggal: a.tanggal_saldo_awal, waktu: '', account_id: a.id, sumber: 'saldo_awal', ref: a.id, nomor: null, uraian: 'Saldo awal ' + a.nama, pihak: null, kategori: 'Saldo awal', masuk: a.saldo_awal, keluar: 0 }))
+      .concat(akunPilih.flatMap((a) => mutasi(mulai, selesai, a.id)).filter((x) => p.account_id || !x.sumber.startsWith('pindah')))
+      .sort((a, b) => a.tanggal.localeCompare(b.tanggal) || String(a.waktu).localeCompare(String(b.waktu)))
+    const baris = m.map((x) => { awal += x.masuk - x.keluar; return { ...x, akun: D.akun.find((a) => a.id === x.account_id)?.nama, saldo: awal } })
+    return salin({ mulai, selesai, akun, saldo_awal: akun.reduce((x, a) => x + a.saldo_awal, 0), baris, masuk: baris.reduce((x, y) => x + y.masuk, 0), keluar: baris.reduce((x, y) => x + y.keluar, 0), saldo_akhir: akun.reduce((x, a) => x + a.saldo_akhir, 0) })
+  },
+  laporan(p = {}) {
+    siapkan(); const { mulai, selesai } = p; const di = (t) => t >= mulai && t <= selesai; const h = hariIniISO()
+    const perJenis = new Map()
+    for (const py of D.bayar.filter((x) => x.status === 'sah' && di(x.tanggal))) for (const i of py.items) { const b = D.tagihan.find((x) => x.id === i.bill_id); const f = j(b.fee_type_id)
+      const r = perJenis.get(f.id) || { jenis: f.nama, jumlah: 0, transaksi: new Set(), u: f.urutan }; r.jumlah += i.jumlah; r.transaksi.add(py.id); perJenis.set(f.id, r) }
+    const kelompokan = (arah) => { const m = new Map(); for (const e of D.entri.filter((x) => x.status === 'sah' && x.arah === arah && di(x.tanggal))) { const r = m.get(e.kategori) || { kategori: e.kategori, jumlah: 0, transaksi: 0 }; r.jumlah += e.jumlah; r.transaksi++; m.set(e.kategori, r) } return [...m.values()].sort((a, b) => b.jumlah - a.jumlah) }
+    const tg = D.tagihan.filter((b) => b.status !== 'batal' && di(b.jatuh_tempo))
+    return salin({ mulai, selesai, masuk_tagihan: [...perJenis.values()].sort((a, b) => a.u - b.u).map((r) => ({ jenis: r.jenis, jumlah: r.jumlah, transaksi: r.transaksi.size })),
+      masuk_lain: kelompokan('masuk'), keluar: kelompokan('keluar'),
+      akun: D.akun.filter((a) => a.aktif).map((a) => { const m = mutasi(mulai, selesai, a.id); return { nama: a.nama, jenis: a.jenis, saldo_awal: saldo(a.id, tambahHari(mulai, -1)), masuk: m.reduce((x, y) => x + y.masuk, 0), keluar: m.reduce((x, y) => x + y.keluar, 0), saldo_akhir: saldo(a.id, selesai) } }),
+      tagihan: D.jenis.map((f) => { const b = tg.filter((x) => x.fee_type_id === f.id); const nom = b.reduce((x, y) => x + y.nominal, 0); const d = b.reduce((x, y) => x + y.dibayar, 0)
+        return { jenis: f.nama, siklus: f.siklus, tagihan: b.length, santri: new Set(b.map((x) => x.student_id)).size, lunas: b.filter((x) => x.status === 'lunas').length, nominal: nom, dibayar: d, sisa: nom - d, persen: nom ? Math.round(d * 1000 / nom) / 10 : 100 } }).filter((x) => x.tagihan),
+      tunggakan: { santri: new Set(D.tagihan.filter((b) => terbuka(b) && b.jatuh_tempo < h).map((b) => b.student_id)).size, jumlah: D.tagihan.filter((b) => terbuka(b) && b.jatuh_tempo < h).reduce((x, b) => x + b.nominal - b.dibayar, 0) },
+      subsidi: tg.reduce((x, b) => x + b.potongan, 0) })
+  },
+  cekBebas(sid) {
+    siapkan(); const h = hariIniISO(); const tb = D.tagihan.filter((b) => b.student_id === sid && terbuka(b))
+    return salin({ santri: ringkas(sid), terbuka: tb.filter((b) => b.tanggal_tagih <= h).map((b) => ({ bill_id: b.id, tagihan: b.nama, jatuh_tempo: b.jatuh_tempo, sisa: b.nominal - b.dibayar })),
+      mendatang: tb.filter((b) => b.tanggal_tagih > h).map((b) => ({ bill_id: b.id, tagihan: b.nama, tanggal_tagih: b.tanggal_tagih, sisa: b.nominal - b.dibayar })),
+      lunas: { tagihan: D.tagihan.filter((b) => b.student_id === sid && b.status === 'lunas').length, jumlah: D.tagihan.filter((b) => b.student_id === sid && b.status === 'lunas').reduce((x, b) => x + b.nominal, 0),
+        terakhir: D.bayar.filter((py) => py.student_id === sid && py.status === 'sah').map((py) => py.tanggal).sort().pop() || null },
+      riwayat: D.bebas.filter((l) => l.student_id === sid).map((l) => ({ id: l.id, nomor: l.nomor, tanggal: l.tanggal, keperluan: l.keperluan, status: l.status })).reverse() })
+  },
+  terbitkanBebas(p) {
+    const c = demo.cekBebas(p.student_id); if (String(p.keperluan || '').trim().length < 5) throw new Error('Tuliskan keperluan surat (minimal 5 huruf), mis. pengambilan ijazah atau pindah sekolah.')
+    if (c.terbuka.length) throw new Error(`Santri ini masih memiliki ${c.terbuka.length} tagihan belum lunas (Rp${c.terbuka.reduce((x, b) => x + b.sisa, 0).toLocaleString('id-ID')}). Surat bebas tunggakan belum dapat diterbitkan.`)
+    const h = hariIniISO(); const l = { id: id(), student_id: p.student_id, nomor: nomor('bebas', h), tanggal: h, keperluan: p.keperluan.trim(), ringkasan: { lunas: c.lunas, mendatang: c.mendatang }, kode_validasi: kode(), status: 'sah', created_at: new Date().toISOString() }
+    D.bebas.push(l); return { id: l.id, nomor: l.nomor, kode_validasi: l.kode_validasi }
+  },
+  suratBebas(ids) { siapkan(); return salin(D.bebas.filter((l) => ids.includes(l.id)).map((l) => ({ ...l, santri: ringkas(l.student_id), ttd: { ...BENDAHARA, waktu: l.created_at } }))) },
+  daftarBebas(p = {}) { siapkan(); return salin(D.bebas.filter((l) => !p.student_id || l.student_id === p.student_id).map((l) => ({ ...l, nama: s(l.student_id).nama, nis: s(l.student_id).nis, kelas: s(l.student_id).kelas, pembuat: BENDAHARA.nama })).reverse()) },
+  cabutBebas(lid, alasan) { const l = D.bebas.find((x) => x.id === lid); l.status = 'dicabut'; l.alasan_cabut = alasan },
+}
+
+// ---------- pembantu 14.7.0 ----------
+function pengaturanDemo() {
+  return salin({ ...D.pengaturan, rekening: D.akun.filter((a) => a.aktif && a.jenis === 'bank' && a.tampil_wali).map((a) => ({ id: a.id, bank: a.bank, nomor: a.nomor, atas_nama: a.atas_nama, keterangan: a.keterangan })) })
+}
+/** Mutasi sah satu rekening dalam rentang (sejak tanggal saldo awal). */
+function mutasi(mulai, selesai, aid) {
+  const a = D.akun.find((x) => x.id === aid); if (!a) return []
+  const di = (t) => t >= a.tanggal_saldo_awal && (!mulai || t >= mulai) && (!selesai || t <= selesai)
+  const st = (sid) => D.santri.find((x) => x.id === sid)
+  return [
+    ...D.bayar.filter((py) => py.status === 'sah' && !py.riwayat && py.account_id === aid && di(py.tanggal)).map((py) => ({ tanggal: py.tanggal, waktu: py.created_at, account_id: aid, sumber: 'pembayaran', ref: py.id, nomor: py.nomor,
+      uraian: 'Pembayaran santri: ' + py.items.map((i) => D.tagihan.find((b) => b.id === i.bill_id)?.nama).join(', '), pihak: `${st(py.student_id).nama} (${st(py.student_id).nis})`, kategori: 'Pembayaran tagihan santri', masuk: py.jumlah, keluar: 0 })),
+    ...D.entri.filter((e) => e.status === 'sah' && e.account_id === aid && di(e.tanggal)).map((e) => ({ tanggal: e.tanggal, waktu: e.dibuat, account_id: aid, sumber: e.arah === 'masuk' ? 'masuk_lain' : 'keluar', ref: e.id, nomor: e.nomor,
+      uraian: e.uraian, pihak: e.pihak, kategori: e.kategori, masuk: e.arah === 'masuk' ? e.jumlah : 0, keluar: e.arah === 'keluar' ? e.jumlah : 0 })),
+    ...D.pindah.filter((t) => t.status === 'sah' && t.dari_id === aid && di(t.tanggal)).map((t) => ({ tanggal: t.tanggal, waktu: t.dibuat, account_id: aid, sumber: 'pindah_keluar', ref: t.id, nomor: null,
+      uraian: `Pindah dana ke ${D.akun.find((x) => x.id === t.ke_id)?.nama}${t.keterangan ? ' – ' + t.keterangan : ''}`, pihak: null, kategori: 'Pindah dana', masuk: 0, keluar: t.jumlah })),
+    ...D.pindah.filter((t) => t.status === 'sah' && t.ke_id === aid && di(t.tanggal)).map((t) => ({ tanggal: t.tanggal, waktu: t.dibuat, account_id: aid, sumber: 'pindah_masuk', ref: t.id, nomor: null,
+      uraian: `Pindah dana dari ${D.akun.find((x) => x.id === t.dari_id)?.nama}${t.keterangan ? ' – ' + t.keterangan : ''}`, pihak: null, kategori: 'Pindah dana', masuk: t.jumlah, keluar: 0 })),
+  ]
+}
+function saldo(aid, sampai = hariIniISO()) {
+  const a = D.akun.find((x) => x.id === aid); if (!a || sampai < a.tanggal_saldo_awal) return 0
+  return a.saldo_awal + mutasi(null, sampai, aid).reduce((x, m) => x + m.masuk - m.keluar, 0)
+}
+function akunJson(a) {
+  return { ...a, saldo: saldo(a.id), dipakai: D.bayar.some((py) => py.account_id === a.id) || D.entri.some((e) => e.account_id === a.id) || D.pindah.some((t) => [t.dari_id, t.ke_id].includes(a.id)) }
 }

@@ -1,12 +1,12 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabPengaturanKeu.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabPengaturanKeu.vue | v1.4 | 14.7.0: rekening dan kas (saldo awal), kategori pengeluaran/pemasukan, catatan surat bebas tunggakan | 18/10/2026 -->
 <script setup>
 // Pengaturan keuangan santri (satu tab, tiga bagian):
 //   Jenis biaya : kode, nama, siklus (bulanan/semesteran/tahunan/sekali), nominal standar, tarif khusus per jenjang/tingkat,
 //                 batas berlaku (hanya jenjang/kelas tertentu; santri lain otomatis tidak ditagih),
 //                 bawaan "hanya santri baru". Jenis yang sudah dipakai tagihan dinonaktifkan, bukan dihapus.
 //   Subsidi     : keringanan per santri (persen/nominal, semua jenis atau jenis tertentu, berjangka).
-//   Ketentuan   : rekening lembaga (tercetak di surat tagihan), tanggal jatuh tempo bulanan, batas surat tagihan,
-//                 pengingat jatuh tempo, catatan kuitansi dan surat tagihan.
+//   Ketentuan   : rekening dan kas (14.7.0: saldo awal, tampil di surat/WA wali), tanggal jatuh tempo bulanan, batas surat tagihan,
+//                 pengingat jatuh tempo, catatan kuitansi, surat tagihan, dan surat bebas tunggakan, kategori pengeluaran/pemasukan lain.
 import { ref, computed, onMounted, watch } from 'vue'
 import { PhPlus, PhPencilSimple, PhTrash, PhFloppyDisk, PhInvoice, PhPercent, PhListChecks, PhMagnifyingGlass, PhBank } from '@phosphor-icons/vue'
 import { useKeuangan } from '@/stores/keuangan'
@@ -15,6 +15,7 @@ import { formatPendek } from '@/lib/tanggal'
 import { rupiah, angka, bacaRupiah, SIKLUS, JENJANG, JK_SANTRI, labelTarif } from '@/lib/keuangan'
 import LembarBawah from '@/components/LembarBawah.vue'
 import LembarSubsidi from './LembarSubsidi.vue'
+import KelolaRekeningKeu from './KelolaRekeningKeu.vue'
 
 const keu = useKeuangan(); const ui = useUI()
 const bagian = ref('jenis')
@@ -49,11 +50,13 @@ async function hapusSubsidi(x) {
 
 // ---------- Ketentuan ----------
 const fk = ref(null)
-const isiKetentuan = () => { fk.value = JSON.parse(JSON.stringify({ ...keu.pengaturan, rekening: keu.pengaturan.rekening || [] })) }
+const isiKetentuan = () => { const x = JSON.parse(JSON.stringify(keu.pengaturan)); fk.value = { ...x, kategori_keluar: (x.kategori_keluar || []).join('\n'), kategori_masuk: (x.kategori_masuk || []).join('\n') } }
 onMounted(isiKetentuan)
 async function simpanKetentuan() {
   proses.value = true
-  try { await keu.simpanPengaturan({ ...fk.value, rekening: fk.value.rekening.filter((r) => r.bank || r.nomor || r.atas_nama) }); isiKetentuan(); ui.toast('Ketentuan keuangan disimpan.') }
+  const baris = (t) => String(t || '').split('\n').map((x) => x.trim()).filter((x) => x.length >= 3)
+  const { rekening, ...isi } = fk.value
+  try { await keu.simpanPengaturan({ ...isi, kategori_keluar: baris(fk.value.kategori_keluar), kategori_masuk: baris(fk.value.kategori_masuk) }); isiKetentuan(); ui.toast('Ketentuan keuangan disimpan.') }
   catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 const toggle = (arr, v) => { const i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v) }
@@ -114,18 +117,8 @@ const tarifLabel = labelTarif
 
     <!-- Ketentuan -->
     <section v-else-if="fk" class="grid gap-4 xl:grid-cols-2">
-      <div class="kartu w-shift p-4 sm:p-5">
-        <h3 class="judul-bagian mb-1 flex items-center gap-2"><PhBank :size="20" weight="duotone" style="color: var(--c)" /> Rekening lembaga</h3>
-        <p class="mb-3 text-sm text-teks3">Tercetak pada surat tagihan dan pesan WA sebagai tujuan transfer. Rekening pribadi tidak dicatat.</p>
-        <div v-for="(r, i) in fk.rekening" :key="i" class="mb-2 grid gap-2 rounded-xl border border-garis p-3 sm:grid-cols-[1fr_1.3fr]">
-          <input v-model="r.bank" class="isian" placeholder="Bank (mis. BSI)" :aria-label="'Bank rekening ' + (i + 1)" :disabled="!keu.hak.kelola" />
-          <input v-model="r.nomor" class="isian tabular-nums" placeholder="Nomor rekening" inputmode="numeric" :aria-label="'Nomor rekening ' + (i + 1)" :disabled="!keu.hak.kelola" />
-          <input v-model="r.atas_nama" class="isian sm:col-span-2" placeholder="Atas nama" :aria-label="'Atas nama rekening ' + (i + 1)" :disabled="!keu.hak.kelola" />
-          <div class="flex gap-2 sm:col-span-2"><input v-model="r.keterangan" class="isian flex-1" placeholder="Keterangan (tidak wajib)" :aria-label="'Keterangan rekening ' + (i + 1)" :disabled="!keu.hak.kelola" />
-            <button v-if="keu.hak.kelola" class="tombol-ikon h-11 w-11 text-merah" aria-label="Hapus rekening" @click="fk.rekening.splice(i, 1)"><PhTrash :size="20" /></button></div>
-        </div>
-        <button v-if="keu.hak.kelola" class="tombol-garis" @click="fk.rekening.push({ bank: '', nomor: '', atas_nama: '', keterangan: '' })"><PhPlus :size="18" /> Tambah rekening</button>
-      </div>
+      <!-- 14.7.0: rekening bank dan kas tunai dikelola sebagai daftar rekening (saldo awal, tampil di surat/WA wali) -->
+      <KelolaRekeningKeu class="xl:col-span-2" />
       <div class="kartu w-pengaturan p-4 sm:p-5">
         <h3 class="judul-bagian mb-3">Jatuh tempo dan dokumen</h3>
         <div class="grid gap-3 sm:grid-cols-3">
@@ -135,7 +128,16 @@ const tarifLabel = labelTarif
         </div>
         <div class="mt-3"><label class="label-isian" for="kk-ck">Catatan pada kuitansi</label><textarea id="kk-ck" v-model="fk.catatan_kuitansi" rows="2" class="isian" :disabled="!keu.hak.kelola" /></div>
         <div class="mt-3"><label class="label-isian" for="kk-ct">Catatan pada surat tagihan</label><textarea id="kk-ct" v-model="fk.catatan_tagihan" rows="3" class="isian" :disabled="!keu.hak.kelola" /></div>
+        <div class="mt-3"><label class="label-isian" for="kk-cb">Catatan pada surat keterangan bebas tunggakan</label><textarea id="kk-cb" v-model="fk.catatan_bebas" rows="2" class="isian" :disabled="!keu.hak.kelola" /></div>
         <p class="mt-2 text-xs text-teks3">Setiap pagi pukul 07.05 WITA pengelola keuangan menerima notifikasi tagihan yang akan jatuh tempo; setiap Senin, ringkasan tunggakan. Isi pesan WA ke wali diatur di Setelan → Template WA.</p>
+      </div>
+      <div class="kartu w-klinik p-4 sm:p-5">
+        <h3 class="judul-bagian mb-1">Kategori transaksi lain</h3>
+        <p class="mb-3 text-sm text-teks3">Dipakai saat mencatat pengeluaran dan pemasukan di luar tagihan santri (tab Kas dan bank), satu per baris.</p>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div><label class="label-isian" for="kk-kk">Kategori pengeluaran</label><textarea id="kk-kk" v-model="fk.kategori_keluar" rows="8" class="isian" :disabled="!keu.hak.kelola" /></div>
+          <div><label class="label-isian" for="kk-km">Kategori pemasukan lain</label><textarea id="kk-km" v-model="fk.kategori_masuk" rows="8" class="isian" :disabled="!keu.hak.kelola" /></div>
+        </div>
       </div>
       <button v-if="keu.hak.kelola" class="tombol-utama xl:col-span-2" :disabled="proses" @click="simpanKetentuan"><PhFloppyDisk :size="20" weight="duotone" /> Simpan ketentuan</button>
     </section>

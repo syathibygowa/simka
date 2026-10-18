@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/keuangan.js | v1.2 | Fase 13 – Impor catatan keuangan lama | 12/10/2026
+// SIMKA PRO | src/stores/keuangan.js | v1.3 | 14.7.0: rekening/kas, transaksi lain, pindah dana, buku kas, laporan, bebas tunggakan | 18/10/2026
 // Menu Keuangan (Blueprint Bagian 37). Hak dihitung server (hak_keuangan): superadmin dan pegawai yang ditunjuk
 // superadmin untuk "keuangan" (Hak Akses → Fitur sensitif). Jabatan Bendahara Wustha/SMA tidak otomatis berhak.
 // Semua penulisan lewat fungsi server; mode demo memakai lib/demoKeuangan.
@@ -14,10 +14,10 @@ async function rpc(nama, args) {
 }
 const D = (f, ...a) => Promise.resolve().then(() => f(...a))
 
-export const PENGATURAN_KEUANGAN = { rekening: [], jatuh_tempo_hari: 10, batas_surat_hari: 7, pengingat_hari: 3, catatan_kuitansi: '', catatan_tagihan: '' }
+export const PENGATURAN_KEUANGAN = { rekening: [], jatuh_tempo_hari: 10, batas_surat_hari: 7, pengingat_hari: 3, catatan_kuitansi: '', catatan_tagihan: '', catatan_bebas: '', kategori_keluar: [], kategori_masuk: [] }
 
 export const useKeuangan = defineStore('keuangan', {
-  state: () => ({ hak: {}, hakDimuat: false, pengaturan: { ...PENGATURAN_KEUANGAN }, jenis: [], jenisDimuat: false }),
+  state: () => ({ hak: {}, hakDimuat: false, pengaturan: { ...PENGATURAN_KEUANGAN }, jenis: [], jenisDimuat: false, akun: [] }),
   getters: {
     jabatanSaya: (s) => s.hak.jabatan_ttd || (s.hak.superadmin ? 'Pengelola Sistem' : 'Pengelola Keuangan'),
     jenisAktif: (s) => s.jenis.filter((f) => f.aktif),
@@ -68,5 +68,22 @@ export const useKeuangan = defineStore('keuangan', {
     ringkasan() { return MODE_DEMO ? D(demo.ringkasan) : rpc('ringkasan_keuangan') },
     kelompok() { return MODE_DEMO ? D(demo.kelompok) : rpc('kelompok_keuangan').then((r) => r || []) },
     ringkasanBeranda() { return MODE_DEMO ? D(demo.beranda) : rpc('ringkasan_keuangan_beranda') },
+    // ---------- 14.7.0: rekening dan kas ----------
+    async muatAkun() { this.akun = MODE_DEMO ? demo.rekening() : (await rpc('daftar_rekening_keu')) || []; return this.akun },
+    async simpanAkun(p) { MODE_DEMO ? demo.simpanRekening(p) : await rpc('simpan_rekening_keu', { p }); await Promise.all([this.muatAkun(), this.muatHak()]) },
+    async hapusAkun(id) { const r = MODE_DEMO ? demo.hapusRekening(id) : await rpc('hapus_rekening_keu', { p_id: id }); await Promise.all([this.muatAkun(), this.muatHak()]); return r },
+    catatTransaksi(p) { return MODE_DEMO ? D(demo.catatTransaksi, p) : rpc('catat_transaksi_keu', { p }) },
+    batalTransaksi(id, alasan) { return MODE_DEMO ? D(demo.batalTransaksi, id, alasan) : rpc('batal_transaksi_keu', { p_id: id, p_alasan: alasan }) },
+    catatPindah(p) { return MODE_DEMO ? D(demo.catatPindah, p) : rpc('catat_pindah_dana', { p }) },
+    batalPindah(id, alasan) { return MODE_DEMO ? D(demo.batalPindah, id, alasan) : rpc('batal_pindah_dana', { p_id: id, p_alasan: alasan }) },
+    transaksi(p) { return MODE_DEMO ? D(demo.transaksi, p) : rpc('daftar_transaksi_keu', { p }).then((r) => r || []) },
+    bukuKas(p) { return MODE_DEMO ? D(demo.bukuKas, p) : rpc('buku_kas', { p }) },
+    laporan(p) { return MODE_DEMO ? D(demo.laporan, p) : rpc('laporan_keuangan', { p }) },
+    // ---------- 14.7.0: Surat Keterangan Bebas Tunggakan ----------
+    cekBebas(sid) { return MODE_DEMO ? D(demo.cekBebas, sid) : rpc('cek_bebas_tunggakan', { p_sid: sid }) },
+    terbitkanBebas(p) { return MODE_DEMO ? D(demo.terbitkanBebas, p) : rpc('terbitkan_bebas_tunggakan', { p }) },
+    suratBebas(ids) { return MODE_DEMO ? D(demo.suratBebas, ids) : rpc('surat_bebas_tunggakan', { p_ids: ids }).then((r) => r || []) },
+    daftarBebas(p = {}) { return MODE_DEMO ? D(demo.daftarBebas, p) : rpc('daftar_bebas_tunggakan', { p }).then((r) => r || []) },
+    cabutBebas(id, alasan) { return MODE_DEMO ? D(demo.cabutBebas, id, alasan) : rpc('cabut_bebas_tunggakan', { p_id: id, p_alasan: alasan }) },
   },
 })

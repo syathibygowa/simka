@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabTagihan.vue | v1.4 | 14.2.0: saringan corong di HP, tombol WA hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabTagihan.vue | v1.5 | 14.7.0: daftar ringkas satu baris per santri dengan total; pengirim WA berurutan dengan template | 18/10/2026 -->
 <script setup>
 // Buat tagihan massal: pilih jenis biaya → periode (bulan-bulan untuk bulanan; tahun ajaran untuk tahunan; sekali)
 // → sasaran (jenjang, tingkat, santri baru saja, atau santri tertentu) → pratinjau (standar, subsidi, tagihan, sudah ada)
@@ -8,6 +8,8 @@
 //       saringan "Segera jatuh tempo"/"Lewat jatuh tempo" → WA pengingat/tunggakan berurutan ke wali.
 // v1.2: tahun ajaran tagihan dapat dipilih mundur dua tahun (kelas santri saat itu dihitung server); sasaran putra/putri;
 //       tombol "Impor catatan lama" (Excel) untuk tagihan dan pembayaran tahun-tahun lalu.
+// v1.5 (14.7.0): tampilan bawaan "Per santri" (satu baris per santri: jumlah tagihan, nominal, dibayar, sisa, status); "Per tagihan" tetap ada.
+//       WA ke wali memakai pengirim berurutan (template tagihan baru/pengingat/tunggakan, kemajuan 1/n, pratinjau, lewati).
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import * as XLSX from 'xlsx'
@@ -17,7 +19,7 @@ import { useLembaga } from '@/stores/lembaga'
 import { useUI } from '@/stores/ui'
 import { formatPendek, hariIniISO } from '@/lib/tanggal'
 import { rupiah, angka, SIKLUS, STATUS_TAGIHAN, JENJANG, TINGKAT, namaBulan, bulanTahunAjaran, perSantri, JK_SANTRI, labelTarif, tahunAjaranMundur, pesanTagihanBaru, pesanPengingat, pesanTunggakan } from '@/lib/keuangan'
-import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
+import PengirimWABeruntun from '@/components/PengirimWABeruntun.vue'
 import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
@@ -44,7 +46,21 @@ watch(() => [saring.value.fee_type_id, saring.value.kunci_periode, saring.value.
 watch(() => route.query.status, (v) => { if (typeof v === 'string') saring.value.status = v })
 const periodeAda = computed(() => [...new Set(daftar.value.map((b) => b.kunci_periode))].sort())
 const tampil = computed(() => { const c = saring.value.q.toLowerCase().trim(); return c ? daftar.value.filter((b) => b.nama.toLowerCase().includes(c) || b.nis.startsWith(c)) : daftar.value })
-const jml = (k) => tampil.value.reduce((a, b) => a + Number(b[k] || 0), 0)
+const jml = (k) => tampil.value.filter((b) => b.status !== 'batal').reduce((a, b) => a + Number(b[k] || 0), 0)
+// 14.7.0: ringkas per santri (satu baris per santri dengan total)
+const tampilan = ref('santri')
+const perSantriRingkas = computed(() => {
+  const m = new Map()
+  for (const b of tampil.value) {
+    const x = m.get(b.student_id) || { student_id: b.student_id, nis: b.nis, nama: b.nama, jk: b.jk, kelas: b.kelas, wali: b.wali, n: 0, lunas: 0, nominal: 0, dibayar: 0, sisa: 0, lewat: false, tempo: null, isi: [] }
+    x.isi.push(b)
+    if (b.status !== 'batal') { x.n++; x.nominal += Number(b.nominal); x.dibayar += Number(b.dibayar); x.sisa += Number(b.sisa); if (b.status === 'lunas') x.lunas++ }
+    if (b.lewat) x.lewat = true
+    if (['belum', 'sebagian'].includes(b.status) && (!x.tempo || b.jatuh_tempo < x.tempo)) x.tempo = b.jatuh_tempo
+    m.set(b.student_id, x)
+  }
+  return [...m.values()].map((x) => ({ ...x, status: !x.n ? 'batal' : x.sisa <= 0 ? 'lunas' : x.dibayar > 0 ? 'sebagian' : 'belum' }))
+})
 const STATUS = [{ k: '', n: 'Semua' }, { k: 'tunggak', n: 'Belum lunas' }, { k: 'segera', n: 'Segera jatuh tempo' }, { k: 'lewat', n: 'Lewat jatuh tempo' }, { k: 'lunas', n: 'Lunas' }, { k: 'batal', n: 'Dibatalkan' }]
 const buka = (b) => router.replace({ query: { ...route.query, santri: b.student_id } })
 const labelPeriode = (k) => (k === 'sekali' ? 'Sekali' : /-S[12]$/.test(k) ? `Semester ${k.endsWith('1') ? 'ganjil' : 'genap'} ${k.slice(0, 9)}` : namaBulan(k))
@@ -82,18 +98,22 @@ async function buat() {
   try {
     const kunci = pra.value.periode.map((x) => x.kunci); const fid = f.value.fee_type_id; const lalu = taLalu.value
     const r = await keu.buatTagihan(muatan()); ui.toast(`${r.dibuat} tagihan dibuat${r.dilewati ? `, ${r.dilewati} sudah ada` : ''}.`); f.value = null; await muat()   // tidak memicu muat ulang tab (agar lembar "Kabari wali" tetap terbuka)
-    if (r.dibuat && !lalu) { const baruDibuat = await keu.daftarTagihan({ fee_type_id: fid, kunci, status: 'tunggak' }); kirim.value = { jenis: 'baru', santri: perSantri(baruDibuat) } }
+    if (r.dibuat && !lalu) { const baruDibuat = await keu.daftarTagihan({ fee_type_id: fid, kunci, status: 'tunggak' }); kirim.value = { jenis: 'baru', santri: perSantri(baruDibuat), sesudahBuat: true } }
   }
   catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 
 // ---------- WA ke wali ----------
 const kirim = ref(null)   // { jenis: 'baru' | 'segera' | 'lewat', santri: [...] }
-const bukaKirim = () => { kirim.value = { jenis: saring.value.status === 'segera' ? 'segera' : 'lewat', santri: perSantri(tampil.value.filter((b) => ['belum', 'sebagian'].includes(b.status))) } }
-const JUDUL_KIRIM = { baru: 'Kabari wali: tagihan baru', segera: 'WA pengingat jatuh tempo', lewat: 'WA pemberitahuan tunggakan' }
-const penerimaWA = computed(() => (kirim.value?.santri || []).map((x) => ({ employee_id: x.id, nama: `${x.wali?.nama || 'Wali'} – ${x.nama}`, no_hp: x.wali?.no_hp,
-  unit: `${x.kelas || '–'} · ${rupiah(x.isi.reduce((a, b) => a + Number(b.sisa), 0))}`, x })))
-const pesanKirim = (p) => (kirim.value.jenis === 'baru' ? pesanTagihanBaru : kirim.value.jenis === 'segera' ? pesanPengingat : pesanTunggakan)(p.x, p.x.isi, keu.pengaturan)
+const bukaKirim = () => { kirim.value = { jenis: saring.value.status === 'segera' ? 'segera' : saring.value.status === 'lewat' ? 'lewat' : 'baru', santri: perSantri(tampil.value.filter((b) => ['belum', 'sebagian'].includes(b.status))) } }
+const JUDUL_KIRIM = { baru: 'Kirim tagihan ke wali melalui WhatsApp', segera: 'WA pengingat jatuh tempo', lewat: 'WA pemberitahuan tunggakan' }
+const penerimaWA = computed(() => (kirim.value?.santri || []).map((x) => ({ id: x.id, nama: `${x.wali?.nama || 'Wali'} – ${x.nama}`, no_hp: x.wali?.no_hp,
+  ket: `${x.kelas || '–'} · ${rupiah(x.isi.reduce((a, b) => a + Number(b.sisa), 0))}`, x })))
+const TEMPLAT_WA = [
+  { k: 'baru', n: 'Tagihan', f: (p) => pesanTagihanBaru(p.x, p.x.isi, keu.pengaturan) },
+  { k: 'segera', n: 'Pengingat jatuh tempo', f: (p) => pesanPengingat(p.x, p.x.isi, keu.pengaturan) },
+  { k: 'lewat', n: 'Tunggakan', f: (p) => pesanTunggakan(p.x, p.x.isi, keu.pengaturan) },
+]
 
 function ekspor() {
   const aoa = [['No.', 'NIS', 'Nama', 'JK', 'Kelas', 'Jenis', 'Tagihan', 'Jatuh tempo', 'Standar', 'Subsidi', 'Tagihan (Rp)', 'Dibayar', 'Sisa', 'Status', 'Keterangan subsidi'],
@@ -124,13 +144,51 @@ function ekspor() {
         :class="['tab-garis', (saring.status === s.k) && 'aktif']" role="tab" :aria-selected="saring.status === s.k">{{ s.n }}</button>
       </div>
     </div>
-    <button v-if="['segera', 'lewat', 'tunggak'].includes(saring.status) && tampil.length" class="tombol-wa-garis mb-3 w-presensi" @click="bukaKirim">
-      <PhWhatsappLogo :size="20" weight="duotone" /> {{ saring.status === 'segera' ? 'WA pengingat jatuh tempo ke wali' : 'WA tunggakan ke wali' }}</button>
+    <div class="mb-3 flex flex-wrap items-center gap-2">
+      <div class="flex rounded-xl bg-permukaan2 p-1" role="radiogroup" aria-label="Tampilan daftar tagihan">
+        <button v-for="(n, k) in { santri: 'Per santri', rinci: 'Per tagihan' }" :key="k" type="button" role="radio" :aria-checked="tampilan === k" @click="tampilan = k"
+          :class="['min-h-[38px] rounded-lg px-3 text-sm font-semibold', tampilan === k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ n }}</button></div>
+      <button v-if="tampil.some((b) => ['belum', 'sebagian'].includes(b.status))" class="tombol-wa-garis w-presensi" @click="bukaKirim">
+        <PhWhatsappLogo :size="20" weight="duotone" /> {{ saring.status === 'segera' ? 'WA pengingat ke wali' : saring.status === 'lewat' ? 'WA tunggakan ke wali' : 'WA tagihan ke wali' }}</button>
+    </div>
     <p v-if="!keu.jenisAktif.length" class="kartu mb-3 p-4 text-sm">Belum ada jenis biaya aktif. Isi dulu di <router-link to="/keuangan/pengaturan" class="font-semibold underline">Pengaturan → Jenis biaya</router-link>.</p>
     <p v-if="memuat" class="kartu p-8 text-center text-sm text-teks3">Memuat…</p>
     <p v-else-if="!tampil.length" class="kartu p-8 text-center text-sm text-teks3">Tidak ada tagihan yang sesuai.</p>
     <template v-else>
-      <p class="mb-2 text-sm text-teks2">{{ tampil.length }} tagihan · nominal {{ rupiah(jml('nominal')) }} · dibayar {{ rupiah(jml('dibayar')) }} · sisa <b>{{ rupiah(jml('sisa')) }}</b></p>
+      <p class="mb-2 text-sm text-teks2">{{ perSantriRingkas.length }} santri · {{ tampil.length }} tagihan · nominal {{ rupiah(jml('nominal')) }} · dibayar {{ rupiah(jml('dibayar')) }} · sisa <b>{{ rupiah(jml('sisa')) }}</b></p>
+      <!-- 14.7.0: satu baris per santri -->
+      <template v-if="tampilan === 'santri'">
+      <div class="kartu hidden overflow-x-auto lg:block">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-garis bg-permukaan2 text-teks2"><tr><th class="px-3 py-3 font-bold">NIS</th><th class="px-3 py-3 font-bold">Nama</th><th class="px-3 py-3 text-center font-bold">Tagihan</th>
+            <th class="px-3 py-3 font-bold">Rincian</th><th class="px-3 py-3 text-right font-bold">Jumlah (Rp)</th><th class="px-3 py-3 text-right font-bold">Dibayar</th>
+            <th class="px-3 py-3 text-right font-bold">Sisa</th><th class="px-3 py-3 font-bold">Status</th></tr></thead>
+          <tbody class="divide-y divide-garis">
+            <tr v-for="x in perSantriRingkas" :key="x.student_id" class="cursor-pointer hover:bg-permukaan2" @click="buka(x)">
+              <td class="px-3 py-2.5 tabular-nums text-teks2">{{ x.nis }}</td><td class="px-3 py-2.5"><p class="font-semibold">{{ x.nama }}</p><p class="text-xs text-teks3">{{ x.kelas || '–' }} · {{ x.jk }}</p></td>
+              <td class="px-3 py-2.5 text-center tabular-nums">{{ x.lunas }}/{{ x.n }}</td>
+              <td class="max-w-[22rem] px-3 py-2.5 text-xs text-teks2">{{ x.isi.filter((b) => b.status !== 'batal').map((b) => b.tagihan).join(', ') }}
+                <p v-if="x.tempo" :class="['mt-0.5', x.lewat ? 'font-semibold text-merah' : 'text-teks3']">{{ x.lewat ? 'Lewat jatuh tempo sejak' : 'Jatuh tempo terdekat' }} {{ formatPendek(x.tempo) }}</p></td>
+              <td class="px-3 py-2.5 text-right tabular-nums">{{ angka(x.nominal) }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ angka(x.dibayar) }}</td>
+              <td :class="['px-3 py-2.5 text-right font-bold tabular-nums', x.lewat && 'text-merah']">{{ angka(x.sisa) }}</td>
+              <td class="px-3 py-2.5"><span :class="['lencana', 'w-' + STATUS_TAGIHAN[x.status].w]">{{ x.status === 'belum' ? 'Belum bayar' : STATUS_TAGIHAN[x.status].n }}</span></td>
+            </tr>
+          </tbody>
+          <tfoot class="border-t-2 border-garis font-bold"><tr><td class="px-3 py-2.5" colspan="4">Jumlah {{ perSantriRingkas.length }} santri</td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ angka(jml('nominal')) }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ angka(jml('dibayar')) }}</td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ angka(jml('sisa')) }}</td><td /></tr></tfoot>
+        </table>
+      </div>
+      <ul class="space-y-2.5 lg:hidden">
+        <li v-for="x in perSantriRingkas" :key="x.student_id"><button class="kartu w-full p-3.5 text-left active:bg-permukaan2" @click="buka(x)">
+          <div class="flex items-start gap-2"><div class="min-w-0 flex-1"><p class="truncate font-bold">{{ x.nama }}</p><p class="truncate text-xs text-teks3">{{ x.nis }} · {{ x.kelas || '–' }} · {{ x.lunas }}/{{ x.n }} lunas</p></div>
+            <span :class="['lencana shrink-0', 'w-' + STATUS_TAGIHAN[x.status].w]">{{ x.status === 'belum' ? 'Belum bayar' : STATUS_TAGIHAN[x.status].n }}</span></div>
+          <p class="mt-1.5 flex justify-between text-sm"><span class="text-teks2">Tagihan {{ rupiah(x.nominal) }}</span>
+            <span :class="['font-bold tabular-nums', x.lewat && 'text-merah']">{{ x.sisa > 0 ? 'sisa ' + rupiah(x.sisa) : 'Lunas' }}</span></p>
+        </button></li>
+      </ul>
+      </template>
+      <template v-else>
       <div class="kartu hidden overflow-x-auto lg:block">
         <table class="w-full text-left text-sm">
           <thead class="border-b border-garis bg-permukaan2 text-teks2"><tr><th class="px-3 py-3 font-bold">NIS</th><th class="px-3 py-3 font-bold">Nama</th><th class="px-3 py-3 font-bold">JK</th>
@@ -156,12 +214,13 @@ function ekspor() {
             <span class="font-bold tabular-nums">{{ b.status === 'lunas' ? rupiah(b.nominal) : 'sisa ' + rupiah(b.sisa) }}</span></p>
         </button></li>
       </ul>
+      </template>
     </template>
 
     <LembarBawah :model-value="!!kirim" @update:model-value="(v) => !v && (kirim = null)" :judul="kirim ? JUDUL_KIRIM[kirim.jenis] : ''" lebar>
       <div v-if="kirim" class="pb-2">
-        <p v-if="kirim.jenis === 'baru'" class="mb-3 text-sm text-teks2">Tagihan sudah dibuat. Kabari wali satu per satu melalui WhatsApp (pesan dapat disunting di Setelan → Template WA), atau tutup bila tidak perlu.</p>
-        <DaftarKirimWA :penerima="penerimaWA" :pesan="pesanKirim" :kunci="'tagihan-' + kirim.jenis + '-' + hariIniISO()" />
+        <p v-if="kirim.sesudahBuat" class="mb-3 text-sm text-teks2">Tagihan sudah dibuat. Kabari wali satu per satu melalui WhatsApp (pesan dapat disunting di Setelan → Template WA), atau tutup bila tidak perlu.</p>
+        <PengirimWABeruntun :penerima="penerimaWA" :templat="TEMPLAT_WA" :templat-awal="kirim.jenis" :kunci="'tagihan-' + hariIniISO() + '-' + penerimaWA.length" />
       </div>
     </LembarBawah>
 

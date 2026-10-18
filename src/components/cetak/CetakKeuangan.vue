@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/CetakKeuangan.vue | v1.2 | Perbaikan: nama berkas PDF (nama santri - Kuitansi/Surat Tagihan - bulan) | 16/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/CetakKeuangan.vue | v1.3 | 14.7.0: Surat Keterangan Bebas Tunggakan | 18/10/2026 -->
 <script setup>
 // Dokumen keuangan santri, kertas F4 tegak, satu dokumen per halaman (dapat banyak sekaligus):
 //   • KUITANSI      : kop, nomor; telah terima dari, untuk santri, tanggal, cara bayar; rincian per tagihan (tagihan,
@@ -6,6 +6,8 @@
 //                     Bendahara Pondok bertanda tangan elektronik dengan QR (kanan).
 //   • SURAT TAGIHAN : kop, nomor, perihal; kepada wali; identitas santri; rincian tagihan berjalan dan tunggakan;
 //                     jumlah dan terbilang; batas pembayaran; rekening lembaga; tanda tangan elektronik Bendahara.
+//   • BEBAS TUNGGAKAN (14.7.0): kop, judul, nomor; identitas santri; pernyataan tidak memiliki tunggakan sampai tanggal surat;
+//                     keperluan; catatan; tanda tangan "Mengetahui" Direktur (kiri) dan Bendahara bertanda tangan elektronik (kanan).
 // Pembungkus sama dengan CetakSlip (cetak-saja/tampil) sehingga hanya dokumen yang dipratinjau yang tercetak.
 import { ref, watch, onBeforeUnmount, computed } from 'vue'
 import { PhPrinter, PhX } from '@phosphor-icons/vue'
@@ -19,15 +21,18 @@ import { namaBerkas, pasangJudul, lepasJudul, periodeBulan } from '@/lib/namaBer
 const lembaga = useLembaga(); lembaga.muat()
 const pratinjau = defineModel('pratinjau', { type: Boolean, default: false })
 const props = defineProps({
-  jenis: { type: String, default: 'kuitansi' },     // 'kuitansi' | 'tagihan'
+  jenis: { type: String, default: 'kuitansi' },     // 'kuitansi' | 'tagihan' | 'bebas'
   dok: { type: Array, default: () => [] },
   pengaturan: { type: Object, default: () => ({}) },
   pencetak: String,
 })
 const kuitansi = computed(() => props.jenis === 'kuitansi')
-const judul = computed(() => (kuitansi.value ? 'Kuitansi' : 'Surat Tagihan') + (props.dok.length === 1 ? ` ${props.dok[0].santri?.nama || ''}` : ` (${props.dok.length} santri)`))
+const bebas = computed(() => props.jenis === 'bebas')
+const NAMA = { kuitansi: 'Kuitansi', tagihan: 'Surat Tagihan', bebas: 'Surat Keterangan Bebas Tunggakan' }
+const direktur = computed(() => lembaga.signatories?.find((x) => /^direktur$/i.test(x.jabatan_tertulis)) || {})
+const judul = computed(() => NAMA[props.jenis] + (props.dok.length === 1 ? ` ${props.dok[0].santri?.nama || ''}` : ` (${props.dok.length} santri)`))
 let dipasang = false
-const namaPdf = computed(() => namaBerkas(props.dok.length === 1 ? props.dok[0].santri?.nama : `${props.dok.length} santri`, kuitansi.value ? 'Kuitansi' : 'Surat Tagihan', props.dok.length === 1 ? props.dok[0].nomor : '', periodeBulan(props.dok[0]?.tanggal)))
+const namaPdf = computed(() => namaBerkas(props.dok.length === 1 ? props.dok[0].santri?.nama : `${props.dok.length} santri`, NAMA[props.jenis], props.dok.length === 1 ? props.dok[0].nomor : '', periodeBulan(props.dok[0]?.tanggal)))
 const skala = ref(1)
 const ukur = () => { skala.value = Math.min(1, (window.innerWidth - 32) / 812) }
 const esc = (e) => e.key === 'Escape' && (pratinjau.value = false)
@@ -103,6 +108,37 @@ const batal = (d) => d.status === 'batal' || d.status === 'dicabut'
             </section>
           </template>
 
+          <!-- ================= BEBAS TUNGGAKAN (14.7.0) ================= -->
+          <template v-else-if="bebas">
+            <h1 class="judul-dok">Surat Keterangan Bebas Tunggakan</h1>
+            <p class="subjudul-dok">Nomor {{ d.nomor || '–' }}</p>
+            <p class="rata" style="margin-top: 10pt">Yang bertanda tangan di bawah ini, {{ d.ttd?.nama || '…' }}, {{ d.ttd?.jabatan || 'Bendahara Pondok' }}, atas nama {{ lembaga.identitas?.nama_lengkap || 'pondok' }}, menerangkan bahwa:</p>
+            <table class="meta-dok identitas" style="margin: 6pt 0 6pt 12pt">
+              <tbody>
+                <tr><td>Nama santri</td><td>: <b>{{ d.santri?.nama }}</b></td></tr>
+                <tr><td>NIS</td><td>: {{ d.santri?.nis }}</td></tr>
+                <tr><td>Kelas/jenjang</td><td>: {{ kelas(d.santri) }}</td></tr>
+                <tr><td>Orang tua/wali</td><td>: {{ d.santri?.wali?.nama || '–' }}</td></tr>
+              </tbody>
+            </table>
+            <p class="rata">berdasarkan catatan keuangan santri sampai dengan tanggal surat ini, <b>tidak memiliki tunggakan</b> pembayaran kepada pondok
+              ({{ d.ringkasan?.lunas?.tagihan || 0 }} tagihan telah lunas dengan jumlah {{ rupiah(d.ringkasan?.lunas?.jumlah || 0) }}).</p>
+            <p class="rata" style="margin-top: 6pt">Surat keterangan ini diberikan untuk keperluan <b>{{ d.keperluan }}</b>.</p>
+            <p v-if="d.ringkasan?.mendatang?.length" class="rata" style="margin-top: 6pt">Catatan: terdapat tagihan yang ditagihkan sesudah tanggal surat ini, yaitu
+              {{ d.ringkasan.mendatang.map((b) => `${b.tagihan} (${rupiah(b.sisa)})`).join(', ') }}.</p>
+            <p v-if="pengaturan.catatan_bebas" class="rata" style="margin-top: 6pt">{{ pengaturan.catatan_bebas }}</p>
+            <p class="rata" style="margin-top: 6pt">Demikian surat keterangan ini dibuat dengan sebenarnya untuk dipergunakan sebagaimana mestinya.</p>
+            <section class="ttd-keu">
+              <div><p>&nbsp;</p><p>Mengetahui,</p><p>{{ direktur.jabatan_tertulis || 'Direktur' }}</p><div class="ruang" /><p class="nama">{{ direktur.nama || '.................................' }}</p><p v-if="direktur.niy">NIY. {{ direktur.niy }}</p></div>
+              <div>
+                <p>{{ kota }}, {{ formatPanjang(d.tanggal) }}</p><p>&nbsp;</p><p>{{ d.ttd?.jabatan || 'Bendahara Pondok' }}</p>
+                <div class="ruang"><div v-if="d.kode_validasi && !batal(d)" class="ttd-qr"><span class="qr" v-html="qr(d.kode_validasi)" />
+                  <span class="ket">Ditandatangani secara elektronik<br>{{ waktuEl(d.ttd?.waktu) }}</span></div></div>
+                <p class="nama">{{ d.ttd?.nama || '' }}</p><p v-if="d.ttd?.niy">NIY. {{ d.ttd.niy }}</p>
+              </div>
+            </section>
+          </template>
+
           <!-- ================= SURAT TAGIHAN ================= -->
           <template v-else>
             <table class="meta-dok kepala-surat">
@@ -163,7 +199,7 @@ const batal = (d) => d.status === 'batal' || d.status === 'dicabut'
           </template>
 
           <p v-if="lembaga.catatanCetak" class="catatan-cetak">{{ dicetak }}</p>
-          <p v-if="d.kode_validasi" class="catatan-keu">{{ kuitansi ? 'Kuitansi' : 'Surat tagihan' }} ini ditandatangani secara elektronik melalui SIMKA PRO. Keaslian dapat diperiksa dengan memindai QR
+          <p v-if="d.kode_validasi" class="catatan-keu">{{ kuitansi ? 'Kuitansi' : bebas ? 'Surat keterangan' : 'Surat tagihan' }} ini ditandatangani secara elektronik melalui SIMKA PRO. Keaslian dapat diperiksa dengan memindai QR
             atau membuka halaman Cek Keabsahan Dokumen dan memasukkan kode validasi <b>{{ d.kode_validasi }}</b>.</p>
         </article>
       </div>

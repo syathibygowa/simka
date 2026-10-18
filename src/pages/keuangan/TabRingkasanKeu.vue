@@ -1,10 +1,10 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabRingkasanKeu.vue | v1.0 | Fase 13 – Ringkasan keuangan santri (angka langsung) | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabRingkasanKeu.vue | v1.1 | 14.7.0: kartu saldo seluruh rekening dan pengeluaran bulan ini | 18/10/2026 -->
 <script setup>
 // Ringkasan: kartu statistik langsung (diperbarui setiap menit), capaian per jenis biaya, pemasukan 6 bulan,
 // dan tagihan yang akan jatuh tempo (ketuk untuk membuka rincian santri).
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { PhHandCoins, PhCalendarCheck, PhWallet, PhWarningCircle, PhUsersThree, PhClockCountdown, PhInvoice, PhReceipt, PhCaretRight } from '@phosphor-icons/vue'
+import { PhHandCoins, PhCalendarCheck, PhWallet, PhWarningCircle, PhUsersThree, PhClockCountdown, PhInvoice, PhReceipt, PhCaretRight, PhBank, PhArrowCircleUp } from '@phosphor-icons/vue'
 import { useKeuangan } from '@/stores/keuangan'
 import { useUI } from '@/stores/ui'
 import { formatPendek, formatJam, sekarang } from '@/lib/tanggal'
@@ -38,6 +38,8 @@ const buka = (sid) => router.replace({ query: { ...route.query, santri: sid } })
         <KartuStatistik class="w-[72%] shrink-0 snap-start sm:w-auto" judul="Tunggakan lewat jatuh tempo" :nilai="rupiah(r.lewat)" :ikon="PhWarningCircle" warna="klinik" keterangan="Belum dibayar setelah jatuh tempo" ke="/keuangan/tunggakan" />
         <KartuStatistik class="w-[44%] shrink-0 snap-start sm:w-auto" judul="Santri menunggak" :nilai="r.santri_menunggak" :ikon="PhUsersThree" warna="pengajuan" keterangan="Ada tagihan lewat tempo" ke="/keuangan/santri?status=lewat" />
         <KartuStatistik class="w-[44%] shrink-0 snap-start sm:w-auto" judul="Jatuh tempo 7 hari" :nilai="r.tempo_pekan" :ikon="PhClockCountdown" warna="tahfizh" :keterangan="rupiah(r.tempo_pekan_nominal)" />
+        <KartuStatistik v-if="r.saldo != null" class="w-[72%] shrink-0 snap-start sm:w-auto" judul="Saldo seluruh rekening/kas" :nilai="rupiah(r.saldo)" :ikon="PhBank" warna="shift" keterangan="Kas tunai dan rekening bank aktif" ke="/keuangan/kas" />
+        <KartuStatistik v-if="r.keluar_bulan_ini != null" class="w-[72%] shrink-0 snap-start sm:w-auto" judul="Pengeluaran bulan ini" :nilai="rupiah(r.keluar_bulan_ini)" :ikon="PhArrowCircleUp" warna="laporan" :keterangan="`Pemasukan lain ${rupiah(r.masuk_lain_bulan_ini || 0)}`" ke="/keuangan/laporan" />
       </div>
 
       <div v-if="!r.jenis_biaya" class="kartu w-keuangan mb-4 flex flex-wrap items-center gap-3 p-4">

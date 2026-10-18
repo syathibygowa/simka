@@ -1,11 +1,11 @@
-<!-- SIMKA PRO | src/pages/keuangan/LembarSantriKeu.vue | v1.4 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/LembarSantriKeu.vue | v1.5 | 14.7.0: tombol Surat Keterangan Bebas Tunggakan | 18/10/2026 -->
 <script setup>
 // Rincian keuangan satu santri (dibuka dengan ?santri=<id> dari tab mana pun):
 // ringkasan, kontak wali (WA), tagihan (ubah/batalkan beralasan), pembayaran (kuitansi, WA konfirmasi, batalkan),
 // subsidi, dan surat tagihan. Tombol utama: catat pembayaran, surat tagihan, WA tunggakan, tambah subsidi.
 // v1.1: cetak Laporan Keuangan Santri (individu) F4: tagihan, pembayaran, subsidi, dan sisa; TTD Mengetahui Direktur · Bendahara.
 import { ref, computed, watch } from 'vue'
-import { PhReceipt, PhPaperPlaneTilt, PhWhatsappLogo, PhPercent, PhPencilSimple, PhXCircle, PhPrinter, PhTrash, PhFloppyDisk, PhWarningCircle, PhFileText } from '@phosphor-icons/vue'
+import { PhReceipt, PhPaperPlaneTilt, PhWhatsappLogo, PhPercent, PhPencilSimple, PhXCircle, PhPrinter, PhTrash, PhFloppyDisk, PhWarningCircle, PhFileText, PhSealCheck } from '@phosphor-icons/vue'
 import { useLembaga } from '@/stores/lembaga'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -21,6 +21,7 @@ import CetakKeuangan from '@/components/cetak/CetakKeuangan.vue'
 import LembarBayar from './LembarBayar.vue'
 import LembarSuratTagihan from './LembarSuratTagihan.vue'
 import LembarSubsidi from './LembarSubsidi.vue'
+import LembarBebasTunggakan from './LembarBebasTunggakan.vue'
 
 const props = defineProps({ id: { type: String, required: true } })
 const emit = defineEmits(['tutup', 'berubah'])
@@ -47,6 +48,7 @@ const direktur = computed(() => lembaga.signatories.find((x) => /^direktur$/i.te
 const sahBayar = computed(() => (r.value?.pembayaran || []).filter((p) => p.status === 'sah'))
 
 // ---------- Lembar anak ----------
+const bebas = ref(null)
 const bayar = ref(null); const surat = ref(null); const suratIds = ref(null); const subsidi = ref(null)
 const kuitansi = ref([]); const pratinjau = ref(false)
 async function cetakKuitansi(p) { try { kuitansi.value = await keu.kuitansi([p.id]); pratinjau.value = true } catch (e) { ui.toast(e.message, 'galat') } }
@@ -98,6 +100,7 @@ async function hapusSubsidi(x) {
         <a v-if="s.wali?.no_hp && terbuka.length" :href="tautanWA(s.wali.no_hp, pesanTunggak)" target="_blank" rel="noopener" class="tombol-wa-garis w-presensi"><PhWhatsappLogo :size="20" weight="duotone" /> WA {{ lewat.length ? 'tunggakan' : 'tagihan' }}</a>
         <button v-if="keu.hak.kelola" class="tombol-garis" @click="subsidi = { student_id: s.id, nama: s.nama, mulai: '' }"><PhPercent :size="20" /> Subsidi</button>
         <button class="tombol-garis" @click="laporan = true"><PhFileText :size="20" weight="duotone" /> Cetak laporan</button>
+        <button class="tombol-garis" @click="bebas = { id: s.id, nama: s.nama }"><PhSealCheck :size="20" weight="duotone" /> Bebas tunggakan</button>
       </div>
       <ul v-if="r.kontak.length" class="flex flex-wrap gap-2 text-sm">
         <li v-for="k in r.kontak" :key="k.hubungan" class="rounded-xl bg-permukaan2 px-3 py-1.5">{{ HUB[k.hubungan] }}: <b>{{ k.nama || '–' }}</b> {{ k.no_hp || '(tanpa HP)' }}<span v-if="k.utama" class="text-xs text-teks3"> · utama</span></li>
@@ -180,6 +183,7 @@ async function hapusSubsidi(x) {
   <LembarBayar :santri="bayar" :tagihan="r?.tagihan || []" @tutup="bayar = null" @tersimpan="segar" />
   <LembarSuratTagihan :santri="surat" :ids="suratIds" @tutup="(surat = null), (suratIds = null)" @terbit="segar" />
   <LembarSubsidi :isi="subsidi" @tutup="subsidi = null" @tersimpan="segar" />
+  <LembarBebasTunggakan :santri="bebas" @tutup="bebas = null" @terbit="segar" />
   <DokumenCetak v-if="r" v-model:pratinjau="laporan" judul="Laporan Keuangan Santri" :subjudul="`Posisi per ${formatPanjang(hariIniISO())}`" :pencetak="sesi.pengguna?.nama_lengkap">
     <table class="meta-dok" style="margin-bottom: 6pt"><tbody>
       <tr><td style="width: 1%; white-space: nowrap; padding-right: 6pt">Nama santri</td><td>: {{ s.nama }}</td><td style="width: 1%; white-space: nowrap; padding-right: 6pt">Kelas/jenjang</td><td>: {{ s.kelas || '–' }} · {{ JENJANG[s.jenjang] }}</td></tr>

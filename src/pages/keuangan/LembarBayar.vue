@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/LembarBayar.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/LembarBayar.vue | v1.3 | 14.7.0: pembayaran masuk ke rekening/kas yang dipilih | 18/10/2026 -->
 <script setup>
 // Catat pembayaran seorang santri. Tagihan terbuka tampil berurutan dari jatuh tempo tertua; centang tagihan dan
 // ubah jumlahnya (pembayaran sebagian boleh), atau isi "jumlah diterima" untuk dibagi otomatis ke tagihan tertua.
@@ -31,12 +31,15 @@ const terbuka = computed(() => props.tagihan.filter((b) => ['belum', 'sebagian']
 const f = ref(null); const alok = ref({}); const otomatis = ref('')
 watch(() => props.santri, (s) => {
   if (!s) return
-  const rek = keu.pengaturan.rekening?.[0]
-  f.value = { tanggal: hariIniISO(), cara: 'tunai', rekening_tujuan: rek ? `${rek.bank} ${rek.nomor}` : '', penyetor: s.wali?.nama || '', keterangan: '', bukti: null, buktiNama: '', riwayat: false }
+  if (!keu.akun.length) keu.muatAkun().then(() => { if (f.value && !f.value.account_id) f.value.account_id = akunCara('tunai')[0]?.id || '' }).catch(() => {})
+  f.value = { tanggal: hariIniISO(), cara: 'tunai', account_id: akunCara('tunai')[0]?.id || '', rekening_tujuan: '', penyetor: s.wali?.nama || '', keterangan: '', bukti: null, buktiNama: '', riwayat: false }
   alok.value = Object.fromEntries(terbuka.value.map((b) => [b.id, props.pilihAwal.includes(b.id) ? angka(b.sisa) : '']))
   otomatis.value = ''; hasil.value = null
 }, { immediate: true })
 watch(() => f.value?.tanggal, (t) => { if (f.value && t) f.value.riwayat = t < awalTA.value })
+// 14.7.0: rekening/kas tujuan — tunai ke kas, transfer ke rekening bank (dapat dipilih)
+function akunCara(cara) { const a = keu.akun.filter((x) => x.aktif); const cocok = a.filter((x) => (cara === 'tunai' ? x.jenis === 'kas' : x.jenis === 'bank')); return cocok.length ? cocok : a }
+watch(() => f.value?.cara, (c) => { if (f.value && c && !akunCara(c).some((a) => a.id === f.value.account_id)) f.value.account_id = akunCara(c)[0]?.id || '' })
 const pilih = (b) => { alok.value[b.id] = alok.value[b.id] ? '' : angka(b.sisa) }
 function bagi() {
   let sisa = bacaRupiah(otomatis.value) || 0
@@ -64,7 +67,7 @@ async function simpan() {
         kategori: 'bukti_bayar', folder: `SIMKA PRO/Keuangan/${f.value.tanggal.slice(0, 4)}/${f.value.tanggal.slice(5, 7)}` })
     }
     const r = await keu.catatPembayaran({ student_id: props.santri.id, tanggal: f.value.tanggal, cara: f.value.cara,
-      rekening_tujuan: f.value.cara === 'transfer' ? f.value.rekening_tujuan : null, penyetor: f.value.penyetor, keterangan: f.value.keterangan, bukti_id, riwayat: f.value.riwayat,
+      account_id: f.value.riwayat ? null : f.value.account_id || null, rekening_tujuan: null, penyetor: f.value.penyetor, keterangan: f.value.keterangan, bukti_id, riwayat: f.value.riwayat,
       alokasi: terbuka.value.filter((b) => bacaRupiah(alok.value[b.id]) > 0).map((b) => ({ bill_id: b.id, jumlah: bacaRupiah(alok.value[b.id]) })) })
     if (f.value.riwayat) { ui.toast('Catatan pembayaran lama tersimpan.'); emit('tersimpan'); emit('tutup'); return }
     hasil.value = (await keu.kuitansi([r.id]))[0]
@@ -99,9 +102,8 @@ async function simpan() {
             <button v-for="(n, k) in CARA_BAYAR" :key="k" type="button" role="radio" :aria-checked="f.cara === k" @click="f.cara = k"
               :class="['min-h-[40px] flex-1 rounded-lg text-sm font-semibold', f.cara === k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ n }}</button>
           </div></div>
-        <div v-if="f.cara === 'transfer'"><label class="label-isian" for="lb-rek">Ke rekening</label>
-          <select id="lb-rek" v-model="f.rekening_tujuan" class="isian"><option v-for="r in keu.pengaturan.rekening" :key="r.nomor" :value="`${r.bank} ${r.nomor}`">{{ r.bank }} {{ r.nomor }} – {{ r.atas_nama }}</option>
-            <option value="">Lainnya / tidak dicatat</option></select></div>
+        <div v-if="!f.riwayat"><label class="label-isian" for="lb-rek">{{ f.cara === 'transfer' ? 'Masuk ke rekening' : 'Masuk ke kas' }}</label>
+          <select id="lb-rek" v-model="f.account_id" class="isian"><option v-for="a in akunCara(f.cara)" :key="a.id" :value="a.id">{{ a.nama }}{{ a.jenis === 'bank' ? ` – ${a.bank} ${a.nomor}` : '' }}</option></select></div>
         <div><label class="label-isian" for="lb-pen">Penyetor</label><input id="lb-pen" v-model="f.penyetor" class="isian" placeholder="Nama orang tua/wali yang membayar" /></div>
       </div>
 

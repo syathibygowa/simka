@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/LembarSuratTagihan.vue | v1.0 | Fase 13 – Terbitkan surat tagihan (satu/banyak), cetak, dan kirim WA ke wali | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/LembarSuratTagihan.vue | v1.1 | 14.7.0: kirim surat tagihan dengan pengirim WA berurutan | 18/10/2026 -->
 <script setup>
 // Surat tagihan untuk santri terpilih: memuat tagihan belum lunas yang jatuh tempo paling lambat tanggal tertentu
 // (bawaan = batas pembayaran). Setiap santri satu surat bernomor, bertanda tangan elektronik Bendahara Pondok.
@@ -13,7 +13,7 @@ import { hariIniISO } from '@/lib/tanggal'
 import { rupiah, pesanTagihan, kelasSantri } from '@/lib/keuangan'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
-import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
+import PengirimWABeruntun from '@/components/PengirimWABeruntun.vue'
 import CetakKeuangan from '@/components/cetak/CetakKeuangan.vue'
 
 const props = defineProps({ santri: { type: Array, default: null }, ids: { type: Array, default: null } })   // santri: [{id, nama}] · ids: surat yang sudah terbit
@@ -37,7 +37,8 @@ async function terbitkan() {
     ui.toast(`${r.length} surat tagihan terbit${props.santri.length > r.length ? `; ${props.santri.length - r.length} santri tanpa tagihan dilewati` : ''}.`); emit('terbit')
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
-const penerima = computed(() => surat.value.map((l) => ({ employee_id: l.id, nama: `${l.santri?.wali?.nama || 'Wali'} – ${l.santri?.nama}`, no_hp: l.santri?.wali?.no_hp, unit: `${kelasSantri(l.santri)} · ${rupiah(l.total)}`, l })))
+const penerima = computed(() => surat.value.map((l) => ({ id: l.id, nama: `${l.santri?.wali?.nama || 'Wali'} – ${l.santri?.nama}`, no_hp: l.santri?.wali?.no_hp, ket: `${kelasSantri(l.santri)} · ${rupiah(l.total)}`, l })))
+const TEMPLAT_WA = [{ k: 'surat', n: 'Surat tagihan', f: (p) => pesanTagihan(p.l, keu.pengaturan) }]
 const total = computed(() => surat.value.reduce((a, l) => a + Number(l.total), 0))
 </script>
 <template>
@@ -50,7 +51,7 @@ const total = computed(() => surat.value.reduce((a, l) => a + Number(l.total), 0
       </div>
       <button class="tombol-utama" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Cetak {{ surat.length > 1 ? 'semua' : 'surat' }}</button>
       <div><p class="judul-bagian mb-2">Kirim ke wali melalui WhatsApp</p>
-        <DaftarKirimWA :penerima="penerima" :pesan="(p) => (keu.catatKirim(p.l.id).catch(() => {}), pesanTagihan(p.l, keu.pengaturan))" :kunci="'tagihan-' + surat.map((l) => l.id).join('').slice(0, 40)" /></div>
+        <PengirimWABeruntun :penerima="penerima" :templat="TEMPLAT_WA" :kunci="'surat-' + surat.map((l) => l.id).join('').slice(0, 40)" @terkirim="(p) => keu.catatKirim(p.l.id).catch(() => {})" /></div>
       <CetakKeuangan v-model:pratinjau="pratinjau" jenis="tagihan" :dok="surat" :pengaturan="keu.pengaturan" :pencetak="sesi.pengguna?.nama_lengkap" />
     </div>
     <div v-else-if="santri && f" class="space-y-4 pb-2">

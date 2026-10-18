@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/Keuangan.vue | v1.0 | Fase 13 – Menu Keuangan santri | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/Keuangan.vue | v1.1 | 14.7.0: tab Kas dan bank (buku kas, pengeluaran) dan Laporan satu halaman | 18/10/2026 -->
 <script setup>
 // Menu Keuangan santri (Blueprint Bagian 37; Fase 13 dipercepat). Hanya superadmin dan pegawai yang ditunjuk
 // superadmin (Hak Akses → Fitur sensitif → Keuangan santri), mis. Bendahara Pondok. Data tidak tampil di portal wali.
@@ -7,11 +7,13 @@
 //   Tagihan     : buat tagihan massal (bulanan/tahunan/sekali; per jenjang, tingkat, kelompok, santri) dan daftar tagihan
 //   Pembayaran  : pembayaran per rentang tanggal, kuitansi, pembatalan, rekap pemasukan
 //   Tunggakan   : posisi tunggakan per tanggal per santri/kelas/jenis/jenjang; cetak F4, Excel, WA ke wali
+//   Kas dan bank: saldo per rekening, buku kas/rekening koran, pengeluaran, pemasukan lain, pindah dana (14.7.0)
+//   Laporan     : laporan satu halaman pemasukan, pengeluaran, saldo, tagihan dan persentase lunas (14.7.0)
 //   Pengaturan  : jenis biaya dan tarif, subsidi santri, ketentuan (rekening lembaga, jatuh tempo, catatan dokumen)
 // Rincian seorang santri dibuka dari tab mana pun dengan ?santri=<id>.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { PhChartPieSlice, PhStudent, PhInvoice, PhReceipt, PhWarningCircle, PhSlidersHorizontal, PhLockSimple, PhSignature } from '@phosphor-icons/vue'
+import { PhChartPieSlice, PhStudent, PhInvoice, PhReceipt, PhWarningCircle, PhSlidersHorizontal, PhLockSimple, PhSignature, PhBank, PhPresentationChart } from '@phosphor-icons/vue'
 import { useKeuangan } from '@/stores/keuangan'
 import { useSesi } from '@/stores/sesi'
 import BilahTab from '@/components/BilahTab.vue'
@@ -21,6 +23,8 @@ import TabTagihan from './TabTagihan.vue'
 import TabPembayaran from './TabPembayaran.vue'
 import TabTunggakan from './TabTunggakan.vue'
 import TabPengaturanKeu from './TabPengaturanKeu.vue'
+import TabKasKeu from './TabKasKeu.vue'
+import TabLaporanKeu from './TabLaporanKeu.vue'
 import LembarSantriKeu from './LembarSantriKeu.vue'
 
 const props = defineProps({ tab: { type: String, default: '' } })
@@ -34,6 +38,8 @@ const TAB = computed(() => (keu.hak.lihat ? [
   { k: 'tagihan', n: 'Tagihan', ikon: PhInvoice, w: 'agenda' },
   { k: 'pembayaran', n: 'Pembayaran', ikon: PhReceipt, w: 'presensi' },
   { k: 'tunggakan', n: 'Tunggakan', ikon: PhWarningCircle, w: 'klinik' },
+  { k: 'kas', n: 'Kas dan bank', ikon: PhBank, w: 'shift' },
+  { k: 'laporan', n: 'Laporan', ikon: PhPresentationChart, w: 'rekap' },
   { k: 'pengaturan', n: 'Pengaturan', ikon: PhSlidersHorizontal, w: 'pengaturan' },
 ] : []))
 const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : TAB.value[0]?.k || ''))
@@ -68,6 +74,8 @@ const berubah = () => { versi.value++ }
         <TabTagihan v-else-if="aktif === 'tagihan'" :key="'t' + versi" @berubah="berubah" />
         <TabPembayaran v-else-if="aktif === 'pembayaran'" :key="'p' + versi" @berubah="berubah" />
         <TabTunggakan v-else-if="aktif === 'tunggakan'" :key="'u' + versi" />
+        <TabKasKeu v-else-if="aktif === 'kas'" :key="'k' + versi" />
+        <TabLaporanKeu v-else-if="aktif === 'laporan'" :key="'l' + versi" />
         <TabPengaturanKeu v-else-if="aktif === 'pengaturan'" />
       </div>
       <LembarSantriKeu v-if="santriId" :id="santriId" @tutup="tutupSantri" @berubah="berubah" />

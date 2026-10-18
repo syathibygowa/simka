@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabTunggakan.vue | v1.3 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabTunggakan.vue | v1.4 | 14.7.0: pengirim WA berurutan dengan template dan pratinjau | 18/10/2026 -->
 <script setup>
 // Posisi tunggakan per tanggal (bawaan hari ini): tagihan yang jatuh tempo paling lambat tanggal itu dan masih bersisa
 // pada tanggal itu. Dikelompokkan per santri, kelas, kamar, halaqah, jenis biaya, atau jenjang. Cetak F4 dan Excel.
@@ -13,13 +13,13 @@ import { useLembaga } from '@/stores/lembaga'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 import { formatPendek, formatPanjang, hariIniISO } from '@/lib/tanggal'
-import { rupiah, angka, kelompokTunggakan, pesanTunggakan, JENJANG } from '@/lib/keuangan'
+import { rupiah, angka, kelompokTunggakan, pesanTunggakan, pesanPengingat, JENJANG } from '@/lib/keuangan'
 import { periodeCepat } from '@/lib/laporanKehadiran'
 import { tautanWA } from '@/lib/wa'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
-import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
+import PengirimWABeruntun from '@/components/PengirimWABeruntun.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarSuratTagihan from './LembarSuratTagihan.vue'
@@ -47,8 +47,12 @@ const bukaSantri = (sid) => router.replace({ query: { ...route.query, santri: si
 const judulCakupan = computed(() => CAKUPAN.find((c) => c.k === cakupan.value).n.toLowerCase())
 
 const kirim = ref(false); const surat = ref(null)
-const penerima = computed(() => santri.value.map((k) => ({ employee_id: k.student_id, nama: `${k.wali?.nama || 'Wali'} – ${k.nama}`, no_hp: k.wali?.no_hp, unit: `${k.kelas || '–'} · ${rupiah(k.sisa)}`, k })))
-const pesan = (p) => pesanTunggakan({ nama: p.k.nama, nis: p.k.nis, kelas: p.k.kelas, wali: p.k.wali }, p.k.isi, keu.pengaturan)
+const penerima = computed(() => santri.value.map((k) => ({ id: k.student_id, nama: `${k.wali?.nama || 'Wali'} – ${k.nama}`, no_hp: k.wali?.no_hp, ket: `${k.kelas || '–'} · ${rupiah(k.sisa)}`, k })))
+const sasaranWA = (k) => ({ nama: k.nama, nis: k.nis, kelas: k.kelas, wali: k.wali })
+const TEMPLAT_WA = [
+  { k: 'tunggakan', n: 'Tunggakan', f: (p) => pesanTunggakan(sasaranWA(p.k), p.k.isi, keu.pengaturan) },
+  { k: 'pengingat', n: 'Pengingat halus', f: (p) => pesanPengingat(sasaranWA(p.k), p.k.isi, keu.pengaturan) },
+]
 
 function ekspor() {
   const aoa = [['No.', 'NIS', 'Nama', 'JK', 'Kelas', 'Kamar', 'Halaqah', 'Jenjang', 'Jenis biaya', 'Tagihan', 'Jatuh tempo', 'Hari lewat', 'Nominal', 'Dibayar', 'Sisa', 'Wali', 'HP wali'],
@@ -112,7 +116,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
     </ul>
 
     <LembarBawah v-model="kirim" judul="WA tunggakan ke wali" lebar>
-      <DaftarKirimWA :penerima="penerima" :pesan="pesan" :kunci="'tunggakan-' + tanggal" />
+      <PengirimWABeruntun :penerima="penerima" :templat="TEMPLAT_WA" :kunci="'tunggakan-' + tanggal" />
     </LembarBawah>
     <LembarSuratTagihan :santri="surat" @tutup="surat = null" @terbit="muat" />
     <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Laporan Tunggakan Keuangan Santri" :subjudul="`${teksPeriode.charAt(0).toUpperCase() + teksPeriode.slice(1)} · ${CAKUPAN.find((c) => c.k === cakupan).n}${jenjang ? ' · ' + JENJANG[jenjang] : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
