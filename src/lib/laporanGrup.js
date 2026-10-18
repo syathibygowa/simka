@@ -1,9 +1,10 @@
-// SIMKA PRO | src/lib/laporanGrup.js | v1.0 | Perbaikan 13.8.0: teks laporan untuk grup WhatsApp (absensi, setoran, jurnal mengajar, ekskul) | 16/10/2026
+// SIMKA PRO | src/lib/laporanGrup.js | v1.1 | 14.4.0: laporan mengajar memuat tujuan, alat, sumber; laporan ekskul memuat jam latihan | 17/10/2026
 // Menyusun teks laporan siap kirim ke grup WhatsApp bidang agar pimpinan dapat membaca ringkasan tanpa membuka SIMKA.
 // Format mengikuti kebiasaan WhatsApp: *tebal*, _miring_, emoji sebagai penanda status.
 //   laporanAbsensi  — wali kelas, muhaffizh, musyrif, pembina ekskul (ekskul ikut memuat jurnal latihan)
 //   laporanSetoran  — muhaffizh: perkembangan hafalan satu sesi halaqah
 //   laporanMengajar — guru mapel: jurnal mengajar satu hari
+//   laporanMengajarPeriode / laporanEkskulPeriode — (14.4.0) rekap pekanan/bulanan guru mapel dan pembina ekskul
 import { formatHari, formatPendek, formatJam, sekarang } from '@/lib/tanggal'
 import { formatPosisi } from '@/lib/tahfizh'
 
@@ -50,13 +51,17 @@ export function laporanAbsensi(d) {
   const jr = d.jurnal
   const jurnal = jr && (jr.materi || jr.kegiatan) ? [
     '', '*Kegiatan latihan*',
+    baris('Jam latihan', jr.jam_mulai && jr.jam_selesai ? `${jr.jam_mulai}–${jr.jam_selesai} WITA` : null),
     baris('Materi', [jr.materi, jr.submateri].filter(Boolean).join(' – ')),
     baris('Uraian', jr.kegiatan),
     baris('Metode', (jr.metode || []).join(', ') || null),
     baris('Media', (jr.media || []).join(', ') || null),
+    baris('Alat', (jr.alat || []).join(', ') || null),
+    baris('Sumber', (jr.sumber || []).join(', ') || null),
     baris('Capaian', jr.capaian),
     baris('Kendala', jr.kendala),
     baris('Tindak lanjut', jr.tindak_lanjut),
+    baris('Catatan', jr.catatan),
   ] : []
 
   let daftar = []
@@ -129,14 +134,69 @@ export function laporanMengajar(d) {
       `   ${x.jp}${x.jam ? `, ${x.jam} WITA` : ''}`,
       ...(x.status === 'tidak_terlaksana' ? [`   ❌ Tidak terlaksana${x.keterangan ? `: ${x.keterangan}` : ''}`] : [
         x.materi ? `   Materi: ${x.materi}` : null,
+        x.tujuan ? `   Tujuan: ${x.tujuan}` : null,
         x.metode?.length ? `   Metode: ${x.metode.join(', ')}` : null,
         x.media?.length ? `   Media: ${x.media.join(', ')}` : null,
+        x.alat?.length ? `   Alat: ${x.alat.join(', ')}` : null,
+        x.sumber?.length ? `   Sumber: ${x.sumber.join(', ')}` : null,
         x.jumlah != null ? `   Kehadiran: ${x.hadir}/${x.jumlah} santri${x.tidakHadir?.length ? ` (tidak hadir: ${x.tidakHadir.map((t) => `${t.nama} – ${kodeN(t.kode)}`).join('; ')})` : ' ✅'}` : null,
         x.keterangan ? `   Catatan: ${x.keterangan}` : null,
       ]),
     ]),
     '', '*Ringkasan*',
     `Pertemuan: ${p.length} · terlaksana ${ok.length}${p.length - ok.length ? ` · tidak terlaksana ${p.length - ok.length}` : ''}`,
+    '', kaki(),
+  ])
+}
+
+/** 14.4.0: laporan jurnal mengajar satu periode (pekan/bulan) — per kelas × mapel: keterlaksanaan, materi, kehadiran. */
+export function laporanMengajarPeriode(d) {
+  const per = new Map()
+  for (const x of d.pertemuan) { const k = `${x.kelas}|${x.mapel}`; if (!per.has(k)) per.set(k, []); per.get(k).push(x) }
+  const blok = [...per.entries()].flatMap(([k, xs], i) => {
+    const [kelas, mapel] = k.split('|'); const ok = xs.filter((x) => x.status === 'terlaksana')
+    const ab = ok.filter((x) => x.jumlah_anggota); const h = ab.reduce((n, x) => n + x.jumlah_hadir, 0); const a = ab.reduce((n, x) => n + x.jumlah_anggota, 0)
+    const sering = {}; for (const x of ok) for (const t of x.tidak_hadir || []) if (t.kode !== 'T') sering[t.nama] = (sering[t.nama] || 0) + 1
+    const top = Object.entries(sering).sort((p, q) => q[1] - p[1]).slice(0, 5)
+    return ['', `${i + 1}. *${mapel} · Kelas ${kelas}*`,
+      `   Terlaksana ${ok.length}/${xs.length} pertemuan (${ok.reduce((n, x) => n + x.jp, 0)} JP)`,
+      ...ok.map((x) => `   • ${formatPendek(x.tanggal)}: ${[x.bab, x.subbab].filter(Boolean).join(' – ') || x.materi || '–'}`),
+      ...xs.filter((x) => x.status !== 'terlaksana').map((x) => `   ❌ ${formatPendek(x.tanggal)} tidak terlaksana${x.keterangan ? ': ' + x.keterangan : ''}`),
+      a ? `   Kehadiran santri: ${persen(h, a)}` : null,
+      top.length ? `   Sering tidak hadir: ${top.map(([n, c]) => `${n} (${c}×)`).join(', ')}` : null]
+  })
+  const semua = d.pertemuan.filter((x) => x.status === 'terlaksana')
+  return gabung([
+    '*LAPORAN JURNAL MENGAJAR*',
+    baris('Guru', d.guru),
+    baris('Periode', `${formatPendek(d.mulai)} s.d. ${formatPendek(d.selesai)}`),
+    ...blok,
+    '', '*Ringkasan*',
+    `Pertemuan terlaksana: ${semua.length}/${d.pertemuan.length} · ${semua.reduce((n, x) => n + x.jp, 0)} JP`,
+    '', kaki(),
+  ])
+}
+
+/** 14.4.0: laporan kegiatan ekskul satu periode — pertemuan, materi, kehadiran anggota. */
+export function laporanEkskulPeriode(d) {
+  const ok = d.jurnal
+  const h = ok.reduce((n, x) => n + (x.jumlah_hadir || 0), 0); const a = ok.reduce((n, x) => n + (x.jumlah_anggota || 0), 0)
+  return gabung([
+    '*LAPORAN KEGIATAN EKSKUL*',
+    baris('Ekskul', d.ekskul),
+    baris('Pembina', d.pembina),
+    baris('Periode', `${formatPendek(d.mulai)} s.d. ${formatPendek(d.selesai)}`),
+    '', `*Pertemuan (${ok.length})*`,
+    ...ok.map((x, i) => {
+      const r = x.rincian || {}
+      return gabung([`${i + 1}. ${formatHari(x.tanggal)}${r.jam_mulai && r.jam_selesai ? `, ${r.jam_mulai}–${r.jam_selesai}` : ''}`,
+        `   Materi: ${[r.materi, r.submateri].filter(Boolean).join(' – ') || x.topik || '–'}`,
+        r.capaian ? `   Capaian: ${r.capaian}` : null,
+        x.jumlah_anggota ? `   Hadir: ${x.jumlah_hadir}/${x.jumlah_anggota}` : null])
+    }),
+    '', '*Ringkasan*',
+    a ? `Kehadiran anggota rata-rata: ${persen(h, a)}` : null,
+    d.perhatian?.length ? `Perlu perhatian (kehadiran rendah): ${d.perhatian.join(', ')}` : null,
     '', kaki(),
   ])
 }

@@ -1,11 +1,11 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabHariIniGuru.vue | v1.0 | Fase 4 – Menu Guru Mapel: tugas mengajar hari ini | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabHariIniGuru.vue | v1.1 | 14.4.0: tombol laporan hari ini/pekan ini ke grup WA | 17/10/2026 -->
 <script setup>
 // Halaman kerja guru mapel: statistik (JP hari ini, jurnal terisi, keterlaksanaan bulan ini, kelas diampu), jadwal
 // mengajar hari ini beserta status jurnal tiap jam dan tombol "Isi jurnal mengajar", pengingat jurnal kemarin yang
 // belum diisi (batas H+1), dan daftar kelas-mapel yang diampu beserta wali kelasnya.
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhSun, PhNotePencil, PhChartLineUp, PhChalkboard, PhWarningCircle, PhBookOpenText, PhCheckSquareOffset } from '@phosphor-icons/vue'
+import { PhSun, PhNotePencil, PhChartLineUp, PhChalkboard, PhWarningCircle, PhBookOpenText, PhCheckSquareOffset, PhWhatsappLogo } from '@phosphor-icons/vue'
 import { useJadwal } from '@/stores/jadwal'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import { useSesi } from '@/stores/sesi'
@@ -48,6 +48,11 @@ const isiJurnal = () => router.push('/jurnal/mengajar')
   <div class="space-y-4">
     <div class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
       <KartuStatistik v-for="k in statistik" :key="k.judul" class="w-[44%] shrink-0 snap-start sm:w-auto" :judul="k.judul" :nilai="memuat ? '…' : k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket" />
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <router-link to="/guru-mapel/jurnal?periode=hari&mode=semua" class="tombol-wa-garis min-h-[40px] px-4 text-sm"><PhWhatsappLogo :size="18" weight="duotone" /> Lapor jurnal hari ini ke grup</router-link>
+      <router-link to="/guru-mapel/jurnal?periode=pekan&mode=semua" class="tombol-garis min-h-[40px] px-4 text-sm"><PhWhatsappLogo :size="18" weight="duotone" /> Rekap pekan ini</router-link>
     </div>
 
     <div v-if="belumKemarin.length" class="kartu w-tahfizh flex flex-wrap items-center gap-3 p-4">

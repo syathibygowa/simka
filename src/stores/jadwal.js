@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/jadwal.js | v1.4 | 14.3.0: rekap kehadiran santri per mapel | 17/10/2026
+// SIMKA PRO | src/stores/jadwal.js | v1.5 | 14.4.0: jurnal lengkap (tujuan, kegiatan, alat, sumber) dan laporan jurnal mengajar | 17/10/2026
 // Mata pelajaran, jam pelajaran, penugasan mengajar, jadwal pelajaran per kelas/guru, jurnal mengajar, dan rekap.
 // Penulisan lewat fungsi SQL (hak atur_jadwal; guru menulis jurnal dan rencana materinya sendiri).
 import { defineStore } from 'pinia'
@@ -17,7 +17,10 @@ const idSaya = () => (MODE_DEMO ? 'p1' : useSesi().pengguna?.id)
 
 export const ATUR_JURNAL_DEMO = { batas_hari: 1, absen_santri: true,
   metode: ['Ceramah', 'Tanya jawab', 'Diskusi', 'Demonstrasi', 'Praktik', 'Penugasan', 'Presentasi', 'Talaqqi/hafalan', 'Proyek', 'Permainan'],
-  media: ['Papan tulis', 'Buku paket', 'Kitab', 'Lembar kerja', 'Proyektor/LCD', 'Video', 'Alat peraga', 'Lingkungan sekitar'] }
+  media: ['Papan tulis', 'Buku paket', 'Kitab', 'Lembar kerja', 'Proyektor/LCD', 'Video', 'Alat peraga', 'Lingkungan sekitar'],
+  alat: ['Papan tulis dan spidol', 'Laptop', 'Proyektor/LCD', 'Pengeras suara', 'Alat peraga', 'Alat praktik/laboratorium', 'Mushaf/kitab'],
+  sumber: ['Buku paket', 'Buku pendamping/LKS', 'Kitab', 'Modul guru', "Al-Qur'an dan tafsir", 'Internet/artikel', 'Video pembelajaran'],
+  wajib: { subbab: true, metode: true, media: false, alat: false, sumber: false, tujuan: false, kegiatan: false } }
 
 export const useJadwal = defineStore('jadwal', {
   state: () => ({ mapel: [], jam: [], penugasan: [], jadwal: [], hariJam: { wustha: { ...HARI_JAM_BAWAAN }, sma: { ...HARI_JAM_BAWAAN } }, memuat: false, dimuat: false, aturJurnal: null }),
@@ -203,6 +206,27 @@ export const useJadwal = defineStore('jadwal', {
         mapel, santri: anggota.map((st, si) => ({ student_id: st.id, nis: st.nis, nama: st.nama_lengkap, jk: st.jenis_kelamin,
           mapel: Object.fromEntries(mapel.map((m, mi) => { const tidak = (si * 3 + mi * 5) % 7 === 0 ? 3 : (si + mi) % 5 === 0 ? 1 : 0; const h = m.pertemuan - tidak
             return [m.assignment_id, { p: m.pertemuan, h, t: (si + mi) % 6 === 0 ? 1 : 0, s: tidak > 1 ? 1 : 0, i: tidak > 2 ? 1 : 0, a: tidak ? 1 : 0, b: 0, persen: Math.round((1000 * h) / m.pertemuan) / 10 }] })) })) }
+    },
+    /** 14.4.0: laporan jurnal mengajar. p: { assignment_id | group_id | employee_id, subject_id?, mulai, selesai } */
+    async laporanJurnal(p) {
+      if (!MODE_DEMO) return rpc('laporan_jurnal_mengajar', { p })
+      await this.muat(); const d = dataJadwalDemo()
+      const tugas = d.penugasan.filter((t) => (!p.assignment_id || t.id === p.assignment_id) && (!p.group_id || t.group_id === p.group_id)
+        && (!p.employee_id || t.employee_id === p.employee_id) && (!p.subject_id || t.subject_id === p.subject_id))
+      const ids = new Set(tugas.map((t) => t.id)); const kel = dataKelompokDemo([]).kelompok
+      const slot = (await this.slot(p.mulai, p.selesai)).filter((x) => ids.has(x.assignment_id) && ['terlaksana', 'tidak_terlaksana'].includes(x.status))
+      const per = new Map()
+      for (const x of slot) { const k = x.assignment_id + x.tanggal; const a = per.get(k); if (a) { a.jp++; a.jam_selesai = x.jam_selesai; a.jam_ke = a.jam_ke.split(' – ')[0] + ' – ' + x.jam_ke } else per.set(k, { ...x, jp: 1 }) }
+      const METODE = [['Ceramah', 'Tanya jawab'], ['Diskusi'], ['Penugasan', 'Praktik'], ['Demonstrasi']]
+      return { mulai: p.mulai, selesai: p.selesai,
+        penugasan: tugas.map((t) => ({ assignment_id: t.id, group_id: t.group_id, kelas: kel.find((g) => g.id === t.group_id)?.nama, subject_id: t.subject_id, mapel: this.cariMapel(t.subject_id)?.nama,
+          kode_mapel: this.cariMapel(t.subject_id)?.kode, employee_id: t.employee_id, guru: t.nama_guru, niy: null, wali: { nama: (kel.find((g) => g.id === t.group_id)?.pengasuh || [])[0]?.nama || '', niy: null } })),
+        pertemuan: [...per.values()].map((x, i) => ({ assignment_id: x.assignment_id, tanggal: x.tanggal, kelas: x.kelas, mapel: x.mapel, guru: x.guru, jp: x.jp, jam_ke: x.jam_ke,
+          jam_mulai: x.jam_mulai, jam_selesai: x.jam_selesai, status: x.status, bab: x.materi, subbab: x.status === 'terlaksana' ? 'Pembahasan ' + (i % 5 + 1) : null, materi: x.materi,
+          tujuan: x.status === 'terlaksana' ? 'Santri memahami ' + String(x.materi || '').toLowerCase() : null, kegiatan: null,
+          metode: x.status === 'terlaksana' ? METODE[i % 4] : [], media: x.status === 'terlaksana' ? ['Papan tulis'] : [], alat: i % 3 ? ['Laptop'] : [], sumber: x.status === 'terlaksana' ? ['Buku paket'] : [],
+          keterangan: x.keterangan, jumlah_anggota: x.status === 'terlaksana' ? 3 : null, jumlah_hadir: x.status === 'terlaksana' ? 3 - (i % 4 === 0 ? 1 : 0) : null,
+          tidak_hadir: x.status === 'terlaksana' && i % 4 === 0 ? [{ nama: 'Ahmad Fauzan', kode: 'S' }] : [] })) }
     },
     async slot(mulai, selesai, group = null, emp = null) {
       if (!MODE_DEMO) return (await rpc('slot_mengajar', { p_mulai: mulai, p_selesai: selesai, p_group: group, p_emp: emp })) || []

@@ -1,9 +1,10 @@
-<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.8 | 14.2.0: rujukan klinik hanya dari sumber absensi yang dicentang | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.9 | 14.4.0: jurnal ekskul + jam latihan, alat, sumber belajar, catatan | 17/10/2026 -->
 <script setup>
 // Pengisian absensi satu sesi: semua santri bawaan Hadir, ketuk kode HISBAT bagi yang tidak.
 // Pengampu halaqah/ekskul diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi (asrama tidak).
 // Admin ber-izin absensi_atas_nama dapat mengisi atas nama pengampu (tercatat di riwayat).
 // Halaqah: tab Absensi | Setoran (setoran terbuka setelah absensi tersimpan; ?tab=setoran membuka tab Setoran).
+// v1.9: jurnal ekskul ditambah jam mulai–selesai latihan (bawaan jam sesi), alat/perlengkapan, sumber belajar, catatan.
 // v1.8: santri Sakit dirujuk ke klinik hanya bila absensi jenis ini dicentang di Klinik → Ketentuan (bawaan: asrama saja);
 //       absensi lain cukup mencatat Sakit tanpa keluhan wajib.
 // v1.7: tombol "Lapor ke grup WA" setelah absensi tersimpan — teks laporan (kelompok, pengasuh, hari, tanggal, sesi,
@@ -30,7 +31,7 @@ import LembarBawah from '@/components/LembarBawah.vue'
 import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
 import FormSetoran from '@/pages/tahfizh/FormSetoran.vue'
 import BilahTab from '@/components/BilahTab.vue'
-import { METODE_EKSKUL, MEDIA_EKSKUL, JURNAL_KOSONG, kurangJurnal } from '@/lib/ekskul'
+import { METODE_EKSKUL, MEDIA_EKSKUL, ALAT_EKSKUL, SUMBER_EKSKUL, JURNAL_KOSONG, kurangJurnal } from '@/lib/ekskul'
 import { laporanAbsensi, FORMAT_ABSENSI } from '@/lib/laporanGrup'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import LembarLaporanGrup from '@/components/LembarLaporanGrup.vue'
@@ -46,6 +47,9 @@ const jurnal = ref({ topik: '', uraian: '', foto_id: null }); const fotoBaru = r
 const rinci = ref(JURNAL_KOSONG()); const sebelumnya = ref(null); const metodeLain = ref(''); const mediaLain = ref('')
 const pilihanMetode = computed(() => [...new Set([...METODE_EKSKUL, ...(rinci.value.metode || [])])])
 const pilihanMedia = computed(() => [...new Set([...MEDIA_EKSKUL, ...(rinci.value.media || [])])])
+const pilihanAlat = computed(() => [...new Set([...ALAT_EKSKUL, ...(rinci.value.alat || [])])])
+const pilihanSumber = computed(() => [...new Set([...SUMBER_EKSKUL, ...(rinci.value.sumber || [])])])
+const alatLain = ref(''); const sumberLain = ref('')
 const togel = (arr, v) => { const i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v) }
 function tambahPilihan(arr, teks) { const v = teks.value.trim(); if (v.length >= 2 && !arr.includes(v)) arr.push(v); teks.value = '' }
 const ekskul = computed(() => d.value?.jenis === 'ekskul')
@@ -71,8 +75,9 @@ async function muat() {
       const rr = await abs.rincianEkskul(x.sesi_tercatat?.id, route.params.group, route.params.tanggal).catch(() => ({}))
       sebelumnya.value = rr.terakhir || null
       const t = rr.terakhir?.rincian || {}
-      rinci.value = rr.rincian ? { ...JURNAL_KOSONG(), ...rr.rincian, metode: [...(rr.rincian.metode || [])], media: [...(rr.rincian.media || [])] }
-        : { ...JURNAL_KOSONG(), materi: t.materi || (x.jurnal?.topik || ''), submateri: '', kegiatan: x.jurnal?.uraian || '', metode: [...(t.metode || [])], media: [...(t.media || [])] }
+      rinci.value = rr.rincian ? { ...JURNAL_KOSONG(), ...rr.rincian, metode: [...(rr.rincian.metode || [])], media: [...(rr.rincian.media || [])], alat: [...(rr.rincian.alat || [])], sumber: [...(rr.rincian.sumber || [])] }
+        : { ...JURNAL_KOSONG(), materi: t.materi || (x.jurnal?.topik || ''), submateri: '', kegiatan: x.jurnal?.uraian || '', metode: [...(t.metode || [])], media: [...(t.media || [])],
+            alat: [...(t.alat || [])], sumber: [...(t.sumber || [])], jam_mulai: String(x.jam_mulai || '').slice(0, 5), jam_selesai: String(x.jam_selesai || '').slice(0, 5) }
     }
     atasNama.value = x.pengasuh.find((p) => p.peran === 'utama')?.employee_id || x.pengasuh[0]?.employee_id || ''
     awal.value = JSON.stringify([isian.value, ket.value, catatan.value, jurnal.value, rinci.value])
@@ -221,6 +226,10 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
             <div><label class="label-isian" for="jr-sub">Sub-materi/pembahasan <span class="text-merah">*</span></label>
               <input id="jr-sub" v-model="rinci.submateri" class="isian" placeholder="Contoh: Posisi berdiri dan menarik busur" /></div>
           </div>
+          <div class="grid grid-cols-2 gap-3 sm:max-w-sm">
+            <div><label class="label-isian" for="jr-jm">Jam mulai latihan</label><input id="jr-jm" v-model="rinci.jam_mulai" type="time" class="isian tabular-nums" /></div>
+            <div><label class="label-isian" for="jr-js">Jam selesai</label><input id="jr-js" v-model="rinci.jam_selesai" type="time" class="isian tabular-nums" /></div>
+          </div>
           <div><label class="label-isian" for="jr-keg">Uraian kegiatan latihan <span class="text-merah">*</span></label>
             <textarea id="jr-keg" v-model="rinci.kegiatan" class="isian min-h-[80px]" rows="3" placeholder="Pemanasan, demonstrasi pelatih, latihan berpasangan 10 anak panah per santri, evaluasi" /></div>
           <div>
@@ -237,12 +246,27 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
               <input v-model="mediaLain" class="isian h-9 min-h-0 w-40 py-0 text-sm" placeholder="Media lain…" aria-label="Media lain" @keydown.enter.prevent="tambahPilihan(rinci.media, mediaLain)" @blur="tambahPilihan(rinci.media, mediaLain)" />
             </div>
           </div>
+          <div>
+            <p class="label-isian">Alat/perlengkapan</p>
+            <div class="flex flex-wrap gap-1.5">
+              <button v-for="m in pilihanAlat" :key="m" type="button" :aria-pressed="rinci.alat.includes(m)" :class="['pil-isian', rinci.alat.includes(m) && 'aktif']" @click="togel(rinci.alat, m)">{{ m }}</button>
+              <input v-model="alatLain" class="isian h-9 min-h-0 w-40 py-0 text-sm" placeholder="Alat lain…" aria-label="Alat lain" @keydown.enter.prevent="tambahPilihan(rinci.alat, alatLain)" @blur="tambahPilihan(rinci.alat, alatLain)" />
+            </div>
+          </div>
+          <div>
+            <p class="label-isian">Sumber belajar/referensi</p>
+            <div class="flex flex-wrap gap-1.5">
+              <button v-for="m in pilihanSumber" :key="m" type="button" :aria-pressed="rinci.sumber.includes(m)" :class="['pil-isian', rinci.sumber.includes(m) && 'aktif']" @click="togel(rinci.sumber, m)">{{ m }}</button>
+              <input v-model="sumberLain" class="isian h-9 min-h-0 w-40 py-0 text-sm" placeholder="Sumber lain…" aria-label="Sumber lain" @keydown.enter.prevent="tambahPilihan(rinci.sumber, sumberLain)" @blur="tambahPilihan(rinci.sumber, sumberLain)" />
+            </div>
+          </div>
           <div><label class="label-isian" for="jr-capai">Capaian/hasil latihan santri <span class="text-merah">*</span></label>
             <input id="jr-capai" v-model="rinci.capaian" class="isian" placeholder="Contoh: 80% santri tepat sasaran pada jarak 10 meter" /></div>
           <div class="grid gap-3 sm:grid-cols-2">
             <div><label class="label-isian" for="jr-kendala">Kendala</label><input id="jr-kendala" v-model="rinci.kendala" class="isian" placeholder="Opsional" /></div>
             <div><label class="label-isian" for="jr-tl">Tindak lanjut pertemuan berikutnya</label><input id="jr-tl" v-model="rinci.tindak_lanjut" class="isian" placeholder="Opsional" /></div>
           </div>
+          <div><label class="label-isian" for="jr-cat">Catatan</label><input id="jr-cat" v-model="rinci.catatan" class="isian" placeholder="Opsional, mis. persiapan lomba, perlengkapan yang perlu dibeli" /></div>
           <div class="flex flex-wrap items-center gap-3">
             <img v-if="pratinjauFoto" :src="pratinjauFoto" alt="Foto kegiatan baru" class="h-24 w-32 rounded-xl object-cover" />
             <FotoBerkas v-else-if="jurnal.foto_id" :id="jurnal.foto_id" alt="Foto kegiatan ekskul" ukuran="h-24 w-32" />

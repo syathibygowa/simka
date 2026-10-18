@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/ekskul/TabRekapEkskul.vue | v1.1 | Perbaikan 13.7.0: saringan kategori ekskul indoor/outdoor | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/ekskul/TabRekapEkskul.vue | v1.2 | 14.4.0: laporan periode ke grup WA; cetak jurnal rinci (jam, metode, alat, sumber, capaian) | 17/10/2026 -->
 <script setup>
 // Rekap ekskul per periode: kehadiran anggota (HISBAT) dan jurnal materi setiap pertemuan.
 // Dapat dicetak oleh pembina, pimpinan, admin, dan superadmin (F4 mendatar, berkop pondok).
@@ -17,6 +17,9 @@ import InputTanggal from '@/components/InputTanggal.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import FotoBerkas from '@/components/FotoBerkas.vue'
+import LembarLaporanGrup from '@/components/LembarLaporanGrup.vue'
+import { laporanEkskulPeriode } from '@/lib/laporanGrup'
+import { PhWhatsappLogo } from '@phosphor-icons/vue'
 
 const abs = useAbsensiSantri(); const kel = useKelompokSantri(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
 const mulai = ref(hariIniISO().slice(0, 8) + '01'); const selesai = ref(hariIniISO()); const groupId = ref('')
@@ -45,6 +48,15 @@ const data = computed(() => (kel.anggota[groupId.value]?.aktif || []).map((a) =>
 const teksPeriode = computed(() => `${formatPanjang(mulai.value)} s.d. ${formatPanjang(selesai.value)}`)
 const pembina = computed(() => (g.value?.pengasuh || []).find((p) => p.peran === 'utama') || (g.value?.pengasuh || [])[0] || null)
 
+// 14.4.0: laporan periode ke grup WhatsApp internal
+const lembarWA = ref(false); const teksWA = ref('')
+function laporWA() {
+  teksWA.value = laporanEkskulPeriode({ ekskul: g.value?.nama, pembina: pembina.value?.nama, mulai: mulai.value, selesai: selesai.value, jurnal: jurnal.value,
+    perhatian: data.value.filter(({ r }) => r?.sesi && (persen(r.hadir, r.sesi) ?? 100) < 75).map(({ s }) => s.nama_lengkap) })
+  lembarWA.value = true
+}
+const rinci = (j) => j.rincian || {}
+const daftar = (a) => (a || []).join(', ')
 function ekspor() {
   const wb = XLSX.utils.book_new()
   const k1 = ['No.', 'NIS', 'Nama', 'Kelas', 'Pertemuan', 'Hadir', 'Izin', 'Sakit', 'Bolos', 'Absen', 'Terlambat', 'Kehadiran (%)']
@@ -52,10 +64,12 @@ function ekspor() {
     ...data.value.map(({ s, r }, i) => [i + 1, s.nis, s.nama_lengkap, labelRombel(s), r?.sesi || 0, r?.hadir || 0, r?.izin || 0, r?.sakit || 0, r?.bolos || 0, r?.absen || 0, r?.terlambat || 0, persen(r?.hadir, r?.sesi) ?? ''])])
   ws1['!cols'] = k1.map((k, i) => ({ wch: i === 2 ? 30 : Math.max(8, k.length + 2) }))
   XLSX.utils.book_append_sheet(wb, ws1, 'Kehadiran')
-  const k2 = ['No.', 'Tanggal', 'Topik/materi', 'Uraian', 'Hadir', 'Pembina']
+  const k2 = ['No.', 'Tanggal', 'Jam latihan', 'Materi – sub-materi', 'Uraian kegiatan', 'Metode', 'Media/alat', 'Sumber', 'Capaian', 'Kendala/tindak lanjut', 'Catatan', 'Hadir', 'Pembina']
   const ws2 = XLSX.utils.aoa_to_sheet([[`Jurnal materi ekskul ${g.value.nama} – ${teksPeriode.value}`], [], k2,
-    ...jurnal.value.map((j, i) => [i + 1, formatPendek(j.tanggal), j.topik || '', j.uraian || '', `${j.jumlah_hadir}/${j.jumlah_anggota}`, j.pengampu || ''])])
-  ws2['!cols'] = [{ wch: 5 }, { wch: 12 }, { wch: 36 }, { wch: 60 }, { wch: 8 }, { wch: 28 }]
+    ...jurnal.value.map((j, i) => { const r = rinci(j); return [i + 1, formatPendek(j.tanggal), r.jam_mulai && r.jam_selesai ? `${r.jam_mulai}–${r.jam_selesai}` : '', [r.materi, r.submateri].filter(Boolean).join(' – ') || j.topik || '',
+      r.kegiatan || j.uraian || '', daftar(r.metode), daftar([...(r.media || []), ...(r.alat || [])]), daftar(r.sumber), r.capaian || '', [r.kendala, r.tindak_lanjut].filter(Boolean).join('; '), r.catatan || '',
+      `${j.jumlah_hadir}/${j.jumlah_anggota}`, j.pengampu || ''] })])
+  ws2['!cols'] = [5, 12, 12, 34, 50, 20, 22, 20, 30, 30, 24, 8, 26].map((w) => ({ wch: w }))
   XLSX.utils.book_append_sheet(wb, ws2, 'Jurnal materi')
   XLSX.writeFile(wb, `Rekap-Ekskul-${g.value.nama.replace(/[^\w.-]+/g, '-')}-${formatPendek(mulai.value).replace(/\//g, '')}-${formatPendek(selesai.value).replace(/\//g, '')}.xlsx`)
 }
@@ -76,6 +90,7 @@ function ekspor() {
       <div class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
         <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Excel</button>
         <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Cetak rekap</button>
+        <button class="tombol-wa-garis shrink-0 px-4 text-sm" :disabled="!jurnal.length" @click="laporWA"><PhWhatsappLogo :size="20" weight="duotone" /> Lapor ke grup</button>
       </div>
       <div class="grid gap-4 xl:grid-cols-2">
         <section class="kartu overflow-x-auto">
@@ -116,8 +131,13 @@ function ekspor() {
         </table>
         <p style="margin: 8pt 0 4pt">B. Jurnal materi</p>
         <table class="tabel kecil">
-          <thead><tr><th style="width:4%">No.</th><th style="width:16%">Hari, tanggal</th><th style="width:26%">Topik/materi</th><th>Uraian</th><th style="width:8%">Hadir</th></tr></thead>
-          <tbody><tr v-for="(j, i) in jurnal" :key="j.session_id"><td class="tengah">{{ i + 1 }}</td><td>{{ formatHari(j.tanggal) }}</td><td>{{ j.topik || '–' }}</td><td>{{ j.uraian || '–' }}</td><td class="tengah">{{ j.jumlah_hadir }}/{{ j.jumlah_anggota }}</td></tr></tbody>
+          <thead><tr><th style="width:3%">No.</th><th style="width:12%">Hari, tanggal (jam)</th><th style="width:17%">Materi – sub-materi</th><th>Uraian kegiatan</th><th style="width:11%">Metode</th>
+            <th style="width:12%">Media, alat, sumber</th><th style="width:13%">Capaian</th><th style="width:6%">Hadir</th></tr></thead>
+          <tbody><tr v-for="(j, i) in jurnal" :key="j.session_id"><td class="tengah">{{ i + 1 }}</td>
+            <td>{{ formatHari(j.tanggal) }}{{ rinci(j).jam_mulai && rinci(j).jam_selesai ? ` (${rinci(j).jam_mulai}–${rinci(j).jam_selesai})` : '' }}</td>
+            <td>{{ [rinci(j).materi, rinci(j).submateri].filter(Boolean).join(' – ') || j.topik || '–' }}</td><td>{{ rinci(j).kegiatan || j.uraian || '–' }}{{ rinci(j).catatan ? '. ' + rinci(j).catatan : '' }}</td>
+            <td>{{ daftar(rinci(j).metode) }}</td><td>{{ [daftar(rinci(j).media), daftar(rinci(j).alat), daftar(rinci(j).sumber)].filter(Boolean).join('; ') }}</td>
+            <td>{{ rinci(j).capaian || '' }}</td><td class="tengah">{{ j.jumlah_hadir }}/{{ j.jumlah_anggota }}</td></tr></tbody>
         </table>
         <template #ttd>
           <TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: penanda.jabatan, nama: penanda.nama, niy: penanda.niy }"
@@ -125,5 +145,6 @@ function ekspor() {
         </template>
       </DokumenCetak>
     </template>
+    <LembarLaporanGrup v-model="lembarWA" judul="Laporan ekskul ke grup WhatsApp" :teks="teksWA" />
   </div>
 </template>

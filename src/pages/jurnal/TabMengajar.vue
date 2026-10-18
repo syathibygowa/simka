@@ -1,6 +1,8 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabMengajar.vue | v2.2 | 14.2.0: pengaturan dipindah ke Jurnal → Pengaturan; tombol Lapor hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabMengajar.vue | v2.3 | 14.4.0: tujuan, kegiatan, alat, sumber belajar; isian wajib mengikuti pengaturan | 17/10/2026 -->
 <script setup>
 // Jurnal mengajar (sepaket dengan Jurnal Harian).
+// v2.3: isian lengkap — tujuan pembelajaran, kegiatan, alat/perlengkapan, sumber belajar/referensi (pilihan ketuk + tambah sendiri);
+//       isian wajib mengikuti Jurnal → Pengaturan (tanda *). Alat dan sumber terisi otomatis dari pertemuan sebelumnya.
 // v2.2: pengaturan jurnal mengajar dipindah ke tab Jurnal → Pengaturan (tautan ikon roda gigi tetap ada bagi pengatur).
 // v2.1: tombol "Lapor" per hari menyusun laporan jurnal mengajar hari itu (materi, metode, kehadiran santri) untuk grup WA bidang.
 // v2.0:
@@ -29,7 +31,11 @@ const jd = useJadwal(); const sesi = useSesi(); const ui = useUI()
 const hari = hariIniISO()
 const geser = (iso, n) => { const d = new Date(`${iso}T12:00:00+08:00`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) }
 const acuan = ref(hari); const pekan = ref([]); const memuat = ref(false)
-const atur = computed(() => jd.aturJurnal || { batas_hari: 1, absen_santri: true, metode: [], media: [] })
+const atur = computed(() => jd.aturJurnal || { batas_hari: 1, absen_santri: true, metode: [], media: [], alat: [], sumber: [], wajib: {} })
+const wajib = (k) => !!atur.value.wajib?.[k]
+const lain = ref({ metode: '', media: '', alat: '', sumber: '' })
+const pilihan = (k) => [...new Set([...(atur.value[k] || []), ...(f.value?.[k] || [])])]
+function tambahLain(k) { const v = lain.value[k].trim(); if (v.length >= 2 && !f.value[k].includes(v)) f.value[k].push(v); lain.value[k] = '' }
 async function muat() {
   memuat.value = true
   try { await jd.muatAturJurnal().catch(() => null); pekan.value = await jd.jadwalPekan(acuan.value) } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false }
@@ -64,7 +70,8 @@ async function buka(x) {
   b.value = x
   const j = x.jurnal; const t = x.terakhir || {}
   f.value = { status: j?.status || 'terlaksana', bab: j?.bab || (j ? j.materi || '' : t.bab || ''), subbab: j?.subbab || '', metode: [...(j?.metode?.length ? j.metode : t.metode || [])],
-    media: [...(j?.media?.length ? j.media : t.media || [])], keterangan: j?.keterangan || '', plan_id: j?.plan_id || null }
+    media: [...(j?.media?.length ? j.media : t.media || [])], keterangan: j?.keterangan || '', plan_id: j?.plan_id || null,
+    alat: [...(j?.alat?.length ? j.alat : t.alat || [])], sumber: [...(j?.sumber?.length ? j.sumber : t.sumber || [])], tujuan: j?.tujuan || '', kegiatan: j?.kegiatan || '' }
   absen.value = { ...(j?.absen || {}) }; peserta.value = []; bukaAbsen.value = false; lembar.value = true
   if (atur.value.absen_santri && x.st !== 'nanti') {
     memuatPeserta.value = true
@@ -82,13 +89,19 @@ const saranBab = computed(() => [...new Set([b.value?.rencana?.topik, b.value?.t
 function sesuaiRencana() { Object.assign(f.value, { status: 'terlaksana', bab: b.value.rencana.topik, plan_id: b.value.rencana.id }) }
 async function simpan() {
   const x = f.value
-  if (x.status === 'terlaksana' && `${x.bab} ${x.subbab}`.trim().length < 3) return ui.toast('Isi bab atau materi pokok yang diajarkan.', 'galat')
+  if (x.status === 'terlaksana') {
+    if (x.bab.trim().length < 3) return ui.toast('Isi bab atau materi pokok yang diajarkan.', 'galat')
+    if (wajib('subbab') && x.subbab.trim().length < 3) return ui.toast('Isi sub-bab/pembahasan yang diajarkan.', 'galat')
+    if (wajib('tujuan') && x.tujuan.trim().length < 5) return ui.toast('Isi tujuan pembelajaran.', 'galat')
+    if (wajib('kegiatan') && x.kegiatan.trim().length < 10) return ui.toast('Uraikan kegiatan pembelajaran (minimal 10 huruf).', 'galat')
+    for (const [k, n] of [['metode', 'metode/strategi'], ['media', 'media'], ['alat', 'alat/perlengkapan'], ['sumber', 'sumber belajar']]) if (wajib(k) && !x[k].length) return ui.toast(`Pilih minimal satu ${n}.`, 'galat')
+  }
   if (x.status === 'tidak_terlaksana' && x.keterangan.trim().length < 3) return ui.toast('Isi keterangan mengapa pelajaran tidak terlaksana.', 'galat')
   proses.value = true
   try {
     const pakaiAbsen = x.status === 'terlaksana' && atur.value.absen_santri && peserta.value.length > 0
     await jd.simpanJurnal(b.value.tanggal, b.value.slot.map((s) => ({ assignment_id: s.assignment_id, period_id: s.period_id, status: x.status, bab: x.bab.trim(), subbab: x.subbab.trim(),
-      metode: x.metode, media: x.media, plan_id: x.plan_id, keterangan: x.keterangan.trim(), absen: pakaiAbsen ? absen.value : undefined,
+      metode: x.metode, media: x.media, alat: x.alat, sumber: x.sumber, tujuan: x.tujuan.trim(), kegiatan: x.kegiatan.trim(), plan_id: x.plan_id, keterangan: x.keterangan.trim(), absen: pakaiAbsen ? absen.value : undefined,
       jumlah_anggota: pakaiAbsen ? peserta.value.length : undefined, jumlah_hadir: pakaiAbsen ? peserta.value.length - tidakHadir.value.length : undefined,
       materi: [x.bab.trim(), x.subbab.trim()].filter(Boolean).join(' – ') })))
     ui.toast(`Jurnal ${b.value.mapel} kelas ${b.value.kelas} tersimpan.`); lembar.value = false; await muat()
@@ -121,7 +134,7 @@ async function laporHari(h) {
       let nama = {}
       if (kode.length) { try { nama = Object.fromEntries((await jd.peserta(x.assignment_id, x.tanggal)).map((p) => [p.id, p.nama])) } catch { /* nama tidak tersedia */ } }
       pertemuan.push({ mapel: x.mapel, kelas: x.kelas, jp: `${jpLabel(x)} (${x.slot.length} JP)`, jam: `${jamPendek(x.jam_mulai)}–${jamPendek(x.jam_selesai)}`,
-        status: j.status, materi: j.materi || [j.bab, j.subbab].filter(Boolean).join(' – '), metode: j.metode, media: j.media, keterangan: j.keterangan,
+        status: j.status, materi: j.materi || [j.bab, j.subbab].filter(Boolean).join(' – '), tujuan: j.tujuan, metode: j.metode, media: j.media, alat: j.alat, sumber: j.sumber, keterangan: j.keterangan,
         hadir: j.jumlah_hadir, jumlah: j.jumlah_anggota, tidakHadir: kode.map(([id, k]) => ({ nama: nama[id] || 'Santri', kode: k })) })
     }
     teksLaporan.value = laporanMengajar({ guru: sesi.pengguna?.nama_lengkap, tanggal: h.tanggal, pertemuan })
@@ -190,20 +203,40 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
             <div><label class="label-isian" for="jm-bab">Bab / materi pokok <span class="text-merah">*</span></label>
               <input id="jm-bab" v-model="f.bab" class="isian" list="jm-saran" placeholder="Contoh: Bab 2 Fungsi" @input="f.plan_id = null" />
               <datalist id="jm-saran"><option v-for="s in saranBab" :key="s" :value="s" /></datalist></div>
-            <div><label class="label-isian" for="jm-sub">Sub-bab / pembahasan</label>
+            <div><label class="label-isian" for="jm-sub">Sub-bab / pembahasan <span v-if="wajib('subbab')" class="text-merah">*</span></label>
               <input id="jm-sub" v-model="f.subbab" class="isian" :placeholder="b.terakhir?.subbab ? `Sebelumnya: ${b.terakhir.subbab}` : 'Contoh: Fungsi kuadrat dan grafiknya'" /></div>
+            <div><label class="label-isian" for="jm-tujuan">Tujuan pembelajaran <span v-if="wajib('tujuan')" class="text-merah">*</span></label>
+              <input id="jm-tujuan" v-model="f.tujuan" class="isian" placeholder="Contoh: Santri dapat menggambar grafik fungsi kuadrat" /></div>
+            <div><label class="label-isian" for="jm-keg">Kegiatan pembelajaran <span v-if="wajib('kegiatan')" class="text-merah">*</span></label>
+              <textarea id="jm-keg" v-model="f.kegiatan" class="isian" rows="2" placeholder="Ringkas: pembukaan, inti, penutup; tugas yang diberikan" /></div>
             <div>
-              <p class="label-isian">Metode pembelajaran</p>
+              <p class="label-isian">Metode/strategi pembelajaran <span v-if="wajib('metode')" class="text-merah">*</span></p>
               <div class="flex flex-wrap gap-1.5">
-                <button v-for="m in atur.metode" :key="m" type="button" :aria-pressed="f.metode.includes(m)" @click="togel(f.metode, m)"
+                <button v-for="m in pilihan('metode')" :key="m" type="button" :aria-pressed="f.metode.includes(m)" @click="togel(f.metode, m)"
                   :class="['min-h-[36px] rounded-full border px-3 text-sm', f.metode.includes(m) ? 'border-[#1E7D4F] bg-[#E2F1E8] font-semibold text-[#14583A] dark:bg-[#123524] dark:text-[#8FE0B5]' : 'border-garis text-teks2']">{{ m }}</button>
               </div>
             </div>
             <div>
-              <p class="label-isian">Media pembelajaran (bila ada)</p>
+              <p class="label-isian">Media pembelajaran <span v-if="wajib('media')" class="text-merah">*</span></p>
               <div class="flex flex-wrap gap-1.5">
-                <button v-for="m in atur.media" :key="m" type="button" :aria-pressed="f.media.includes(m)" @click="togel(f.media, m)"
+                <button v-for="m in pilihan('media')" :key="m" type="button" :aria-pressed="f.media.includes(m)" @click="togel(f.media, m)"
                   :class="['min-h-[36px] rounded-full border px-3 text-sm', f.media.includes(m) ? 'border-[#2F5FA8] bg-[#E3ECF8] font-semibold text-[#1F4580] dark:bg-[#15253D] dark:text-[#A9C6F0]' : 'border-garis text-teks2']">{{ m }}</button>
+              </div>
+            </div>
+            <div>
+              <p class="label-isian">Alat/perlengkapan <span v-if="wajib('alat')" class="text-merah">*</span></p>
+              <div class="flex flex-wrap gap-1.5">
+                <button v-for="m in pilihan('alat')" :key="m" type="button" :aria-pressed="f.alat.includes(m)" @click="togel(f.alat, m)"
+                  :class="['min-h-[36px] rounded-full border px-3 text-sm', f.alat.includes(m) ? 'border-[#B7791F] bg-[#FBF0DC] font-semibold text-[#7A4E0B] dark:bg-[#3A2A0E] dark:text-[#F2C879]' : 'border-garis text-teks2']">{{ m }}</button>
+                <input v-model="lain.alat" class="h-9 w-36 rounded-full border border-dashed border-garis bg-permukaan px-3 text-sm" :placeholder="'+ alat lain'" :aria-label="'Alat/perlengkapan lainnya'" @keydown.enter.prevent="tambahLain('alat')" @blur="tambahLain('alat')" />
+              </div>
+            </div>
+            <div>
+              <p class="label-isian">Sumber belajar/referensi <span v-if="wajib('sumber')" class="text-merah">*</span></p>
+              <div class="flex flex-wrap gap-1.5">
+                <button v-for="m in pilihan('sumber')" :key="m" type="button" :aria-pressed="f.sumber.includes(m)" @click="togel(f.sumber, m)"
+                  :class="['min-h-[36px] rounded-full border px-3 text-sm', f.sumber.includes(m) ? 'border-[#7A3FA0] bg-[#F1E7F8] font-semibold text-[#55267A] dark:bg-[#2E1B3D] dark:text-[#D7B6F0]' : 'border-garis text-teks2']">{{ m }}</button>
+                <input v-model="lain.sumber" class="h-9 w-36 rounded-full border border-dashed border-garis bg-permukaan px-3 text-sm" :placeholder="'+ sumber lain'" :aria-label="'Sumber belajar/referensi lainnya'" @keydown.enter.prevent="tambahLain('sumber')" @blur="tambahLain('sumber')" />
               </div>
             </div>
             <!-- Kehadiran santri -->
@@ -236,7 +269,11 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
           <div><dt class="inline font-semibold">Status: </dt><dd class="inline">{{ b.jurnal.status === 'tidak_terlaksana' ? 'Tidak terlaksana' : 'Terlaksana' }}</dd></div>
           <div v-if="b.jurnal.materi"><dt class="inline font-semibold">Materi: </dt><dd class="inline">{{ b.jurnal.materi }}</dd></div>
           <div v-if="b.jurnal.metode?.length"><dt class="inline font-semibold">Metode: </dt><dd class="inline">{{ b.jurnal.metode.join(', ') }}</dd></div>
+          <div v-if="b.jurnal.tujuan"><dt class="inline font-semibold">Tujuan: </dt><dd class="inline">{{ b.jurnal.tujuan }}</dd></div>
+          <div v-if="b.jurnal.kegiatan"><dt class="inline font-semibold">Kegiatan: </dt><dd class="inline">{{ b.jurnal.kegiatan }}</dd></div>
           <div v-if="b.jurnal.media?.length"><dt class="inline font-semibold">Media: </dt><dd class="inline">{{ b.jurnal.media.join(', ') }}</dd></div>
+          <div v-if="b.jurnal.alat?.length"><dt class="inline font-semibold">Alat: </dt><dd class="inline">{{ b.jurnal.alat.join(', ') }}</dd></div>
+          <div v-if="b.jurnal.sumber?.length"><dt class="inline font-semibold">Sumber: </dt><dd class="inline">{{ b.jurnal.sumber.join(', ') }}</dd></div>
           <div v-if="b.jurnal.jumlah_anggota != null"><dt class="inline font-semibold">Kehadiran: </dt><dd class="inline">{{ b.jurnal.jumlah_hadir }}/{{ b.jurnal.jumlah_anggota }} santri</dd></div>
           <div v-if="b.jurnal.keterangan"><dt class="inline font-semibold">Catatan: </dt><dd class="inline">{{ b.jurnal.keterangan }}</dd></div>
         </dl>

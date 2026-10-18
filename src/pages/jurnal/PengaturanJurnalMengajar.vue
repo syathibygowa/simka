@@ -1,7 +1,8 @@
-<!-- SIMKA PRO | src/pages/jurnal/PengaturanJurnalMengajar.vue | v1.0 | 14.2.0: pengaturan jurnal mengajar dipindah ke Jurnal → Pengaturan | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/PengaturanJurnalMengajar.vue | v1.1 | 14.4.0: pilihan alat dan sumber belajar, isian wajib dapat diatur | 17/10/2026 -->
 <script setup>
 // Pengaturan jurnal mengajar guru mapel (sebelumnya tombol di tab Jurnal mengajar): batas pengisian, absensi santri
 // oleh guru mapel, pilihan metode dan media. Diubah superadmin atau admin ber-izin Jadwal pelajaran; lainnya membaca.
+// v1.1: pilihan alat/perlengkapan dan sumber belajar/referensi; isian wajib (bab/materi pokok selalu wajib).
 import { ref, computed, onMounted } from 'vue'
 import { PhChalkboardTeacher, PhFloppyDisk } from '@phosphor-icons/vue'
 import { useJadwal } from '@/stores/jadwal'
@@ -11,13 +12,16 @@ import { useUI } from '@/stores/ui'
 const jd = useJadwal(); const sesi = useSesi(); const ui = useUI()
 const boleh = computed(() => sesi.isSuperadmin || sesi.bolehAdmin('atur_jadwal'))
 const fa = ref(null); const proses = ref(false)
-function salin(a) { fa.value = { batas_hari: a.batas_hari ?? 1, absen_santri: a.absen_santri !== false, metode: (a.metode || []).join('\n'), media: (a.media || []).join('\n') } }
+const WAJIB = [['subbab', 'Sub-bab/pembahasan'], ['metode', 'Metode/strategi'], ['tujuan', 'Tujuan pembelajaran'], ['kegiatan', 'Kegiatan pembelajaran'], ['media', 'Media'], ['alat', 'Alat/perlengkapan'], ['sumber', 'Sumber belajar/referensi']]
+function salin(a) { fa.value = { batas_hari: a.batas_hari ?? 1, absen_santri: a.absen_santri !== false, metode: (a.metode || []).join('\n'), media: (a.media || []).join('\n'),
+  alat: (a.alat || []).join('\n'), sumber: (a.sumber || []).join('\n'), wajib: { subbab: true, metode: true, ...(a.wajib || {}) } } }
 onMounted(async () => { try { salin(await jd.muatAturJurnal()) } catch (e) { ui.toast(e.message, 'galat') } })
 async function simpan() {
   const daftar = (t) => [...new Set(t.split('\n').map((x) => x.trim()).filter(Boolean))].slice(0, 30)
   proses.value = true
   try {
-    salin(await jd.simpanAturJurnal({ batas_hari: Number(fa.value.batas_hari), absen_santri: fa.value.absen_santri, metode: daftar(fa.value.metode), media: daftar(fa.value.media) }))
+    salin(await jd.simpanAturJurnal({ batas_hari: Number(fa.value.batas_hari), absen_santri: fa.value.absen_santri, metode: daftar(fa.value.metode), media: daftar(fa.value.media),
+      alat: daftar(fa.value.alat), sumber: daftar(fa.value.sumber), wajib: { ...fa.value.wajib } }))
     ui.toast('Pengaturan jurnal mengajar disimpan.')
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
@@ -36,6 +40,15 @@ async function simpan() {
       <div class="grid gap-3 sm:grid-cols-2">
         <div><label class="label-isian" for="ja-metode">Pilihan metode/strategi (satu per baris)</label><textarea id="ja-metode" v-model="fa.metode" class="isian" rows="6" :disabled="!boleh" /></div>
         <div><label class="label-isian" for="ja-media">Pilihan media (satu per baris)</label><textarea id="ja-media" v-model="fa.media" class="isian" rows="6" :disabled="!boleh" /></div>
+        <div><label class="label-isian" for="ja-alat">Pilihan alat/perlengkapan (satu per baris)</label><textarea id="ja-alat" v-model="fa.alat" class="isian" rows="6" :disabled="!boleh" /></div>
+        <div><label class="label-isian" for="ja-sumber">Pilihan sumber belajar/referensi (satu per baris)</label><textarea id="ja-sumber" v-model="fa.sumber" class="isian" rows="6" :disabled="!boleh" /></div>
+      </div>
+      <div class="rounded-xl border border-garis p-3">
+        <p class="text-sm font-bold">Isian wajib saat guru menyimpan jurnal</p>
+        <p class="mb-2 text-xs text-teks3">Bab/materi pokok selalu wajib. Absensi santri mengikuti pilihan "Absensi santri oleh guru mapel" di atas. Guru tetap dapat menambah pilihan sendiri.</p>
+        <div class="grid gap-1 sm:grid-cols-2">
+          <label v-for="[k, n] in WAJIB" :key="k" class="flex min-h-[40px] items-center gap-2 text-sm"><input v-model="fa.wajib[k]" type="checkbox" class="h-5 w-5 accent-[#1E7D4F]" :disabled="!boleh" /> {{ n }}</label>
+        </div>
       </div>
       <button v-if="boleh" class="tombol-utama" :disabled="proses" @click="simpan"><PhFloppyDisk :size="20" weight="duotone" /> Simpan pengaturan</button>
     </div>

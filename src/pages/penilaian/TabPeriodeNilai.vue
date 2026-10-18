@@ -1,8 +1,8 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabPeriodeNilai.vue | v1.2 | 14.3.0: rentang tanggal semester (dasar komponen Kehadiran) | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabPeriodeNilai.vue | v1.3 | 14.4.0: rentang semester bawaan sama dengan rentang rapor | 17/10/2026 -->
 <script setup>
 // Periode penilaian per jenis rapor × semester: status (Disiapkan → Dibuka → Ditutup), batas pengisian, tanggal rapor
 // (dicetak di atas tanda tangan), hari efektif (otomatis dari kalender, dapat diubah), dan tema kokurikuler (SMA).
-// v1.2: awal/akhir semester (kosong = otomatis 6 bulan) — rentang penghitungan komponen nilai Kehadiran.
+// v1.2: awal/akhir semester (kosong = sama dengan rentang rapor) — rentang penghitungan komponen nilai Kehadiran.
 import { ref, computed, watch } from 'vue'
 import { PhFloppyDisk, PhLockSimple, PhLockSimpleOpen, PhHourglassMedium, PhInfo } from '@phosphor-icons/vue'
 import { usePenilaian } from '@/stores/penilaian'
@@ -68,7 +68,7 @@ async function simpan(p) {
             <template v-if="k.j !== 'tahfizh'">
               <InputTanggal v-model="form[p.id].tanggal_mulai" label="Awal semester (kosong = otomatis)" bawaan-kosong />
               <InputTanggal v-model="form[p.id].tanggal_selesai" label="Akhir semester (kosong = otomatis)" bawaan-kosong />
-              <p class="text-xs text-teks3 sm:col-span-2">Rentang ini dipakai untuk menghitung komponen nilai <b>Kehadiran</b> (absensi pelajaran). Bila kosong: semester 1 = 6 bulan pertama tahun ajaran, semester 2 = sisanya.</p>
+              <p class="text-xs text-teks3 sm:col-span-2">Rentang ini dipakai untuk menghitung komponen nilai <b>Kehadiran</b> (absensi pelajaran). Bila kosong: sama dengan rentang rapor (semester 1 = awal tahun ajaran s.d. 31 Desember, semester 2 = 1 Januari s.d. akhir tahun ajaran).</p>
             </template>
             <div v-if="k.j === 'sma'"><label class="label-isian" :for="`tema-${p.id}`">Tema kokurikuler</label>
               <input :id="`tema-${p.id}`" v-model="form[p.id].tema_kokurikuler" class="isian" placeholder="Contoh: Generasi Sehat dan Bugar" :disabled="!boleh(k.j)" /></div>

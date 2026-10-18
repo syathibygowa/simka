@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/RekapKehadiranMapel.vue | v1.0 | 14.3.0: rekap kehadiran santri per mata pelajaran | 17/10/2026 -->
+<!-- SIMKA PRO | src/components/RekapKehadiranMapel.vue | v1.1 | 14.4.0: awal semester 2 = 1 Januari (sama dengan rapor) | 17/10/2026 -->
 <script setup>
 // Rekap kehadiran santri per mata pelajaran dari absensi guru mapel di jurnal mengajar.
 //   * Pertemuan = tanggal jurnal terlaksana yang absensinya diisi (beberapa JP di hari sama = 1 pertemuan).
@@ -29,7 +29,7 @@ const hari = hariIniISO()
 const ta = computed(() => lembaga.tahunAktif)
 const awalSmt = computed(() => {
   if (!ta.value?.mulai) return hari.slice(0, 7) + '-01'
-  const m = ta.value.mulai; const d = new Date(m + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() + 6); const s2 = d.toISOString().slice(0, 10)
+  const m = ta.value.mulai; const s2 = `${Number(m.slice(0, 4)) + 1}-01-01`   // sama dengan rentang rapor: semester 2 mulai 1 Januari
   return hari >= s2 ? s2 : m
 })
 const PERIODE = computed(() => [
