@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/rekamPegawai.js | v1.0 | 14.8.0: pemuat Rekam Kepegawaian individu (server dan mode demo) serta temuan otomatis | 18/10/2026
+// SIMKA PRO | src/lib/rekamPegawai.js | v1.1 | 14.8.1: catatan disiplin, riwayat kelompok binaan, beban kerja bulanan, dan gaji (demo dan temuan) | 18/10/2026
 // rekam_kepegawaian(pegawai, mulai, selesai) menyatukan identitas, jabatan, kehadiran, pengajuan, jurnal, mengajar, tugas, beban kerja,
 // dan surat teguran satu pegawai. temuan() menyusun catatan ringkas otomatis (seperti ringkasan rekam medis) dari angka tersebut.
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -8,6 +8,8 @@ import { hariIniISO } from '@/lib/tanggal'
 
 export const NAMA_HARI_ISO = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Ahad']
 export const JENIS_TUGAS = { kelas: 'Wali kelas', kamar: 'Musyrif kamar', halaqah: 'Muhaffizh halaqah', ekskul: 'Pembina ekskul', asrama: 'Musyrif asrama' }
+export const JENIS_BINAAN = { kelas: 'Wali kelas', kamar: 'Musyrif kamar', halaqah: 'Muhaffizh halaqah', ekskul: 'Pembina ekskul', mengajar: 'Mengajar' }
+export const KEADAAN_SP_PEG = { aktif: 'Masih berlaku', berakhir: 'Berakhir', dicabut: 'Dicabut', terbit: 'Terbit' }
 export const JENIS_ABSEN = { kelas: 'Absensi kelas', halaqah: 'Absensi halaqah', asrama: 'Absensi asrama', ekskul: 'Pertemuan ekskul' }
 
 export async function muatRekam(id, mulai, selesai) {
@@ -41,6 +43,10 @@ export function temuan(r, batas = 80) {
   if (ajar.y + ajar.n) t.push({ jenis: ajar.n / (ajar.y + ajar.n) > 0.1 ? 'perhatian' : 'baik', teks: `${ajar.y} pertemuan mengajar terlaksana, ${ajar.n} tidak terlaksana.` })
   const sp = (r.teguran || []).filter((w) => w.status === 'terbit' && w.berlaku_sampai >= hariIniISO())
   if (sp.length) t.push({ jenis: 'perhatian', teks: `Masih memiliki SP-${Math.max(...sp.map((w) => w.tingkat))} yang berlaku.` })
+  else if (r.teguran && !r.teguran.length) t.push({ jenis: 'baik', teks: 'Tidak pernah menerima surat teguran.' })
+  else if (r.teguran?.length) t.push({ jenis: 'info', teks: `Pernah menerima ${r.teguran.length} surat teguran; tidak ada yang masih berlaku.` })
+  const th = new Set((r.binaan || []).map((b) => b.tahun)).size
+  if (th) t.push({ jenis: 'info', teks: `Membina kelompok santri pada ${th} tahun ajaran (${(r.binaan || []).filter((b) => b.aktif).length} tugas berjalan).` })
   const peng = (r.pengajuan || []).filter((x) => x.status === 'disetujui')
   if (peng.length) t.push({ jenis: 'info', teks: `${peng.length} pengajuan disetujui (${peng.reduce((a, x) => a + Number(x.hari || 0), 0)} hari).` })
   return t
@@ -82,6 +88,15 @@ function demoRekam(id, mulai, selesai) {
     absensi_santri: [{ jenis: 'kelas', sesi: 18 * bulan.length, terlambat_isi: 2 }],
     tugas: [{ jenis: 'kelas', kelompok: '7A', peran: 'utama', mulai: '2026-07-13', sampai: null, anggota: 24 }, { jenis: 'ekskul', kelompok: 'Robotik', peran: 'pendamping', mulai: '2026-08-01', sampai: null, anggota: 15 }],
     beban: { jam: 34, rincian: [{ komponen: 'Mengajar tatap muka', jam: 24 }, { komponen: 'Wali kelas', jam: 4 }, { komponen: 'Pembina ekskul', jam: 2 }, { komponen: 'Piket', jam: 4 }], kunci: { periode: '2026-09', jam_wajib: 30, total: 34, selisih: 4, status: 'dikunci' } },
-    teguran: [],
+    teguran: [{ tingkat: 1, nomor: 'D.019/IZ/PPTQ-IAS/IX/1446', tanggal: '2025-03-10', kategori: ['Terlambat berulang kali'], uraian: 'Terlambat hadir di halaqah subuh lebih dari lima kali dalam sebulan.',
+      status: 'terbit', berlaku_mulai: '2025-03-10', berlaku_sampai: '2025-09-09', alasan: null, keadaan: 'berakhir', dalam_periode: false }],
+    binaan: [
+      { tahun: '2026/2027', jenis: 'kelas', kelompok: '7A', peran: 'utama', anggota: 24, aktif: true }, { tahun: '2026/2027', jenis: 'ekskul', kelompok: 'Robotik', peran: 'pendamping', anggota: 15, aktif: true },
+      { tahun: '2026/2027', jenis: 'mengajar', kelompok: '7A', mapel: 'Matematika', jp: 4, pertemuan: 48, aktif: true }, { tahun: '2026/2027', jenis: 'mengajar', kelompok: '8A', mapel: 'Matematika', jp: 4, pertemuan: 47, aktif: true },
+      { tahun: '2025/2026', jenis: 'kelas', kelompok: '8B', peran: 'utama', anggota: 26, aktif: false }, { tahun: '2025/2026', jenis: 'kamar', kelompok: 'Kamar Umar', peran: 'pendamping', anggota: 18, aktif: false },
+      { tahun: '2025/2026', jenis: 'mengajar', kelompok: '8B', mapel: 'Matematika', jp: 4, pertemuan: 128, aktif: false }, { tahun: '2025/2026', jenis: 'mengajar', kelompok: '9A', mapel: 'Matematika', jp: 4, pertemuan: 120, aktif: false },
+      { tahun: '2024/2025', jenis: 'halaqah', kelompok: 'Halaqah Ust. Hasan', peran: 'utama', anggota: 12, aktif: false }, { tahun: '2024/2025', jenis: 'mengajar', kelompok: '7A', mapel: 'Matematika', jp: 4, pertemuan: 131, aktif: false }],
+    beban_riwayat: bulan.slice(0, -1).map((b, i) => ({ periode: b + '-01', jam_wajib: 30, total: 32 + (i % 3), selisih: 2 + (i % 3), status: 'dikunci' })),
+    gaji: bulan.slice(0, -1).map((b) => ({ tahun: Number(b.slice(0, 4)), bulan: Number(b.slice(5)), tanggal_bayar: b + '-01', pendapatan: 3650000, potongan: 120000, diterima: 3530000, nomor_slip: null })),
   }
 }

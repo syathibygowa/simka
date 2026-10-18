@@ -1,8 +1,8 @@
-// SIMKA PRO | src/lib/versi.js | v14.8.0 | 14.8.0: Rekam Kepegawaian individu (tabel, grafik, temuan, cetak F4) | 18/10/2026
+// SIMKA PRO | src/lib/versi.js | v14.8.1 | 14.8.1: Rekam Kepegawaian dilengkapi navigasi, catatan disiplin, kelompok binaan, beban kerja, dan gaji | 18/10/2026
 // Nomor versi aplikasi yang tampil di halaman Profil. Naikkan setiap kali kode diunggah ke GitHub.
 // Keterangan versi tampil kepada pengguna, jadi ditulis tanpa kata "Fase".
-export const VERSI_APLIKASI = '14.8.0'
-export const KETERANGAN_VERSI = 'Rekam Kepegawaian: laporan menyeluruh satu pegawai pada satu periode (kehadiran, pengajuan, jurnal, mengajar, tugas, beban kerja, teguran) dengan grafik, temuan otomatis, cetak F4, dan Excel'
+export const VERSI_APLIKASI = '14.8.1'
+export const KETERANGAN_VERSI = 'Rekam Kepegawaian dilengkapi tombol Kembali, Sebelumnya, dan Berikutnya; catatan disiplin (riwayat surat teguran); riwayat kelompok binaan semua tahun ajaran; beban kerja bulanan; dan gaji diterima bila fitur gaji aktif'
 
 // Waktu kode dibangun oleh GitHub Actions; dipakai untuk memastikan versi yang tayang adalah yang terbaru.
 /* global __WAKTU_BUILD__ */

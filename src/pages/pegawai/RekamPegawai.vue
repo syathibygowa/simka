@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/RekamPegawai.vue | v1.0 | 14.8.0: Rekam Kepegawaian individu (tabel, grafik, temuan otomatis, cetak F4, Excel) | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/RekamPegawai.vue | v1.1 | 14.8.1: navigasi kembali/sebelumnya/berikutnya, catatan disiplin, riwayat kelompok binaan, riwayat beban kerja, gaji | 18/10/2026 -->
 <script setup>
 // Rekam Kepegawaian: laporan menyeluruh satu pegawai pada satu periode, seperti rekam medis.
 //   Kepala     : foto, nama, NIY, jabatan struktural/fungsional/Plt, unit, status, masa kerja
@@ -9,17 +9,21 @@
 //   Tabel      : pengajuan, mengajar per kelas-mapel, tugas pengasuhan, absensi santri yang diisi, beban kerja, riwayat, surat teguran
 //   Cetak F4   : kop, identitas, temuan, tabel dan grafik; tanda tangan "Mengetahui" pimpinan (kiri) dan pegawai ybs. (kanan). Excel per bagian.
 // Hak baca diperiksa server: dirinya, atasan langsung, dan pemegang hak melihat semua pegawai. /profil/rekam = rekam milik sendiri.
+// v1.1 (14.8.1): tombol Kembali, Sebelumnya, Berikutnya (urutan nama pegawai aktif; periode ikut terbawa); Catatan disiplin (seluruh SP);
+//       Riwayat kelompok binaan semua tahun ajaran (wali kelas, musyrif, muhaffizh, pembina ekskul, mengajar); riwayat beban kerja
+//       bulanan; Gaji per bulan (hanya bila fitur gaji dipakai dan pembaca berhak: pembaca gaji, atau pegawai sendiri untuk slip yang dibuka).
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
 import { PhUserCircle, PhCalendarCheck, PhTimer, PhWarningCircle, PhFileText, PhNotebook, PhChalkboardTeacher, PhClockCountdown, PhPrinter, PhFileXls,
-  PhCheckCircle, PhInfo, PhWarning, PhStethoscope, PhWarningOctagon } from '@phosphor-icons/vue'
+  PhCheckCircle, PhInfo, PhWarning, PhStethoscope, PhWarningOctagon, PhArrowLeft, PhCaretLeft, PhCaretRight, PhUsersThree, PhWallet, PhShieldWarning } from '@phosphor-icons/vue'
 import { usePegawai } from '@/stores/pegawai'
 import { useSesi } from '@/stores/sesi'
 import { useLembaga } from '@/stores/lembaga'
 import { useAmbang } from '@/stores/ambang'
 import { useUI } from '@/stores/ui'
-import { muatRekam, temuan, NAMA_HARI_ISO, JENIS_TUGAS, JENIS_ABSEN } from '@/lib/rekamPegawai'
+import { muatRekam, temuan, NAMA_HARI_ISO, JENIS_TUGAS, JENIS_ABSEN, JENIS_BINAAN, KEADAAN_SP_PEG } from '@/lib/rekamPegawai'
+import { rupiah, angka } from '@/lib/gaji'
 import { STATUS_PEGAWAI, PENDIDIKAN } from '@/lib/kepegawaian'
 import { formatPendek, formatPanjang, hariIniISO, BULAN } from '@/lib/tanggal'
 import { namaBerkas, periodeRentang } from '@/lib/namaBerkas'
@@ -29,7 +33,7 @@ import GrafikDeret from '@/components/grafik/GrafikDeret.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
-const route = useRoute(); const peg = usePegawai(); const sesi = useSesi(); const lembaga = useLembaga(); const ambang = useAmbang(); const ui = useUI()
+const route = useRoute(); const router = useRouter(); const peg = usePegawai(); const sesi = useSesi(); const lembaga = useLembaga(); const ambang = useAmbang(); const ui = useUI()
 const id = computed(() => (route.params.id ? String(route.params.id) : sesi.pengguna?.id))
 const hari = hariIniISO()
 const geser = (iso, bulan) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() + bulan); return d.toISOString().slice(0, 10) }
@@ -40,7 +44,9 @@ const PRESET = [
   { k: 'ta', n: 'Tahun ajaran', m: `${thTA}-07-01`, s: hari },
   { k: '12b', n: '12 bulan terakhir', m: geser(hari, -12), s: hari },
 ]
-const preset = ref('sem'); const mulai = ref(PRESET[1].m); const selesai = ref(PRESET[1].s)
+const q = route.query
+const preset = ref(typeof q.preset === 'string' ? q.preset : 'sem')
+const mulai = ref(typeof q.mulai === 'string' ? q.mulai : PRESET[1].m); const selesai = ref(typeof q.selesai === 'string' ? q.selesai : PRESET[1].s)
 const pilih = (p) => { preset.value = p.k; mulai.value = p.m; selesai.value = p.s }
 const r = ref(null); const memuat = ref(false); const foto = ref('')
 async function muat() {
@@ -51,6 +57,14 @@ async function muat() {
 }
 onMounted(() => { muat(); lembaga.muat().catch(() => {}); ambang.muat().catch(() => {}) })
 watch([mulai, selesai, id], muat)
+
+// ---------- Navigasi: kembali, sebelumnya, berikutnya ----------
+const urutan = computed(() => (route.params.id ? [...peg.daftar].filter((x) => x.status_keaktifan !== 'keluar' && x.peran !== 'superadmin').sort((a, b) => String(a.nama_lengkap).localeCompare(String(b.nama_lengkap), 'id')) : []))
+const posisi = computed(() => urutan.value.findIndex((x) => x.id === id.value))
+const sebelum = computed(() => (posisi.value > 0 ? urutan.value[posisi.value - 1] : null))
+const sesudah = computed(() => (posisi.value >= 0 && posisi.value < urutan.value.length - 1 ? urutan.value[posisi.value + 1] : null))
+function pindah(x) { if (x) router.replace({ path: `/pegawai/${x.id}/rekam`, query: { mulai: mulai.value, selesai: selesai.value, preset: preset.value } }) }
+function kembali() { if (window.history.state?.back) router.back(); else router.push(route.params.id ? `/pegawai/${route.params.id}` : '/profil') }
 watch(() => r.value?.profil?.id, async (pid) => { if (!pid) return; try { foto.value = (await peg.foto(pid)) || '' } catch { foto.value = '' } })
 
 const P = computed(() => r.value?.profil || {})
@@ -76,6 +90,12 @@ const KARTU = computed(() => {
   ]
 })
 const catatan = computed(() => temuan(r.value, batas.value))
+const binaanTahun = computed(() => { const m = new Map(); for (const b of r.value?.binaan || []) { if (!m.has(b.tahun)) m.set(b.tahun, []); m.get(b.tahun).push(b) } return [...m.entries()] })
+const teksBinaan = (b) => (b.jenis === 'mengajar' ? `${b.mapel} kelas ${b.kelompok} (${b.jp || 0} JP/pekan, ${b.pertemuan || 0} pertemuan)` : `${JENIS_BINAAN[b.jenis] || b.jenis} ${b.kelompok}${b.peran && b.peran !== 'utama' ? ` (${b.peran})` : ''}`)
+const gaji = computed(() => r.value?.gaji)
+const totalGaji = computed(() => (gaji.value || []).reduce((a, x) => ({ p: a.p + Number(x.pendapatan || 0), k: a.k + Number(x.potongan || 0), d: a.d + Number(x.diterima || 0) }), { p: 0, k: 0, d: 0 }))
+const labelGaji = (x) => `${BULAN[x.bulan - 1]} ${x.tahun}`
+const spDalam = computed(() => (r.value?.teguran || []).filter((w) => w.dalam_periode).length)
 const IKON_TEMUAN = { baik: { ikon: PhCheckCircle, w: 'presensi' }, perhatian: { ikon: PhWarning, w: 'klinik' }, info: { ikon: PhInfo, w: 'shift' } }
 
 // ---------- Grafik ----------
@@ -106,12 +126,26 @@ function excel() {
   lembar('Mengajar', [['Kelas', 'Mapel', 'JP/pekan', 'Terlaksana', 'Tidak terlaksana'], ...x.mengajar.map((m) => [m.kelas, m.mapel, m.jp, m.terlaksana, m.tidak])], [12, 28, 10, 12, 16])
   lembar('Jurnal dan tugas', [['Bulan', 'Hari jurnal', 'Hari hadir'], ...x.jurnal_bulan.map((b) => [b.bulan, b.hari, b.hari_hadir]), [], ['Tugas', 'Kelompok', 'Anggota'],
     ...x.tugas.map((t) => [JENIS_TUGAS[t.jenis] || t.jenis, t.kelompok, t.anggota]), [], ['Komponen beban kerja', 'Jam'], ...(x.beban?.rincian || []).map((b) => [b.komponen, b.jam])], [26, 22, 12])
+  lembar('Kelompok binaan', [['Tahun ajaran', 'Tugas', 'Kelompok', 'Keterangan'], ...(x.binaan || []).map((b) => [b.tahun, b.jenis === 'mengajar' ? 'Mengajar' : JENIS_BINAAN[b.jenis] || b.jenis, b.kelompok,
+    b.jenis === 'mengajar' ? `${b.mapel}, ${b.jp || 0} JP/pekan, ${b.pertemuan || 0} pertemuan` : `${b.anggota || 0} santri${b.peran !== 'utama' ? ', ' + b.peran : ''}`])], [12, 20, 16, 40])
+  if (x.teguran) lembar('Catatan disiplin', [['Tingkat', 'Nomor', 'Tanggal', 'Berlaku sampai', 'Keadaan', 'Pelanggaran', 'Uraian'], ...x.teguran.map((w) => [`SP-${w.tingkat}`, w.nomor, formatPendek(w.tanggal), formatPendek(w.berlaku_sampai), KEADAAN_SP_PEG[w.keadaan] || w.keadaan, (w.kategori || []).join('; '), w.uraian])], [8, 22, 12, 14, 12, 30, 50])
+  if (x.beban_riwayat?.length) lembar('Beban kerja bulanan', [['Bulan', 'Jam wajib', 'Total', 'Selisih', 'Status'], ...x.beban_riwayat.map((b) => [String(b.periode).slice(0, 7), b.jam_wajib, b.total, b.selisih, b.status])], [10, 10, 10, 10, 12])
+  if (gaji.value) lembar('Gaji', [['Bulan', 'Pendapatan', 'Potongan', 'Diterima'], ...gaji.value.map((g) => [labelGaji(g), Number(g.pendapatan), Number(g.potongan), Number(g.diterima)]), ['Jumlah', totalGaji.value.p, totalGaji.value.k, totalGaji.value.d]], [18, 15, 15, 15])
   XLSX.writeFile(wb, `${namaBerkas(P.value.nama, 'Rekam Kepegawaian', periodeRentang(mulai.value, selesai.value))}.xlsx`)
 }
 </script>
 <template>
   <div class="w-pegawai">
     <div class="layar-saja">
+      <!-- Navigasi -->
+      <div class="mb-3 flex flex-wrap items-center gap-2">
+        <button class="tombol-garis min-h-[44px] px-3 text-sm" @click="kembali"><PhArrowLeft :size="18" weight="bold" /> Kembali</button>
+        <template v-if="urutan.length && posisi >= 0">
+          <span class="flex-1 text-center text-sm text-teks3">Pegawai {{ posisi + 1 }}/{{ urutan.length }}</span>
+          <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!sebelum" :title="sebelum?.nama_lengkap" @click="pindah(sebelum)"><PhCaretLeft :size="18" weight="bold" /> <span class="hidden sm:inline">Sebelumnya</span></button>
+          <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!sesudah" :title="sesudah?.nama_lengkap" @click="pindah(sesudah)"><span class="hidden sm:inline">Berikutnya</span> <PhCaretRight :size="18" weight="bold" /></button>
+        </template>
+      </div>
       <!-- Kepala -->
       <section class="kartu overflow-hidden">
         <div class="kepala flex flex-wrap items-center gap-4 p-5">
@@ -119,11 +153,11 @@ function excel() {
           <span v-else class="grid h-20 w-16 place-items-center rounded-xl bg-white/20"><PhUserCircle :size="40" weight="duotone" /></span>
           <div class="min-w-0 flex-1">
             <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider opacity-90"><PhStethoscope :size="16" /> Rekam Kepegawaian</p>
-            <h2 class="text-xl font-extrabold leading-tight">{{ P.nama || 'Memuat…' }}</h2>
+            <h2 class="text-xl font-extrabold leading-tight text-white">{{ P.nama || 'Memuat…' }}</h2>
             <p class="text-sm opacity-90">NIY {{ P.niy || '–' }} · {{ jabatan }}</p>
             <p class="text-sm opacity-90">{{ P.unit || '–' }} · {{ STATUS_PEGAWAI[P.status_kepegawaian] || P.status_kepegawaian || '–' }} · masa kerja {{ masa }}</p>
           </div>
-          <div class="flex gap-2">
+          <div class="flex w-full gap-2 sm:w-auto [&>button]:flex-1 sm:[&>button]:flex-none">
             <button class="tombol-garis kepala-tombol min-h-[44px] px-3 text-sm" :disabled="!r" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
             <button class="tombol-garis kepala-tombol min-h-[44px] px-3 text-sm" :disabled="!r" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
           </div>
@@ -189,12 +223,42 @@ function excel() {
               <li v-if="!r.tugas.length" class="py-1.5 text-teks3">Tidak ada tugas pengasuhan.</li></ul>
             <ul class="mt-3 divide-y divide-garis text-sm"><li v-for="(b, i) in r.beban.rincian" :key="i" class="flex justify-between py-1.5"><span>{{ b.komponen }}</span><b class="tabular-nums">{{ fmt(b.jam) }} jam</b></li>
               <li class="flex justify-between py-1.5 font-extrabold"><span>Jumlah beban kerja per pekan</span><span class="tabular-nums">{{ fmt(r.beban.jam, 0) }} jam</span></li></ul></section>
-          <section class="kartu w-hakakses p-4"><h3 class="judul-bagian mb-2">Riwayat kepegawaian dan surat teguran</h3>
-            <ul class="divide-y divide-garis text-sm"><li v-for="(h, i) in r.riwayat.slice(0, 8)" :key="i" class="py-1.5"><b>{{ JENIS_RIWAYAT[h.jenis] || h.jenis }}</b>: {{ h.lama ? h.lama + ' → ' : '' }}{{ h.baru }}
+          <section v-if="r.teguran" class="kartu w-klinik p-4"><h3 class="judul-bagian mb-1 flex items-center gap-2"><PhShieldWarning :size="20" weight="duotone" style="color: var(--c)" /> Catatan disiplin</h3>
+            <p class="mb-2 text-xs text-teks3">Seluruh surat teguran yang pernah terbit; {{ spDalam }} di antaranya berlaku pada periode ini.</p>
+            <ul class="space-y-2"><li v-for="(w, i) in r.teguran" :key="i" :class="['rounded-xl border border-garis p-3 text-sm', !w.dalam_periode && 'opacity-75']">
+              <p class="flex flex-wrap items-center gap-1.5"><b style="color: var(--c)">SP-{{ w.tingkat }}</b><span>{{ w.nomor || '–' }} · {{ formatPendek(w.tanggal) }}</span>
+                <span :class="['lencana', w.keadaan === 'aktif' ? 'w-klinik' : w.keadaan === 'dicabut' ? 'w-hakakses' : 'w-presensi']">{{ KEADAAN_SP_PEG[w.keadaan] || w.keadaan }}</span>
+                <span v-if="w.dalam_periode" class="lencana w-pengajuan">Dalam periode</span></p>
+              <p class="mt-1 text-teks2">{{ (w.kategori || []).join(', ') }}</p>
+              <p v-if="w.uraian" class="text-xs text-teks3">{{ w.uraian }}</p>
+              <p class="text-xs text-teks3">Berlaku {{ formatPendek(w.berlaku_mulai || w.tanggal) }} – {{ formatPendek(w.berlaku_sampai) }}{{ w.alasan ? ' · ' + w.alasan : '' }}</p></li>
+              <li v-if="!r.teguran.length" class="flex items-center gap-2 rounded-xl bg-permukaan2 p-3 text-sm"><PhCheckCircle :size="18" weight="duotone" class="text-[#1E7D4F]" /> Tidak pernah menerima surat teguran.</li></ul></section>
+          <section class="kartu w-hakakses p-4"><h3 class="judul-bagian mb-2">Riwayat kepegawaian</h3>
+            <ul class="divide-y divide-garis text-sm"><li v-for="(h, i) in r.riwayat.slice(0, 10)" :key="i" class="py-1.5"><b>{{ JENIS_RIWAYAT[h.jenis] || h.jenis }}</b>: {{ h.lama ? h.lama + ' → ' : '' }}{{ h.baru }}
               <span class="block text-xs text-teks3">{{ h.tanggal ? formatPendek(h.tanggal) : '–' }}{{ h.alasan ? ' · ' + h.alasan : '' }}</span></li>
-              <li v-if="!r.riwayat.length" class="py-1.5 text-teks3">Belum ada riwayat perubahan tercatat.</li></ul>
-            <ul v-if="r.teguran?.length" class="mt-3 space-y-1.5"><li v-for="(w, i) in r.teguran" :key="i" class="w-klinik flex items-center gap-2 rounded-xl border border-garis p-2 text-sm">
-              <PhWarningOctagon :size="18" weight="duotone" style="color: var(--c)" /><span>SP-{{ w.tingkat }} {{ w.nomor || '' }} · {{ formatPendek(w.tanggal) }}{{ w.status === 'dicabut' ? ' · dicabut' : '' }}</span></li></ul></section>
+              <li v-if="!r.riwayat.length" class="py-1.5 text-teks3">Belum ada riwayat perubahan tercatat.</li></ul></section>
+          <section class="kartu w-musyrif p-4 xl:col-span-2"><h3 class="judul-bagian mb-1 flex items-center gap-2"><PhUsersThree :size="20" weight="duotone" style="color: var(--c)" /> Riwayat kelompok binaan</h3>
+            <p class="mb-2 text-xs text-teks3">Semua tahun ajaran: wali kelas, musyrif kamar, muhaffizh halaqah, pembina ekskul, dan kelas yang diajar.</p>
+            <div v-if="binaanTahun.length" class="grid gap-3 md:grid-cols-2">
+              <div v-for="[th, isi] in binaanTahun" :key="th" class="rounded-xl border border-garis p-3">
+                <p class="mb-1.5 font-bold">Tahun ajaran {{ th }} <span v-if="isi.some((b) => b.aktif)" class="lencana w-presensi">Berjalan</span></p>
+                <ul class="space-y-1 text-sm"><li v-for="(b, i) in isi" :key="i" class="flex items-start gap-2"><span :class="['mt-1.5 h-2 w-2 shrink-0 rounded-full', b.jenis === 'mengajar' ? 'bg-[#6B3FA0]' : b.jenis === 'kelas' ? 'bg-[#3F6212]' : b.jenis === 'kamar' ? 'bg-[#245E3F]' : b.jenis === 'halaqah' ? 'bg-[#8C6200]' : 'bg-[#9D174D]']" />
+                  <span>{{ teksBinaan(b) }}<span v-if="b.jenis !== 'mengajar'" class="text-xs text-teks3"> · {{ b.anggota || 0 }} santri</span></span></li></ul>
+              </div>
+            </div>
+            <p v-else class="text-sm text-teks3">Belum pernah tercatat membina kelompok santri.</p></section>
+          <section v-if="r.beban_riwayat?.length" class="kartu w-gaji p-4"><h3 class="judul-bagian mb-2">Beban kerja bulanan (dikunci)</h3>
+            <table class="w-full text-sm"><thead class="text-left text-teks3"><tr><th class="py-1.5">Bulan</th><th class="py-1.5 text-center">Wajib</th><th class="py-1.5 text-center">Total</th><th class="py-1.5 text-center">Selisih</th></tr></thead>
+              <tbody class="divide-y divide-garis"><tr v-for="(b, i) in r.beban_riwayat" :key="i"><td class="py-1.5">{{ BULAN[Number(String(b.periode).slice(5, 7)) - 1] }} {{ String(b.periode).slice(0, 4) }}</td>
+                <td class="py-1.5 text-center tabular-nums">{{ fmt(b.jam_wajib) }}</td><td class="py-1.5 text-center tabular-nums">{{ fmt(b.total) }}</td>
+                <td :class="['py-1.5 text-center font-semibold tabular-nums', Number(b.selisih) < 0 && 'text-merah']">{{ Number(b.selisih) > 0 ? '+' : '' }}{{ fmt(b.selisih) }}</td></tr></tbody></table></section>
+          <section v-if="gaji" class="kartu w-gaji p-4"><h3 class="judul-bagian mb-1 flex items-center gap-2"><PhWallet :size="20" weight="duotone" style="color: var(--c)" /> Gaji diterima</h3>
+            <p class="mb-2 text-xs text-teks3">Slip gaji yang telah terbit pada periode ini. Data bersifat rahasia.</p>
+            <table v-if="gaji.length" class="w-full text-sm"><thead class="text-left text-teks3"><tr><th class="py-1.5">Bulan</th><th class="py-1.5 text-right">Pendapatan</th><th class="py-1.5 text-right">Potongan</th><th class="py-1.5 text-right">Diterima</th></tr></thead>
+              <tbody class="divide-y divide-garis"><tr v-for="(g, i) in gaji" :key="i"><td class="py-1.5">{{ labelGaji(g) }}</td><td class="py-1.5 text-right tabular-nums">{{ angka(g.pendapatan) }}</td>
+                <td class="py-1.5 text-right tabular-nums">{{ angka(g.potongan) }}</td><td class="py-1.5 text-right font-bold tabular-nums">{{ angka(g.diterima) }}</td></tr>
+                <tr class="font-extrabold"><td class="py-1.5">Jumlah</td><td class="py-1.5 text-right tabular-nums">{{ angka(totalGaji.p) }}</td><td class="py-1.5 text-right tabular-nums">{{ angka(totalGaji.k) }}</td><td class="py-1.5 text-right tabular-nums">{{ rupiah(totalGaji.d) }}</td></tr></tbody></table>
+            <p v-else class="text-sm text-teks3">Belum ada slip gaji terbit pada periode ini.</p></section>
         </div>
       </template>
     </div>
@@ -237,7 +301,29 @@ function excel() {
             <tr v-if="!r.mengajar.length"><td colspan="6" class="tengah">Tidak ada penugasan mengajar</td></tr></tbody></table>
         <p class="ket">Tugas pengasuhan: {{ r.tugas.map((t) => `${JENIS_TUGAS[t.jenis] || t.jenis} ${t.kelompok}`).join(', ') || 'tidak ada' }}.
           Beban kerja: {{ r.beban.rincian.map((b) => `${b.komponen} ${fmt(b.jam)} jam`).join(', ') || '–' }} (jumlah {{ fmt(r.beban.jam, 0) }} jam/pekan).
-          <template v-if="r.teguran?.length"> Surat teguran: {{ r.teguran.map((w) => `SP-${w.tingkat} ${w.nomor || ''} (${formatPendek(w.tanggal)}${w.status === 'dicabut' ? ', dicabut' : ''})`).join('; ') }}.</template></p>
+</p>
+        <p class="sub">E. Riwayat kelompok binaan</p>
+        <table class="tabel"><colgroup><col style="width:6%"><col style="width:16%"><col style="width:22%"><col style="width:56%"></colgroup>
+          <thead><tr><th>No.</th><th>Tahun ajaran</th><th>Tugas</th><th>Kelompok dan keterangan</th></tr></thead>
+          <tbody><tr v-for="(b, i) in r.binaan || []" :key="i"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ b.tahun }}</td><td>{{ b.jenis === 'mengajar' ? 'Mengajar' : JENIS_BINAAN[b.jenis] || b.jenis }}</td>
+            <td>{{ b.jenis === 'mengajar' ? `${b.mapel} kelas ${b.kelompok}, ${b.jp || 0} JP/pekan, ${b.pertemuan || 0} pertemuan` : `${b.kelompok}, ${b.anggota || 0} santri${b.peran !== 'utama' ? ' (' + b.peran + ')' : ''}` }}</td></tr>
+            <tr v-if="!(r.binaan || []).length"><td colspan="4" class="tengah">Belum pernah tercatat membina kelompok santri</td></tr></tbody></table>
+        <template v-if="r.teguran">
+          <p class="sub">F. Catatan disiplin</p>
+          <table class="tabel"><colgroup><col style="width:6%"><col style="width:8%"><col style="width:22%"><col style="width:13%"><col style="width:13%"><col style="width:26%"><col style="width:12%"></colgroup>
+            <thead><tr><th>No.</th><th>SP</th><th>Nomor</th><th>Tanggal</th><th>Berlaku s.d.</th><th>Pelanggaran</th><th>Keadaan</th></tr></thead>
+            <tbody><tr v-for="(w, i) in r.teguran" :key="i"><td class="tengah">{{ i + 1 }}</td><td class="tengah">SP-{{ w.tingkat }}</td><td>{{ w.nomor || '–' }}</td><td class="tengah">{{ formatPendek(w.tanggal) }}</td>
+              <td class="tengah">{{ formatPendek(w.berlaku_sampai) }}</td><td>{{ (w.kategori || []).join('; ') }}</td><td>{{ KEADAAN_SP_PEG[w.keadaan] || w.keadaan }}</td></tr>
+              <tr v-if="!r.teguran.length"><td colspan="7" class="tengah">Tidak pernah menerima surat teguran</td></tr></tbody></table>
+        </template>
+        <template v-if="gaji">
+          <p class="sub">{{ r.teguran ? 'G' : 'F' }}. Gaji diterima (rahasia)</p>
+          <table class="tabel"><colgroup><col style="width:6%"><col style="width:28%"><col style="width:22%"><col style="width:22%"><col style="width:22%"></colgroup>
+            <thead><tr><th>No.</th><th>Bulan</th><th>Pendapatan (Rp)</th><th>Potongan (Rp)</th><th>Diterima (Rp)</th></tr></thead>
+            <tbody><tr v-for="(g, i) in gaji" :key="i"><td class="tengah">{{ i + 1 }}</td><td>{{ labelGaji(g) }}</td><td class="kanan">{{ angka(g.pendapatan) }}</td><td class="kanan">{{ angka(g.potongan) }}</td><td class="kanan">{{ angka(g.diterima) }}</td></tr>
+              <tr v-if="!gaji.length"><td colspan="5" class="tengah">Belum ada slip gaji terbit pada periode ini</td></tr>
+              <tr><th colspan="2">Jumlah</th><th class="kanan">{{ angka(totalGaji.p) }}</th><th class="kanan">{{ angka(totalGaji.k) }}</th><th class="kanan">{{ angka(totalGaji.d) }}</th></tr></tbody></table>
+        </template>
         <p class="ket">Dokumen ini bersifat terbatas dan disusun otomatis dari data presensi, pengajuan, jurnal, dan penugasan pada SIMKA PRO.</p>
       </div>
       <template #ttd>
