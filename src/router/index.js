@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.31 | 14.1.0: halaman Surat Teguran Saya (Profil) | 17/10/2026
+// SIMKA PRO | src/router/index.js | v3.32 | 14.6.0: rute /disiplin-santri (Kedisiplinan Santri) | 18/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu; meta.menu/meta.izin/meta.boleh mengikuti Hak Akses.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -41,6 +41,7 @@ const routes = [
       { path: 'santri/:id/ubah', component: () => import('@/pages/santri/FormSantri.vue'), meta: { judul: 'Ubah Data Santri', kembali: '/santri' } },
       { path: 'santri/:id', component: () => import('@/pages/santri/DetailSantri.vue'), meta: { judul: 'Biodata Santri', cetak: true, kembali: '/santri' } },
       { path: 'absensi-santri/isi/:group/:tanggal/:sesi', component: () => import('@/pages/absensisantri/IsiAbsensi.vue'), meta: { judul: 'Isi Absensi Santri', kembali: '/absensi-santri' } },
+      { path: 'disiplin-santri/:tab?', component: () => import('@/pages/disiplin/DisiplinSantri.vue'), props: true, meta: { judul: 'Kedisiplinan Santri', kembali: '/tugas' } },
       { path: 'prestasi-santri', component: () => import('@/pages/prestasi/PrestasiSantri.vue'), meta: { judul: 'Prestasi Santri', cetak: true, kembali: '/tugas' } },
       { path: 'absensi-santri/:tab?', component: () => import('@/pages/absensisantri/AbsensiSantri.vue'), props: true, meta: { judul: 'Absensi Santri', kembali: '/tugas' } },
       { path: 'statistik-santri', component: () => import('@/pages/santri/StatistikSantri.vue'), meta: { judul: 'Statistik Santri', cetak: true, kembali: '/tugas' } },

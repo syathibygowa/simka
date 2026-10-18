@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/SuratResmi.vue | v1.7 | 14.5.0: lampiran sesudah tanda tangan (opsi.lampiran_isi), mis. lampiran SK | 18/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/SuratResmi.vue | v1.8 | 14.6.0: kolom penerima "Orang tua/wali santri" untuk surat berisian santri (SP santri) | 18/10/2026 -->
 <script setup>
 // Isi surat keluar resmi di dalam DokumenCetak (kop dari DokumenCetak): kepala surat (judul di tengah, atau nomor/lampiran/hal
 // di kiri dengan tempat-tanggal di kanan dan alamat tujuan), basmalah/salam/hamdalah/doa (Latin, miring), isi dari template,
@@ -44,12 +44,18 @@ const tembusan = computed(() => (props.surat.tembusan || []).filter((x) => Strin
 const draf = computed(() => props.statusDokumen === 'draf' || (!props.kode && props.mode !== 'final'))
 const qr = (p) => (props.kode && p.status === 'ditandatangani' && !p.basah ? svgQR(alamatCek(props.kode)) : '')
 const waktuEl = (p) => (p.waktu ? `${formatPendek(p.waktu)} ${formatJam(p.waktu)} WITA` : '')
-// Penerima: pegawai pada isian jenis pegawai pertama (opsi.penerima)
+// Penerima: pegawai pada isian jenis pegawai pertama (opsi.penerima); 14.6.0: bila tidak ada isian pegawai tetapi ada isian
+// santri (mis. Surat Peringatan santri), penerimanya orang tua/wali santri tersebut.
 const penerima = computed(() => {
   if (!opsi.value.penerima) return null
   const i = (t.value.isian || []).find((x) => x.jenis === 'pegawai')
+  if (!i) {
+    const j = (t.value.isian || []).find((x) => x.jenis === 'santri')
+    const v = j ? (props.surat.nilai || {})[j.kunci] : null
+    if (j) return { label: 'Orang tua/wali santri,', nama: v?.wali || [v?.ayah, v?.ibu].filter(Boolean).join(' / ') || '', niy: '' }
+  }
   const v = i ? (props.surat.nilai || {})[i.kunci] : null
-  return { nama: v?.nama || '', niy: v?.niy || '' }
+  return { label: 'Yang menerima,', nama: v?.nama || '', niy: v?.niy || '' }
 })
 </script>
 <template>
@@ -100,7 +106,7 @@ const penerima = computed(() => {
           <p v-if="p.niy">NIY. {{ p.niy }}</p>
         </div>
         <div v-if="penerima" class="ttd-surat">
-          <p>Yang menerima,</p>
+          <p>{{ penerima.label }}</p>
           <div class="ruang-ttd"><span v-if="diterima" class="ket-terima">Diterima secara elektronik<br>{{ formatPendek(diterima) }} {{ formatJam(diterima) }} WITA</span></div>
           <p class="nama-ttd">{{ penerima.nama || '……………………' }}</p>
           <p v-if="penerima.niy">NIY. {{ penerima.niy }}</p>

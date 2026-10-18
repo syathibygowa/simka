@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.10 | Perbaikan 13.9.0: navigasi dari Kelengkapan Data (kembali, sebelumnya, berikutnya) | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.11 | 14.6.0: bagian Kedisiplinan (pelanggaran dan SP santri) | 18/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Biodata santri: identitas, kontak orang tua/wali (tombol WA), riwayat status dan mutasi;
@@ -32,6 +32,7 @@ import SeksiHafalan from './SeksiHafalan.vue'
 import SeksiLayananSantri from './SeksiLayananSantri.vue'
 import SeksiSecuritySantri from './SeksiSecuritySantri.vue'
 import SeksiPrestasi from './SeksiPrestasi.vue'
+import SeksiDisiplin from './SeksiDisiplin.vue'
 import KartuSantri from '@/components/KartuSantri.vue'
 import LembarKartu from '@/components/cetak/LembarKartu.vue'
 import { useLembaga } from '@/stores/lembaga'
@@ -246,6 +247,8 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
       <SeksiSecuritySantri :santri="s" />
       <!-- Prestasi (Tahap C) -->
       <SeksiPrestasi :santri="s" :boleh-surat="!!ps.hak.susun" />
+      <!-- Kedisiplinan: pelanggaran dan surat peringatan (14.6.0) -->
+      <SeksiDisiplin :santri="s" />
 
       <!-- Kelompok tahun ajaran berjalan -->
       <section class="kartu w-kelompoksantri mt-4 p-5">

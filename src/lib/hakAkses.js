@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/hakAkses.js | v2.2 | 14.1.0: fitur Surat teguran (SP1–SP3) dan izin admin Kelola teguran | 17/10/2026
+// SIMKA PRO | src/lib/hakAkses.js | v2.3 | 14.6.0: fitur Kedisiplinan santri dan izin admin kelola_disiplin | 18/10/2026
 // Katalog Hak Akses Fitur: SATU fitur untuk setiap menu (atau sekelompok menu yang tidak terpisahkan), dikelompokkan sesuai
 // grup menu di sidebar. Isi ini sama dengan migrasi 20261020011200_hak_akses_semua_fitur.sql (+ 20261021011300, 20261022011400) dan dipakai sebagai cadangan bila
 // kolom keterangan belum ada di database serta sebagai data mode demo.
@@ -71,6 +71,10 @@ export const KATALOG_FITUR = [
   { kode: 'prestasi', nama: 'Prestasi santri', kelompok: 'Santri', urutan: 4, menu: 'Prestasi Santri',
     arti: { 1: 'Melihat prestasi seluruh santri', 2: 'Mencatat, mengubah, dan menghapus prestasi santri', 3: 'Sama dengan input/ubah' },
     keterangan: 'Pengasuh kelompok dan pimpinan unit otomatis untuk santrinya. Santri yang dapat dipilih saat mencatat mengikuti Data santri. Bawaan disalin dari Data santri dan jabatan pimpinan.' },
+  { kode: 'disiplin_santri', nama: 'Kedisiplinan santri', kelompok: 'Santri', urutan: 8, menu: 'Kedisiplinan Santri (pelanggaran, Surat Peringatan SP1–SP3, rekap)',
+    arti: { 1: 'Melihat seluruh catatan pelanggaran, surat peringatan, dan rekapnya', 2: 'Mencatat pelanggaran semua santri', 3: 'Mengusulkan dan mencabut surat peringatan santri serta mengatur ketentuannya' },
+    keterangan: 'Pengasuh santri dan petugas Security otomatis dapat mencatat. Pimpinan Bidang Kesantrian otomatis tingkat Kelola. Surat diproses Tata Usaha dan ditandatangani Direktur.',
+    izin: [{ kode: 'kelola_disiplin', min: 3 }] },
   { kode: 'nilai', nama: 'Penilaian dan rapor', kelompok: 'Santri', urutan: 5, menu: 'Penilaian',
     arti: { 1: 'Belum berpengaruh (nilai diisi di menu kerja penilai)', 2: 'Belum berpengaruh (nilai diisi di menu kerja penilai)', 3: 'Membuka menu Penilaian: mengatur penilaian, mengelola nilai, dan mencetak rapor' },
     keterangan: 'Pengisian nilai tetap di menu kerja penilai (Guru Mapel, Tahfizh, Ekskul, Wali Kelas).', izin: [{ kode: 'atur_penilaian', min: 3 }, { kode: 'kelola_nilai', min: 3 }] },

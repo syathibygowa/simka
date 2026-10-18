@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v4.1 | 14.1.0: Persuratan juga terbuka bagi pemegang Surat teguran | 17/10/2026
+// SIMKA PRO | src/lib/menu.js | v4.2 | 14.6.0: menu Kedisiplinan Santri (pelanggaran dan surat peringatan santri) | 18/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Fungsional, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -6,7 +6,7 @@
 import {
   PhHouse, PhFingerprint, PhUsersThree, PhStudent, PhBookOpenText, PhFileText, PhFirstAidKit,
   PhShieldCheck, PhChartBar, PhEnvelopeSimple, PhWallet, PhMegaphone, PhKey, PhGearSix, PhBell,
-  PhFiles, PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhCashRegister, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut, PhListMagnifyingGlass, PhChalkboard, PhPresentationChart, PhExam, PhTrophy,
+  PhFiles, PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhCashRegister, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut, PhListMagnifyingGlass, PhChalkboard, PhPresentationChart, PhExam, PhTrophy, PhGavel,
 } from '@phosphor-icons/vue'
 
 // Aturan tampil setiap menu (v4.0, 14.0.0) — semuanya dapat diatur superadmin di Hak Akses:
@@ -65,6 +65,9 @@ export const MENU = [
     otomatis: (c) => kel(c, 'halaqah') || t(c, 'data_santri') >= 1 || !!c.pengujiUtas || !!c.penguji },
   { kode: 'prestasi',   nama: 'Prestasi Santri', ikon: PhTrophy,         warna: 'prestasi',   ke: '/prestasi-santri',   grup: 'Santri', fitur: 'prestasi', admin: true,
     otomatis: (c) => c.kelompok },
+  // Kedisiplinan santri (14.6.0): pengasuh santri, petugas Security, Bidang Kesantrian/pimpinan, Tata Usaha, pemegang fitur
+  { kode: 'disiplin',   nama: 'Kedisiplinan Santri', ikon: PhGavel,     warna: 'disiplin',   ke: '/disiplin-santri',   grup: 'Santri', fitur: 'disiplin_santri', admin: true, izin: 'kelola_disiplin',
+    otomatis: (c) => c.kelompok || !!c.pimpinan || t(c, 'tata_usaha') >= 2 || t(c, 'gerbang') >= 2 },
   // Penilaian: pengaturan, rekap, dan permintaan ubah nilai. Pengisian nilai tetap di menu kerja penilai.
   { kode: 'penilaian',  nama: 'Penilaian',       ikon: PhExam,           warna: 'penilaian',  ke: '/penilaian',         grup: 'Santri', fitur: 'nilai', min: 3, otomatis: (c) => !!c.penilaian },
   { kode: 'klinik',     nama: 'Klinik',          ikon: PhFirstAidKit,    warna: 'klinik',     ke: '/klinik',            grup: 'Fungsional', fitur: 'klinik', admin: true,
