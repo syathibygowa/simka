@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/TabSuratTeguran.vue | v1.0 | 14.1.0: Surat Teguran SP1–SP3 (daftar, usul, rincian, cabut, rekap F4, Excel, ketentuan) | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/TabSuratTeguran.vue | v1.1 | 14.2.0: saringan corong di HP | 17/10/2026 -->
 <script setup>
 // Tab Persuratan → Surat Teguran.
 //   Daftar    : SP yang boleh dilihat (penerima tidak melihat usulan sebelum terbit; atasan langsung melihat anggota unitnya;
@@ -21,6 +21,7 @@ import { tambahHari } from '@/lib/persuratan'
 import { eksporExcel } from '@/lib/excel'
 import { namaBerkas, periodeRentang } from '@/lib/namaBerkas'
 import BilahTab from '@/components/BilahTab.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
@@ -116,19 +117,19 @@ const direktur = computed(() => lembaga.signatories?.find((s) => /^direktur$/i.t
         <KartuStatistik v-for="k in KARTU" :key="k.judul" :judul="k.judul" :nilai="k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket" />
       </section>
 
-      <div class="mt-4 grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
-        <div class="relative col-span-2 min-w-[200px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-          <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIY, nomor surat" aria-label="Cari surat teguran" /></div>
-        <select v-model="keadaan" class="isian sm:w-auto" aria-label="Saring keadaan"><option value="">Semua keadaan</option>
+      <SaringCorong class="mt-4" :jumlah="[keadaan, tingkat, bidang].filter(Boolean).length" :ringkasan="[`${formatPendek(mulai)} – ${formatPendek(selesai)}`, keadaan && KEADAAN_SP[keadaan].n, tingkat && TINGKAT_SP[tingkat].singkat, bidang].filter(Boolean).join(' · ')" judul="Saring surat teguran">
+        <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
+        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIY, nomor surat" aria-label="Cari surat teguran" /></div></template>
+        <select v-model="keadaan" class="isian md:w-auto" aria-label="Saring keadaan"><option value="">Semua keadaan</option>
           <option v-for="(v, k) in KEADAAN_SP" :key="k" :value="k">{{ v.n }}</option></select>
-        <select v-model="tingkat" class="isian sm:w-auto" aria-label="Saring tingkat"><option value="">Semua tingkat</option>
+        <select v-model="tingkat" class="isian md:w-auto" aria-label="Saring tingkat"><option value="">Semua tingkat</option>
           <option v-for="t in [1, 2, 3]" :key="t" :value="t">{{ TINGKAT_SP[t].singkat }}</option></select>
-        <select v-if="daftarBidang.length > 1" v-model="bidang" class="isian col-span-2 sm:w-auto" aria-label="Saring bidang"><option value="">Semua bidang</option>
+        <select v-if="daftarBidang.length > 1" v-model="bidang" class="isian md:w-auto" aria-label="Saring bidang"><option value="">Semua bidang</option>
           <option v-for="b in daftarBidang" :key="b" :value="b">{{ b }}</option></select>
+        <div class="grid w-full grid-cols-2 gap-3 md:w-auto md:min-w-[22rem]"><InputTanggal v-model="mulai" label="Diusulkan dari" /><InputTanggal v-model="selesai" label="Sampai" /></div>
         <button v-if="hak.usul" class="tombol-utama hidden lg:inline-flex" @click="lembarUsul = true"><PhPlus :size="20" weight="bold" /> Usulkan SP</button>
-      </div>
-      <div class="mt-3 flex flex-wrap items-end gap-3">
-        <div class="grid w-full grid-cols-2 gap-3 sm:w-auto sm:min-w-[22rem] sm:max-w-md sm:flex-1"><InputTanggal v-model="mulai" label="Diusulkan dari" /><InputTanggal v-model="selesai" label="Sampai" /></div>
+      </SaringCorong>
+      <div class="mt-3 flex flex-wrap items-end gap-2 md:justify-end">
         <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
         <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak rekap</button>
       </div>

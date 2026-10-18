@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.6 | Perbaikan: saringan jenis kelamin "Semua" | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.7 | 14.2.0: saringan corong di HP | 17/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
@@ -19,6 +19,7 @@ import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 // Tab Tim kerja (pindahan dari menu Tim Kerja, admin ber-izin kelola_kelompok) dan Cetak kartu (admin ber-izin cetak_kartu)
 const sesiK = useSesi(); const route = useRoute(); const bolehKartu = computed(() => sesiK.bolehAdmin('cetak_kartu')); const bolehTim = computed(() => sesiK.bolehAdmin('kelola_kelompok'))
 const TAB_PEG = computed(() => [{ k: 'data', n: 'Data pegawai', ikon: PhUsersThree, w: 'pegawai' },
@@ -42,6 +43,11 @@ const STATUS_AKUN = { // label status akun
   aktif: { n: 'Aktif', w: 'presensi' }, menunggu: { n: 'Menunggu verifikasi', w: 'verifikasi' },
   tanpa_akun: { n: 'Belum punya akun', w: 'tahfizh' }, ditolak: { n: 'Ditolak', w: 'klinik' }, nonaktif: { n: 'Nonaktif', w: 'hakakses' },
 }
+// 14.2.0: ringkasan saringan untuk tombol corong di HP
+const jumlahSaring = computed(() => [jk.value, bidang.value, keaktifan.value !== 'aktif'].filter(Boolean).length)
+const ringkasSaring = computed(() => [jk.value === 'L' ? 'Laki-laki' : jk.value === 'P' ? 'Perempuan' : '', daftarBidang.value.find((b) => b.id === bidang.value)?.nama,
+  keaktifan.value === 'semua' ? 'Semua keaktifan' : KEAKTIFAN[keaktifan.value]].filter(Boolean).join(' · '))
+function aturUlang() { jk.value = ''; bidang.value = ''; keaktifan.value = 'aktif' }
 const SARING = [{ k: 'semua', n: 'Semua' }, { k: 'aktif', n: 'Akun aktif' }, { k: 'menunggu', n: 'Menunggu' }, { k: 'tanpa_akun', n: 'Belum punya akun' }]
 const STATUS_PEG = { tetap: 'Tetap', kontrak: 'Kontrak', honorer: 'Honorer' }
 const jabatan = (p) => [p.jabatan_struktural, ...(p.jabatan_fungsional || [])].filter(Boolean).join(', ')
@@ -93,18 +99,20 @@ const saringanTeks = computed(() => [jk.value === 'L' ? 'Laki-laki' : jk.value =
         <button class="w-tatausaha tombol-garis shrink-0 px-4 text-sm" @click="opsiCetak = true"><PhSlidersHorizontal :size="20" weight="duotone" style="color: var(--c)" /> Atur dan cetak</button>
       </div>
 
-      <!-- Pencarian dan saringan -->
-      <div class="flex flex-wrap gap-2">
-      <div class="relative min-w-[220px] flex-1">
-        <PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIY, bidang, atau jabatan" aria-label="Cari pegawai" />
-      </div>
-      <select v-model="jk" class="isian w-auto" aria-label="Saring jenis kelamin"><option value="">Semua</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select>
-      <select v-model="bidang" class="isian w-auto max-w-full" aria-label="Saring bidang"><option value="">Semua bidang</option><option v-for="b in daftarBidang" :key="b.id" :value="b.id">{{ b.nama }}</option></select>
-      <select v-model="keaktifan" class="isian w-auto" aria-label="Saring status keaktifan">
-        <option value="semua">Semua keaktifan</option><option v-for="(n, k) in KEAKTIFAN" :key="k" :value="k">{{ n }}</option>
-      </select>
-      </div>
+      <!-- Pencarian dan saringan (HP: tombol corong) -->
+      <SaringCorong :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring pegawai" bisa-atur-ulang @atur-ulang="aturUlang">
+        <template #cari>
+          <div class="relative">
+            <PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
+            <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIY, bidang, atau jabatan" aria-label="Cari pegawai" />
+          </div>
+        </template>
+        <select v-model="jk" class="isian w-auto" aria-label="Saring jenis kelamin"><option value="">Semua jenis kelamin</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select>
+        <select v-model="bidang" class="isian w-auto max-w-full" aria-label="Saring bidang"><option value="">Semua bidang</option><option v-for="b in daftarBidang" :key="b.id" :value="b.id">{{ b.nama }}</option></select>
+        <select v-model="keaktifan" class="isian w-auto" aria-label="Saring status keaktifan">
+          <option value="semua">Semua keaktifan</option><option v-for="(n, k) in KEAKTIFAN" :key="k" :value="k">{{ n }}</option>
+        </select>
+      </SaringCorong>
       <div class="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
         <button v-for="s in SARING" :key="s.k" :aria-pressed="saring === s.k"
           :class="['min-h-[40px] shrink-0 rounded-full border px-4 text-sm font-semibold transition',

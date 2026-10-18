@@ -1,6 +1,7 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabMengajar.vue | v2.1 | Perbaikan 13.8.0: laporan jurnal mengajar harian ke grup WhatsApp | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabMengajar.vue | v2.2 | 14.2.0: pengaturan dipindah ke Jurnal → Pengaturan; tombol Lapor hijau | 17/10/2026 -->
 <script setup>
 // Jurnal mengajar (sepaket dengan Jurnal Harian).
+// v2.2: pengaturan jurnal mengajar dipindah ke tab Jurnal → Pengaturan (tautan ikon roda gigi tetap ada bagi pengatur).
 // v2.1: tombol "Lapor" per hari menyusun laporan jurnal mengajar hari itu (materi, metode, kehadiran santri) untuk grup WA bidang.
 // v2.0:
 //  * Tanpa memilih tanggal: langsung tampil semua pertemuan sepekan (Senin–Sabtu) sesuai jadwal mengajar; tanggal otomatis.
@@ -107,15 +108,6 @@ async function simpanRencana() {
 
 // ---------- Pengaturan (superadmin/admin ber-izin Jadwal pelajaran) ----------
 const bolehAtur = computed(() => sesi.isSuperadmin || sesi.bolehAdmin('atur_jadwal'))
-const lembarA = ref(false); const fa = ref(null)
-function bukaAtur() { fa.value = { batas_hari: atur.value.batas_hari ?? 1, absen_santri: atur.value.absen_santri !== false, metode: (atur.value.metode || []).join('\n'), media: (atur.value.media || []).join('\n') }; lembarA.value = true }
-async function simpanAtur() {
-  const daftar = (t) => [...new Set(t.split('\n').map((x) => x.trim()).filter(Boolean))].slice(0, 20)
-  try {
-    await jd.simpanAturJurnal({ batas_hari: Number(fa.value.batas_hari), absen_santri: fa.value.absen_santri, metode: daftar(fa.value.metode), media: daftar(fa.value.media) })
-    ui.toast('Pengaturan jurnal mengajar disimpan.'); lembarA.value = false; await muat()
-  } catch (e) { ui.toast(e.message, 'galat') }
-}
 // ---------- Laporan harian ke grup WA ----------
 const lembarGrup = ref(false); const teksLaporan = ref(''); const menyusun = ref('')
 const adaJurnal = (h) => h.blok.some((x) => ['terisi', 'tidak'].includes(x.st))
@@ -149,7 +141,7 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
       </div>
       <button v-if="!pekanIni" class="tombol-garis min-h-[40px] px-3 text-sm" @click="pindahPekan(0)">Pekan ini</button>
       <p class="min-w-[180px] flex-1 text-sm text-teks3">{{ ringkas.isi }}/{{ ringkas.n }} pertemuan terisi<template v-if="ringkas.belum"> · <b class="text-merah">{{ ringkas.belum }} belum diisi</b></template> · batas pengisian H+{{ atur.batas_hari }}</p>
-      <button v-if="bolehAtur" class="tombol-garis min-h-[40px] px-3 text-sm" @click="bukaAtur"><PhGear :size="18" weight="duotone" /> Pengaturan jurnal</button>
+      <router-link v-if="bolehAtur" to="/jurnal/pengaturan" class="tombol-ikon h-10 w-10" aria-label="Pengaturan jurnal mengajar" title="Pengaturan jurnal mengajar (Jurnal → Pengaturan)"><PhGear :size="20" weight="duotone" /></router-link>
     </div>
 
     <p v-if="memuat && !pekan.length" class="kartu py-10 text-center text-sm text-teks3">Memuat jadwal mengajar…</p>
@@ -158,7 +150,7 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
         <h3 class="mb-2 flex flex-wrap items-center gap-2 px-1 text-sm font-bold">
           {{ h.nama }}, {{ formatPendek(h.tanggal) }}<span v-if="h.tanggal === hari" class="lencana w-presensi">Hari ini</span>
           <span class="ml-auto text-xs font-normal text-teks3">{{ h.libur ? 'Libur sekolah' : h.blok.length ? `${h.blok.length} pertemuan` : 'Tidak ada jadwal' }}</span>
-          <button v-if="adaJurnal(h)" class="tombol-garis w-presensi h-9 min-h-0 px-3 text-xs" :disabled="menyusun === h.tanggal" :title="`Laporan jurnal ${h.nama} ke grup WhatsApp`" @click="laporHari(h)">
+          <button v-if="adaJurnal(h)" class="tombol-wa-garis w-presensi h-9 min-h-0 px-3 text-xs" :disabled="menyusun === h.tanggal" :title="`Laporan jurnal ${h.nama} ke grup WhatsApp`" @click="laporHari(h)">
             <PhWhatsappLogo :size="16" weight="duotone" style="color: var(--c)" /> {{ menyusun === h.tanggal ? 'Menyusun…' : 'Lapor' }}</button>
         </h3>
         <ul v-if="h.blok.length" class="space-y-2">
@@ -261,16 +253,5 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
       </div>
     </LembarBawah>
 
-    <LembarBawah v-model="lembarA" judul="Pengaturan jurnal mengajar">
-      <div v-if="fa" class="space-y-3 pb-2">
-        <div><label class="label-isian" for="ja-batas">Batas pengisian (hari setelah mengajar)</label>
-          <select id="ja-batas" v-model.number="fa.batas_hari" class="isian"><option v-for="n in [0, 1, 2, 3, 6, 7, 14]" :key="n" :value="n">{{ n === 0 ? 'Hari itu saja' : `H+${n}` }}{{ n === 1 ? ' (bawaan, sama dengan Jurnal Harian)' : n === 6 ? ' (sepekan)' : '' }}</option></select></div>
-        <label class="flex items-center gap-3 rounded-xl border border-garis p-3 text-sm"><input v-model="fa.absen_santri" type="checkbox" class="h-5 w-5 shrink-0 accent-[#1E7D4F]" />
-          <span><b>Absensi santri oleh guru mapel</b><span class="block text-xs text-teks3">Guru menandai santri yang tidak hadir pada pelajarannya; tersimpan di baris jurnal (tanpa tabel tambahan).</span></span></label>
-        <div><label class="label-isian" for="ja-metode">Pilihan metode (satu per baris)</label><textarea id="ja-metode" v-model="fa.metode" class="isian" rows="5" /></div>
-        <div><label class="label-isian" for="ja-media">Pilihan media (satu per baris)</label><textarea id="ja-media" v-model="fa.media" class="isian" rows="5" /></div>
-        <button class="tombol-utama w-full" @click="simpanAtur"><PhFloppyDisk :size="20" weight="duotone" /> Simpan pengaturan</button>
-      </div>
-    </LembarBawah>
   </div>
 </template>

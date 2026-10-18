@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/LembarSantriKeu.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/LembarSantriKeu.vue | v1.4 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Rincian keuangan satu santri (dibuka dengan ?santri=<id> dari tab mana pun):
 // ringkasan, kontak wali (WA), tagihan (ubah/batalkan beralasan), pembayaran (kuitansi, WA konfirmasi, batalkan),
@@ -95,7 +95,7 @@ async function hapusSubsidi(x) {
       <div class="flex flex-wrap gap-2">
         <button v-if="keu.hak.kelola" class="tombol-utama" :disabled="!terbuka.length" @click="bayar = s"><PhReceipt :size="20" weight="duotone" /> Catat pembayaran</button>
         <button v-if="keu.hak.kelola" class="tombol-garis" :disabled="!terbuka.length" @click="surat = [s]"><PhPaperPlaneTilt :size="20" weight="duotone" /> Surat tagihan</button>
-        <a v-if="s.wali?.no_hp && terbuka.length" :href="tautanWA(s.wali.no_hp, pesanTunggak)" target="_blank" rel="noopener" class="tombol-garis w-presensi" style="color: var(--c)"><PhWhatsappLogo :size="20" weight="duotone" /> WA {{ lewat.length ? 'tunggakan' : 'tagihan' }}</a>
+        <a v-if="s.wali?.no_hp && terbuka.length" :href="tautanWA(s.wali.no_hp, pesanTunggak)" target="_blank" rel="noopener" class="tombol-wa-garis w-presensi"><PhWhatsappLogo :size="20" weight="duotone" /> WA {{ lewat.length ? 'tunggakan' : 'tagihan' }}</a>
         <button v-if="keu.hak.kelola" class="tombol-garis" @click="subsidi = { student_id: s.id, nama: s.nama, mulai: '' }"><PhPercent :size="20" /> Subsidi</button>
         <button class="tombol-garis" @click="laporan = true"><PhFileText :size="20" weight="duotone" /> Cetak laporan</button>
       </div>
@@ -144,7 +144,7 @@ async function hapusSubsidi(x) {
             <p v-if="p.alasan_batal" class="text-xs text-merah">{{ p.alasan_batal }}</p></div>
           <p class="font-bold tabular-nums">{{ rupiah(p.jumlah) }}</p>
           <button v-if="!p.riwayat" class="tombol-ikon h-9 w-9" :aria-label="'Cetak kuitansi ' + p.nomor" @click="cetakKuitansi(p)"><PhPrinter :size="18" /></button>
-          <button v-if="p.status === 'sah' && !p.riwayat" class="tombol-ikon h-9 w-9" :aria-label="'Kirim konfirmasi WA ' + p.nomor" @click="waKuitansi(p)"><PhWhatsappLogo :size="18" /></button>
+          <button v-if="p.status === 'sah' && !p.riwayat" class="tombol-ikon h-9 w-9" :aria-label="'Kirim konfirmasi WA ' + p.nomor" @click="waKuitansi(p)"><PhWhatsappLogo :size="18" weight="duotone" class="text-[#1A8F4A] dark:text-[#5BD69A]" /></button>
           <button v-if="keu.hak.kelola && p.status === 'sah'" class="tombol-ikon h-9 w-9 text-merah" :aria-label="'Batalkan pembayaran ' + p.nomor" @click="batalBayar(p)"><PhXCircle :size="18" /></button>
         </li>
       </ul>

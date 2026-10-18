@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/presensi/DataPresensi.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/DataPresensi.vue | v1.2 | 14.2.0: saringan corong di HP | 17/10/2026 -->
 <script setup>
 // Data Presensi (admin ber-izin verval_presensi dan superadmin), dipisah dari tab Verval Presensi:
 //   Harian  : semua pegawai satu bidang (beserta cabangnya) pada satu tanggal, tombol sebelum/sesudah, saring status,
@@ -26,6 +26,7 @@ import BilahTab from '@/components/BilahTab.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarKeputusan from '@/pages/verval/LembarKeputusan.vue'
@@ -85,6 +86,7 @@ const lencanaHari = (k) => (k === 'belum' ? { n: 'Belum presensi', w: 'hakakses'
 // ---------- Bulanan ----------
 const bulan = ref(String(route.query.bulan || hariIniISO().slice(0, 7))); const rekap = ref(null); const memuatB = ref(false)
 const tanggalBulan = computed(() => { const [y, m] = bulan.value.split('-').map(Number); return daftarTanggal(`${bulan.value}-01`, `${bulan.value}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`) })
+const ringkasSaring = computed(() => [aktif.value === 'harian' ? formatHari(tgl.value) : judulBulan.value, unit.value ? namaUnit.value : 'Seluruh bidang'].join(' · '))
 const judulBulan = computed(() => { const [y, m] = bulan.value.split('-').map(Number); return `${BULAN[m - 1]} ${y}` })
 function geserBulan(n) { const [y, m] = bulan.value.split('-').map(Number); const d = new Date(Date.UTC(y, m - 1 + n, 1)); bulan.value = d.toISOString().slice(0, 7) }
 async function muatB() {
@@ -187,11 +189,15 @@ const ringkasB = (p) => ['hadir', 'terlambat', 'dinas_luar', 'izin', 'sakit', 'c
     <p v-else-if="!siap" class="py-10 text-center text-teks3">Memuat…</p>
 
     <template v-else>
-      <!-- Bilah saringan -->
-      <div class="kartu grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,16rem)_auto_1fr_auto] lg:items-end">
-        <div><label class="label-isian" for="dp-unit">Bidang</label>
+      <!-- Bilah saringan (14.2.0: HP memakai tombol corong) -->
+      <div class="kartu p-3">
+      <SaringCorong :jumlah="unit ? 1 : 0" :ringkasan="ringkasSaring" judul="Saring data presensi">
+        <template #cari><div class="relative"><label class="label-isian hidden md:block" for="dp-cari">Cari pegawai</label>
+          <PhMagnifyingGlass :size="20" class="pointer-events-none absolute bottom-3.5 left-3 text-teks3" />
+          <input id="dp-cari" v-model="cari" type="search" class="isian pl-10" placeholder="Nama, NIY, atau jabatan" aria-label="Cari pegawai" /></div></template>
+        <div class="md:w-64"><label class="label-isian" for="dp-unit">Bidang</label>
           <select id="dp-unit" v-model="unit" class="isian"><option value="">Seluruh bidang</option>
-            <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ ' '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
+            <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ ' '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
         <div v-if="aktif === 'harian'" class="flex items-end gap-1.5">
           <button class="tombol-garis h-12 w-12 shrink-0 px-0" aria-label="Hari sebelumnya" title="Hari sebelumnya" @click="geserHari(-1)"><PhCaretLeft :size="20" weight="bold" /></button>
           <div class="w-40"><InputTanggal v-model="tgl" label="Tanggal" /></div>
@@ -204,12 +210,10 @@ const ringkasB = (p) => ['hadir', 'terlambat', 'dinas_luar', 'izin', 'sakit', 'c
           <button class="tombol-garis h-12 w-12 shrink-0 px-0" aria-label="Bulan berikutnya" title="Bulan berikutnya" @click="geserBulan(1)"><PhCaretRight :size="20" weight="bold" /></button>
           <button v-if="bulan !== hariIniISO().slice(0, 7)" class="tombol-teks h-12 shrink-0 px-2 text-sm" @click="bulan = hariIniISO().slice(0, 7)">Bulan ini</button>
         </div>
-        <div class="relative sm:col-span-2 lg:col-span-1"><label class="label-isian" for="dp-cari">Cari pegawai</label>
-          <PhMagnifyingGlass :size="20" class="pointer-events-none absolute bottom-3.5 left-3 text-teks3" />
-          <input id="dp-cari" v-model="cari" type="search" class="isian pl-10" placeholder="Nama, NIY, atau jabatan" /></div>
-        <div class="flex gap-2 sm:col-span-2 lg:col-span-1">
-          <button class="tombol-garis h-12 flex-1 lg:flex-none" :disabled="memuatH || memuatB" @click="aktif === 'harian' ? muatH() : muatB()"><PhArrowClockwise :size="18" /> <span class="lg:sr-only">Muat ulang</span></button>
-          <button class="tombol-utama h-12 flex-1 lg:flex-none" :disabled="aktif === 'harian' ? !tampilH.length : !tampilB.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
+      </SaringCorong>
+        <div class="mt-2 flex gap-2 md:justify-end">
+          <button class="tombol-garis h-11 flex-1 md:flex-none" :disabled="memuatH || memuatB" @click="aktif === 'harian' ? muatH() : muatB()"><PhArrowClockwise :size="18" /> <span class="lg:sr-only">Muat ulang</span></button>
+          <button class="tombol-utama h-11 flex-1 md:flex-none" :disabled="aktif === 'harian' ? !tampilH.length : !tampilB.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
         </div>
       </div>
 

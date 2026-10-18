@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/agenda/Agenda.vue | v1.6 | Perbaikan 13.8.0: keterangan agenda dengan gaya teks (tebal, miring, garis bawah, daftar otomatis) | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/agenda/Agenda.vue | v1.7 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Agenda dan kalender pondok. Semua pegawai melihat agenda yang ditujukan kepadanya beserta hari libur pondok
 // dalam kalender bulanan. Admin ber-izin kelola_agenda membuat agenda dengan sasaran dan pengingat H-n;
@@ -250,7 +250,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
         <p v-if="kelola && terpilih.sumber === 'agenda'" class="mt-3 text-sm text-teks2">Sasaran: {{ terpilih.ringkasan_sasaran }}<template v-if="terpilih.penerima != null"> · {{ terpilih.penerima }} penerima</template></p>
         <p v-if="terpilih.sumber === 'libur'" class="mt-3 text-sm text-teks3">Diatur di Setelan → Kalender.</p>
         <div v-if="kelola && terpilih.sumber === 'agenda'" class="mt-4 flex flex-wrap gap-2">
-          <button class="tombol-garis" @click="bukaWA(terpilih)"><PhWhatsappLogo :size="20" weight="duotone" /> Undang/ingatkan via WA</button>
+          <button class="tombol-wa-garis" @click="bukaWA(terpilih)"><PhWhatsappLogo :size="20" weight="duotone" /> Undang/ingatkan via WA</button>
           <button class="tombol-garis" @click="ubah(terpilih)"><PhPencilSimple :size="20" weight="duotone" /> {{ terpilih.ulang ? 'Ubah seri' : 'Ubah' }}</button>
           <button v-if="terpilih.ulang" class="tombol-garis" @click="lewati(terpilih)"><PhSkipForward :size="20" weight="duotone" /> Tiadakan tanggal ini</button>
           <button class="tombol-garis w-beranda" style="color: var(--c)" @click="hapus(terpilih)"><PhTrash :size="20" weight="duotone" /> Hapus</button>

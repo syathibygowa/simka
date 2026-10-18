@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabSantriKeu.vue | v1.2 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabSantriKeu.vue | v1.3 | 14.2.0: saringan corong di HP | 17/10/2026 -->
 <script setup>
 // Per santri: tagihan, dibayar, sisa, tunggakan lewat tempo, subsidi, wali (WA). Ketuk santri → rincian (?santri=).
 // Pilih beberapa santri → terbitkan surat tagihan sekaligus. Ekspor Excel dan cetak F4.
@@ -13,6 +13,7 @@ import { useUI } from '@/stores/ui'
 import { formatPendek, hariIniISO, formatPanjang } from '@/lib/tanggal'
 import { rupiah, angka, JENJANG, JENJANG_SINGKAT } from '@/lib/keuangan'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarSuratTagihan from './LembarSuratTagihan.vue'
 
@@ -54,12 +55,14 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
 </script>
 <template>
   <div>
-    <div class="mb-3 flex flex-wrap items-end gap-2">
-      <div class="relative min-w-[200px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
-        <input v-model="q" type="search" class="isian pl-10" placeholder="Cari nama atau NIS" aria-label="Cari santri" /></div>
+    <SaringCorong class="mb-2" :jumlah="[grup, jenjang].filter(Boolean).length" :ringkasan="[kelompok.find((g) => g.id === grup)?.nama, jenjang && JENJANG[jenjang]].filter(Boolean).join(' · ')" judul="Saring santri">
+      <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
+        <input v-model="q" type="search" class="isian pl-10" placeholder="Cari nama atau NIS" aria-label="Cari santri" /></div></template>
       <select v-model="grup" class="isian w-48" aria-label="Kelompok"><option value="">Semua kelompok</option>
         <optgroup v-for="(n, jn) in { kelas: 'Kelas', kamar: 'Kamar', halaqah: 'Halaqah' }" :key="jn" :label="n"><option v-for="g in kelompok.filter((x) => x.jenis === jn)" :key="g.id" :value="g.id">{{ g.nama }}</option></optgroup></select>
       <select v-model="jenjang" class="isian w-48" aria-label="Jenjang"><option value="">Semua jenjang</option><option v-for="(n, k) in JENJANG" :key="k" :value="k">{{ n }}</option></select>
+    </SaringCorong>
+    <div class="mb-3 flex flex-wrap gap-2 md:justify-end">
       <button class="tombol-garis" :disabled="!tampil.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Excel</button>
       <button class="tombol-garis" :disabled="!tampil.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Cetak</button>
     </div>

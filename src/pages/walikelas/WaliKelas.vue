@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/WaliKelas.vue | v1.1 | Fase 12 – Tahap 4 Tab Rapor | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/WaliKelas.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Menu Wali Kelas. Wali kelas melihat kelasnya; admin, superadmin, dan pimpinan (pemegang hak Absensi Kelas/Jadwal
 // mengajar menurut jenjangnya) melihat semua kelas. Tab:
@@ -69,8 +69,8 @@ const pindah = (x) => router.replace(`/wali-kelas/${x}`)
             <p class="text-xs text-teks3">Wali kelas: {{ daftarWali }}</p>
           </div>
           <div class="flex w-full flex-wrap gap-2 sm:w-auto">
-            <a v-if="k.wa_wali" :href="k.wa_wali" target="_blank" rel="noopener" class="tombol-garis w-presensi min-h-[40px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" style="color: var(--c)" /> Grup wali santri</a>
-            <a v-if="k.wa_internal" :href="k.wa_internal" target="_blank" rel="noopener" class="tombol-garis w-agenda min-h-[40px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" style="color: var(--c)" /> Grup internal</a>
+            <a v-if="k.wa_wali" :href="k.wa_wali" target="_blank" rel="noopener" class="tombol-wa-garis w-presensi min-h-[40px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" /> Grup wali santri</a>
+            <a v-if="k.wa_internal" :href="k.wa_internal" target="_blank" rel="noopener" class="tombol-wa-garis w-agenda min-h-[40px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" /> Grup internal</a>
           </div>
         </div>
       </section>

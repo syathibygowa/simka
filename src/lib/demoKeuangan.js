@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoKeuangan.js | v1.2 | Fase 13 – Demo tagihan tahun lalu, tarif putra/putri, catatan pembayaran lama, impor | 12/10/2026
+// SIMKA PRO | src/lib/demoKeuangan.js | v1.3 | 14.2.0: subsidi beririsan periode dan langsung menyesuaikan tagihan | 17/10/2026
 // Meniru migrasi 7600–8000 agar menu Keuangan dapat dicoba tanpa Supabase. Semua nama fiktif.
 // Hasil baca selalu salinan (seperti hasil server) agar tampilan menyegar setelah perubahan.
 import { SANTRI_DEMO } from '@/lib/demoSantri'
@@ -75,13 +75,25 @@ function kelasPada(st, acuan) {
   if (!sel) return { jenjang: st.jenjang, tingkat: st.tingkat }
   const t = st.tingkat - sel; return t < 7 ? null : { jenjang: t >= 10 ? 'sma' : 'wustha', tingkat: t }
 }
+const akhirPeriode = (f, acuan) => (f.siklus === 'bulanan' ? tambahHari(tambahBulan(acuan.slice(0, 7) + '-01', 1), -1) : f.siklus === 'semesteran' ? tambahHari(tambahBulan(acuan, 6), -1)
+  : f.siklus === 'tahunan' ? tambahHari(tambahBulan(acuan, 12), -1) : acuan)
+function tambahBulan(iso, n) { const d = new Date(iso + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() + n); return d.toISOString().slice(0, 10) }
 function potongan(st, f, acuan, std) {
-  let p = 0; const a = []
-  for (const x of D.subsidi.filter((y) => y.student_id === st.id && y.aktif && (!y.fee_type_id || y.fee_type_id === f.id) && y.mulai <= acuan && (!y.sampai || y.sampai >= acuan))) {
+  let p = 0; const a = []; const akhir = akhirPeriode(f, acuan)
+  for (const x of D.subsidi.filter((y) => y.student_id === st.id && y.aktif && (!y.fee_type_id || y.fee_type_id === f.id) && y.mulai <= akhir && (!y.sampai || y.sampai >= acuan))) {
     p += x.jenis === 'persen' ? Math.round(std * x.nilai / 100) : x.nilai
     a.push(`${x.alasan} (${x.jenis === 'persen' ? x.nilai + '%' : 'Rp' + x.nilai.toLocaleString('id-ID')})`)
   }
   return { potongan: Math.min(p, std), alasan: a.join('; ') || null }
+}
+/** Seperti _terapkan_subsidi: hitung ulang tagihan belum lunas (atau lunas karena subsidi), tidak di bawah yang sudah dibayar. */
+function terapkanSubsidi(sid) {
+  const st = D.santri.find((x) => x.id === sid); if (!st) return
+  for (const b of D.tagihan.filter((x) => x.student_id === sid && !x.potongan_manual && (['belum', 'sebagian'].includes(x.status) || (x.status === 'lunas' && x.potongan > 0)))) {
+    const f = D.jenis.find((x) => x.id === b.fee_type_id); const pt = potongan(st, f, b.tanggal_tagih, b.standar)
+    b.potongan = Math.min(pt.potongan, b.standar - b.dibayar); b.alasan_potongan = pt.alasan; b.nominal = b.standar - b.potongan
+    b.status = b.dibayar >= b.nominal ? 'lunas' : b.dibayar > 0 ? 'sebagian' : 'belum'
+  }
 }
 function periode(f, p) {
   const hari = hariIniISO(); const tempo = p.jatuh_tempo || null
@@ -136,8 +148,9 @@ export const demo = {
   subsidi() { siapkan(); const h = hariIniISO(); return salin(D.subsidi.map((x) => { const st = s(x.student_id); return { ...x, nis: st.nis, nama: st.nama, jk: st.jk, jenjang: st.jenjang, tingkat: st.tingkat, kelas: st.kelas,
     jenis_biaya: x.fee_type_id ? j(x.fee_type_id)?.nama : null, berlaku: x.aktif && x.mulai <= h && (!x.sampai || x.sampai >= h) } }).sort((a, b) => a.nama.localeCompare(b.nama))) },
   simpanSubsidi(p) { const x = { ...salin(p), nilai: Number(p.nilai), fee_type_id: p.fee_type_id || null, sampai: p.sampai || null, aktif: p.aktif ?? true }
-    const i = D.subsidi.findIndex((y) => y.id === p.id); if (i >= 0) Object.assign(D.subsidi[i], x); else D.subsidi.push({ ...x, id: id(), created_at: new Date().toISOString(), oleh: 'Superadmin SIMKA' }) },
-  hapusSubsidi(sid) { D.subsidi = D.subsidi.filter((x) => x.id !== sid) },
+    const i = D.subsidi.findIndex((y) => y.id === p.id); if (i >= 0) Object.assign(D.subsidi[i], x); else D.subsidi.push({ ...x, id: id(), created_at: new Date().toISOString(), oleh: 'Superadmin SIMKA' })
+    terapkanSubsidi(x.student_id) },
+  hapusSubsidi(sid) { const x = D.subsidi.find((y) => y.id === sid); D.subsidi = D.subsidi.filter((y) => y.id !== sid); if (x) terapkanSubsidi(x.student_id) },
   pratinjau(p) {
     siapkan(); const f = j(p.fee_type_id); if (!f) throw new Error('Pilih jenis biaya.')
     const per = periode(f, p)
@@ -169,7 +182,7 @@ export const demo = {
       .map(barisTagihan).sort((a, b) => a.nama.localeCompare(b.nama) || a.jatuh_tempo.localeCompare(b.jatuh_tempo)))
   },
   ubahTagihan(bid, p) { const b = D.tagihan.find((x) => x.id === bid); if (!p.alasan || p.alasan.length < 3) throw new Error('Tulis alasan perubahan tagihan.')
-    if (p.standar != null) b.standar = Number(p.standar); if (p.potongan != null) b.potongan = Number(p.potongan); if ('alasan_potongan' in p) b.alasan_potongan = p.alasan_potongan || null
+    if (p.standar != null) b.standar = Number(p.standar); if (p.potongan != null && Number(p.potongan) !== b.potongan) { b.potongan = Number(p.potongan); b.potongan_manual = true } if ('alasan_potongan' in p) b.alasan_potongan = p.alasan_potongan || null
     if (p.jatuh_tempo) b.jatuh_tempo = p.jatuh_tempo; b.nominal = Math.max(b.standar - b.potongan, 0)
     if (b.nominal < b.dibayar) throw new Error('Tagihan tidak boleh lebih kecil dari jumlah yang sudah dibayar.'); b.catatan = [b.catatan, p.alasan].filter(Boolean).join('\n'); segarkan(b) },
   batalTagihan(bid, alasan) { const b = D.tagihan.find((x) => x.id === bid); if (b.dibayar > 0) throw new Error('Tagihan ini sudah dibayar. Batalkan pembayarannya dulu.'); b.status = 'batal'; b.alasan_batal = alasan },

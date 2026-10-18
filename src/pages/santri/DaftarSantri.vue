@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.7 | Perbaikan 13.8.0: tombol Kelengkapan data (seluruh data santri) | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.8 | 14.2.0: saringan corong di HP | 17/10/2026 -->
 <script setup>
 // Daftar santri sesuai cakupan pengguna (RLS): kartu statistik langsung, cari dan saring,
 // ekspor Excel, cetak daftar F4 berkop jenjang. v1.4: cetak kartu pelajar massal (santri aktif yang tampil, per rombel).
@@ -15,6 +15,7 @@ import { JENJANG, JENJANG_PENDEK, TINGKAT, STATUS_SANTRI, HUBUNGAN, kontakUtama,
 import { formatPanjang, formatPendek, hariIniISO } from '@/lib/tanggal'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import KartuStatistik from '@/components/KartuStatistik.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
@@ -29,6 +30,11 @@ const bolehUbah = computed(() => sesi.bolehAdmin('kelola_santri') || sesi.tingka
 const bolehImpor = computed(() => sesi.bolehAdmin('kelola_santri'))
 
 const cari = ref(''); const status = ref('aktif'); const jenjang = ref('semua'); const tingkat = ref(''); const jk = ref(''); const lengkap = ref('')
+// 14.2.0: ringkasan saringan untuk tombol corong di HP
+const jumlahSaring = computed(() => [status.value !== 'aktif', tingkat.value, lengkap.value, jk.value].filter(Boolean).length)
+const ringkasSaring = computed(() => [status.value === 'semua' ? 'Semua status' : status.value !== 'aktif' ? STATUS_SANTRI[status.value]?.n : '', tingkat.value ? 'Kelas ' + tingkat.value : '',
+  lengkap.value === 'kurang' ? 'Data kurang' : lengkap.value === 'lengkap' ? 'Data lengkap' : '', jk.value === 'L' ? 'Putra' : jk.value === 'P' ? 'Putri' : ''].filter(Boolean).join(' · '))
+function aturUlang() { status.value = 'aktif'; tingkat.value = ''; lengkap.value = ''; jk.value = '' }
 const pratinjau = ref(false); const opsiCetak = ref(false); const tglDok = ref(hariIniISO())
 const pimpinan = ref({ jabatan: '', nama: '', niy: '' })
 onMounted(() => san.muat())
@@ -139,12 +145,12 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
         <button v-if="bolehUbah" class="w-presensi tombol-garis shrink-0 px-4 text-sm" @click="lembarKartu = true"><PhCards :size="20" weight="duotone" style="color: var(--c)" /> Cetak kartu pelajar</button>
       </div>
 
-      <!-- Pencarian dan saringan -->
-      <div class="flex flex-wrap gap-2">
-        <div class="relative min-w-[220px] flex-1">
+      <!-- Pencarian dan saringan (HP: tombol corong) -->
+      <SaringCorong :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring santri" bisa-atur-ulang @atur-ulang="aturUlang">
+        <template #cari><div class="relative">
           <PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIS, NISN, atau nama orang tua" aria-label="Cari santri" />
-        </div>
+        </div></template>
         <select v-model="status" class="isian w-auto" aria-label="Saring status">
           <option value="semua">Semua status</option><option v-for="(s, k) in STATUS_SANTRI" :key="k" :value="k">{{ s.n }}</option>
         </select>
@@ -157,7 +163,7 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
         <select v-model="jk" class="isian w-auto" aria-label="Saring jenis kelamin">
           <option value="">Putra dan putri</option><option value="L">Putra</option><option value="P">Putri</option>
         </select>
-      </div>
+      </SaringCorong>
       <div class="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
         <button v-for="j in [{ k: 'semua', n: 'Semua jenjang' }, { k: 'wustha', n: 'Kesetaraan Wustha' }, { k: 'sma', n: 'SMA' }]" :key="j.k" :aria-pressed="jenjang === j.k"
           :class="['min-h-[40px] shrink-0 rounded-full border px-4 text-sm font-semibold transition',

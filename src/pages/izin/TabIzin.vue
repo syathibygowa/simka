@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.4 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Daftar izin santri. Dipakai di menu Perizinan (cakupan tetap) dan menu Musyrif (disaring per kamar,
 // dengan pilihan Menunggu/Aktif/Semua). Aksi sesuai hak dari server: setujui/tolak, ubah, batalkan,
@@ -131,7 +131,7 @@ const kosong = computed(() => ({ persetujuan: 'Tidak ada izin yang menunggu kepu
               <button v-if="x.boleh_catat && x.status === 'disetujui'" class="tombol-garis w-shift min-h-[38px] px-3 text-sm" @click="catat(x, 'keluar')"><PhSignOut :size="18" style="color: var(--c)" /> Catat keluar</button>
               <button v-if="x.boleh_catat" class="tombol-garis w-rekap min-h-[38px] px-3 text-sm" @click="catat(x, 'kembali')"><PhSignIn :size="18" style="color: var(--c)" /> Catat kembali</button>
               <button v-if="x.boleh_ubah" class="tombol-garis min-h-[38px] px-3 text-sm" @click="ubah(x)"><PhPencilSimple :size="18" /> Ubah</button>
-              <button class="tombol-garis w-presensi min-h-[38px] px-3 text-sm" @click="waWali(x)"><PhWhatsappLogo :size="18" weight="duotone" style="color: var(--c)" /> Wali</button>
+              <button class="tombol-wa-garis w-presensi min-h-[38px] px-3 text-sm" @click="waWali(x)"><PhWhatsappLogo :size="18" weight="duotone" /> Wali</button>
               <button v-if="x.boleh_batal" class="tombol-garis min-h-[38px] px-3 text-sm" @click="batal(x)"><PhProhibit :size="18" /> Batalkan</button>
             </div>
           </div>

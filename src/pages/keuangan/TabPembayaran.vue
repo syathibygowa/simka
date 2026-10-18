@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabPembayaran.vue | v1.1 | Fase 13 – Penanda catatan pembayaran lama | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabPembayaran.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Pembayaran santri per rentang tanggal (bawaan: awal bulan ini s.d. hari ini): jumlah, tunai/transfer, per jenis biaya.
 // Setiap baris: cetak kuitansi, kirim konfirmasi WA ke wali, buka rincian santri, batalkan beralasan (kuitansi dicabut).
@@ -103,7 +103,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
         </div>
         <div class="mt-2 flex flex-wrap gap-1.5">
           <button v-if="!p.riwayat" class="tombol-garis min-h-[40px] px-3 text-sm" @click="cetak(p)"><PhReceipt :size="18" weight="duotone" /> Kuitansi</button>
-          <button v-if="p.status === 'sah' && !p.riwayat" class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!p.wali?.no_hp" @click="wa(p)"><PhWhatsappLogo :size="18" weight="duotone" /> WA wali</button>
+          <button v-if="p.status === 'sah' && !p.riwayat" class="tombol-wa-garis min-h-[40px] px-3 text-sm" :disabled="!p.wali?.no_hp" @click="wa(p)"><PhWhatsappLogo :size="18" weight="duotone" /> WA wali</button>
           <button v-if="p.bukti_id" class="tombol-garis min-h-[40px] px-3 text-sm" @click="bukti(p)"><PhImage :size="18" /> Bukti</button>
           <button v-if="keu.hak.kelola && p.status === 'sah'" class="tombol-garis min-h-[40px] px-3 text-sm text-merah" @click="batal = { p, teks: '' }"><PhXCircle :size="18" /> Batalkan</button>
         </div>

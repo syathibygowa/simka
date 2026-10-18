@@ -1,27 +1,31 @@
-<!-- SIMKA PRO | src/pages/jurnal/Jurnal.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/Jurnal.vue | v1.4 | 14.2.0: tab Pengaturan (jurnal mengajar + template ceklist) | 17/10/2026 -->
 <script setup>
 // Jurnal harian pegawai. Tab: Jurnal saya (semua pegawai), Verval (admin ber-izin verval_jurnal),
-// Rekap (pegawai: dirinya; pimpinan: anggota unit; admin: semua), Template ceklist (admin ber-izin atur_jurnal).
+// Rekap (pegawai: dirinya; pimpinan: anggota unit; admin: semua), Pengaturan: jurnal mengajar (admin ber-izin atur_jadwal)
+// dan template ceklist jurnal harian (admin ber-izin atur_jurnal). v1.4: alamat lama /jurnal/template diarahkan ke Pengaturan.
 import { computed, nextTick, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { PhNotebook, PhSealCheck, PhChartBar, PhListChecks, PhChalkboardTeacher } from '@phosphor-icons/vue'
+import { PhNotebook, PhSealCheck, PhChartBar, PhGear, PhChalkboardTeacher } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import TabHarian from './TabHarian.vue'
 import TabVervalJurnal from './TabVervalJurnal.vue'
 import TabRekapJurnal from './TabRekapJurnal.vue'
 import TabTemplateJurnal from './TabTemplateJurnal.vue'
 import TabMengajar from './TabMengajar.vue'
+import PengaturanJurnalMengajar from './PengaturanJurnalMengajar.vue'
 
 const props = defineProps({ tab: { type: String, default: 'harian' } })
 const router = useRouter(); const route = useRoute(); const sesi = useSesi()
+const aturMengajar = computed(() => sesi.isSuperadmin || sesi.bolehAdmin('atur_jadwal'))
+const aturCeklist = computed(() => sesi.bolehAdmin('atur_jurnal'))
 const TAB = computed(() => [
   { k: 'harian', n: 'Jurnal saya', ikon: PhNotebook, w: 'tatausaha' },
   (sesi.tugas?.mengajar || sesi.tingkat('jadwal_mengajar') >= 2 || sesi.isAdmin) && { k: 'mengajar', n: 'Jurnal mengajar', ikon: PhChalkboardTeacher, w: 'jadwal' },
   sesi.bolehAdmin('verval_jurnal') && { k: 'verval', n: 'Verval kegiatan', ikon: PhSealCheck, w: 'verval' },
   { k: 'rekap', n: 'Rekap dan laporan', ikon: PhChartBar, w: 'rekap' },
-  sesi.bolehAdmin('atur_jurnal') && { k: 'template', n: 'Template ceklist', ikon: PhListChecks, w: 'pengaturan' },
+  (aturMengajar.value || aturCeklist.value) && { k: 'pengaturan', n: 'Pengaturan', ikon: PhGear, w: 'pengaturan' },
 ].filter(Boolean))
-const aktif = computed(() => TAB.value.find((t) => t.k === props.tab) || TAB.value[0])
+const aktif = computed(() => TAB.value.find((t) => t.k === (props.tab === 'template' ? 'pengaturan' : props.tab)) || TAB.value[0])
 onMounted(async () => { await nextTick(); document.querySelector('[role=tab][aria-selected=true]')?.scrollIntoView({ inline: 'center', block: 'nearest' }) })
 </script>
 <template>
@@ -37,7 +41,10 @@ onMounted(async () => { await nextTick(); document.querySelector('[role=tab][ari
       <TabMengajar v-else-if="aktif.k === 'mengajar'" />
       <TabVervalJurnal v-else-if="aktif.k === 'verval'" />
       <TabRekapJurnal v-else-if="aktif.k === 'rekap'" />
-      <TabTemplateJurnal v-else-if="aktif.k === 'template'" />
+      <div v-else-if="aktif.k === 'pengaturan'" class="space-y-4">
+        <PengaturanJurnalMengajar v-if="aturMengajar" />
+        <section v-if="aturCeklist"><h2 class="judul-bagian mb-2 px-1">Template ceklist jurnal harian</h2><TabTemplateJurnal /></section>
+      </div>
     </div>
   </div>
 </template>

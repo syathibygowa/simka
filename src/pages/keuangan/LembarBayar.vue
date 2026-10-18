@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/LembarBayar.vue | v1.1 | Fase 13 – Catatan pembayaran lama (tanpa kuitansi baru) | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/LembarBayar.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Catat pembayaran seorang santri. Tagihan terbuka tampil berurutan dari jatuh tempo tertua; centang tagihan dan
 // ubah jumlahnya (pembayaran sebagian boleh), atau isi "jumlah diterima" untuk dibagi otomatis ke tagihan tertua.
@@ -83,7 +83,7 @@ async function simpan() {
       </div>
       <div class="flex flex-wrap gap-2">
         <button class="tombol-utama" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Cetak kuitansi</button>
-        <a v-if="hasil.santri?.wali?.no_hp" :href="tautanWA(hasil.santri.wali.no_hp, pesanKuitansi(hasil))" target="_blank" rel="noopener" class="tombol-garis" style="color: var(--c)">
+        <a v-if="hasil.santri?.wali?.no_hp" :href="tautanWA(hasil.santri.wali.no_hp, pesanKuitansi(hasil))" target="_blank" rel="noopener" class="tombol-wa-garis">
           <PhWhatsappLogo :size="20" weight="duotone" /> Kirim konfirmasi ke {{ hasil.santri.wali.nama }}</a>
         <span v-else class="tombol-garis cursor-not-allowed opacity-60"><PhWhatsappLogo :size="20" /> Nomor HP wali belum diisi</span>
         <button class="tombol-garis" @click="emit('tutup')">Selesai</button>

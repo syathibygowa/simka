@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabSantriKelas.vue | v1.0 | Fase 4 – Menu Wali Kelas: daftar santri kelas | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabSantriKelas.vue | v1.1 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Daftar santri satu kelas: NIS, nama, JK, kehadiran bulan berjalan (izin, sakit, absen), orang tua/wali utama dan
 // tombol WA, serta tautan biodata. Cetak F4 "Daftar Santri Kelas" (wali kelas di kanan, Direktur mengetahui di kiri) dan Excel.
@@ -68,7 +68,7 @@ function ekspor() {
               <td :class="['px-3 py-2.5 text-right font-bold tabular-nums', s.persen != null && s.persen < 85 && 'text-merah']">{{ teksPersen(s.persen) }}</td>
               <td class="px-3 py-2.5 tabular-nums text-teks2">{{ s.r ? `${s.r.I} · ${s.r.S} · ${s.r.A} · ${s.r.B}` : '–' }}</td>
               <td class="px-3 py-2.5">{{ s.kontak?.nama || '–' }}<span v-if="s.kontak" class="block text-xs text-teks3">{{ HUBUNGAN[s.kontak.hubungan] }} · {{ s.kontak.no_hp || 'HP belum diisi' }}</span></td>
-              <td class="px-3 py-2.5 text-right"><a v-if="s.kontak?.no_hp" :href="tautanWA(s.kontak.no_hp, sapa(s))" target="_blank" rel="noopener" class="tombol-garis w-presensi min-h-[36px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" style="color: var(--c)" /> WA</a></td>
+              <td class="px-3 py-2.5 text-right"><a v-if="s.kontak?.no_hp" :href="tautanWA(s.kontak.no_hp, sapa(s))" target="_blank" rel="noopener" class="tombol-wa-garis w-presensi min-h-[36px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" /> WA</a></td>
             </tr>
           </tbody>
         </table>

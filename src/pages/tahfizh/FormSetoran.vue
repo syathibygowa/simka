@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/FormSetoran.vue | v1.1 | Perbaikan 13.8.0: laporan perkembangan hafalan ke grup WhatsApp | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/FormSetoran.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Setoran satu sesi halaqah. Bawaan semua santri "Sama"; ketuk "Bertambah" pada Sabaq/Sabqi/Manzil lalu atur posisi
 // barunya (Juz + Halaman). Santri yang Izin/Sakit/Bolos/Absen pada absensi sesi ini otomatis "Tidak setor".
@@ -116,7 +116,7 @@ defineExpose({ berubah })
         <div v-if="d.session_id && !berubah" class="kartu w-presensi mt-3 flex flex-wrap items-center gap-3 p-3">
           <span class="chip-ikon h-10 w-10 shrink-0"><PhUsersThree :size="22" weight="duotone" /></span>
           <p class="min-w-[180px] flex-1 text-sm"><b>Lapor perkembangan hafalan</b><span class="block text-xs text-teks3">Ringkasan setoran sesi ini untuk grup WhatsApp bidang tahfizh.</span></p>
-          <button class="tombol-utama min-h-[42px] px-4 text-sm" @click="bukaLaporan"><PhWhatsappLogo :size="20" weight="duotone" /> Buat laporan</button>
+          <button class="tombol-wa min-h-[42px] px-4 text-sm" @click="bukaLaporan"><PhWhatsappLogo :size="20" weight="duotone" /> Buat laporan</button>
         </div>
         <p v-if="!d.session_id && bolehIsi" class="mt-2 text-xs text-teks3">Belum disimpan. Bila semua santri sama, cukup tekan "Simpan setoran" agar tercatat sudah diisi.</p>
 

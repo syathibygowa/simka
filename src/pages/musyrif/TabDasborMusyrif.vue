@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabDasborMusyrif.vue | v1.0 | Fase 6 – Tahap M1 Menu Musyrif | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabDasborMusyrif.vue | v1.1 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Dasbor musyrif untuk satu kamar: kartu statistik langsung (hari ini, pekan ini, bulan ini, tidak hadir hari ini),
 // sesi asrama hari ini dengan tombol isi absensi, grafik kehadiran 14 hari, santri yang perlu perhatian
@@ -137,7 +137,7 @@ async function salinHariIni() {
         <ul class="divide-y divide-garis">
           <li v-for="x in perhatian" :key="x.s.id" class="flex items-center gap-3 py-2.5 text-sm">
             <span class="min-w-0 flex-1"><b class="block truncate">{{ x.s.nama }}</b><span class="text-xs text-teks3">{{ teksRekapSantri(x.r) }}</span></span>
-            <button class="tombol-garis w-presensi min-h-[38px] px-3 text-sm" @click="waWali(x)" :aria-label="`WA wali ${x.s.nama}`"><PhWhatsappLogo :size="18" weight="duotone" style="color: var(--c)" /> Wali</button>
+            <button class="tombol-wa-garis w-presensi min-h-[38px] px-3 text-sm" @click="waWali(x)" :aria-label="`WA wali ${x.s.nama}`"><PhWhatsappLogo :size="18" weight="duotone" /> Wali</button>
           </li>
           <li v-if="!perhatian.length" class="py-4 text-center text-sm text-teks3">Alhamdulillah, tidak ada santri yang perlu perhatian khusus pekan ini.</li>
         </ul>

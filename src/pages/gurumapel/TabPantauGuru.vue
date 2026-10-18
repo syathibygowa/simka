@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.4 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Pantauan guru mapel (admin, superadmin, pimpinan sesuai cakupannya):
 //   Harian  : tanggal dengan tombol sebelum/sesudah; statistik jam pelajaran (terjadwal, terlaksana, belum diisi, tidak
@@ -101,7 +101,7 @@ function ekspor() {
         <li v-for="g in guruH" :key="g.employee_id" class="kartu p-3.5">
           <div class="flex items-start gap-2">
             <div class="min-w-0 flex-1"><p class="truncate font-bold">{{ g.guru }}</p><p class="truncate text-xs text-teks3">{{ g.kelas.join(', ') }} · {{ g.mapel.join(', ') }}</p></div>
-            <a v-if="g.belum.length && g.no_hp" :href="tautanWA(g.no_hp, pesanPengingatJurnal(g.guru, g.belum))" target="_blank" rel="noopener" class="tombol-garis w-presensi min-h-[38px] shrink-0 px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" style="color: var(--c)" /> Ingatkan</a>
+            <a v-if="g.belum.length && g.no_hp" :href="tautanWA(g.no_hp, pesanPengingatJurnal(g.guru, g.belum))" target="_blank" rel="noopener" class="tombol-wa-garis w-presensi min-h-[38px] shrink-0 px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" /> Ingatkan</a>
           </div>
           <div class="mt-2 flex flex-wrap gap-1.5">
             <span v-for="s in g.slot" :key="s.period_id + s.assignment_id" :class="['lencana', 'w-' + STATUS_JP[statusSlot(s)].w]" :title="`${s.mapel} ${s.kelas}: ${STATUS_JP[statusSlot(s)].n}${s.materi ? ' – ' + s.materi : s.keterangan ? ' – ' + s.keterangan : ''}`">

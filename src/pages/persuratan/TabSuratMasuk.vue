@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/TabSuratMasuk.vue | v1.0 | Fase 10 – Tahap 1 Surat masuk dan disposisi | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/TabSuratMasuk.vue | v1.1 | 14.2.0: saringan corong di HP | 17/10/2026 -->
 <script setup>
 // Daftar surat masuk. cakupan "untuk_saya": surat yang perlu saya disposisikan/tindak lanjuti (paling atas) dan yang melibatkan saya;
 // "masuk": semua surat yang boleh saya baca pada rentang tanggal terima. Diketuk membuka rincian. TU mencatat surat dari sini.
@@ -9,6 +9,7 @@ import { useUI } from '@/stores/ui'
 import { SIFAT_SURAT, STATUS_SURAT, tambahHari } from '@/lib/persuratan'
 import { formatPendek, hariIniISO } from '@/lib/tanggal'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarCatatSurat from './LembarCatatSurat.vue'
 
@@ -41,16 +42,16 @@ function keteranganSaya(s) {
 </script>
 <template>
   <div>
-    <div class="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
-      <div class="relative col-span-2 min-w-[200px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nomor, pengirim, perihal" aria-label="Cari surat" /></div>
-      <select v-model="sifat" class="isian sm:w-auto" aria-label="Saring sifat"><option value="">Semua sifat</option>
+    <SaringCorong :jumlah="[sifat, status].filter(Boolean).length" :ringkasan="[`${formatPendek(mulai)} – ${formatPendek(selesai)}`, sifat && SIFAT_SURAT[sifat].n, status && STATUS_SURAT[status].n].filter(Boolean).join(' · ')" judul="Saring surat">
+      <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
+        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nomor, pengirim, perihal" aria-label="Cari surat" /></div></template>
+      <select v-model="sifat" class="isian md:w-auto" aria-label="Saring sifat"><option value="">Semua sifat</option>
         <option v-for="(v, k) in SIFAT_SURAT" :key="k" :value="k">{{ v.n }}</option></select>
-      <select v-model="status" class="isian sm:w-auto" aria-label="Saring status"><option value="">Semua status</option>
+      <select v-model="status" class="isian md:w-auto" aria-label="Saring status"><option value="">Semua status</option>
         <option v-for="(v, k) in STATUS_SURAT" :key="k" :value="k">{{ v.n }}</option></select>
+      <div class="grid w-full grid-cols-2 gap-3 md:w-auto md:min-w-[22rem]"><InputTanggal v-model="mulai" label="Diterima dari" /><InputTanggal v-model="selesai" label="Sampai" /></div>
       <button v-if="cakupan === 'masuk' && ps.hak.kelola" class="tombol-utama hidden lg:inline-flex" @click="lembarCatat = true"><PhPlus :size="20" weight="bold" /> Catat surat masuk</button>
-    </div>
-    <div class="mt-3 grid grid-cols-2 gap-3 sm:max-w-md"><InputTanggal v-model="mulai" label="Diterima dari" /><InputTanggal v-model="selesai" label="Sampai" /></div>
+    </SaringCorong>
 
     <template v-for="(grup, gi) in [{ judul: 'Perlu tindakan Anda', isi: perlu }, { judul: cakupan === 'masuk' ? 'Daftar surat' : 'Riwayat surat yang melibatkan Anda', isi: lain }]" :key="gi">
       <h2 v-if="grup.isi.length && (cakupan === 'untuk_saya' || gi === 1 && perlu.length)" class="judul-bagian mb-2 mt-5 flex items-center gap-2">

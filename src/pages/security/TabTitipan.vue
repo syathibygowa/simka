@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/security/TabTitipan.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/security/TabTitipan.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Titipan barang/uang untuk santri (Blueprint Bagian 24). Mencegah paket hilang di pos:
 //   Terima : santri penerima, jenis, uraian, pengirim, ekspedisi, FOTO BARANG WAJIB → musyrif dinotifikasi.
@@ -156,7 +156,7 @@ watch(pratinjau, async (v) => { if (v) penanda.value = await penandaKelompok({ j
                 <button class="tombol-garis min-h-[38px] px-3 text-sm" @click="bukaTutup(t, 'dikembalikan')"><PhArrowUUpLeft :size="18" /> Kembalikan</button>
               </template>
               <button v-if="t.status === 'di_pos' && sc.hak.kelola" class="tombol-garis min-h-[38px] px-3 text-sm" @click="bukaTutup(t, 'batal')"><PhProhibit :size="18" /> Batalkan</button>
-              <button v-if="t.status !== 'batal'" class="tombol-garis w-presensi min-h-[38px] px-3 text-sm" @click="waWali(t)"><PhWhatsappLogo :size="18" weight="duotone" style="color: var(--c)" /> Wali</button>
+              <button v-if="t.status !== 'batal'" class="tombol-wa-garis w-presensi min-h-[38px] px-3 text-sm" @click="waWali(t)"><PhWhatsappLogo :size="18" weight="duotone" /> Wali</button>
             </div>
           </div>
         </div>

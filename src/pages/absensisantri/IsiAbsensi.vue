@@ -1,9 +1,11 @@
-<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.7 | Perbaikan 13.8.0: laporan ke grup WhatsApp bidang | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.8 | 14.2.0: rujukan klinik hanya dari sumber absensi yang dicentang | 17/10/2026 -->
 <script setup>
 // Pengisian absensi satu sesi: semua santri bawaan Hadir, ketuk kode HISBAT bagi yang tidak.
 // Pengampu halaqah/ekskul diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi (asrama tidak).
 // Admin ber-izin absensi_atas_nama dapat mengisi atas nama pengampu (tercatat di riwayat).
 // Halaqah: tab Absensi | Setoran (setoran terbuka setelah absensi tersimpan; ?tab=setoran membuka tab Setoran).
+// v1.8: santri Sakit dirujuk ke klinik hanya bila absensi jenis ini dicentang di Klinik → Ketentuan (bawaan: asrama saja);
+//       absensi lain cukup mencatat Sakit tanpa keluhan wajib.
 // v1.7: tombol "Lapor ke grup WA" setelah absensi tersimpan — teks laporan (kelompok, pengasuh, hari, tanggal, sesi,
 //       daftar santri bertanda ✅/❌ atau dipisah per kehadiran, ringkasan; ekskul memuat jurnal latihan) siap kirim ke grup bidang.
 // v1.6: ekskul — jurnal latihan rinci dan wajib seperti jurnal mengajar guru (materi pokok, sub-materi, uraian kegiatan,
@@ -21,7 +23,7 @@ import { KODE, URUT_KODE, JENIS_ABSENSI, jam } from '@/lib/absensi'
 import { inisial, kontakUtama, labelRombel, judulKelompok } from '@/lib/santri'
 import { formatHari, formatWaktu, formatPanjang, formatJam } from '@/lib/tanggal'
 import { pesanWA } from '@/lib/wa'
-import { MODE_DEMO } from '@/lib/supabase'
+import { MODE_DEMO, supabase } from '@/lib/supabase'
 import { unggahKeDrive, kompresGambar, namaRapi } from '@/lib/penyimpanan'
 import FotoBerkas from '@/components/FotoBerkas.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
@@ -37,6 +39,7 @@ const route = useRoute(); const router = useRouter()
 const abs = useAbsensiSantri(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
 const d = ref(null); const galat = ref(''); const isian = ref({}); const ket = ref({}); const catatan = ref(''); const proses = ref(false)
 const atasNama = ref(''); const cari = ref(''); const lembarWA = ref(false); const awal = ref('')
+const rujukKlinik = ref(false) // absensi jenis ini mengirim santri Sakit ke klinik (Ketentuan Klinik)
 const periksa = ref({}) // santri Sakit → waktu periksa klinik (hari_ini/besok)
 // Ekskul: jurnal materi per pertemuan (topik wajib, uraian, foto opsional)
 const jurnal = ref({ topik: '', uraian: '', foto_id: null }); const fotoBaru = ref(null); const pratinjauFoto = ref('')
@@ -56,6 +59,7 @@ async function muat() {
   try {
     const [x] = await Promise.all([abs.detail(route.params.group, route.params.tanggal, route.params.sesi), san.muat()])
     d.value = x
+    rujukKlinik.value = MODE_DEMO ? x.jenis === 'asrama' : await supabase.rpc('rujuk_klinik_dari', { p_jenis: x.jenis }).then((r) => r.data === true, () => false)
     isian.value = Object.fromEntries(x.anggota.map((a) => [a.id, 'H'])); ket.value = {}
     for (const p of x.pengecualian) { isian.value[p.student_id] = p.kode; if (p.keterangan) ket.value[p.student_id] = p.keterangan }
     periksa.value = {}
@@ -79,7 +83,7 @@ onMounted(muat)
 const jenis = computed(() => JENIS_ABSENSI[d.value?.jenis] || JENIS_ABSENSI.kelas)
 /** Status otomatis per santri: { kode, sumber: klinik|izin, keterangan } — terkunci, tidak dapat diubah pengasuh. */
 const oto = computed(() => Object.fromEntries((d.value?.otomatis || []).map((o) => [o.student_id, o])))
-const perluKeluhan = (id) => isian.value[id] === 'S' && !oto.value[id]
+const perluKeluhan = (id) => rujukKlinik.value && isian.value[id] === 'S' && !oto.value[id]
 const modeAtasNama = computed(() => d.value && !d.value.pengasuh_saya && d.value.boleh_atas_nama)
 const bolehIsi = computed(() => d.value && (d.value.pengasuh_saya || d.value.boleh_atas_nama))
 const kini = computed(() => new Date(d.value?.sekarang || Date.now()))
@@ -175,7 +179,7 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
       <div v-if="d.sesi_tercatat && !berubah && !(halaqah && tab === 'setoran')" class="kartu w-presensi mt-3 flex flex-wrap items-center gap-3 p-3">
         <span class="chip-ikon h-10 w-10 shrink-0"><PhUsersThree :size="22" weight="duotone" /></span>
         <p class="min-w-[180px] flex-1 text-sm"><b>Lapor ke grup WhatsApp</b><span class="block text-xs text-teks3">Ringkasan kehadiran {{ ekskul ? 'dan kegiatan latihan ' : '' }}untuk kepala bidang, siap kirim.</span></p>
-        <button class="tombol-utama min-h-[42px] px-4 text-sm" @click="bukaLaporan"><PhWhatsappLogo :size="20" weight="duotone" /> Buat laporan</button>
+        <button class="tombol-wa min-h-[42px] px-4 text-sm" @click="bukaLaporan"><PhWhatsappLogo :size="20" weight="duotone" /> Buat laporan</button>
       </div>
 
       <!-- Tab halaqah: Absensi | Setoran -->
@@ -288,7 +292,8 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
         <div class="mt-3"><label class="label-isian" for="ab-cat">Catatan sesi (opsional)</label>
           <input id="ab-cat" v-model="catatan" :disabled="!bolehIsi || lewatBatas" class="isian" placeholder="Contoh: kegiatan dipindah ke masjid" /></div>
         <p class="mt-3 text-xs text-teks3">H Hadir · I Izin · S Sakit · B Bolos (ada di pondok tetapi tidak ikut) · A Absen (tanpa keterangan) · T Terlambat. Terlambat dan Bolos dihitung hadir.
-          Santri berlabel Klinik/Izin terisi otomatis. Santri yang ditandai Sakit otomatis dirujuk ke klinik saat disimpan.</p>
+          Santri berlabel Klinik/Izin terisi otomatis. <template v-if="rujukKlinik">Santri yang ditandai Sakit otomatis dirujuk ke klinik saat disimpan.</template>
+          <template v-else>Sakit pada absensi ini hanya tercatat dan tidak dikirim ke klinik (sesuai Ketentuan Klinik).</template></p>
       </section>
 
       <!-- Riwayat pengisian -->
@@ -304,7 +309,7 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
       <div v-if="bolehIsi && !perluPresensi && !lewatBatas && !belumBuka" class="bilah-simpan layar-saja fixed inset-x-0 z-30 border-t border-garis bg-permukaan/95 px-4 py-3 backdrop-blur lg:left-auto lg:right-6 lg:w-[30rem] lg:rounded-2xl lg:border">
         <div class="mx-auto flex max-w-3xl items-center gap-3">
           <p class="flex-1 text-sm"><b class="tabular-nums">{{ hadirDihitung }}/{{ d.anggota.length }}</b> hadir<span class="text-teks3"> · {{ d.anggota.length - hitung.H }} pengecualian</span></p>
-          <button v-if="d.sesi_tercatat && penerimaWA.length && !berubah" class="tombol-garis w-presensi min-h-[44px] px-3" @click="lembarWA = true"><PhWhatsappLogo :size="20" weight="duotone" style="color: var(--c)" /> Wali</button>
+          <button v-if="d.sesi_tercatat && penerimaWA.length && !berubah" class="tombol-wa-garis w-presensi min-h-[44px] px-3" @click="lembarWA = true"><PhWhatsappLogo :size="20" weight="duotone" /> Wali</button>
           <button class="tombol-utama min-h-[44px]" :disabled="proses || (d.sesi_tercatat && !berubah)" @click="simpan">
             <component :is="d.sesi_tercatat && !berubah ? PhCheckCircle : PhFloppyDisk" :size="20" weight="duotone" />
             {{ proses ? 'Menyimpan…' : d.sesi_tercatat ? (berubah ? 'Simpan koreksi' : 'Tersimpan') : 'Simpan absensi' }}</button>

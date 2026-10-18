@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/main.css | v1.3 | Perbaikan 13.8.0: gaya butir daftar teks kaya (penomoran dan simbol otomatis) | 16/10/2026 */
+/* SIMKA PRO | src/styles/main.css | v1.4 | 14.2.0: tombol WhatsApp hijau, huruf HP lebih ringkas | 17/10/2026 */
 @import './token.css';
 @import './cetak.css';
 @tailwind base;
@@ -21,6 +21,13 @@
   .grid > * { min-width: 0; }
   /* Jaring pengaman: isi halaman tidak pernah menggeser layar ke samping (baris gulir mendatar tetap berfungsi) */
   .isi-utama { overflow-x: clip; }
+  /* 14.2.0: HP (< 640 px) — huruf dan jarak sedikit lebih kecil agar lebih banyak informasi termuat.
+     Kolom isian tetap 16 px agar iPhone tidak memperbesar layar saat mengetik. */
+  @media (max-width: 639px) {
+    html { font-size: 15px; }
+    body { font-size: 14px; line-height: 1.5; }
+    input.isian, select.isian, textarea.isian { font-size: 16px; }
+  }
 }
 
 @layer components {
@@ -41,6 +48,11 @@
   .tombol-utama { @apply tombol text-white; background: #C7332F; }
   .tombol-utama:hover { background: #A82824; }
   .tombol-garis { @apply tombol border border-garis text-teks bg-permukaan hover:bg-permukaan2; }
+  /* 14.2.0: tombol WhatsApp selalu hijau (utama: latar hijau; garis: tepi dan teks hijau) */
+  .tombol-wa { @apply tombol text-white; background: #1A8F4A; }
+  .tombol-wa:hover { background: #157A3E; }
+  .tombol-wa-garis { @apply tombol border bg-permukaan hover:bg-permukaan2; color: #157A3E; border-color: color-mix(in srgb, #1A8F4A 55%, transparent); }
+  .dark .tombol-wa-garis { color: #5BD69A; border-color: color-mix(in srgb, #5BD69A 45%, transparent); }
   .tombol-teks  { @apply tombol px-3 text-merah hover:bg-permukaan2; }
   .tombol-ikon {
     @apply inline-flex items-center justify-center rounded-full text-teks2 hover:bg-permukaan2 transition-colors;

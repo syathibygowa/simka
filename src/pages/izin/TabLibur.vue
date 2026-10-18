@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/izin/TabLibur.vue | v1.1 | Perbaikan 13.8.0: periode yang dibatalkan dapat dihapus | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabLibur.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Penentuan libur santri (Blueprint Bagian 23).
 //   Daftar periode → pilih periode → nilai otomatis (boleh / tidak / perlu pertimbangan, lengkap dengan angka)
@@ -218,7 +218,7 @@ async function simpanSyarat() {
                 <p v-if="s.rincian?.catatan_izin" class="text-xs text-teks3">{{ s.rincian.catatan_izin }}</p>
                 <div class="mt-2 flex flex-wrap gap-2">
                   <button v-if="bolehUbah" class="tombol-garis min-h-[36px] px-3 text-sm" @click="bukaUbah(s)"><PhPencilSimple :size="16" /> {{ s.keputusan ? 'Ubah' : 'Putuskan' }}</button>
-                  <button v-if="detail.status === 'disahkan' && s.keputusan" class="tombol-garis w-presensi min-h-[36px] px-3 text-sm" @click="waWali(s)"><PhWhatsappLogo :size="16" weight="duotone" style="color: var(--c)" /> Wali</button>
+                  <button v-if="detail.status === 'disahkan' && s.keputusan" class="tombol-wa-garis w-presensi min-h-[36px] px-3 text-sm" @click="waWali(s)"><PhWhatsappLogo :size="16" weight="duotone" /> Wali</button>
                 </div>
               </div>
             </div>

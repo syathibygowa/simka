@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/klinik/TabKasus.vue | v1.0 | Fase 6 – Tahap 1 Dasar Klinik | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/klinik/TabKasus.vue | v1.1 | 14.2.0: saringan corong di HP | 17/10/2026 -->
 <script setup>
 // Daftar kasus klinik untuk empat cakupan:
 //   antrean      : rujukan menunggu pemeriksaan; yang lewat batas waktu ditandai merah dan tampil paling atas
@@ -16,6 +16,7 @@ import { useUI } from '@/stores/ui'
 import { KLINIK, STATUS_KASUS, TINDAK_LANJUT, SUMBER_RUJUKAN, labelKasus, sisaBatas } from '@/lib/klinik'
 import { formatWaktu, formatPendek, hariIniISO } from '@/lib/tanggal'
 import KartuStatistik from '@/components/KartuStatistik.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
@@ -103,17 +104,22 @@ const ikonStatus = (k) => (k.status === 'ditangani' && k.tindak_lanjut ? TINDAK_
 </script>
 <template>
   <div>
-    <div class="flex flex-wrap items-center gap-2">
-      <select v-if="duaKlinik" v-model="klinik" class="isian w-auto" aria-label="Saring klinik">
+    <SaringCorong v-if="duaKlinik || cakupan === 'riwayat' || cakupan === 'rujukan_saya'" :jumlah="klinik ? 1 : 0"
+      :ringkasan="[klinik && KLINIK[klinik], (cakupan === 'riwayat' || cakupan === 'rujukan_saya') && `${formatPendek(mulai)} – ${formatPendek(selesai)}`].filter(Boolean).join(' · ')" judul="Saring kasus">
+      <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
+        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri, kelas, kamar, atau keluhan" aria-label="Cari kasus" /></div></template>
+      <select v-if="duaKlinik" v-model="klinik" class="isian md:w-auto" aria-label="Saring klinik">
         <option value="">Klinik putra dan putri</option><option value="putra">{{ KLINIK.putra }}</option><option value="putri">{{ KLINIK.putri }}</option>
       </select>
-      <div class="relative min-w-[200px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri, kelas, kamar, atau keluhan" aria-label="Cari kasus" /></div>
+      <div v-if="cakupan === 'riwayat' || cakupan === 'rujukan_saya'" class="grid w-full grid-cols-2 gap-3 md:w-auto md:min-w-[22rem]">
+        <InputTanggal v-model="mulai" label="Dari tanggal" /><InputTanggal v-model="selesai" label="Sampai tanggal" />
+      </div>
+    </SaringCorong>
+    <div v-else class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
+      <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri, kelas, kamar, atau keluhan" aria-label="Cari kasus" /></div>
+    <div v-if="kl.hak.rujuk || (bisaPasienDatang && cakupan !== 'rujukan_saya')" class="mt-2 flex flex-wrap gap-2 md:justify-end">
       <button v-if="kl.hak.rujuk" class="tombol-utama hidden lg:inline-flex" @click="lembarRujuk = true"><PhPaperPlaneTilt :size="20" weight="duotone" /> Rujuk santri</button>
       <button v-if="bisaPasienDatang && cakupan !== 'rujukan_saya'" class="tombol-garis w-klinik" @click="pasienDatang"><PhUserPlus :size="20" weight="duotone" style="color: var(--c)" /> Pasien datang</button>
-    </div>
-    <div v-if="cakupan === 'riwayat' || cakupan === 'rujukan_saya'" class="mt-3 grid grid-cols-2 gap-3 sm:max-w-md">
-      <InputTanggal v-model="mulai" label="Dari tanggal" /><InputTanggal v-model="selesai" label="Sampai tanggal" />
     </div>
 
     <div class="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">

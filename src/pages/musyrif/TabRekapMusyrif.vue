@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Rekap kehadiran asrama satu kamar. Empat tampilan:
 //   kamar   : per santri pada rentang (sesi, hadir, I, S, B, A, T, %)
@@ -159,7 +159,7 @@ const subjudulCetak = computed(() => `${kamar.value?.nama || ''} · ${teksPeriod
     <BilahTab v-model="mode" class="mb-3" :tab="MODE" label="Tampilan rekap" />
 
     <div class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
-      <button class="w-presensi tombol-garis shrink-0 px-4 text-sm" @click="mode === 'individu' ? waIndividu() : (lembarWA = true)"><PhWhatsappLogo :size="20" weight="duotone" style="color: var(--c)" /> {{ mode === 'individu' ? 'WA ke wali santri ini' : 'WA rekap ke wali' }}</button>
+      <button class="w-presensi tombol-wa-garis shrink-0 px-4 text-sm" @click="mode === 'individu' ? waIndividu() : (lembarWA = true)"><PhWhatsappLogo :size="20" weight="duotone" /> {{ mode === 'individu' ? 'WA ke wali santri ini' : 'WA rekap ke wali' }}</button>
       <button class="w-agenda tombol-garis shrink-0 px-4 text-sm" @click="lembarGrup = true"><PhCopy :size="20" weight="duotone" style="color: var(--c)" /> Salin untuk grup WA</button>
       <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Cetak</button>
       <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Excel</button>
@@ -227,7 +227,7 @@ const subjudulCetak = computed(() => `${kamar.value?.nama || ''} · ${teksPeriod
               <div v-for="k in ['I', 'S', 'B', 'A', 'T']" :key="k" class="rounded-xl bg-permukaan2 p-2" :class="'w-' + KODE[k].w"><b class="block text-xl tabular-nums" style="color: var(--c)">{{ totalDari(santriPilih)[k] }}</b><span class="text-xs text-teks2">{{ KODE[k].n }}</span></div>
             </div>
             <div class="mt-3 flex flex-wrap gap-2">
-              <button class="tombol-utama min-h-[40px] px-4 text-sm" @click="waIndividu"><PhWhatsappLogo :size="18" weight="duotone" /> WA rekap ke wali</button>
+              <button class="tombol-wa min-h-[40px] px-4 text-sm" @click="waIndividu"><PhWhatsappLogo :size="18" weight="duotone" /> WA rekap ke wali</button>
               <router-link :to="`/santri/${santriPilih}`" class="tombol-garis min-h-[40px] px-4 text-sm"><PhArrowSquareOut :size="18" /> Profil santri</router-link>
             </div>
           </template>
@@ -277,8 +277,8 @@ const subjudulCetak = computed(() => `${kamar.value?.nama || ''} · ${teksPeriod
         <p class="text-xs text-teks3">Teks dapat disunting sebelum disalin. Keterangan sakit atau alasan pribadi santri tidak dicantumkan.</p>
         <div class="grid gap-2 sm:grid-cols-2">
           <button class="tombol-utama" @click="salin(null)"><PhCopy :size="20" weight="duotone" /> Salin teks</button>
-          <button v-if="kamar?.wa_wali" class="tombol-garis w-presensi" @click="salin(kamar.wa_wali)"><PhWhatsappLogo :size="20" weight="duotone" style="color: var(--c)" /> Salin & buka grup wali</button>
-          <button v-if="kamar?.wa_internal" class="tombol-garis w-agenda" @click="salin(kamar.wa_internal)"><PhWhatsappLogo :size="20" weight="duotone" style="color: var(--c)" /> Salin & buka grup internal</button>
+          <button v-if="kamar?.wa_wali" class="tombol-wa-garis w-presensi" @click="salin(kamar.wa_wali)"><PhWhatsappLogo :size="20" weight="duotone" /> Salin & buka grup wali</button>
+          <button v-if="kamar?.wa_internal" class="tombol-wa-garis w-agenda" @click="salin(kamar.wa_internal)"><PhWhatsappLogo :size="20" weight="duotone" /> Salin & buka grup internal</button>
         </div>
         <p v-if="!kamar?.wa_wali && !kamar?.wa_internal" class="text-xs text-teks3">Tautan grup WA kamar dapat diisi di Kelompok Santri → kamar ini → Ubah.</p>
       </div>

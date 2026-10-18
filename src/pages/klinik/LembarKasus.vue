@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/klinik/LembarKasus.vue | v1.1 | Fase 6 – Tahap 3 Jurnal musyrif dan klinik lanjutan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/klinik/LembarKasus.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Rincian satu kasus klinik: data santri, rujukan, pemeriksaan (rahasia; hanya yang berhak), jejak kasus,
 // dan riwayat kasus santri sebelumnya.
@@ -61,7 +61,7 @@ const baris = (label, nilai) => (nilai ? { label, nilai } : null)
           <template v-if="d.kasus.kontrol_pada"> · kontrol {{ formatWaktu(d.kasus.kontrol_pada) }}</template>
           <template v-if="d.kasus.selesai_pada"> · ditutup {{ formatWaktu(d.kasus.selesai_pada) }}</template></p>
         <p v-if="d.kasus.catatan_selesai" class="text-xs text-teks2">Catatan: {{ d.kasus.catatan_selesai }}</p>
-        <button v-if="d.kasus.status !== 'batal'" class="tombol-garis w-presensi mt-3 min-h-[40px] w-full text-sm" @click="waWali">
+        <button v-if="d.kasus.status !== 'batal'" class="tombol-wa-garis w-presensi mt-3 min-h-[40px] w-full text-sm" @click="waWali">
           <PhWhatsappLogo :size="18" weight="duotone" style="color: var(--c)" /> {{ d.kasus.status === 'selesai' ? 'Kabari wali: sudah sembuh' : 'Kabari wali: sedang sakit' }}{{ kontak?.nama ? ' (' + kontak.nama + ')' : '' }}</button>
         <button v-if="d.boleh_periksa && ['menunggu', 'ditangani'].includes(d.kasus.status)" class="tombol-utama mt-3 min-h-[40px] w-full text-sm"
           @click="emit('periksa', { ...d.kasus, id: d.kasus.id })"><PhStethoscope :size="18" /> {{ d.kasus.status === 'menunggu' ? 'Periksa sekarang' : 'Catat kontrol' }}</button>

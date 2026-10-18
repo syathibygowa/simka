@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengaturan/TabTemplateWA.vue | v1.3 | Fase 4 – Tahap 3 Absensi HISBAT | 04/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/TabTemplateWA.vue | v1.4 | 14.2.0: pratinjau seperti WhatsApp | 17/10/2026 -->
 <script setup>
 // Template pesan WhatsApp (superadmin). Isian dalam kurung kurawal, misalnya {nama}, diganti otomatis saat pesan dibuat.
 // Baris yang hanya berisi isian kosong dibuang. Pratinjau memakai data contoh.
@@ -7,6 +7,7 @@ import { PhPencilSimple, PhPlus, PhFloppyDisk, PhTrash, PhWhatsappLogo, PhArrowC
 import { useTemplatWA } from '@/stores/templatWA'
 import { useUI } from '@/stores/ui'
 import { isiTemplat, BAWAAN_WA, ISIAN_WA } from '@/lib/wa'
+import PratinjauWA from '@/components/PratinjauWA.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 
 const tw = useTemplatWA(); const ui = useUI()
@@ -76,7 +77,7 @@ const buka = ref(ISIAN_WA[0].grup)
           </div>
           <p class="mt-1 text-xs text-teks3">Tulis *teks* untuk huruf tebal di WhatsApp.</p>
         </div>
-        <div class="rounded-xl bg-permukaan2 p-3"><p class="mb-1 text-xs font-bold text-teks3">Pratinjau (data contoh)</p><p class="whitespace-pre-line text-sm">{{ pratinjau }}</p></div>
+        <div><p class="mb-1 text-xs font-bold text-teks3">Pratinjau seperti di WhatsApp (data contoh)</p><PratinjauWA :teks="pratinjau" /></div>
         <div><label class="label-isian" for="tw-ket">Keterangan penggunaan</label><input id="tw-ket" v-model="f.keterangan" class="isian" /></div>
         <label class="flex min-h-[44px] items-center gap-3 font-semibold"><input v-model="f.aktif" type="checkbox" class="h-5 w-5 accent-[#1E7D4F]" /> Aktif (bila nonaktif, isi bawaan sistem yang dipakai)</label>
         <div class="flex flex-wrap gap-2">

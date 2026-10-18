@@ -1,10 +1,12 @@
-<!-- SIMKA PRO | src/pages/klinik/TabKetentuanKlinik.vue | v1.0 | Fase 6 – Tahap 1 Dasar Klinik | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/klinik/TabKetentuanKlinik.vue | v1.1 | 14.2.0: sumber rujukan otomatis dari absensi dapat dicentang | 17/10/2026 -->
 <script setup>
 // Ketentuan klinik: jam layanan, batas waktu pemeriksaan rujukan (dasar tanda merah), jadwal kontrol bawaan,
 // dan petugas Klinik Putra/Putri. Diubah oleh superadmin, admin ber-izin kelola_klinik, atau hak fitur Klinik tingkat 3.
 // Pengguna lain hanya membaca.
+// v1.1: Sumber rujukan otomatis — absensi mana (asrama, kelas, halaqah, ekskul) yang mengirim santri Sakit ke klinik.
+//       Bawaan: asrama (musyrif) saja. Absensi lain tetap mencatat Sakit tanpa rujukan.
 import { ref, computed, onMounted } from 'vue'
-import { PhClock, PhPlus, PhTrash, PhFloppyDisk, PhGenderMale, PhGenderFemale, PhUserPlus, PhInfo } from '@phosphor-icons/vue'
+import { PhClock, PhPlus, PhTrash, PhFloppyDisk, PhGenderMale, PhGenderFemale, PhUserPlus, PhInfo, PhFirstAidKit } from '@phosphor-icons/vue'
 import { useKlinik } from '@/stores/klinik'
 import { useUI } from '@/stores/ui'
 import { KLINIK } from '@/lib/klinik'
@@ -12,7 +14,13 @@ import LembarBawah from '@/components/LembarBawah.vue'
 
 const kl = useKlinik(); const ui = useUI()
 const isi = ref(null); const proses = ref(false)
-const salin = () => { isi.value = JSON.parse(JSON.stringify(kl.pengaturan)) }
+const salin = () => { isi.value = JSON.parse(JSON.stringify(kl.pengaturan)); if (!Array.isArray(isi.value.sumber_absensi)) isi.value.sumber_absensi = ['asrama'] }
+const SUMBER = [
+  { k: 'asrama', n: 'Absensi asrama', ket: 'Musyrif/musyrifah' },
+  { k: 'kelas', n: 'Absensi kelas', ket: 'Wali kelas' },
+  { k: 'halaqah', n: 'Absensi halaqah', ket: 'Muhaffizh/muhaffizhah' },
+  { k: 'ekskul', n: 'Absensi ekskul', ket: 'Pembina ekskul' },
+]
 onMounted(async () => { try { await kl.muatPengaturan(); salin() } catch (e) { ui.toast(e.message, 'galat') } })
 const boleh = computed(() => kl.hak.atur)
 
@@ -22,7 +30,7 @@ async function simpan() {
   proses.value = true
   try {
     await kl.simpanPengaturan({ jam_layanan: isi.value.jam_layanan, batas_hari_ini_menit: Number(isi.value.batas_hari_ini_menit),
-      batas_besok_jam: isi.value.batas_besok_jam, kontrol_bawaan_hari: Number(isi.value.kontrol_bawaan_hari) })
+      batas_besok_jam: isi.value.batas_besok_jam, kontrol_bawaan_hari: Number(isi.value.kontrol_bawaan_hari), sumber_absensi: isi.value.sumber_absensi })
     salin(); ui.toast('Ketentuan klinik tersimpan.')
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
@@ -75,6 +83,19 @@ async function hapus(p) {
         <div><label class="label-isian" for="kl-kt">Jadwal kontrol bawaan (hari)</label><input id="kl-kt" v-model="isi.kontrol_bawaan_hari" type="number" min="0" max="30" class="isian tabular-nums" :disabled="!boleh" />
           <p class="mt-1 text-xs text-teks3">0 = tidak dijadwalkan otomatis.</p></div>
       </div>
+      <button v-if="boleh" class="tombol-utama mt-4" :disabled="proses" @click="simpan"><PhFloppyDisk :size="20" weight="duotone" /> Simpan ketentuan</button>
+    </section>
+
+    <section class="kartu w-klinik p-4 sm:p-5">
+      <h2 class="judul-bagian flex items-center gap-2"><PhFirstAidKit :size="22" weight="duotone" style="color: var(--c)" /> Sumber rujukan otomatis</h2>
+      <p class="mt-1 text-sm text-teks2">Centang absensi yang mengirim santri bertanda <b>Sakit</b> ke klinik untuk ditangani. Absensi yang tidak dicentang tetap mencatat Sakit, tetapi santrinya tidak masuk antrean klinik.
+        Absensi guru mapel tidak pernah mengirim rujukan.</p>
+      <div class="mt-3 grid gap-2 sm:grid-cols-2">
+        <label v-for="x in SUMBER" :key="x.k" class="flex min-h-[52px] items-center gap-3 rounded-xl border border-garis px-3 text-sm">
+          <input v-model="isi.sumber_absensi" type="checkbox" :value="x.k" class="h-5 w-5 shrink-0 accent-[#B42A5E]" :disabled="!boleh" />
+          <span><b>{{ x.n }}</b><span class="block text-xs text-teks3">{{ x.ket }}</span></span></label>
+      </div>
+      <p v-if="!isi.sumber_absensi.length" class="mt-2 text-sm font-semibold text-merah">Tidak ada absensi yang mengirim rujukan. Santri sakit hanya masuk klinik lewat rujukan manual, lapor, atau datang sendiri.</p>
       <button v-if="boleh" class="tombol-utama mt-4" :disabled="proses" @click="simpan"><PhFloppyDisk :size="20" weight="duotone" /> Simpan ketentuan</button>
     </section>
 

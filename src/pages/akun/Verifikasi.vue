@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/akun/Verifikasi.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/akun/Verifikasi.vue | v1.4 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Verifikasi pendaftaran dan pengelolaan akun pegawai (admin dengan izin, superadmin).
 import { ref, computed, onMounted } from 'vue'
@@ -220,7 +220,7 @@ const tutupSemua = () => { v.value = null; k.value = null; hasil.value = null }
       <template v-if="hasil && v">
         <div :class="['space-y-4 pb-2', hasil.ok ? 'w-presensi' : 'w-klinik']">
           <p class="text-teks2">{{ hasil.ok ? 'Email aktivasi sudah dikirim otomatis.' : 'Pemberitahuan penolakan sudah dikirim ke email pendaftar.' }} Kabari juga melalui WhatsApp bila perlu.</p>
-          <a v-if="hasil.no_hp" :href="tautanWA(hasil.no_hp, hasil.wa)" target="_blank" rel="noopener" class="tombol-utama w-full !bg-[#1E7D4F]"><PhWhatsappLogo :size="22" weight="fill" /> Kirim pesan WA</a>
+          <a v-if="hasil.no_hp" :href="tautanWA(hasil.no_hp, hasil.wa)" target="_blank" rel="noopener" class="tombol-wa w-full"><PhWhatsappLogo :size="22" weight="fill" /> Kirim pesan WA</a>
           <p v-else class="text-sm text-teks3">Nomor HP belum diisi, jadi pesan WA tidak dapat dikirim.</p>
           <button class="tombol-garis w-full" @click="tutupSemua">Selesai</button>
         </div>
@@ -237,7 +237,7 @@ const tutupSemua = () => { v.value = null; k.value = null; hasil.value = null }
             <button class="tombol-teks mt-1 text-sm" @click="salin(hasil.sandi)"><PhCopySimple :size="18" /> Salin</button>
           </div>
           <p class="text-sm text-teks2">Sandi ini hanya ditampilkan sekali. Pegawai wajib menggantinya saat masuk.</p>
-          <a v-if="hasil.no_hp" :href="tautanWA(hasil.no_hp, hasil.wa)" target="_blank" rel="noopener" class="tombol-utama w-full !bg-[#1E7D4F]"><PhWhatsappLogo :size="22" weight="fill" /> Kirim melalui WA</a>
+          <a v-if="hasil.no_hp" :href="tautanWA(hasil.no_hp, hasil.wa)" target="_blank" rel="noopener" class="tombol-wa w-full"><PhWhatsappLogo :size="22" weight="fill" /> Kirim melalui WA</a>
           <button class="tombol-garis w-full" @click="tutupSemua">Selesai</button>
         </div>
       </template>

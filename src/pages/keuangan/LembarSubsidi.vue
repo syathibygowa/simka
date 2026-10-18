@@ -1,24 +1,29 @@
-<!-- SIMKA PRO | src/pages/keuangan/LembarSubsidi.vue | v1.0 | Fase 13 – Formulir subsidi/keringanan santri | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/LembarSubsidi.vue | v1.1 | 14.2.0: subsidi langsung mengurangi tagihan yang belum lunas | 17/10/2026 -->
 <script setup>
 // Subsidi (keringanan) seorang santri: persen atau nominal, untuk semua jenis biaya atau satu jenis, berlaku dari–sampai.
-// Dipakai saat tagihan dibuat sesudahnya; tagihan yang sudah ada dapat disesuaikan lewat "Ubah tagihan".
+// v1.1: subsidi berlaku untuk tagihan yang periodenya beririsan dengan masa berlaku, dan tagihan santri yang belum lunas
+//       langsung dihitung ulang saat disimpan (kecuali tagihan yang potongannya diubah manual). Mulai bawaan = awal tahun ajaran aktif.
 import { ref, computed, watch } from 'vue'
 import { PhFloppyDisk } from '@phosphor-icons/vue'
 import { useKeuangan } from '@/stores/keuangan'
 import { useUI } from '@/stores/ui'
+import { useLembaga } from '@/stores/lembaga'
+import { formatPanjang } from '@/lib/tanggal'
 import { bacaRupiah, angka } from '@/lib/keuangan'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 
 const props = defineProps({ isi: { type: Object, default: null } })   // { id?, student_id?, nama? ... } · null = tertutup
 const emit = defineEmits(['tutup', 'tersimpan'])
-const keu = useKeuangan(); const ui = useUI()
+const keu = useKeuangan(); const ui = useUI(); const lembaga = useLembaga()
+const awalTA = computed(() => lembaga.tahunAktif?.mulai || '')
 const buka = computed({ get: () => !!props.isi, set: (v) => !v && emit('tutup') })
 const f = ref(null); const daftar = ref([]); const cari = ref('')
 watch(() => props.isi, async (x) => {
   if (!x) return
+  await lembaga.muat().catch(() => null)
   f.value = { id: x.id || null, student_id: x.student_id || '', nama: x.nama || '', fee_type_id: x.fee_type_id || '', jenis: x.jenis || 'persen',
-    nilai: x.nilai ? (x.jenis === 'nominal' ? angka(x.nilai) : String(Number(x.nilai))) : '', mulai: x.mulai || '', sampai: x.sampai || '', alasan: x.alasan || '', aktif: x.aktif ?? true }
+    nilai: x.nilai ? (x.jenis === 'nominal' ? angka(x.nilai) : String(Number(x.nilai))) : '', mulai: x.mulai || awalTA.value, sampai: x.sampai || '', alasan: x.alasan || '', aktif: x.aktif ?? true }
   cari.value = ''
   if (!x.student_id && !daftar.value.length) { try { daftar.value = await keu.santri({}) } catch { /* abaikan */ } }
 }, { immediate: true })
@@ -31,7 +36,7 @@ async function simpan() {
   if (!nilai || nilai <= 0 || (d.jenis === 'persen' && nilai > 100)) return ui.toast(d.jenis === 'persen' ? 'Isi persen antara 1 dan 100.' : 'Isi nominal potongan.', 'galat')
   if ((d.alasan || '').trim().length < 3) return ui.toast('Tulis alasan subsidi.', 'galat')
   proses.value = true
-  try { await keu.simpanSubsidi({ ...d, nilai, fee_type_id: d.fee_type_id || null, sampai: d.sampai || null }); ui.toast('Subsidi disimpan. Berlaku untuk tagihan yang dibuat sesudahnya.'); emit('tersimpan'); emit('tutup') }
+  try { await keu.simpanSubsidi({ ...d, nilai, fee_type_id: d.fee_type_id || null, sampai: d.sampai || null }); ui.toast('Subsidi disimpan. Tagihan santri ini yang belum lunas sudah ikut disesuaikan.'); emit('tersimpan'); emit('tutup') }
   catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 </script>
@@ -62,6 +67,8 @@ async function simpan() {
         <InputTanggal v-model="f.mulai" label="Berlaku mulai" wajib />
         <InputTanggal v-model="f.sampai" label="Sampai (kosong = seterusnya)" bawaan-kosong />
       </div>
+      <p class="rounded-xl bg-permukaan2 p-3 text-xs text-teks2">Subsidi mengurangi tagihan yang periodenya masuk masa berlaku ini, termasuk tagihan yang <b>sudah dibuat</b> dan belum lunas.
+        Tagihan yang potongannya pernah diubah manual tidak disentuh.<template v-if="awalTA"> Bawaan mulai: awal tahun ajaran aktif ({{ formatPanjang(awalTA) }}).</template></p>
       <div><label class="label-isian" for="sb-als">Alasan</label><input id="sb-als" v-model="f.alasan" class="isian" placeholder="Contoh: Santri yatim; anak pegawai; beasiswa tahfizh" /></div>
       <label v-if="f.id" class="flex items-center gap-3"><input v-model="f.aktif" type="checkbox" class="h-5 w-5" /> Subsidi aktif</label>
       <button class="tombol-utama w-full" :disabled="proses" @click="simpan"><PhFloppyDisk :size="20" weight="duotone" /> Simpan subsidi</button>

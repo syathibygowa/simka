@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/klinik.js | v1.1 | Fase 6 – Tahap 2 Status otomatis dan perizinan santri | 06/10/2026
+// SIMKA PRO | src/lib/klinik.js | v1.2 | 14.2.0: bawaan sumber rujukan absensi (asrama) | 17/10/2026
 // Label baku Klinik: status kasus, tindak lanjut, sumber rujukan, klinik putra/putri.
 import { PhHourglass, PhStethoscope, PhCheckCircle, PhXCircle, PhPersonSimpleWalk, PhBed, PhFirstAidKit, PhAmbulance, PhHouseLine } from '@phosphor-icons/vue'
 
@@ -43,5 +43,5 @@ export function sisaBatas(batas, kini = Date.now()) {
 
 export const PENGATURAN_KLINIK_BAWAAN = () => ({
   jam_layanan: [{ mulai: '07:30', selesai: '11:00' }, { mulai: '16:00', selesai: '19:00' }],
-  batas_hari_ini_menit: 120, batas_besok_jam: '11:00', kontrol_bawaan_hari: 1, kop: 'pondok',
+  batas_hari_ini_menit: 120, batas_besok_jam: '11:00', kontrol_bawaan_hari: 1, kop: 'pondok', sumber_absensi: ['asrama'],
 })

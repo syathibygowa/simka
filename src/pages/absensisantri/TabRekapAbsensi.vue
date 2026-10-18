@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/TabRekapAbsensi.vue | v1.1 | Fase 4 – Dapat dikunci pada satu kelompok (menu Wali Kelas) | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/TabRekapAbsensi.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Rekap kehadiran santri per kelompok dan periode: kelas, halaqah, asrama, dan gabungan program pokok
 // (Terlambat dan Bolos dihitung hadir). Ekspor Excel, cetak F4 mendatar, WA rekap ke wali, salin rekap umum untuk grup.
@@ -100,7 +100,7 @@ const pesanKe = (p) => pesanWA('rekap_santri', { nama_wali: p.k?.nama, nama_sant
     <div v-if="g" class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
       <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Excel</button>
       <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Cetak rekap</button>
-      <button class="w-presensi tombol-garis shrink-0 px-4 text-sm" @click="lembarWA = true"><PhWhatsappLogo :size="20" weight="duotone" style="color: var(--c)" /> WA rekap ke wali</button>
+      <button class="w-presensi tombol-wa-garis shrink-0 px-4 text-sm" @click="lembarWA = true"><PhWhatsappLogo :size="20" weight="duotone" /> WA rekap ke wali</button>
       <button class="w-agenda tombol-garis shrink-0 px-4 text-sm" @click="salinGrup"><PhCopy :size="20" weight="duotone" style="color: var(--c)" /> Rekap untuk grup WA</button>
     </div>
 

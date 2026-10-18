@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabRekapLayanan.vue | v1.4 | Perbaikan 14.0.0: pemantau termasuk pemegang Dokumen tingkat Input/ubah | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabRekapLayanan.vue | v1.5 | 14.2.0: saringan dilipat (corong) di HP setelah hasil tampil | 17/10/2026 -->
 <script setup>
 // Laporan periode modul layanan (menu Dokumen → Rekap layanan): Security, libur santri, pengajuan pegawai, klinik.
 // Pilihan laporan tampil sesuai hak (diperiksa server). Daftar santri berurutan NIS, Nama, JK. Data klinik tanpa diagnosis.
@@ -18,6 +18,7 @@ import { formatPanjang, formatPendek, formatWaktu, formatJam } from '@/lib/tangg
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TtdResmi from '@/components/cetak/TtdResmi.vue'
 import PanelResmi from '@/components/PanelResmi.vue'
@@ -36,7 +37,7 @@ const JENIS = computed(() => [
 const jenis = ref(JENIS.value[0].k)
 const info = computed(() => JENIS.value.find((j) => j.k === jenis.value) || { n: JUDUL[jenis.value] || '', ket: 'Versi resmi' })
 const awal = periodeCepat('bulan'); const mulai = ref(awal.mulai); const selesai = ref(awal.selesai); const cepat = ref('bulan')
-const unit = ref(''); const cari = ref('')
+const unit = ref(''); const cari = ref(''); const bukaSaring = ref(false)
 onMounted(async () => {
   if (pemantau.value) await org.muat()
   if (route.query.resmi) { try { terapkanResmi(await dr.ambil(String(route.query.resmi))); return } catch (e) { ui.toast(e.message, 'galat') } }
@@ -137,28 +138,31 @@ const ada = computed(() => !!d.value)
 </script>
 <template>
   <div class="space-y-4">
-    <fieldset :disabled="!!resmi" :class="['kartu min-w-0 space-y-4 p-4', resmi && 'opacity-60']">
-      <div class="bilah-tab kecil" role="tablist" aria-label="Jenis laporan layanan">
-        <button v-for="j in JENIS" :key="j.k" type="button" role="tab" :aria-selected="jenis === j.k" @click="jenis = j.k"
-          :class="['tab-garis w-laporan', jenis === j.k && 'aktif']">
-          <component :is="j.ikon" :size="18" weight="duotone" /><span>{{ j.n }}</span></button>
-      </div>
-      <p class="text-sm text-teks2">{{ info.ket }}.</p>
-      <label v-if="jenis === 'pengajuan' && pemantau" class="block max-w-md"><span class="label-isian">Bidang/unit</span>
-        <select v-model="unit" class="isian"><option value="">Semua yang dapat Anda lihat</option>
-          <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ ' '.repeat(u.tingkat * 2) }}{{ u.nama }}</option></select></label>
-      <div class="flex flex-wrap gap-2">
-        <div class="bilah-tab kecil" role="tablist" aria-label="Periode cepat">
-          <button v-for="p in PERIODE_CEPAT" :key="p.k" type="button" @click="pilihCepat(p.k)"
-          :class="['tab-garis', (cepat === p.k) && 'aktif']" role="tab" :aria-selected="cepat === p.k">{{ p.n }}</button>
+    <!-- 14.2.0: di HP saringan dilipat menjadi bilah corong setelah hasil tampil -->
+    <SaringCorong v-model:buka="bukaSaring" :lipat="!!ll.data && !resmi" :ringkasan="`${formatPendek(mulai)} s.d. ${formatPendek(selesai)}${unit ? ' · ' + (org.cariUnit(unit)?.nama || '') : ''}`" judul="Ubah saringan laporan" tanpa-tombol>
+      <fieldset :disabled="!!resmi" :class="['kartu w-full min-w-0 space-y-4 p-4', resmi && 'opacity-60']">
+        <div class="bilah-tab kecil" role="tablist" aria-label="Jenis laporan layanan">
+          <button v-for="j in JENIS" :key="j.k" type="button" role="tab" :aria-selected="jenis === j.k" @click="jenis = j.k"
+            :class="['tab-garis w-laporan', jenis === j.k && 'aktif']">
+            <component :is="j.ikon" :size="18" weight="duotone" /><span>{{ j.n }}</span></button>
         </div>
-      </div>
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
-        <InputTanggal v-model="mulai" label="Dari tanggal" />
-        <InputTanggal v-model="selesai" label="Sampai tanggal" />
-        <button type="button" class="tombol-utama" :disabled="ll.memuat" @click="muat"><PhMagnifyingGlass :size="20" weight="bold" /> Tampilkan</button>
-      </div>
-    </fieldset>
+        <p class="text-sm text-teks2">{{ info.ket }}.</p>
+        <label v-if="jenis === 'pengajuan' && pemantau" class="block max-w-md"><span class="label-isian">Bidang/unit</span>
+          <select v-model="unit" class="isian"><option value="">Semua yang dapat Anda lihat</option>
+            <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ ' '.repeat(u.tingkat * 2) }}{{ u.nama }}</option></select></label>
+        <div class="flex flex-wrap gap-2">
+          <div class="bilah-tab kecil" role="tablist" aria-label="Periode cepat">
+            <button v-for="p in PERIODE_CEPAT" :key="p.k" type="button" @click="pilihCepat(p.k)"
+            :class="['tab-garis', (cepat === p.k) && 'aktif']" role="tab" :aria-selected="cepat === p.k">{{ p.n }}</button>
+          </div>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+          <InputTanggal v-model="mulai" label="Dari tanggal" />
+          <InputTanggal v-model="selesai" label="Sampai tanggal" />
+          <button type="button" class="tombol-utama" :disabled="ll.memuat" @click="muat(); bukaSaring = false"><PhMagnifyingGlass :size="20" weight="bold" /> Tampilkan</button>
+        </div>
+      </fieldset>
+    </SaringCorong>
 
     <PanelResmi v-if="d || resmi" :kunci="kunci" :beku="resmi" jenis="laporan_layanan" :jenis-nama="JUDUL[jenis]" :perihal="JUDUL[jenis]"
       :periode="`${formatPendek(mulai)} s.d. ${formatPendek(selesai)}`" :subjek="namaUnit || ''" kop="pondok" tautan="/rekap/layanan" :isi="isiBeku" :penanda-jabatan="jabPenanda"

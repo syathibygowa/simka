@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/berkas/Berkas.vue | v1.4 | Perbaikan 13.8.0: keterangan/informasi berkas dengan gaya teks dan daftar otomatis | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/berkas/Berkas.vue | v1.5 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Berkas Saya: berkas untuk pegawai dengan kategori yang dapat dibuat sendiri. Berkas tersimpan di Google Drive pondok
 // dan dibuka lewat tautan sementara (tidak publik); setiap pembukaan tercatat. Tanpa masa berlaku: berkas tetap ada
@@ -156,7 +156,7 @@ async function simpanKat(k, baru) {
           <button v-if="terpilih.berkas_id" class="tombol-utama" :disabled="membuka" @click="buka(terpilih)"><PhDownloadSimple :size="20" weight="duotone" /> {{ membuka ? 'Mengambil berkas…' : 'Buka berkas' }}</button>
           <a v-if="terpilih.tautan_luar" :href="terpilih.tautan_luar" target="_blank" rel="noopener" :class="terpilih.berkas_id ? 'tombol-garis' : 'tombol-utama'" @click="bp.catatBuka(terpilih.id)"><PhArrowSquareOut :size="20" weight="duotone" /> Buka tautan</a>
           <template v-if="kelola">
-            <button class="tombol-garis" @click="lihatPembuka(terpilih)"><PhWhatsappLogo :size="20" weight="duotone" /> Pembukaan dan WA</button>
+            <button class="tombol-wa-garis" @click="lihatPembuka(terpilih)"><PhWhatsappLogo :size="20" weight="duotone" /> Pembukaan dan WA</button>
             <button class="tombol-garis" @click="ubah(terpilih)"><PhPencilSimple :size="20" weight="duotone" /> Ubah</button>
             <button class="tombol-garis w-beranda" style="color: var(--c)" @click="hapus(terpilih)"><PhTrash :size="20" weight="duotone" /> Hapus</button>
           </template>

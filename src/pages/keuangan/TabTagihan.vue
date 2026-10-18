@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabTagihan.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabTagihan.vue | v1.4 | 14.2.0: saringan corong di HP, tombol WA hijau | 17/10/2026 -->
 <script setup>
 // Buat tagihan massal: pilih jenis biaya → periode (bulan-bulan untuk bulanan; tahun ajaran untuk tahunan; sekali)
 // → sasaran (jenjang, tingkat, santri baru saja, atau santri tertentu) → pratinjau (standar, subsidi, tagihan, sudah ada)
@@ -18,6 +18,7 @@ import { useUI } from '@/stores/ui'
 import { formatPendek, hariIniISO } from '@/lib/tanggal'
 import { rupiah, angka, SIKLUS, STATUS_TAGIHAN, JENJANG, TINGKAT, namaBulan, bulanTahunAjaran, perSantri, JK_SANTRI, labelTarif, tahunAjaranMundur, pesanTagihanBaru, pesanPengingat, pesanTunggakan } from '@/lib/keuangan'
 import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import LembarImporRiwayat from './LembarImporRiwayat.vue'
@@ -27,6 +28,11 @@ const keu = useKeuangan(); const lembaga = useLembaga(); const ui = useUI(); con
 const daftar = ref([]); const memuat = ref(true)
 const saring = ref({ fee_type_id: '', kunci_periode: '', status: typeof route.query.status === 'string' ? route.query.status : '', q: '', group_id: '' })
 const kelompok = ref([])
+// 14.2.0: ringkasan saringan untuk tombol corong di HP
+const jumlahSaring = computed(() => [saring.value.fee_type_id, saring.value.group_id, saring.value.kunci_periode].filter(Boolean).length)
+const ringkasSaring = computed(() => [keu.jenis.find((j) => j.id === saring.value.fee_type_id)?.nama, kelompok.value.find((g) => g.id === saring.value.group_id)?.nama,
+  saring.value.kunci_periode ? labelPeriode(saring.value.kunci_periode) : ''].filter(Boolean).join(' · '))
+function aturUlang() { Object.assign(saring.value, { fee_type_id: '', group_id: '', kunci_periode: '' }) }
 const JENIS_KEL = { kelas: 'Kelas', kamar: 'Kamar', halaqah: 'Halaqah' }
 async function muat() {
   memuat.value = true
@@ -99,13 +105,15 @@ function ekspor() {
 </script>
 <template>
   <div>
-    <div class="mb-3 flex flex-wrap items-end gap-2">
+    <SaringCorong class="mb-2" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring tagihan" bisa-atur-ulang @atur-ulang="aturUlang">
+      <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
+        <input v-model="saring.q" type="search" class="isian pl-10" placeholder="Cari nama atau NIS" aria-label="Cari santri" /></div></template>
       <select v-model="saring.fee_type_id" class="isian w-48" aria-label="Jenis biaya"><option value="">Semua jenis</option><option v-for="j in keu.jenis" :key="j.id" :value="j.id">{{ j.nama }}</option></select>
       <select v-model="saring.group_id" class="isian w-44" aria-label="Kelompok"><option value="">Semua kelompok</option>
         <optgroup v-for="(n, jn) in JENIS_KEL" :key="jn" :label="n"><option v-for="g in kelompok.filter((x) => x.jenis === jn)" :key="g.id" :value="g.id">{{ g.nama }} ({{ g.anggota }})</option></optgroup></select>
       <select v-model="saring.kunci_periode" class="isian w-44" aria-label="Periode"><option value="">Semua periode</option><option v-for="k in periodeAda" :key="k" :value="k">{{ labelPeriode(k) }}</option></select>
-      <div class="relative min-w-[180px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
-        <input v-model="saring.q" type="search" class="isian pl-10" placeholder="Cari nama atau NIS" aria-label="Cari santri" /></div>
+    </SaringCorong>
+    <div class="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:justify-end md:px-0">
       <button class="tombol-garis" :disabled="!tampil.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Excel</button>
       <button v-if="keu.hak.kelola" class="tombol-garis" :disabled="!keu.jenis.length" @click="impor = true"><PhClockCounterClockwise :size="20" weight="duotone" /> Impor catatan lama</button>
       <button v-if="keu.hak.kelola" class="tombol-utama" :disabled="!keu.jenisAktif.length" @click="mulai"><PhPlus :size="20" weight="bold" /> Buat tagihan</button>
@@ -116,7 +124,7 @@ function ekspor() {
         :class="['tab-garis', (saring.status === s.k) && 'aktif']" role="tab" :aria-selected="saring.status === s.k">{{ s.n }}</button>
       </div>
     </div>
-    <button v-if="['segera', 'lewat', 'tunggak'].includes(saring.status) && tampil.length" class="tombol-garis mb-3 w-presensi" style="color: var(--c)" @click="bukaKirim">
+    <button v-if="['segera', 'lewat', 'tunggak'].includes(saring.status) && tampil.length" class="tombol-wa-garis mb-3 w-presensi" @click="bukaKirim">
       <PhWhatsappLogo :size="20" weight="duotone" /> {{ saring.status === 'segera' ? 'WA pengingat jatuh tempo ke wali' : 'WA tunggakan ke wali' }}</button>
     <p v-if="!keu.jenisAktif.length" class="kartu mb-3 p-4 text-sm">Belum ada jenis biaya aktif. Isi dulu di <router-link to="/keuangan/pengaturan" class="font-semibold underline">Pengaturan → Jenis biaya</router-link>.</p>
     <p v-if="memuat" class="kartu p-8 text-center text-sm text-teks3">Memuat…</p>

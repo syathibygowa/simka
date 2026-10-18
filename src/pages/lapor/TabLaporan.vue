@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/lapor/TabLaporan.vue | v1.0 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/lapor/TabLaporan.vue | v1.1 | 14.2.0: saringan corong di HP | 17/10/2026 -->
 <script setup>
 // Daftar laporan: "saya" (laporan yang saya kirim) atau "masuk" (laporan untuk unit yang saya tangani).
 // Laporan mendesak dan belum diterima tampil paling atas. Penerima mengubah status: Diterima → Ditindaklanjuti → Selesai;
@@ -8,8 +8,9 @@ import { PhMegaphone, PhMagnifyingGlass, PhSiren, PhPaperPlaneTilt, PhCheck, PhA
 import { useLapor } from '@/stores/lapor'
 import { useUI } from '@/stores/ui'
 import { gayaKategori, STATUS_LAPOR, URUT_STATUS_LAPOR } from '@/lib/lapor'
-import { formatWaktu, hariIniISO } from '@/lib/tanggal'
+import { formatWaktu, formatPendek, hariIniISO } from '@/lib/tanggal'
 import KartuStatistik from '@/components/KartuStatistik.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import FotoBerkas from '@/components/FotoBerkas.vue'
@@ -53,13 +54,13 @@ async function simpanStatus() {
 </script>
 <template>
   <div>
-    <div class="flex flex-wrap items-center gap-2">
-      <select v-model="kategori" class="isian w-auto" aria-label="Saring kategori"><option value="">Semua kategori</option><option v-for="k in lp.kategori" :key="k.kode" :value="k.kode">{{ k.nama }}</option></select>
-      <div class="relative min-w-[180px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari uraian, lokasi, santri" aria-label="Cari laporan" /></div>
+    <SaringCorong :jumlah="kategori ? 1 : 0" :ringkasan="[`${formatPendek(mulai)} – ${formatPendek(selesai)}`, kategori && lp.kategori.find((k) => k.kode === kategori)?.nama].filter(Boolean).join(' · ')" judul="Saring laporan">
+      <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
+        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari uraian, lokasi, santri" aria-label="Cari laporan" /></div></template>
+      <select v-model="kategori" class="isian md:w-auto" aria-label="Saring kategori"><option value="">Semua kategori</option><option v-for="k in lp.kategori" :key="k.kode" :value="k.kode">{{ k.nama }}</option></select>
+      <div class="grid w-full grid-cols-2 gap-3 md:w-auto md:min-w-[22rem]"><InputTanggal v-model="mulai" label="Dari" /><InputTanggal v-model="selesai" label="Sampai" /></div>
       <button class="tombol-utama hidden lg:inline-flex" @click="lembarLapor = true"><PhMegaphone :size="20" weight="duotone" /> Buat laporan</button>
-    </div>
-    <div class="mt-3 grid grid-cols-2 gap-3 sm:max-w-md"><InputTanggal v-model="mulai" label="Dari" /><InputTanggal v-model="selesai" label="Sampai" /></div>
+    </SaringCorong>
     <div class="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
       <KartuStatistik v-for="k in statistik" :key="k.judul" class="w-[44%] shrink-0 snap-start sm:w-auto" :judul="k.judul" :nilai="memuat && !daftar.length ? '…' : k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket" />
     </div>

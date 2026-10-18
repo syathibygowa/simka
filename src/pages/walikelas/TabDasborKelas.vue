@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabDasborKelas.vue | v1.0 | Fase 4 – Menu Wali Kelas: dasbor kelas | 12/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabDasborKelas.vue | v1.1 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Dasbor satu kelas: kartu statistik langsung (hari ini, pekan ini, bulan ini, tidak hadir hari ini), absensi kelas
 // hari ini dengan tombol isi, pelajaran hari ini (jurnal mengajar setiap jam: terlaksana/belum diisi), santri yang perlu
@@ -129,7 +129,7 @@ async function salinHariIni() {
         <ul class="divide-y divide-garis">
           <li v-for="x in perhatian" :key="x.s.id" class="flex items-center gap-3 py-2.5 text-sm">
             <span class="min-w-0 flex-1"><b class="block truncate">{{ x.s.nama }}</b><span class="text-xs text-teks3">{{ teksRekapSantri(x.r) }}</span></span>
-            <button class="tombol-garis w-presensi min-h-[38px] px-3 text-sm" :aria-label="`WA orang tua/wali ${x.s.nama}`" @click="waWali(x)"><PhWhatsappLogo :size="18" weight="duotone" style="color: var(--c)" /> Wali</button>
+            <button class="tombol-wa-garis w-presensi min-h-[38px] px-3 text-sm" :aria-label="`WA orang tua/wali ${x.s.nama}`" @click="waWali(x)"><PhWhatsappLogo :size="18" weight="duotone" /> Wali</button>
           </li>
           <li v-if="!perhatian.length" class="py-4 text-center text-sm text-teks3">Alhamdulillah, tidak ada santri yang perlu perhatian khusus pekan ini.</li>
         </ul>

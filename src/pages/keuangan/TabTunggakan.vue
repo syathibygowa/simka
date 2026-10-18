@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabTunggakan.vue | v1.2 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabTunggakan.vue | v1.3 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Posisi tunggakan per tanggal (bawaan hari ini): tagihan yang jatuh tempo paling lambat tanggal itu dan masih bersisa
 // pada tanggal itu. Dikelompokkan per santri, kelas, kamar, halaqah, jenis biaya, atau jenjang. Cetak F4 dan Excel.
@@ -85,7 +85,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
         :class="['tab-garis', (cakupan === c.k) && 'aktif']" role="tab" :aria-selected="cakupan === c.k">{{ c.n }}</button>
       </div>
       <div class="flex-1" />
-      <button v-if="santri.length" class="tombol-garis min-h-[40px] px-3 text-sm w-presensi" style="color: var(--c)" @click="kirim = true"><PhWhatsappLogo :size="18" weight="duotone" /> WA ke semua wali</button>
+      <button v-if="santri.length" class="tombol-wa-garis min-h-[40px] px-3 text-sm w-presensi" @click="kirim = true"><PhWhatsappLogo :size="18" weight="duotone" /> WA ke semua wali</button>
       <button v-if="santri.length && keu.hak.kelola" class="tombol-utama min-h-[40px] px-3 text-sm" @click="surat = santri.map((k) => ({ id: k.student_id, nama: k.nama }))"><PhPaperPlaneTilt :size="18" weight="duotone" /> Surat tagihan semua</button>
     </div>
 

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/DetailKelompok.vue | v1.4 | Perbaikan: pindah ke kelompok sebelumnya/berikutnya, daftar tanda tangan, calon anggota hanya santri aktif | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/DetailKelompok.vue | v1.5 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Satu kelompok santri: identitas, pengasuh (utama, pendamping, pengganti bertanggal), grup WA, anggota beserta
 // riwayat pindah, tambah/pindah/keluarkan anggota, naqib halaqah, ekspor Excel, dan cetak daftar F4.
@@ -200,7 +200,7 @@ const keKelompok = (x) => x && router.replace({ path: `/kelompok-santri/k/${x.id
           <div class="p-3"><p class="text-2xl font-extrabold tabular-nums text-teks">{{ anggota.filter((a) => a.s.jenis_kelamin === 'P').length }}</p><p class="text-xs text-teks3">putri</p></div>
         </div>
         <div class="flex flex-wrap gap-2 p-4">
-          <a v-if="g.wa_wali" :href="g.wa_wali" target="_blank" rel="noopener" class="tombol-garis w-presensi min-h-[40px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" style="color: var(--c)" /> Grup WA wali</a>
+          <a v-if="g.wa_wali" :href="g.wa_wali" target="_blank" rel="noopener" class="tombol-wa-garis w-presensi min-h-[40px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" /> Grup WA wali</a>
           <a v-if="g.wa_internal" :href="g.wa_internal" target="_blank" rel="noopener" class="tombol-garis w-presensi min-h-[40px] px-3 text-sm"><PhLink :size="18" weight="duotone" style="color: var(--c)" /> Grup internal</a>
           <button v-if="bolehAtur" class="tombol-garis min-h-[40px] px-3 text-sm" @click="lembarUbah = true"><PhPencilSimple :size="18" weight="duotone" /> Ubah</button>
           <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" weight="duotone" /> Excel</button>

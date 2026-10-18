@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.3 | Tahap D: penguji menerbitkan suket kenaikan juz dan sertifikat hafalan | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.4 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Ujian tahfizh: kenaikan juz, sertifikasi berjenjang (5, 10, 15 … juz), dan UTAS (Fase 12, TabUtas.vue).
 // Muhaffizh merekomendasikan → penguji aktif menerima notifikasi (dan dapat dikabari WA) → penguji mengambil/menjadwalkan
@@ -150,7 +150,7 @@ const bolehBatal = (u) => ['menunggu', 'dijadwalkan'].includes(u.status) && (u.m
       <div class="relative min-w-[200px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri atau halaqah" aria-label="Cari santri" /></div>
       <button v-if="tz.hak.muhaffizh || pengelola" class="tombol-utama" @click="bukaRek"><PhPaperPlaneTilt :size="20" weight="duotone" /> Rekomendasikan</button>
-      <button v-if="pengujiAktif.length" class="tombol-garis w-presensi" @click="bukaWA"><PhWhatsappLogo :size="20" weight="duotone" style="color: var(--c)" /> Kabari penguji</button>
+      <button v-if="pengujiAktif.length" class="tombol-wa-garis w-presensi" @click="bukaWA"><PhWhatsappLogo :size="20" weight="duotone" /> Kabari penguji</button>
     </div>
 
     <div class="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
@@ -270,7 +270,7 @@ const bolehBatal = (u) => ['menunggu', 'dijadwalkan'].includes(u.status) && (u.m
         <ul class="divide-y divide-garis rounded-xl border border-garis">
           <li v-for="p in pengujiAktif" :key="p.employee_id" class="flex items-center gap-3 px-3 py-2.5 text-sm">
             <span class="min-w-0 flex-1"><b class="block truncate">{{ p.nama }}</b><span class="text-xs text-teks3">{{ p.no_hp || 'Nomor HP belum diisi' }}</span></span>
-            <a v-if="p.no_hp" :href="tautanWA(p.no_hp, pesanPenguji(p))" target="_blank" rel="noopener" class="tombol-garis w-presensi min-h-[38px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" style="color: var(--c)" /> Kirim</a>
+            <a v-if="p.no_hp" :href="tautanWA(p.no_hp, pesanPenguji(p))" target="_blank" rel="noopener" class="tombol-wa-garis w-presensi min-h-[38px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" /> Kirim</a>
           </li>
         </ul>
       </div>

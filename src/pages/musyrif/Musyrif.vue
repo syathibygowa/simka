@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/Musyrif.vue | v1.7 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/Musyrif.vue | v1.8 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
 <script setup>
 // Menu Musyrif (kepengasuhan asrama). Musyrif/musyrifah melihat kamar asuhannya; admin, pimpinan, dan pemegang
 // hak fitur Absensi Asrama melihat semua kamar. Tab: Dasbor (statistik langsung, sesi hari ini, perlu perhatian)
@@ -61,8 +61,8 @@ const daftarMusyrif = computed(() => (k.value?.musyrif || []).map((m) => m.nama)
             <p class="text-xs text-teks3">Musyrif: {{ daftarMusyrif }}</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <a v-if="k.wa_wali" :href="k.wa_wali" target="_blank" rel="noopener" class="tombol-garis w-presensi min-h-[40px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" style="color: var(--c)" /> Grup wali</a>
-            <a v-if="k.wa_internal" :href="k.wa_internal" target="_blank" rel="noopener" class="tombol-garis w-agenda min-h-[40px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" style="color: var(--c)" /> Grup internal</a>
+            <a v-if="k.wa_wali" :href="k.wa_wali" target="_blank" rel="noopener" class="tombol-wa-garis w-presensi min-h-[40px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" /> Grup wali</a>
+            <a v-if="k.wa_internal" :href="k.wa_internal" target="_blank" rel="noopener" class="tombol-wa-garis w-agenda min-h-[40px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" /> Grup internal</a>
           </div>
         </div>
       </section>
