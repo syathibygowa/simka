@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/SuratResmi.vue | v1.6 | 14.1.0: kolom tanda tangan penerima (pegawai) di kanan, pimpinan di kiri | 17/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/SuratResmi.vue | v1.7 | 14.5.0: lampiran sesudah tanda tangan (opsi.lampiran_isi), mis. lampiran SK | 18/10/2026 -->
 <script setup>
 // Isi surat keluar resmi di dalam DokumenCetak (kop dari DokumenCetak): kepala surat (judul di tengah, atau nomor/lampiran/hal
 // di kiri dengan tempat-tanggal di kanan dan alamat tujuan), basmalah/salam/hamdalah/doa (Latin, miring), isi dari template,
@@ -30,6 +30,8 @@ const penanda = computed(() => (props.surat.penanda || []).map((p, i) => {
 const ktx = computed(() => susunKonteks({ nilai: props.surat.nilai, isian: t.value.isian, lembaga: props.lembaga, kop_kode: props.surat.kop_kode, penanda: penanda.value,
   tanggal_surat: props.surat.tanggal_surat, tanggal_hijriah: props.surat.tanggal_hijriah, nomor: props.surat.nomor, perihal: props.surat.perihal }))
 const isiHtml = computed(() => renderIsi(t.value.isi, ktx.value, props.mode))
+// 14.5.0: lampiran surat (mis. daftar santri pada SK) dicetak sesudah tanda tangan, di halaman baru
+const lampiranHtml = computed(() => (opsi.value.lampiran_isi ? renderIsi(opsi.value.lampiran_isi, ktx.value, props.mode) : ''))
 const judulHtml = computed(() => renderBaris(t.value.judul, ktx.value, props.mode))
 const subjudulHtml = computed(() => renderBaris(t.value.subjudul, ktx.value, props.mode))
 const nomor = computed(() => props.surat.nomor || (props.mode === 'final' ? '' : '…/…/…/…/…'))
@@ -113,6 +115,7 @@ const penerima = computed(() => {
       </div>
       <p v-if="opsi.narahubung && surat.narahubung" class="tembusan">Narahubung:<br>{{ surat.narahubung }}</p>
     </div>
+    <div v-if="lampiranHtml" class="lampiran-surat isi" v-html="lampiranHtml" />
     <CatatanValidasi :kode="kode" :draf="draf" :basah="surat.mode_ttd === 'basah'" :status="statusDokumen" />
   </div>
 </template>
@@ -132,6 +135,9 @@ const penerima = computed(() => {
 .tujuan { margin: 0 0 6pt; }
 .tujuan .tempat { text-indent: 8mm; }
 .isi { margin: 5pt 0; text-align: justify; }
+.lampiran-surat { break-before: page; page-break-before: always; margin-top: 0; }
+.lampiran-surat :deep(table.lampiran-tabel) { font-size: 10pt; }
+.lampiran-surat :deep(table.lampiran-tabel th) { font-weight: 700; }
 .isi :deep(p) { margin: 0 0 5pt; }
 .isi :deep(.tengah-p), .tengah-p { text-align: center; }
 .isi :deep(ol), .isi :deep(ul) { margin: 0 0 7pt; padding-left: 7mm; list-style: decimal; }

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/suratKeluar.js | v1.6 | 14.1.0: opsi kolom tanda tangan penerima (Surat Teguran) | 17/10/2026
+// SIMKA PRO | src/lib/suratKeluar.js | v1.7 | 14.5.0: isian jenis tabel (data otomatis, mis. lampiran SK Kenaikan Kelas) | 18/10/2026
 // Mesin template surat keluar (template sistem, bukan Word). Isi template ditulis sebagai teks biasa:
 //   {kunci}, {kunci.bagian}   isian (lihat ISIAN_GLOBAL dan isian template), mis. {santri.nama}, {pegawai.jabatan}, {lembaga}
 //   *tebal*  _miring_          gaya teks (seperti WhatsApp)
@@ -29,7 +29,7 @@ export const OPSI_SURAT = [
 export const JENIS_ISIAN = [
   { k: 'teks', n: 'Teks singkat' }, { k: 'panjang', n: 'Teks panjang' }, { k: 'tanggal', n: 'Tanggal' }, { k: 'hari_tanggal', n: 'Hari dan tanggal' },
   { k: 'jam', n: 'Jam' }, { k: 'angka', n: 'Angka' }, { k: 'pegawai', n: 'Pilih pegawai' }, { k: 'santri', n: 'Pilih santri' },
-  { k: 'daftar', n: 'Daftar butir' }, { k: 'daftar_pegawai', n: 'Daftar pegawai (tabel)' },
+  { k: 'daftar', n: 'Daftar butir' }, { k: 'daftar_pegawai', n: 'Daftar pegawai (tabel)' }, { k: 'tabel', n: 'Tabel data (terisi otomatis)' },
 ]
 export const KATEGORI_TEMPLATE = { umum: { n: 'Umum', w: 'tatausaha' }, pegawai: { n: 'Kepegawaian', w: 'pegawai' }, santri: { n: 'Kesantrian', w: 'santri' } }
 export const FORMAT_NOMOR = [{ k: 'surat', n: 'Surat (urutan bersama D/K)' }, { k: 'sk', n: 'Surat Keputusan (urutan sendiri)' }]
@@ -120,6 +120,10 @@ export function susunKonteks(k) {
         const butir = (Array.isArray(v) ? v : []).filter(Boolean)
         t[i.kunci] = butir.map((p) => p.nama).join(', '); blok[i.kunci] = { jenis: 'daftar_pegawai', butir }; break
       }
+      case 'tabel': {   // { kolom: [judul…], baris: [[sel…]…] } — diisi otomatis oleh menu asal (mis. Naik Kelas)
+        const kolom = Array.isArray(v?.kolom) ? v.kolom : []; const baris = Array.isArray(v?.baris) ? v.baris : []
+        t[i.kunci] = baris.length ? `${baris.length} baris` : ''; blok[i.kunci] = { jenis: 'tabel', kolom, baris }; break
+      }
       default: t[i.kunci] = v == null ? '' : String(v)
     }
   }
@@ -137,6 +141,11 @@ function sebaris(baris, ktx, mode) {
   })
 }
 function htmlBlok(b, mode) {
+  if (b.jenis === 'tabel') {
+    if (!b.baris.length) return mode === 'final' ? '' : '<p><span class="isian-kosong">[tabel kosong]</span></p>'
+    return `<table class="tabel isi-tabel lampiran-tabel"><thead><tr>${b.kolom.map((c) => `<th>${escape(c)}</th>`).join('')}</tr></thead><tbody>${b.baris.map((r) =>
+      `<tr>${r.map((c, j) => `<td${j === 0 || /^(L|P)$/.test(String(c)) ? ' class="tengah"' : ''}>${escape(c == null ? '' : String(c))}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+  }
   if (b.jenis === 'daftar') {
     if (!b.butir.length) return mode === 'final' ? '' : '<p><span class="isian-kosong">[daftar kosong]</span></p>'
     if (b.gaya === 'poin') return `<ul>${b.butir.map((x) => `<li>${teksKaya(x)}</li>`).join('')}</ul>`
@@ -200,6 +209,7 @@ export function isianKosong(isian = [], nilai = {}) {
     const v = nilai[i.kunci]
     if (i.jenis === 'daftar') return !(Array.isArray(v) ? v : []).some((x) => String(x).trim())
     if (i.jenis === 'daftar_pegawai') return !(Array.isArray(v) && v.length)
+    if (i.jenis === 'tabel') return !(Array.isArray(v?.baris) && v.baris.length)
     if (i.jenis === 'pegawai' || i.jenis === 'santri') return !v?.id && !v?.nama
     return v == null || String(v).trim() === ''
   }).map((i) => i.label)

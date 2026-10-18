@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/IsianSurat.vue | v1.1 | Tahap C: data santri surat ditambah orang tua, hafalan, tanggal masuk, prestasi | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/IsianSurat.vue | v1.2 | 14.5.0: isian tabel (terisi otomatis) tampil baca saja | 18/10/2026 -->
 <script setup>
 // Satu isian surat sesuai jenisnya: teks, teks panjang (tebal/miring), tanggal, hari-tanggal, jam, angka, pilih pegawai,
 // pilih santri (data diambil dari Data Santri), daftar butir, atau daftar pegawai.
@@ -51,6 +51,8 @@ const hapusButir = (i) => { const a = butir.value.filter((_, j) => j !== i); nil
       <IsianTeksKaya v-if="isian.jenis === 'panjang'" :id="id" v-model="nilai" tinggi="6rem" />
       <input v-else-if="isian.jenis === 'teks' || isian.jenis === 'angka'" :id="id" v-model="nilai" :inputmode="isian.jenis === 'angka' ? 'numeric' : 'text'" class="isian" />
 
+      <div v-else-if="isian.jenis === 'tabel'" class="rounded-xl border border-garis bg-permukaan2 p-3 text-sm text-teks2">
+        Tabel terisi otomatis dari menu asal: <b>{{ Array.isArray(nilai?.baris) ? nilai.baris.length : 0 }} baris</b> ({{ (nilai?.kolom || []).join(', ') }}). Lihat di pratinjau surat.</div>
       <div v-else-if="isian.jenis === 'daftar'" class="space-y-2">
         <div v-for="(b, i) in butir" :key="i" class="flex items-center gap-2">
           <span class="w-6 shrink-0 text-right text-sm tabular-nums text-teks3">{{ isian.gaya === 'huruf' ? 'abcdefghijklmnopqrstuvwxyz'[i] + '.' : isian.gaya === 'poin' ? '•' : i + 1 + '.' }}</span>

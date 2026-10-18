@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/libur.js | v1.1 | Perbaikan 13.8.0: hapus periode libur yang dibatalkan | 16/10/2026
+// SIMKA PRO | src/stores/libur.js | v1.2 | 14.5.0: libur bertingkat (lama libur sesuai syarat; ubah tingkat) | 18/10/2026
 // Penentuan libur santri (Blueprint Bagian 23): hak, syarat bawaan, periode, penilaian otomatis, ubah keputusan
 // beralasan, pengesahan (izin libur otomatis ke gerbang), pembatalan, detail per santri. Mode demo memakai data tiruan.
 import { defineStore } from 'pinia'
@@ -15,7 +15,12 @@ const SYARAT_BAWAAN = { kelas_min: 85, halaqah_min: 85, asrama_min: 85, izin_mak
 // ---------- Mode demo ----------
 const PERIODE_DEMO = []; const HASIL_DEMO = {}
 const ringkas = (id) => { const d = HASIL_DEMO[id] || []; return { jumlah: d.length, boleh: d.filter((x) => x.keputusan === 'boleh').length, tidak: d.filter((x) => x.keputusan === 'tidak').length,
-  belum: d.filter((x) => !x.keputusan).length, pertimbangan: d.filter((x) => x.otomatis === 'pertimbangan').length, diubah: d.filter((x) => x.diubah).length, izin_dibuat: d.filter((x) => x.permit_id).length } }
+  belum: d.filter((x) => !x.keputusan).length, pertimbangan: d.filter((x) => x.otomatis === 'pertimbangan').length, diubah: d.filter((x) => x.diubah).length, izin_dibuat: d.filter((x) => x.permit_id).length,
+  tingkat: d.reduce((a, x) => { if (x.tingkat) a[x.tingkat] = (a[x.tingkat] || 0) + 1; return a }, {}) } }
+/** Seperti _penuhi_syarat_libur (tanpa rentang pertimbangan). */
+const penuhi = (r, sy) => ['kelas', 'halaqah', 'asrama'].every((k) => sy[k + '_min'] == null || r[k]?.persen == null || r[k].persen >= sy[k + '_min'])
+  && (sy.izin_maks == null || (r.izin || 0) <= sy.izin_maks) && (sy.terlambat_maks == null || (r.terlambat || 0) <= sy.terlambat_maks)
+  && (!sy.hafalan_min_halaman || (r.hafalan || 0) >= sy.hafalan_min_halaman)
 async function nilaiDemo(h) {
   const san = useSantri(); await san.muat(); const kel = dataKelompokDemo(san.daftar)
   const nama = (id, j) => kel.anggota.filter((a) => a.student_id === id && !a.selesai).map((a) => kel.kelompok.find((g) => g.id === a.group_id)).filter((g) => g?.jenis === j).map((g) => g.nama).join(', ') || null
@@ -35,6 +40,13 @@ async function nilaiDemo(h) {
       rincian: { kelas: { sesi: 40, persen: keg.kelas }, halaqah: { sesi: 52, persen: keg.halaqah }, asrama: { sesi: 60, persen: keg.asrama }, izin, terlambat: i % 5 === 0 ? 1 : 0, hafalan: 6 + (i % 9), gagal, timbang },
       permit_id: null, status_izin: null, wali: { nama: 'Orang tua ' + s.nama_lengkap.split(' ')[0], no_hp: '081234567890' } }
   })
+  if (h.mode === 'bertingkat') {
+    for (const x of HASIL_DEMO[h.id]) {
+      const lalu = lama.find((y) => y.student_id === x.student_id)
+      const t = (h.tingkat.find((tk, i) => i === h.tingkat.length - 1 || penuhi(x.rincian, tk.syarat || {})) || h.tingkat.at(-1)).kode
+      Object.assign(x, { otomatis: 'boleh', keputusan: 'boleh', tingkat_otomatis: t, tingkat: lalu?.diubah ? lalu.tingkat : t, rincian: { ...x.rincian, gagal: [], timbang: [] } })
+    }
+  }
 }
 let demoDiisi = false
 function isiDemo() {
@@ -71,6 +83,8 @@ export const useLibur = defineStore('libur', {
     },
     async simpanPeriode(isi) {
       if (!MODE_DEMO) return rpc('simpan_periode_libur', { p: isi })
+      if (isi.mode === 'bertingkat') { isi = { ...isi, tingkat: isi.tingkat.map((t, i) => ({ ...t, kode: String.fromCharCode(65 + i), syarat: i < isi.tingkat.length - 1 ? t.syarat : {} })) }
+        isi.pulang_pada = isi.tingkat.map((t) => t.pulang_pada).sort()[0]; isi.kembali_batas = isi.tingkat.map((t) => t.kembali_batas).sort().at(-1) }
       if (isi.id) { Object.assign(PERIODE_DEMO.find((x) => x.id === isi.id), isi, { status: 'draf' }); return isi.id }
       const id = 'lb' + Date.now(); PERIODE_DEMO.unshift({ ...isi, id, status: 'draf', pembuat: useSesi().pengguna?.nama_lengkap }); return id
     },
@@ -85,6 +99,16 @@ export const useLibur = defineStore('libur', {
         if ((keputusan !== x.otomatis || x.diubah) && (alasan || '').trim().length < 5) throw new Error('Tuliskan alasan perubahan keputusan (minimal 5 huruf).')
         Object.assign(x, { keputusan, diubah: keputusan !== x.otomatis || x.otomatis === 'pertimbangan', alasan_ubah: alasan, pengubah: useSesi().pengguna?.nama_lengkap })
         if (PERIODE_DEMO.find((h) => h.id === pid)?.status === 'disahkan') x.permit_id = keputusan === 'boleh' ? 'izin-' + x.id : null
+        return ringkas(pid)
+      }
+    },
+    /** 14.5.0: ubah tingkat libur satu santri (mode bertingkat). */
+    async ubahTingkat(idHasil, tingkat, alasan) {
+      if (!MODE_DEMO) return rpc('ubah_tingkat_libur', { p_id: idHasil, p_tingkat: tingkat, p_alasan: alasan })
+      for (const [pid, d] of Object.entries(HASIL_DEMO)) {
+        const x = d.find((y) => y.id === idHasil); if (!x) continue
+        if ((tingkat !== x.tingkat_otomatis || PERIODE_DEMO.find((h) => h.id === pid)?.status === 'disahkan') && (alasan || '').trim().length < 5) throw new Error('Tuliskan alasan perubahan (minimal 5 huruf).')
+        Object.assign(x, { tingkat, keputusan: 'boleh', diubah: tingkat !== x.tingkat_otomatis, alasan_ubah: alasan, pengubah: useSesi().pengguna?.nama_lengkap })
         return ringkas(pid)
       }
     },

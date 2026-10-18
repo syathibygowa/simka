@@ -1,10 +1,12 @@
-<!-- SIMKA PRO | src/pages/izin/TabLibur.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabLibur.vue | v1.3 | 14.5.0: libur bertingkat (kartu per tingkat, ubah tingkat, WA dan cetak sesuai tingkat) | 18/10/2026 -->
 <script setup>
 // Penentuan libur santri (Blueprint Bagian 23).
 //   Daftar periode → pilih periode → nilai otomatis (boleh / tidak / perlu pertimbangan, lengkap dengan angka)
 //   → putuskan yang perlu pertimbangan / ubah keputusan dengan alasan → sahkan (izin libur otomatis ke gerbang)
 //   → WA wali, Excel, cetak F4 (pilih daftar yang libur, yang tinggal, atau semua; ringkasan selalu memuat kedua jumlah).
 // Ketentuan: syarat bawaan untuk periode baru. Pengasuh melihat hasil santri asuhannya setelah disahkan.
+// v1.3: periode "bertingkat" — semua santri libur dengan lama sesuai tingkat (mis. 3/2/1 hari); kartu per tingkat, ubah tingkat
+//       beralasan, WA wali memakai waktu pulang/kembali tingkatnya, cetak per tingkat.
 import { ref, computed, onMounted, watch } from 'vue'
 import * as XLSX from 'xlsx'
 import { PhCalendarPlus, PhCalculator, PhSealCheck, PhProhibit, PhPencilSimple, PhWhatsappLogo, PhEye, PhDownloadSimple, PhMagnifyingGlass,
@@ -70,11 +72,21 @@ const saring = ref('semua'); const cari = ref('')
 const santri = computed(() => detail.value?.santri || [])
 const tampil = computed(() => {
   const q = cari.value.toLowerCase().trim()
-  return santri.value.filter((s) => (saring.value === 'semua' || (saring.value === 'belum' ? !s.keputusan : saring.value === 'diubah' ? s.diubah : s.keputusan === saring.value))
+  return santri.value.filter((s) => (saring.value === 'semua' || (saring.value.startsWith('t:') ? s.tingkat === saring.value.slice(2) : saring.value === 'belum' ? !s.keputusan : saring.value === 'diubah' ? s.diubah : s.keputusan === saring.value))
     && (!q || `${s.nama} ${s.nis} ${s.kelas || ''} ${s.kamar || ''}`.toLowerCase().includes(q)))
 })
 const r = computed(() => detail.value?.ringkasan || {})
-const kartu = computed(() => [
+// ---------- Bertingkat (14.5.0) ----------
+const bertingkat = computed(() => detail.value?.mode === 'bertingkat')
+const daftarTingkat = computed(() => detail.value?.tingkat || [])
+const tk = (kode) => daftarTingkat.value.find((t) => t.kode === kode) || null
+const WARNA_TK = ['presensi', 'jadwal', 'agenda', 'tahfizh', 'pengajuan', 'shift']
+const warnaTk = (kode) => WARNA_TK[Math.max(0, daftarTingkat.value.findIndex((t) => t.kode === kode))] || 'presensi'
+const waktuTk = (t) => (t ? `${formatWaktu(t.pulang_pada)} – ${formatWaktu(t.kembali_batas)}` : '')
+const kartu = computed(() => bertingkat.value ? [
+  { k: 'semua', j: 'Santri dinilai', v: r.value.jumlah, i: PhUsersThree, w: 'santri', ket: `${r.value.diubah || 0} tingkat diubah` },
+  ...daftarTingkat.value.map((t) => ({ k: 't:' + t.kode, j: t.nama, v: r.value.tingkat?.[t.kode] || 0, i: PhCalendarCheck, w: warnaTk(t.kode), ket: waktuTk(t) })),
+] : [
   { k: 'semua', j: 'Santri dinilai', v: r.value.jumlah, i: PhUsersThree, w: 'santri', ket: `${r.value.diubah || 0} keputusan diubah` },
   { k: 'boleh', j: 'Boleh libur', v: r.value.boleh, i: PhCheckCircle, w: 'presensi', ket: detail.value?.status === 'disahkan' ? `${r.value.izin_dibuat} izin libur dibuat` : 'Keputusan saat ini' },
   { k: 'tidak', j: 'Tinggal di pondok', v: r.value.tidak, i: PhXCircle, w: 'klinik', ket: 'Tidak libur' },
@@ -86,19 +98,20 @@ const syaratTeks = computed(() => (detail.value ? SYARAT_LIBUR.filter((x) => det
   .map((x) => `${x.n.replace(' minimal', ' ≥').replace(' maksimal', ' ≤')} ${detail.value.syarat[x.k]}${x.s === '%' ? '%' : ' ' + x.s}`).join(' · ') : ''))
 
 const lembarUbah = ref(false); const pilihSantri = ref(null); const keputusan = ref('boleh'); const alasan = ref('')
-function bukaUbah(s) { pilihSantri.value = s; keputusan.value = s.keputusan || (s.otomatis === 'tidak' ? 'tidak' : 'boleh'); alasan.value = s.alasan_ubah || ''; lembarUbah.value = true }
+function bukaUbah(s) { pilihSantri.value = s; keputusan.value = bertingkat.value ? (s.tingkat || s.tingkat_otomatis) : s.keputusan || (s.otomatis === 'tidak' ? 'tidak' : 'boleh'); alasan.value = s.alasan_ubah || ''; lembarUbah.value = true }
 async function simpanUbah() {
   proses.value = true
-  try { await lb.ubah(pilihSantri.value.id, keputusan.value, alasan.value.trim()); ui.toast('Keputusan tersimpan.'); lembarUbah.value = false; await bukaDetail(pilih.value); periode.value = await lb.daftar() }
+  try { await (bertingkat.value ? lb.ubahTingkat(pilihSantri.value.id, keputusan.value, alasan.value.trim()) : lb.ubah(pilihSantri.value.id, keputusan.value, alasan.value.trim())); ui.toast('Keputusan tersimpan.'); lembarUbah.value = false; await bukaDetail(pilih.value); periode.value = await lb.daftar() }
   catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 function waWali(s) {
   if (!s.wali?.no_hp) return ui.toast('Nomor HP orang tua/wali santri ini belum diisi.', 'galat')
-  const libur = s.keputusan === 'boleh'
+  const libur = s.keputusan === 'boleh'; const t = bertingkat.value ? tk(s.tingkat) : null
   const pesan = pesanWA('libur_santri', { nama_wali: s.wali.nama || 'orang tua/wali', nama_santri: s.nama, kelas: s.kelas || '', periode_libur: detail.value.nama,
-    status_libur: libur ? 'diizinkan libur' : 'belum diizinkan libur dan tetap tinggal di pondok', waktu_pulang: libur ? formatWaktu(detail.value.pulang_pada) + ' WITA' : '-',
-    batas_kembali: libur ? formatWaktu(detail.value.kembali_batas) + ' WITA' : '-',
-    keterangan: libur ? '' : 'Keterangan: ' + ([...(s.rincian?.gagal || []), ...(s.rincian?.timbang || [])].join('; ') || s.alasan_ubah || 'sesuai ketentuan pondok') })
+    status_libur: t ? `mendapat ${t.nama.toLowerCase()}` : libur ? 'diizinkan libur' : 'belum diizinkan libur dan tetap tinggal di pondok',
+    waktu_pulang: libur ? formatWaktu(t?.pulang_pada || detail.value.pulang_pada) + ' WITA' : '-',
+    batas_kembali: libur ? formatWaktu(t?.kembali_batas || detail.value.kembali_batas) + ' WITA' : '-',
+    keterangan: t ? (t.kode !== daftarTingkat.value[0]?.kode ? 'Lama libur disesuaikan dengan kehadiran dan kedisiplinan ananda selama periode penilaian.' : '') : libur ? '' : 'Keterangan: ' + ([...(s.rincian?.gagal || []), ...(s.rincian?.timbang || [])].join('; ') || s.alasan_ubah || 'sesuai ketentuan pondok') })
   window.open(tautanWA(s.wali.no_hp, pesan), '_blank', 'noopener')
 }
 
@@ -108,14 +121,14 @@ function ekspor() {
   const judul = ['No.', 'NIS', 'Nama santri', 'L/P', 'Jenjang', 'Kelas', 'Kamar', 'Halaqah', 'Kelas (%)', 'Halaqah (%)', 'Asrama (%)', 'Izin keluar', 'Terlambat', 'Tambahan hafalan (hal)', 'Hasil otomatis', 'Keputusan', 'Alasan/keterangan']
   const isi = tampil.value.map((s, i) => [i + 1, s.nis, s.nama, s.jenis_kelamin, JENJANG_PENDEK[s.jenjang] || '', s.kelas || '', s.kamar || '', s.halaqah || '',
     s.rincian?.kelas?.persen ?? '', s.rincian?.halaqah?.persen ?? '', s.rincian?.asrama?.persen ?? '', s.rincian?.izin ?? 0, s.rincian?.terlambat ?? 0, s.rincian?.hafalan ?? 0,
-    HASIL_LIBUR[s.otomatis].n, s.keputusan ? HASIL_LIBUR[s.keputusan].n : 'Belum diputuskan', [s.alasan_ubah, ...(s.rincian?.gagal || []), ...(s.rincian?.timbang || [])].filter(Boolean).join('; ')])
+    bertingkat.value ? tk(s.tingkat_otomatis)?.nama || '' : HASIL_LIBUR[s.otomatis].n, bertingkat.value ? tk(s.tingkat)?.nama || '' : s.keputusan ? HASIL_LIBUR[s.keputusan].n : 'Belum diputuskan', [s.alasan_ubah, ...(s.rincian?.gagal || []), ...(s.rincian?.timbang || [])].filter(Boolean).join('; ')])
   const ws = XLSX.utils.aoa_to_sheet([[d.nama], [`Pulang ${formatWaktu(d.pulang_pada)} · kembali ${formatWaktu(d.kembali_batas)} WITA`], [], judul, ...isi])
   ws['!cols'] = [5, 10, 26, 5, 8, 7, 16, 16, 9, 10, 9, 9, 9, 10, 18, 18, 40].map((w) => ({ wch: w }))
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Libur'); XLSX.writeFile(wb, `${d.nama.replace(/[^\w-]+/g, '-')}.xlsx`)
 }
 const lembarCetak = ref(false); const daftarCetak = ref('boleh'); const pratinjau = ref(false); const penanda = ref({ jabatan: 'Kepala Bidang Kesantrian', nama: '', niy: '' })
-const isiCetak = computed(() => santri.value.filter((s) => daftarCetak.value === 'semua' || s.keputusan === daftarCetak.value))
-const judulCetak = computed(() => (daftarCetak.value === 'boleh' ? 'Daftar Santri yang Diizinkan Libur' : daftarCetak.value === 'tidak' ? 'Daftar Santri yang Tinggal di Pondok' : 'Daftar Penentuan Libur Santri'))
+const isiCetak = computed(() => santri.value.filter((s) => daftarCetak.value === 'semua' || (daftarCetak.value.startsWith('t:') ? s.tingkat === daftarCetak.value.slice(2) : s.keputusan === daftarCetak.value)))
+const judulCetak = computed(() => (daftarCetak.value.startsWith('t:') ? `Daftar Santri ${tk(daftarCetak.value.slice(2))?.nama || ''}` : bertingkat.value && daftarCetak.value === 'semua' ? 'Daftar Libur Santri Bertingkat' : daftarCetak.value === 'boleh' ? 'Daftar Santri yang Diizinkan Libur' : daftarCetak.value === 'tidak' ? 'Daftar Santri yang Tinggal di Pondok' : 'Daftar Penentuan Libur Santri'))
 async function cetak() { penanda.value = await penandaKelompok({ jenis: 'kamar' }).catch(() => penanda.value); lembarCetak.value = false; pratinjau.value = true }
 
 // ---------- Ketentuan (syarat bawaan) ----------
@@ -153,7 +166,8 @@ async function simpanSyarat() {
             <span class="min-w-0 flex-1">
               <span class="flex flex-wrap items-center gap-1.5"><b class="leading-snug">{{ h.nama }}</b><span class="lencana">{{ h.selesai ? 'Selesai' : STATUS_PERIODE[h.status].n }}</span></span>
               <span class="block text-xs text-teks3">{{ JENIS_PERIODE[h.jenis] }} · pulang {{ formatWaktu(h.pulang_pada) }} · kembali {{ formatWaktu(h.kembali_batas) }} WITA</span>
-              <span v-if="h.ringkasan?.jumlah" class="mt-1 block text-sm"><b class="text-[#1E7D4F] dark:text-[#6FD19A]">{{ h.ringkasan.boleh }} libur</b> · <b class="text-merah">{{ h.ringkasan.tidak }} tinggal</b>
+              <span v-if="h.ringkasan?.jumlah && h.mode === 'bertingkat'" class="mt-1 block text-sm">Bertingkat: {{ (h.tingkat || []).map((t) => `${t.nama} ${h.ringkasan.tingkat?.[t.kode] || 0}`).join(' · ') }}</span>
+              <span v-else-if="h.ringkasan?.jumlah" class="mt-1 block text-sm"><b class="text-[#1E7D4F] dark:text-[#6FD19A]">{{ h.ringkasan.boleh }} libur</b> · <b class="text-merah">{{ h.ringkasan.tidak }} tinggal</b>
                 <template v-if="h.ringkasan.belum"> · {{ h.ringkasan.belum }} perlu diputuskan</template></span>
               <span v-else class="mt-1 block text-sm text-teks3">Belum dinilai</span>
             </span>
@@ -171,9 +185,11 @@ async function simpanSyarat() {
         <div class="flex flex-wrap items-start gap-3">
           <div class="min-w-0 flex-1">
             <p class="flex flex-wrap items-center gap-1.5"><b class="text-lg leading-snug">{{ detail.nama }}</b><span class="lencana">{{ detail.selesai ? 'Selesai' : STATUS_PERIODE[detail.status].n }}</span></p>
-            <p class="text-sm text-teks2">{{ JENIS_PERIODE[detail.jenis] }} · pulang <b>{{ formatWaktu(detail.pulang_pada) }}</b> · kembali paling lambat <b>{{ formatWaktu(detail.kembali_batas) }}</b> WITA</p>
+            <p v-if="!bertingkat" class="text-sm text-teks2">{{ JENIS_PERIODE[detail.jenis] }} · pulang <b>{{ formatWaktu(detail.pulang_pada) }}</b> · kembali paling lambat <b>{{ formatWaktu(detail.kembali_batas) }}</b> WITA</p>
+            <div v-else class="text-sm text-teks2"><p>{{ JENIS_PERIODE[detail.jenis] }} · <b>libur bertingkat</b> (semua santri libur, lama sesuai syarat):</p>
+              <p v-for="t in daftarTingkat" :key="t.kode" class="text-xs"><b>{{ t.kode }}. {{ t.nama }}</b>: pulang {{ formatWaktu(t.pulang_pada) }}, kembali {{ formatWaktu(t.kembali_batas) }} WITA</p></div>
             <p class="text-xs text-teks3">Rentang hitung {{ formatPendek(detail.hitung_mulai) }} s.d. {{ formatPendek(detail.hitung_selesai) }} · {{ detail.jenjang?.length ? detail.jenjang.map((j) => JENJANG_PENDEK[j]).join(', ') : 'semua jenjang' }} · {{ detail.jenis_kelamin === 'L' ? 'putra' : detail.jenis_kelamin === 'P' ? 'putri' : 'putra dan putri' }}</p>
-            <p class="text-xs text-teks3">Syarat: {{ syaratTeks || 'tidak ada' }}</p>
+            <p v-if="!bertingkat" class="text-xs text-teks3">Syarat: {{ syaratTeks || 'tidak ada' }}</p>
             <p v-if="detail.pengesah" class="text-xs text-teks2">Disahkan oleh {{ detail.pengesah }}{{ detail.disahkan_pada ? ', ' + formatWaktu(detail.disahkan_pada) : '' }}</p>
           </div>
           <button v-if="bolehHapus" class="tombol-garis w-klinik min-h-[40px] px-3 text-sm" :disabled="proses" @click="hapus"><PhTrash :size="18" style="color: var(--c)" /> Hapus periode</button>
@@ -206,8 +222,9 @@ async function simpanSyarat() {
               <span class="chip-ikon h-10 w-10 shrink-0"><component :is="s.keputusan ? HASIL_LIBUR[s.keputusan].ikon : PhHourglass" :size="22" weight="duotone" /></span>
               <div class="min-w-0 flex-1">
                 <p class="flex flex-wrap items-center gap-1.5"><b class="leading-snug">{{ s.nama }}{{ s.kelas ? ' – ' + s.kelas : '' }}</b>
-                  <span class="lencana">{{ s.keputusan ? HASIL_LIBUR[s.keputusan].n : 'Perlu diputuskan' }}</span>
-                  <span v-if="s.diubah" class="text-xs font-semibold text-teks3">(otomatis: {{ HASIL_LIBUR[s.otomatis].n.toLowerCase() }})</span></p>
+                  <span v-if="bertingkat" :class="['lencana', 'w-' + warnaTk(s.tingkat)]">{{ tk(s.tingkat)?.nama || '–' }}</span>
+                  <span v-else class="lencana">{{ s.keputusan ? HASIL_LIBUR[s.keputusan].n : 'Perlu diputuskan' }}</span>
+                  <span v-if="s.diubah" class="text-xs font-semibold text-teks3">(otomatis: {{ bertingkat ? tk(s.tingkat_otomatis)?.nama?.toLowerCase() : HASIL_LIBUR[s.otomatis].n.toLowerCase() }})</span></p>
                 <p class="text-xs text-teks3">{{ s.nis }} · {{ s.kamar || 'Kamar –' }}{{ s.halaqah ? ' · ' + s.halaqah : '' }}</p>
                 <p class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs tabular-nums text-teks2">
                   <span>Kelas <b>{{ persen(s, 'kelas') }}</b></span><span>Halaqah <b>{{ persen(s, 'halaqah') }}</b></span><span>Asrama <b>{{ persen(s, 'asrama') }}</b></span>
@@ -217,7 +234,7 @@ async function simpanSyarat() {
                 <p v-if="s.alasan_ubah" class="text-xs text-teks2">Alasan: {{ s.alasan_ubah }}{{ s.pengubah ? ' (' + s.pengubah + ')' : '' }}</p>
                 <p v-if="s.rincian?.catatan_izin" class="text-xs text-teks3">{{ s.rincian.catatan_izin }}</p>
                 <div class="mt-2 flex flex-wrap gap-2">
-                  <button v-if="bolehUbah" class="tombol-garis min-h-[36px] px-3 text-sm" @click="bukaUbah(s)"><PhPencilSimple :size="16" /> {{ s.keputusan ? 'Ubah' : 'Putuskan' }}</button>
+                  <button v-if="bolehUbah" class="tombol-garis min-h-[36px] px-3 text-sm" @click="bukaUbah(s)"><PhPencilSimple :size="16" /> {{ bertingkat ? 'Ubah tingkat' : s.keputusan ? 'Ubah' : 'Putuskan' }}</button>
                   <button v-if="detail.status === 'disahkan' && s.keputusan" class="tombol-wa-garis w-presensi min-h-[36px] px-3 text-sm" @click="waWali(s)"><PhWhatsappLogo :size="16" weight="duotone" /> Wali</button>
                 </div>
               </div>
@@ -231,10 +248,15 @@ async function simpanSyarat() {
 
     <LembarPeriodeLibur v-model="lembarPeriode" :periode="ubahPeriode" @tersimpan="tersimpan" />
 
-    <LembarBawah v-model="lembarUbah" :judul="pilihSantri?.keputusan ? 'Ubah keputusan libur' : 'Putuskan libur'">
+    <LembarBawah v-model="lembarUbah" :judul="bertingkat ? 'Ubah tingkat libur' : pilihSantri?.keputusan ? 'Ubah keputusan libur' : 'Putuskan libur'">
       <div v-if="pilihSantri" class="space-y-3 pb-2">
-        <p class="text-sm"><b>{{ pilihSantri.nama }}</b>{{ pilihSantri.kelas ? ' – ' + pilihSantri.kelas : '' }} · hasil otomatis: <b>{{ HASIL_LIBUR[pilihSantri.otomatis].n }}</b></p>
-        <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Keputusan">
+        <p class="text-sm"><b>{{ pilihSantri.nama }}</b>{{ pilihSantri.kelas ? ' – ' + pilihSantri.kelas : '' }} · hasil otomatis: <b>{{ bertingkat ? tk(pilihSantri.tingkat_otomatis)?.nama : HASIL_LIBUR[pilihSantri.otomatis].n }}</b></p>
+        <div v-if="bertingkat" class="grid gap-2" role="radiogroup" aria-label="Tingkat libur">
+          <button v-for="t in daftarTingkat" :key="t.kode" type="button" role="radio" :aria-checked="keputusan === t.kode" @click="keputusan = t.kode"
+            :class="['flex min-h-[48px] items-center gap-2 rounded-xl border px-3 text-left text-sm', 'w-' + warnaTk(t.kode), keputusan === t.kode ? 'pilih-aktif font-bold text-teks' : 'border-garis text-teks2']">
+            <b class="w-6 shrink-0" style="color: var(--c)">{{ t.kode }}</b><span class="flex-1">{{ t.nama }}<span class="block text-xs font-normal text-teks3">{{ waktuTk(t) }} WITA</span></span></button>
+        </div>
+        <div v-else class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Keputusan">
           <button v-for="k in ['boleh', 'tidak']" :key="k" type="button" role="radio" :aria-checked="keputusan === k" @click="keputusan = k"
             :class="['flex min-h-[48px] items-center justify-center gap-2 rounded-xl border text-sm font-bold', 'w-' + HASIL_LIBUR[k].w, keputusan === k ? 'pilih-aktif text-teks' : 'border-garis text-teks2']">
             <component :is="HASIL_LIBUR[k].ikon" :size="20" weight="duotone" style="color: var(--c)" /> {{ HASIL_LIBUR[k].n }}</button>
@@ -255,7 +277,8 @@ async function simpanSyarat() {
 
     <LembarBawah v-model="lembarCetak" judul="Pilih daftar yang dicetak">
       <div class="space-y-2 pb-2">
-        <button v-for="o in [{ k: 'boleh', n: `Santri yang libur (${r.boleh || 0})` }, { k: 'tidak', n: `Santri yang tinggal di pondok (${r.tidak || 0})` }, { k: 'semua', n: `Semua santri (${r.jumlah || 0})` }]" :key="o.k"
+        <button v-for="o in (bertingkat ? [...daftarTingkat.map((t) => ({ k: 't:' + t.kode, n: `${t.nama} (${r.tingkat?.[t.kode] || 0})` })), { k: 'semua', n: `Semua santri (${r.jumlah || 0})` }]
+          : [{ k: 'boleh', n: `Santri yang libur (${r.boleh || 0})` }, { k: 'tidak', n: `Santri yang tinggal di pondok (${r.tidak || 0})` }, { k: 'semua', n: `Semua santri (${r.jumlah || 0})` }])" :key="o.k"
           type="button" role="radio" :aria-checked="daftarCetak === o.k" @click="daftarCetak = o.k"
           :class="['flex min-h-[48px] w-full items-center rounded-xl border px-4 text-left text-sm font-semibold', daftarCetak === o.k ? 'border-[#3B4CB0] bg-[#3B4CB0]/10 text-teks' : 'border-garis text-teks2']">{{ o.n }}</button>
         <p class="text-xs text-teks3">Ringkasan jumlah yang libur dan yang tinggal tetap tercantum di dokumen.</p>
@@ -264,15 +287,17 @@ async function simpanSyarat() {
     </LembarBawah>
 
     <DokumenCetak v-if="detail" kop="pondok" :judul="judulCetak" :subjudul="detail.nama" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
-      <p style="margin: 0 0 6pt; line-height: 1.5">Waktu pulang: {{ formatWaktu(detail.pulang_pada) }} WITA · Batas kembali: {{ formatWaktu(detail.kembali_batas) }} WITA<br />
+      <p v-if="bertingkat" style="margin: 0 0 6pt; line-height: 1.5"><template v-for="t in daftarTingkat" :key="t.kode">{{ t.kode }}. {{ t.nama }}: pulang {{ formatWaktu(t.pulang_pada) }}, kembali {{ formatWaktu(t.kembali_batas) }} WITA ({{ r.tingkat?.[t.kode] || 0 }} santri)<br /></template>
+        Jumlah {{ r.jumlah }} santri · Status: {{ STATUS_PERIODE[detail.status].n }}{{ detail.pengesah ? ' oleh ' + detail.pengesah : '' }}</p>
+      <p v-else style="margin: 0 0 6pt; line-height: 1.5">Waktu pulang: {{ formatWaktu(detail.pulang_pada) }} WITA · Batas kembali: {{ formatWaktu(detail.kembali_batas) }} WITA<br />
         Ringkasan: {{ r.boleh }} santri libur dan {{ r.tidak }} santri tinggal di pondok (jumlah {{ r.jumlah }}) · Status: {{ STATUS_PERIODE[detail.status].n }}{{ detail.pengesah ? ' oleh ' + detail.pengesah : '' }}</p>
       <table class="tabel kecil">
         <thead><tr><th style="width:5%">No.</th><th style="width:25%">Nama santri</th><th style="width:7%">Kelas</th><th style="width:14%">Kamar</th>
-          <th style="width:7%">Kelas</th><th style="width:7%">Halaqah</th><th style="width:7%">Asrama</th><th style="width:5%">Izin</th><th v-if="daftarCetak === 'semua'" style="width:9%">Hasil</th><th>Keterangan</th></tr></thead>
+          <th style="width:7%">Kelas</th><th style="width:7%">Halaqah</th><th style="width:7%">Asrama</th><th style="width:5%">Izin</th><th v-if="daftarCetak === 'semua'" style="width:9%">{{ bertingkat ? 'Tingkat' : 'Hasil' }}</th><th>Keterangan</th></tr></thead>
         <tbody>
           <tr v-for="(s, i) in isiCetak" :key="s.id"><td class="tengah">{{ i + 1 }}</td><td>{{ s.nama }}</td><td class="tengah">{{ s.kelas || '–' }}</td><td>{{ s.kamar || '–' }}</td>
             <td class="tengah">{{ persen(s, 'kelas') }}</td><td class="tengah">{{ persen(s, 'halaqah') }}</td><td class="tengah">{{ persen(s, 'asrama') }}</td><td class="tengah">{{ s.rincian?.izin ?? 0 }}</td>
-            <td v-if="daftarCetak === 'semua'" class="tengah">{{ s.keputusan === 'boleh' ? 'Libur' : s.keputusan === 'tidak' ? 'Tinggal' : '–' }}</td>
+            <td v-if="daftarCetak === 'semua'" class="tengah">{{ bertingkat ? tk(s.tingkat)?.nama || '–' : s.keputusan === 'boleh' ? 'Libur' : s.keputusan === 'tidak' ? 'Tinggal' : '–' }}</td>
             <td>{{ [s.alasan_ubah, ...(s.rincian?.gagal || []), ...(s.rincian?.timbang || [])].filter(Boolean).join('; ') || '–' }}</td></tr>
           <tr v-if="!isiCetak.length"><td :colspan="daftarCetak === 'semua' ? 10 : 9" class="tengah">Tidak ada santri.</td></tr>
         </tbody>

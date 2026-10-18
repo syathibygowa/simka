@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/tahunAjaran.js | v1.0 | Fase 4 – Tahap 6 Tahun ajaran, statistik, laporan | 05/10/2026
+// SIMKA PRO | src/stores/tahunAjaran.js | v1.1 | 14.5.0: usulan dari keputusan rapor; SK Kenaikan Kelas per jenjang | 18/10/2026
 // Pergantian tahun ajaran (draf kenaikan, kelompok draf, aktivasi) dan statistik santri (beranda, laporan, kohort).
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -52,7 +52,7 @@ export const useTahunAjaran = defineStore('tahunAjaran', {
       if (MODE_DEMO) {
         const san = useSantri(); await san.muat(); await useKelompokSantri().muat()
         return san.daftar.filter((s) => ['aktif', 'nonaktif'].includes(s.status)).map((s) => ({ student_id: s.id, nis: s.nis, nama: s.nama_lengkap, jenis_kelamin: s.jenis_kelamin,
-          jenjang: s.jenjang, tingkat: s.tingkat, rombel: kelompokDari(s, 'kelas')?.nama || null, status: s.status, usulan: s.tingkat >= 12 ? 'lulus' : 'naik' }))
+          jenjang: s.jenjang, tingkat: s.tingkat, rombel: kelompokDari(s, 'kelas')?.nama || null, status: s.status, usulan: s.tingkat >= 12 ? 'lulus' : 'naik', sumber_usulan: s.tingkat === 8 ? 'rapor' : 'otomatis', catatan_rapor: null }))
           .sort((a, b) => a.tingkat - b.tingkat || a.nama.localeCompare(b.nama, 'id'))
       }
       return (await rpc('rencana_kenaikan')) || []
@@ -74,6 +74,12 @@ export const useTahunAjaran = defineStore('tahunAjaran', {
       if (MODE_DEMO) throw new Error('Mode demo: pergantian tahun ajaran tidak dijalankan. Gunakan aplikasi yang tersambung ke server.')
       const h = await rpc('buat_draf_tahun_ajaran', { p: isi }); await useKelompokSantri().muat(); return h
     },
+    /** 14.5.0: SK Kenaikan Kelas satu jenjang → Persuratan (Diperiksa TU). p: { academic_year_id, jenjang, signatory_id?, tanggal_rapat?, memperhatikan? } */
+    async usulSK(p) {
+      if (MODE_DEMO) throw new Error('Mode demo: SK tidak dikirim ke Persuratan. Gunakan aplikasi yang tersambung ke server.')
+      return rpc('usul_sk_kenaikan', { p })
+    },
+    async daftarSK(ta) { if (MODE_DEMO) return []; return (await rpc('daftar_sk_kenaikan', { p_ta: ta })) || [] },
     async hapusDraf(id) { if (MODE_DEMO) return; await rpc('hapus_draf_tahun_ajaran', { p_ta: id }); await useKelompokSantri().muat() },
     async aktifkan(id) {
       if (MODE_DEMO) throw new Error('Mode demo: aktivasi tahun ajaran tidak dijalankan.')
