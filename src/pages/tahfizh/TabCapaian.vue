@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabCapaian.vue | v1.1 | Fase 5 – Perbaikan tampilan tab seragam | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabCapaian.vue | v1.2 | 14.11.0: status bulanan Tahsin (santri belum menghafal) | 18/10/2026 -->
 <script setup>
 // Capaian tahfizh:
 //  * Status bulanan — dihitung otomatis dari setoran (penambahan sabaq sebulan vs target pekan × pekan efektif).
@@ -8,7 +8,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   PhCalendarCheck, PhSealCheck, PhCheckCircle, PhXCircle, PhArrowsClockwise, PhCrown, PhQuestion, PhUsersThree, PhEye, PhStamp,
-  PhArrowCounterClockwise, PhPaperPlaneTilt, PhMagnifyingGlass, PhCheck, PhX, PhHourglass,
+  PhArrowCounterClockwise, PhPaperPlaneTilt, PhMagnifyingGlass, PhCheck, PhX, PhHourglass, PhUserSound,
 } from '@phosphor-icons/vue'
 import { useTahfizh } from '@/stores/tahfizh'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
@@ -46,7 +46,9 @@ const statistik = computed(() => [
   { k: 'tercapai', ikon: PhCheckCircle, ket: 'Penambahan ≥ target' }, { k: 'tidak_tercapai', ikon: PhXCircle, ket: 'Penambahan < target' },
   { k: 'murojaah', ikon: PhArrowsClockwise, ket: "Fokus muraja'ah (beralasan)" }, { k: 'khatam', ikon: PhCrown, ket: 'Hafalan 30 juz' },
   { k: 'tidak_terdata', ikon: PhQuestion, ket: 'Tidak ada setoran tercatat' },
-].map((x) => ({ ...x, judul: STATUS_BULANAN[x.k].n, nilai: hitungStatus.value[x.k], warna: STATUS_BULANAN[x.k].w })))
+  { k: 'tahsin', ikon: PhUserSound, ket: 'Masih tahsin, belum menghafal' },
+].filter((x) => x.k !== 'tahsin' || hitungStatus.value.tahsin > 0)
+  .map((x) => ({ ...x, judul: STATUS_BULANAN[x.k].n, nilai: hitungStatus.value[x.k], warna: STATUS_BULANAN[x.k].w })))
 const sudahSah = computed(() => dalamHalaqah.value.length > 0 && dalamHalaqah.value.every((r) => r.disahkan))
 const sebagianSah = computed(() => dalamHalaqah.value.some((r) => r.disahkan))
 const persen = (r) => (r.target_hal ? Math.min(100, Math.round((Math.max(0, r.tambah_hal) / r.target_hal) * 100)) : 100)
@@ -136,7 +138,7 @@ async function cetak() { kepala.value = await penandaTahfizh(); pratinjau.value 
           <button class="tombol-garis w-laporan" @click="cetak"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau cetak</button>
         </div>
 
-        <div class="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-5 sm:overflow-visible sm:px-0">
+        <div :class="['-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:overflow-visible sm:px-0', statistik.length > 5 ? 'sm:grid-cols-3 lg:grid-cols-6' : 'sm:grid-cols-5']">
           <KartuStatistik v-for="k in statistik" :key="k.k" class="w-[42%] shrink-0 cursor-pointer snap-start sm:w-auto" :judul="k.judul" :nilai="memuat ? '…' : k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket"
             @click="statusSaring = statusSaring === k.k ? '' : k.k" />
         </div>
@@ -275,7 +277,7 @@ async function cetak() { kepala.value = await penandaTahfizh(); pratinjau.value 
           <td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ r.nis }}</td><td>{{ r.nama }}</td><td class="tengah">{{ r.kelas || r.tingkat }}</td><td>{{ r.halaqah || '–' }}</td>
           <td class="tengah">{{ formatPosisi(r.posisi_awal_hal) }}</td><td class="tengah">{{ formatPosisi(r.posisi_akhir_hal) }}</td><td class="tengah">{{ r.tambah_hal }}/{{ r.target_hal }}</td><td class="tengah">{{ STATUS_BULANAN[r.status].n }}</td></tr></tbody>
       </table>
-      <p style="margin-top: 6pt; font-size: 9pt">Tercapai {{ hitungStatus.tercapai }}, Tidak tercapai {{ hitungStatus.tidak_tercapai }}, Murojaah {{ hitungStatus.murojaah }}, Khatam {{ hitungStatus.khatam }}, Tidak terdata {{ hitungStatus.tidak_terdata }} santri. Satuan tambah/target: halaman (1 juz = 20 halaman).</p>
+      <p style="margin-top: 6pt; font-size: 9pt">Tercapai {{ hitungStatus.tercapai }}, Tidak tercapai {{ hitungStatus.tidak_tercapai }}, Murojaah {{ hitungStatus.murojaah }}, Khatam {{ hitungStatus.khatam }}, Tidak terdata {{ hitungStatus.tidak_terdata }}<template v-if="hitungStatus.tahsin">, Tahsin {{ hitungStatus.tahsin }}</template> santri. Satuan tambah/target: halaman (1 juz = 20 halaman).</p>
       <template #ttd>
         <TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: kepala.jabatan, nama: kepala.nama, niy: kepala.niy }"
           :kanan="muhaffizhCetak || { jabatan: 'Pencetak', nama: sesi.pengguna?.nama_lengkap || '', niy: sesi.pengguna?.niy }" />

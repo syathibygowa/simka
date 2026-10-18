@@ -1,13 +1,15 @@
-<!-- SIMKA PRO | src/pages/tahfizh/FormSetoran.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/FormSetoran.vue | v1.3 | 14.11.0: penanda santri tahsin (belum menyetor hafalan) | 18/10/2026 -->
 <script setup>
 // Setoran satu sesi halaqah. Bawaan semua santri "Sama"; ketuk "Bertambah" pada Sabaq/Sabqi/Manzil lalu atur posisi
 // barunya (Juz + Halaman). Santri yang Izin/Sakit/Bolos/Absen pada absensi sesi ini otomatis "Tidak setor".
 // v1.1: setelah setoran tersimpan, muhaffizh dapat membuat laporan perkembangan hafalan untuk grup WA bidang.
+// v1.3: santri yang sedang tahsin diberi penanda dan isian posisi disembunyikan (tetap "Sama"); perkembangan bacaan dicatat di tab Tahsin.
 // Peringatan janggal tampil langsung (posisi turun, lonjakan, sabqi/manzil melebihi sabaq) dan tetap boleh disimpan.
 import { ref, computed, watch } from 'vue'
-import { PhCheckCircle, PhFloppyDisk, PhArrowCounterClockwise, PhMagnifyingGlass, PhWarning, PhCaretDown, PhTrendUp, PhProhibit, PhNotePencil, PhLockSimple, PhWhatsappLogo, PhUsersThree } from '@phosphor-icons/vue'
+import { PhCheckCircle, PhFloppyDisk, PhArrowCounterClockwise, PhMagnifyingGlass, PhWarning, PhCaretDown, PhTrendUp, PhProhibit, PhNotePencil, PhLockSimple, PhWhatsappLogo, PhUsersThree, PhUserSound } from '@phosphor-icons/vue'
 import { useTahfizh } from '@/stores/tahfizh'
 import { useUI } from '@/stores/ui'
+import { useTahsin } from '@/stores/tahsin'
 import { KODE } from '@/lib/absensi'
 import { inisial } from '@/lib/santri'
 import { formatPosisi, periksaIsian, TANDA_JANGGAL, JENIS_POSISI } from '@/lib/tahfizh'
@@ -21,7 +23,9 @@ import { useKelompokSantri } from '@/stores/kelompokSantri'
 
 const props = defineProps({ group: String, tanggal: String, sesi: String, absensi: Object, atasNamaId: String, tertutup: Boolean })
 const emit = defineEmits(['tersimpan'])
-const tz = useTahfizh(); const ui = useUI()
+const tz = useTahfizh(); const ui = useUI(); const tsn = useTahsin()
+if (!tsn.penandaDimuat) tsn.muatPenanda()
+const tahsin = (s) => tsn.penanda[s.id]
 const d = ref(null); const galat = ref(''); const isian = ref({}); const catatan = ref(''); const proses = ref(false); const cari = ref(''); const awal = ref('')
 const JENIS = ['sabaq', 'sabqi', 'manzil']
 const TIDAK_SETOR = ['I', 'S', 'B', 'A']
@@ -138,11 +142,15 @@ defineExpose({ berubah })
                 <span class="min-w-0 flex-1"><span class="block truncate font-semibold">{{ s.nama }}</span>
                   <span class="block text-xs text-teks3">{{ s.nis }} · resmi {{ s.total_resmi }} juz<template v-if="s.juz_sedang"> · sedang juz {{ s.juz_sedang }}</template></span></span>
                 <span v-if="tidakSetor(s)" class="lencana w-klinik"><PhProhibit :size="14" weight="bold" /> Tidak setor · {{ KODE[s.kehadiran].n }}</span>
+                <span v-else-if="tahsin(s)" class="lencana w-tahsin"><PhUserSound :size="14" weight="bold" /> Tahsin · tahap {{ tahsin(s).tahap }}/{{ tahsin(s).jumlah_tahap }}</span>
                 <span v-else-if="tambah(s) > 0" class="lencana w-presensi"><PhTrendUp :size="14" weight="bold" /> +{{ formatPosisi(tambah(s)) }}</span>
                 <span v-else class="lencana w-hakakses">Sama</span>
               </div>
 
-              <div v-if="!tidakSetor(s)" class="mt-2 space-y-2 sm:pl-9">
+              <p v-if="!tidakSetor(s) && tahsin(s)" class="w-tahsin mt-2 rounded-xl bg-permukaan2 p-2.5 text-xs text-teks2 sm:ml-9">
+                Santri tahsin ({{ tahsin(s).tahap_nama }}) belum menyetor hafalan; posisi tetap. Catat perkembangan bacaannya di
+                <RouterLink to="/tahfizh/tahsin" class="font-bold underline" style="color: var(--c)">Tahfizh → Tahsin</RouterLink>.</p>
+              <div v-else-if="!tidakSetor(s)" class="mt-2 space-y-2 sm:pl-9">
                 <div v-for="j in JENIS" :key="j" class="rounded-xl bg-permukaan2 p-2.5">
                   <div class="flex items-center gap-2">
                     <span class="min-w-0 flex-1 text-sm"><b>{{ JENIS_POSISI[j] }}</b>

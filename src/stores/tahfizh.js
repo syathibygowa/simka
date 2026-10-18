@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/tahfizh.js | v1.9 | 14.10.0: khataman 30 juz (usul, putuskan, jadwal ulang, selesai, batal) | 18/10/2026
+// SIMKA PRO | src/stores/tahfizh.js | v1.10 | 14.11.0: capaian demo berstatus Tahsin bagi santri tahsin | 18/10/2026
 // Tahfizh: hak pengguna, pengaturan per tahun ajaran (KKM, bobot, target, predikat, pekan efektif), penguji,
 // daftar santri beserta program, posisi hafalan, dan capaian juz resmi. Penulisan hanya lewat fungsi SQL.
 import { defineStore } from 'pinia'
@@ -10,6 +10,7 @@ import { useSesi } from './sesi'
 import { useSantri } from './santri'
 import { useKelompokSantri } from './kelompokSantri'
 import { useAbsensiSantri } from './absensiSantri'
+import { useTahsin } from './tahsin'
 import { setoranDemo, capaianDemo, ujianDemo } from '@/lib/demoTahfizh'
 import { hitungNilai } from '@/lib/tahfizh'
 import { PENGATURAN_SERTIFIKAT, PENGATURAN_KHATAMAN } from '@/lib/dokumenTahfizh'
@@ -248,10 +249,11 @@ export const useTahfizh = defineStore('tahfizh', {
       if (MODE_DEMO) {
         await this.muatSantri(); if (!this.target.length) await this.muatPengaturan()
         const c = capaianDemo(); const b = this.bulan.find((x) => x.bulan === bulan); const pekan = b ? b.pekan_efektif : 4
+        const tsn = useTahsin(); if (!tsn.penandaDimuat) await tsn.muatPenanda()
         return this.santri.filter((s) => !group || s.halaqah_id === group).map((s, i) => {
           const m = c.bulan[`${s.student_id}|${bulan}`] || {}; const tambah = (i * 7) % 31; const t = this.targetUntuk(s.program, s.tingkat)
           const target = (t?.pekan_hal || 5) * pekan; const sesi = i % 9 === 4 ? 0 : 20 + (i % 6)
-          const ot = s.total_resmi >= 30 ? 'khatam' : m.murojaah ? 'murojaah' : !sesi ? 'tidak_terdata' : tambah >= target ? 'tercapai' : 'tidak_tercapai'
+          const ot = s.total_resmi >= 30 ? 'khatam' : m.murojaah ? 'murojaah' : tsn.penanda[s.student_id] && tambah < target ? 'tahsin' : !sesi ? 'tidak_terdata' : tambah >= target ? 'tercapai' : 'tidak_tercapai'
           return { student_id: s.student_id, nis: s.nis, nama: s.nama, jenis_kelamin: s.jenis_kelamin, tingkat: s.tingkat, kelas: s.kelas, halaqah_id: s.halaqah_id, halaqah: s.halaqah,
             program: s.program, posisi_awal_hal: Math.max(0, s.sabaq_hal - tambah), posisi_akhir_hal: s.sabaq_hal, tambah_hal: tambah, target_hal: target, pekan_efektif: pekan,
             sesi_terdata: sesi, total_resmi: s.total_resmi, status_otomatis: ot, status: m.status || ot, murojaah: !!m.murojaah, alasan_murojaah: m.alasan || null,

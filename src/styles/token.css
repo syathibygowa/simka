@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/token.css | v3.2 | 14.6.0: warna menu Kedisiplinan Santri (.w-disiplin) | 18/10/2026 */
+/* SIMKA PRO | src/styles/token.css | v3.3 | 14.11.0: warna tab Tahsin (.w-tahsin) | 18/10/2026 */
 /* =====================================================================
    SIMKA PRO · Token warna dan tema
    Semua warna teks sudah diuji kontrasnya (WCAG AA, ≥ 4,5:1) terhadap
@@ -84,6 +84,7 @@
 .w-libursantri { --c: #0F7A5C; --c2: #1E7D4F; }
 .w-portalwali { --c: #A3305F; --c2: #C7332F; }   /* merah mawar — portal orang tua/wali, 6,6:1 */
 .w-disiplin   { --c: #A3261C; --c2: #7A4E2D; }   /* merah bata — kedisiplinan santri, 7,2:1 */
+.w-tahsin     { --c: #6E4A1F; --c2: #0F7A5C; }   /* cokelat mushaf — tahsin (perbaikan bacaan), 8,3:1 */
 
 .dark .w-beranda    { --c: #FF8A7A; --c2: #FFB074; }
 .dark .w-presensi   { --c: #5BD69A; --c2: #4FD1D3; }
@@ -127,6 +128,7 @@
 .dark .w-libursantri { --c: #5FD9B2; --c2: #5BD69A; }
 .dark .w-portalwali { --c: #FF9EC7; --c2: #FF8A7A; }
 .dark .w-disiplin   { --c: #FF9A8B; --c2: #E0B48C; }
+.dark .w-tahsin     { --c: #E8C08F; --c2: #5FD9B2; }
 
 /* Warna notifikasi dari database (kolom warna) */
 .n-merah  { --c: #C7332F; } .n-hijau { --c: #1E7D4F; } .n-biru { --c: #2F5FA8; }

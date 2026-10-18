@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | README.md | v2.0 | 14.9.3: README diperbarui sesuai Fase 1–14 dan seri 14.9 | 18/10/2026 -->
+<!-- SIMKA PRO | README.md | v2.1 | 14.11.0: Khataman dan Tahsin pada cakupan Tahfizh | 18/10/2026 -->
 # SIMKA PRO
 
 **Sistem Manajemen Kepegawaian Terintegrasi** — Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa.
@@ -18,7 +18,7 @@ Aplikasi web multidevice (desktop, tablet, HP; dapat dipasang sebagai aplikasi/P
 | **Layanan pegawai** | Pengajuan izin/sakit/cuti/dinas luar berjenjang dengan surat bertanda tangan elektronik; jurnal harian; jurnal mengajar (termasuk guru pengganti); berkas pegawai; kartu pegawai ber-QR; agenda dan pengumuman |
 | **Kepegawaian** | Data pegawai, jabatan struktural/fungsional, Plt; riwayat kepegawaian; beban kerja dan ekuivalensi jam; Surat Teguran SP1–SP3; **Rekam Kepegawaian** |
 | **Kesantrian** | Data santri, mutasi dan status; kelompok (kelas, kamar, halaqah, ekskul); absensi HISBAT; perizinan berjenjang dan libur bertingkat; security (gerbang, tamu, kunjungan, titipan); klinik; Kedisiplinan Santri (pelanggaran, SP santri); prestasi; **Rekam Kesantrian**; Layar Pantauan |
-| **Tahfizh** | Setoran sabaq/sabqi/manzil; capaian bulanan dan validasi juz; ujian kenaikan juz dan sertifikasi berjenjang dengan konfirmasi WhatsApp; UTAS; dokumen tahfizh (suket, sertifikat) |
+| **Tahfizh** | Setoran sabaq/sabqi/manzil; **Tahsin** bagi santri yang belum menghafal (tahapan bacaan, catatan pertemuan, pengesahan lulus); capaian bulanan dan validasi juz; ujian kenaikan juz dan sertifikasi berjenjang dengan konfirmasi WhatsApp; **Khataman 30 juz** (undangan dan sertifikat penghargaan bertanda tangan elektronik); UTAS; dokumen tahfizh (suket, sertifikat) |
 | **Akademik** | Jadwal pelajaran dan jam mengajar; penilaian Kurikulum Merdeka (SMA) dan K13 disesuaikan (Wustha); rapor sekolah dan rapor tahfizh; leger; naik kelas dan SK; kartu pelajar |
 | **Administrasi** | Persuratan (surat masuk, disposisi, surat keluar dari template, tanda tangan elektronik); gaji dan tunjangan (fitur sensitif); keuangan santri dan kas pondok (tagihan, subsidi, pembayaran, rekening, BKK/BKM, bebas tunggakan) |
 | **Portal Wali** | Masuk dengan NIS/NISN + tanggal lahir + nomor HP; kehadiran, hafalan, nilai, perizinan, keuangan (dapat diatur superadmin); unduh dokumen; notifikasi HP |

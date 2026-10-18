@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/tahfizh.js | v1.5 | 14.9.1: keterangan hasil ujian (lulus/perbaikan/tidak lulus) | 18/10/2026
+// SIMKA PRO | src/lib/tahfizh.js | v1.6 | 14.11.0: status bulanan Tahsin | 18/10/2026
 // Konversi posisi hafalan (Juz + Halaman ↔ total halaman), rentang juz, label program, dan penanda tangan tahfizh.
 // Posisi disimpan di server sebagai TOTAL HALAMAN: 20 halaman = 1 juz (10 juz 2 halaman = 202).
 import { supabase, MODE_DEMO } from './supabase'
@@ -106,7 +106,7 @@ export const STATUS_SETORAN = {
 /** Status capaian bulanan (urutan tampilan, label, warna). */
 export const STATUS_BULANAN = {
   tercapai: { n: 'Tercapai', w: 'presensi' }, tidak_tercapai: { n: 'Tidak tercapai', w: 'klinik' }, murojaah: { n: 'Murojaah', w: 'pegawai' },
-  khatam: { n: 'Khatam', w: 'tahfizh' }, tidak_terdata: { n: 'Tidak terdata', w: 'hakakses' },
+  khatam: { n: 'Khatam', w: 'tahfizh' }, tidak_terdata: { n: 'Tidak terdata', w: 'hakakses' }, tahsin: { n: 'Tahsin', w: 'tahsin' },
 }
 export const STATUS_USULAN = { menunggu: { n: 'Menunggu validasi', w: 'pengajuan' }, disetujui: { n: 'Disetujui', w: 'presensi' }, dikembalikan: { n: 'Dikembalikan', w: 'klinik' } }
 export const SUMBER_USULAN = { ceklist: 'Ceklist muhaffizh', ujian: 'Ujian kenaikan juz', sertifikasi: 'Sertifikasi' }

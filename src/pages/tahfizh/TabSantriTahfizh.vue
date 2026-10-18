@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabSantriTahfizh.vue | v1.1 | Fase 5 – Tahap 2 Setoran per sesi halaqah | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabSantriTahfizh.vue | v1.2 | 14.11.0: penanda santri tahsin | 18/10/2026 -->
 <script setup>
 // Data hafalan santri sesuai cakupan (muhaffizh: halaqahnya; pimpinan/admin: semua): program, posisi sabaq/sabqi/manzil,
 // juz sedang dihafal, ceklist juz resmi. Pemegang validasi tahfizh mengisi data hafalan awal (satu per satu atau impor Excel)
@@ -10,6 +10,7 @@ import {
   PhCaretRight, PhUserSwitch, PhFloppyDisk,
 } from '@phosphor-icons/vue'
 import { useTahfizh } from '@/stores/tahfizh'
+import { useTahsin } from '@/stores/tahsin'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
@@ -25,7 +26,8 @@ import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
 const tz = useTahfizh(); const kel = useKelompokSantri(); const sesi = useSesi(); const ui = useUI()
-onMounted(async () => { if (!tz.hakDimuat) await tz.muatHak(); await kel.muat(); await tz.muatSantri() })
+const tsn = useTahsin()
+onMounted(async () => { if (!tz.hakDimuat) await tz.muatHak(); await kel.muat(); await tz.muatSantri(); tsn.muatPenanda() })
 const bolehUbah = computed(() => tz.hak.validasi)
 const bolehProgram = computed(() => tz.hak.validasi || tz.hak.atur)
 
@@ -172,7 +174,7 @@ const judulCetak = computed(() => `Daftar Hafalan Santri${halaqah.value && halaq
           <tbody class="divide-y divide-garis">
             <tr v-for="s in tampil" :key="s.student_id" class="cursor-pointer hover:bg-permukaan2" @click="buka(s)">
               <td class="px-4 py-3 tabular-nums text-teks2">{{ s.nis }}</td>
-              <td class="px-4 py-3 font-semibold text-teks">{{ s.nama }}</td>
+              <td class="px-4 py-3 font-semibold text-teks">{{ s.nama }} <span v-if="tsn.penanda[s.student_id]" class="lencana w-tahsin ml-1">Tahsin</span></td>
               <td class="px-4 py-3 text-teks2">{{ s.kelas || `Kelas ${s.tingkat}` }} · {{ s.halaqah || 'belum masuk halaqah' }}</td>
               <td class="px-4 py-3"><span :class="['lencana', s.program === 'takhassus' ? 'w-pengajuan' : 'w-hakakses']">{{ PROGRAM[s.program] }}</span></td>
               <td class="whitespace-nowrap px-4 py-3 tabular-nums text-teks2">{{ formatPosisi(s.sabaq_hal) }}</td>
@@ -193,7 +195,7 @@ const judulCetak = computed(() => `Daftar Hafalan Santri${halaqah.value && halaq
             <span class="flex items-center gap-3">
               <span :class="['chip-ikon h-11 w-11 text-sm font-extrabold', s.jenis_kelamin === 'P' ? 'w-klinik' : 'w-tahfizh']">{{ inisial(s.nama) }}</span>
               <span class="min-w-0 flex-1">
-                <span class="block truncate font-bold">{{ s.nama }}</span>
+                <span class="block truncate font-bold">{{ s.nama }} <span v-if="tsn.penanda[s.student_id]" class="lencana w-tahsin ml-1">Tahsin</span></span>
                 <span class="block truncate text-sm text-teks3">{{ s.nis }} · {{ s.kelas || `Kelas ${s.tingkat}` }} · {{ s.halaqah || 'tanpa halaqah' }}</span>
               </span>
               <span class="text-right"><b class="block text-lg tabular-nums leading-tight">{{ s.total_resmi }}</b><span class="text-[11px] text-teks3">juz resmi</span></span>

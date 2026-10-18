@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/RekamSantri.vue | v1.0 | 14.9.0: Rekam Kesantrian (rekam menyeluruh satu santri, cetak F4, Excel) | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/RekamSantri.vue | v1.1 | 14.11.0: riwayat tahsin pada bagian hafalan | 18/10/2026 -->
 <script setup>
 // Rekam Kesantrian: laporan menyeluruh satu santri pada satu periode, seperti Rekam Kepegawaian.
 //   Kepala     : foto, nama, NIS/NISN, JK, jenjang, kelas/kamar/halaqah, status
@@ -298,6 +298,9 @@ function excel() {
               <div class="rounded-xl bg-permukaan2 p-2"><p class="text-xs text-teks3">Sabqi</p><p class="font-bold">{{ formatPosisi(hf.sabqi_hal) || '0' }}</p></div>
               <div class="rounded-xl bg-permukaan2 p-2"><p class="text-xs text-teks3">Manzil</p><p class="font-bold">{{ formatPosisi(hf.manzil_hal) || '0' }}</p></div></div>
             <p class="mt-2 text-sm text-teks2">Program {{ PROGRAM[hf.program] || hf.program }} · {{ hf.halaqah || 'belum masuk halaqah' }} · setoran {{ hf.setoran?.sesi || 0 }} kali pada periode{{ hf.posisi_pada ? ' · posisi per ' + formatPendek(hf.posisi_pada) : '' }}</p>
+            <div v-for="(t, i) in hf.tahsin || []" :key="'ts' + i" class="w-tahsin mt-2 rounded-xl bg-permukaan2 p-2.5 text-sm">
+              <p class="flex flex-wrap items-center gap-1.5"><b>Tahsin</b><span :class="['lencana', t.status === 'lulus' ? 'w-presensi' : 'w-tahsin']">{{ t.status === 'lulus' ? 'Lulus tahsin' : 'Berjalan' }}</span></p>
+              <p class="text-xs text-teks2">{{ formatPendek(t.mulai) }}{{ t.selesai ? ' – ' + formatPendek(t.selesai) : ' – sekarang' }} · tahap {{ t.tahap }}/{{ t.jumlah_tahap }} ({{ t.tahap_nama }}) · {{ t.pertemuan }} pertemuan, lancar {{ t.lancar }} kali · pembina {{ t.pembina || '–' }}</p></div>
             <p class="mb-1 mt-3 text-xs font-semibold text-teks2">Juz tuntas ({{ juzTuntas }})</p>
             <div class="flex flex-wrap gap-1.5"><span v-for="j in hf.juz" :key="j.juz" class="lencana w-libursantri" :title="(SUMBER_JUZ[j.sumber] || j.sumber) + ' · ' + formatPendek(j.tanggal)">Juz {{ j.juz }}</span>
               <span v-if="!juzTuntas" class="text-sm text-teks3">Belum ada juz yang dinyatakan tuntas.</span></div>
@@ -417,7 +420,8 @@ function excel() {
 
         <p class="sub">{{ huruf.hafalan }}. Hafalan dan ujian tahfizh</p>
         <p class="ket">Program {{ PROGRAM[hf.program] || hf.program }}, {{ hf.halaqah || '–' }}. Posisi sabaq {{ formatPosisi(hf.sabaq_hal, true) || '0' }}, sabqi {{ formatPosisi(hf.sabqi_hal, true) || '0' }}, manzil {{ formatPosisi(hf.manzil_hal, true) || '0' }}.
-          Juz tuntas: {{ (hf.juz || []).map((j) => j.juz).join(', ') || 'belum ada' }}. Setoran pada periode {{ hf.setoran?.sesi || 0 }} kali, hafalan baru {{ formatPosisi(hf.setoran?.tambah_hal, true) || '0' }}.</p>
+          Juz tuntas: {{ (hf.juz || []).map((j) => j.juz).join(', ') || 'belum ada' }}. Setoran pada periode {{ hf.setoran?.sesi || 0 }} kali, hafalan baru {{ formatPosisi(hf.setoran?.tambah_hal, true) || '0' }}.
+          <template v-for="(t, i) in hf.tahsin || []" :key="'tc' + i"> Tahsin {{ formatPendek(t.mulai) }}{{ t.selesai ? '–' + formatPendek(t.selesai) : '–sekarang' }}: {{ t.status === 'lulus' ? 'lulus' : 'berjalan' }}, tahap {{ t.tahap }}/{{ t.jumlah_tahap }}, {{ t.pertemuan }} pertemuan.</template></p>
         <table class="tabel"><colgroup><col style="width:6%"><col style="width:30%"><col style="width:14%"><col style="width:10%"><col style="width:10%"><col style="width:12%"><col style="width:18%"></colgroup>
           <thead><tr><th>No.</th><th>Ujian</th><th>Tanggal</th><th>Tajwid</th><th>Itqan</th><th>Nilai akhir</th><th>Hasil</th></tr></thead>
           <tbody><tr v-for="(u, i) in r.ujian" :key="'u' + i"><td class="tengah">{{ i + 1 }}</td><td>{{ JENIS_UJIAN_TAHFIZH[u.jenis] || u.jenis }} juz {{ (u.juz || []).join(', ') }}</td><td class="tengah">{{ formatPendek(u.tanggal) }}</td>

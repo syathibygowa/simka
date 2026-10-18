@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/wa.js | v1.16 | 14.10.0: template WA khataman (pengumuman grup, undangan wali, muhaffizh) | 18/10/2026
+// SIMKA PRO | src/lib/wa.js | v1.17 | 14.11.0: template WA tahsin (perkembangan dan lulus tahsin ke orang tua) | 18/10/2026
 // Tautan WhatsApp wa.me dari WA pribadi pegawai (Bagian 25). Isi pesan diambil dari template WA yang
 // dikelola superadmin (Setelan → Template WA); bila belum dimuat, dipakai isi bawaan di bawah.
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -48,6 +48,8 @@ export const BAWAAN_WA = {
   khataman_pengumuman: "{salam}.\n\n*Undangan Khataman Al-Qur'an 30 Juz*\n\nAlhamdulillah, ananda *{nama_santri}* ({kelas}, {halaqah}) telah menuntaskan hafalan Al-Qur'an 30 juz. Insya Allah khataman akan dilaksanakan pada:\n• Hari/tanggal: {tanggal}\n• Waktu: {waktu}\n• Tempat: {tempat}\n\nKami mengundang para asatidzah dan santri untuk hadir menyaksikan dan mendoakan. Semoga Allah memberkahi.\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}",
   khataman_undangan_wali: "{salam}, Bapak/Ibu {nama_wali}.\n\nAlhamdulillah, dengan izin Allah ananda *{nama_santri}* ({kelas}) telah menuntaskan hafalan Al-Qur'an 30 juz. Kami mengundang Bapak/Ibu untuk hadir pada *Khataman Al-Qur'an* ananda:\n• Hari/tanggal: {tanggal}\n• Waktu: {waktu}\n• Tempat: {tempat}\n\nPada acara tersebut ananda menerima Sertifikat Penghargaan Khataman. Surat undangan resmi nomor {nomor} dapat diperiksa di: {tautan_cek}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}",
   khataman_muhaffizh: "{salam}, {nama}.\n\nUsulan khataman ananda *{nama_santri}* ({halaqah}) telah *disetujui* dengan jadwal:\n• Hari/tanggal: {tanggal}\n• Waktu: {waktu}\n• Tempat: {tempat}\n\nMohon undangan diteruskan kepada orang tua santri dan santri dipersiapkan. Undangan dan sertifikat dapat dicetak di SIMKA PRO (Tahfizh → Khataman): {tautan}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}",
+  tahsin_perkembangan_wali: "{salam}, Bapak/Ibu {nama_wali}.\n\nKami sampaikan perkembangan *tahsin* (perbaikan bacaan Al-Qur'an) ananda *{nama_santri}* ({kelas}):\n• Tahap: {tahap}\n• Pertemuan: {pertemuan}\n• Catatan terakhir: {catatan}\n\nMohon doa dan dukungan Bapak/Ibu agar ananda segera lancar membaca dan mulai menghafal.\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}",
+  tahsin_lulus_wali: "{salam}, Bapak/Ibu {nama_wali}.\n\nAlhamdulillah, ananda *{nama_santri}* ({kelas}) telah *lulus tahsin* dan insya Allah mulai menghafal Al-Qur'an bersama halaqah {halaqah}.\n\nSemoga Allah memudahkan ananda menjadi penghafal Al-Qur'an. Mohon terus doakan dan motivasi ananda.\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}",
   verval_presensi: '{salam}, {nama}.\n\nPresensi Anda pada sesi {sesi}, {tanggal} telah diverval dengan status *{status_presensi}*.\nCatatan: {catatan_verval}\n\n{penutup}\n{pengirim}',
 }
 
@@ -87,7 +89,7 @@ export const ISIAN_WA = [
   { grup: 'Tahfizh', isian: [['halaqah', 'Nama halaqah santri'], ['posisi', 'Posisi hafalan (juz dan halaman)'], ['total_juz', 'Jumlah juz hafalan resmi'],
     ['capaian', 'Capaian periode (penambahan dan status)'], ['jenis_ujian', 'Jenis ujian (kenaikan juz/sertifikasi)'], ['jumlah', 'Jumlah santri'], ['daftar', 'Daftar santri menunggu ujian'],
     ['materi', 'Materi ujian (juz/jenjang sertifikasi)'], ['jadwal', 'Jadwal ujian'], ['penguji', 'Nama penguji'], ['muhaffizh', 'Nama muhaffizh halaqah'], ['catatan', 'Catatan rekomendasi'],
-    ['nilai_tajwid', 'Nilai tajwid'], ['nilai_itqan', 'Nilai itqan'], ['nilai_akhir', 'Nilai akhir ujian'], ['predikat', 'Huruf dan predikat'], ['keterangan_ujian', 'Lulus/Perbaikan/Tidak lulus'], ['catatan_perbaikan', 'Catatan perbaikan dari penguji'], ['tempat', 'Tempat khataman']] },
+    ['nilai_tajwid', 'Nilai tajwid'], ['nilai_itqan', 'Nilai itqan'], ['nilai_akhir', 'Nilai akhir ujian'], ['predikat', 'Huruf dan predikat'], ['keterangan_ujian', 'Lulus/Perbaikan/Tidak lulus'], ['catatan_perbaikan', 'Catatan perbaikan dari penguji'], ['tempat', 'Tempat khataman'], ['tahap', 'Tahap tahsin'], ['pertemuan', 'Jumlah pertemuan tahsin']] },
   { grup: 'Asrama (Musyrif)', isian: [['kamar', 'Nama kamar'], ['ketidakhadiran', 'Rincian tanggal ketidakhadiran santri'], ['persen', 'Rata-rata kehadiran kamar'],
     ['jumlah_sesi', 'Jumlah sesi terlaksana'], ['hadir_penuh', 'Jumlah santri hadir penuh'], ['rincian', 'Rincian per santri (salin grup)']] },
   { grup: 'Perizinan santri', isian: [['jenis_izin', 'Jenis izin (pulang/keluar)'], ['waktu_keluar', 'Waktu keluar'],

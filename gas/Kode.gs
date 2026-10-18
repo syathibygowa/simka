@@ -1,4 +1,4 @@
-// SIMKA PRO | gas/Kode.gs | v1.3 | 14.9.2: backup bulanan (CSV dalam ZIP) untuk presensi, absensi, hafalan, nilai, jurnal, keuangan | 18/10/2026
+// SIMKA PRO | gas/Kode.gs | v1.4 | 14.11.0: backup bulanan memuat tahsin, khataman, dan dokumen tahfizh | 18/10/2026
 /**
  * SIMKA PRO · Jembatan Google Apps Script (Gmail pondok: syathiby.gowa@gmail.com)
  * ---------------------------------------------------------------------------
@@ -277,6 +277,7 @@ const BACKUP_KEGIATAN = [
   ['memorization_sessions', 'tanggal', 'id', 'Sesi setoran hafalan'],
   ['memorization_logs', 'tanggal', 'id', 'Setoran hafalan santri'],
   ['monthly_achievements', 'bulan', 'student_id,bulan', 'Capaian hafalan bulanan'],
+  ['tahsin_logs', 'tanggal', 'id', 'Catatan pertemuan tahsin'],
   ['dorm_journals', 'tanggal', 'id', 'Jurnal musyrif'],
   ['student_violations', 'tanggal', 'id', 'Pelanggaran santri'],
   ['student_permits', 'keluar_pada', 'id', 'Perizinan santri'],
@@ -296,6 +297,7 @@ const BACKUP_INDUK = [
   ['students', 'id'], ['student_contacts', 'id'], ['student_status_history', 'id'], ['student_mutations', 'id'],
   ['student_groups', 'id'], ['group_members', 'id'], ['group_keepers', 'id'],
   ['student_tahfizh', 'student_id'], ['juz_achievements', 'id'], ['juz_proposals', 'id'], ['tahfizh_exams', 'id'], ['utas_results', 'id'],
+  ['tahsin_santri', 'id'], ['tahfizh_khataman', 'id'], ['tahfizh_documents', 'id'],
   ['subjects', 'id'], ['lesson_periods', 'id'], ['teaching_assignments', 'id'], ['class_schedules', 'id'],
   ['grade_periods', 'id'], ['grade_categories', 'id'], ['grade_columns', 'id'], ['grade_scores', 'column_id,student_id'],
   ['grade_finals', 'assignment_id,semester,student_id'], ['grade_objectives', 'id'],

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/laporanTahfizh.js | v1.1 | Fase 8 – Urutan identitas NIS > Nama | 10/10/2026
+// SIMKA PRO | src/lib/laporanTahfizh.js | v1.2 | 14.11.0: status Tahsin tidak dihitung sebagai bulan wajib target | 18/10/2026
 // Katalog dan penyusun 15 laporan tahfizh (Blueprint Bagian 20). Setiap penyusun menghasilkan bentuk seragam:
 //   { judul, subjudul?, mendatar, bagian: [{ judul, kunci, kolom: [{ n, lebar, tengah }], baris: [{ sel: [], sorot }], catatan: [] }], grafik? }
 // sehingga satu penampil dipakai untuk layar, cetak F4, dan Excel.
@@ -28,7 +28,7 @@ export const kunciKelompok = (r, k) => (k === 'halaqah' ? r.halaqah || 'Belum ma
 
 export const WARNA_KATEGORI = { 'Tidak terdata': '#8C8C8C', 'Di bawah 5 juz': '#C7332F', 'Di atas 5 juz': '#E07B39', 'Di atas 10 juz': '#D9A21B',
   'Di atas 15 juz': '#4E9A3E', 'Di atas 20 juz': '#1E7D7D', 'Di atas 25 juz': '#2F5FA8', 'Khatam 30 juz': '#7A3FA0' }
-const WARNA_STATUS = { tercapai: '#1E7D4F', tidak_tercapai: '#C7332F', murojaah: '#2F5FA8', khatam: '#7A3FA0', tidak_terdata: '#8C8C8C' }
+const WARNA_STATUS = { tercapai: '#1E7D4F', tidak_tercapai: '#C7332F', murojaah: '#2F5FA8', khatam: '#7A3FA0', tidak_terdata: '#8C8C8C', tahsin: '#6E4A1F' }
 const pct = (n, d) => (d ? `${(Math.round((n / d) * 1000) / 10).toLocaleString('id-ID')}%` : '0%')
 const urutNama = (a, b) => String(a.nama).localeCompare(String(b.nama), 'id')
 const terdata = (r) => r.status !== 'tidak_terdata'
@@ -121,7 +121,7 @@ export function susunLaporan(jenis, ctx) {
       const per = new Map()
       for (const [b, rs] of Object.entries(ctx.dataBulan || {})) for (const r of rs) {
         const x = per.get(r.student_id) || { ...r, tambahSmt: 0, targetSmt: 0, bulanTerdata: 0 }
-        if (r.status !== 'tidak_terdata' && r.status !== 'murojaah') { x.tambahSmt += r.tambah_hal; x.targetSmt += r.target_hal; x.bulanTerdata++ }
+        if (!['tidak_terdata', 'murojaah', 'tahsin'].includes(r.status)) { x.tambahSmt += r.tambah_hal; x.targetSmt += r.target_hal; x.bulanTerdata++ }
         x.posisi_akhir_hal = r.posisi_akhir_hal; x.total_resmi = r.total_resmi; per.set(r.student_id, x)
       }
       const tidak = [...per.values()].filter((r) => r.bulanTerdata > 0 && r.tambahSmt < r.targetSmt && r.total_resmi < 30)
@@ -132,7 +132,7 @@ export function susunLaporan(jenis, ctx) {
           kolom: [{ n: 'No.', lebar: 5, tengah: 1 }, { n: 'NIS', lebar: 11, tengah: 1 }, { n: 'Nama', lebar: 24 }, { n: 'Kelas', lebar: 7, tengah: 1 }, { n: 'Halaqah', lebar: 18 },
             { n: 'Target semester (hal)', lebar: 10, tengah: 1 }, { n: 'Capaian semester (hal)', lebar: 10, tengah: 1 }, { n: 'Total hafalan', lebar: 15, tengah: 1 }],
           baris: rs.map((r, i) => ({ sorot: true, sel: [i + 1, r.nis, r.nama, r.kelas || r.tingkat, r.halaqah || '–', r.targetSmt, r.tambahSmt, formatPosisi(r.posisi_akhir_hal)] })),
-          catatan: [`${rs.length} santri belum mencapai target semester (target = target pekan × pekan efektif tiap bulan terdata; bulan Murojaah tidak dihitung).`, 'Hal = Halaman (1 Juz = 20 Hal).'],
+          catatan: [`${rs.length} santri belum mencapai target semester (target = target pekan × pekan efektif tiap bulan terdata; bulan Murojaah dan Tahsin tidak dihitung).`, 'Hal = Halaman (1 Juz = 20 Hal).'],
         })),
       }
     }
@@ -140,21 +140,21 @@ export function susunLaporan(jenis, ctx) {
       const per = new Map()
       for (const r of data) { const k = r.halaqah_id || '-'; const x = per.get(k) || { halaqah: r.halaqah || 'Belum masuk halaqah', muhaffizh: r.muhaffizh, rs: [] }; x.rs.push(r); per.set(k, x) }
       const baris = [...per.entries()].sort((a, b) => a[1].halaqah.localeCompare(b[1].halaqah, 'id', { numeric: true })).map(([id, x], i) => {
-        const capai = x.rs.filter((r) => ['tercapai', 'khatam'].includes(r.status)).length; const dasar = x.rs.filter((r) => !['tidak_terdata', 'murojaah'].includes(r.status)).length
+        const capai = x.rs.filter((r) => ['tercapai', 'khatam'].includes(r.status)).length; const dasar = x.rs.filter((r) => !['tidak_terdata', 'murojaah', 'tahsin'].includes(r.status)).length
         const hadir = (ctx.kehadiran || []).find((h) => h.halaqah_id === id)
         return { sel: [i + 1, x.muhaffizh || '–', x.halaqah, x.rs.length, capai, x.rs.filter((r) => r.status === 'tidak_tercapai').length,
           dasar ? pct(capai, dasar) : '–', hadir?.persen != null ? `${String(hadir.persen).replace('.', ',')}%` : '–'], sorot: dasar && capai / dasar < 0.5 }
       })
       return { judul: 'Rekap Halaqah Bulanan', subjudul: subPeriode, bagian: [{ judul: '', kolom: [{ n: 'No.', lebar: 5, tengah: 1 }, { n: 'Muhaffizh', lebar: 24 }, { n: 'Halaqah', lebar: 20 },
         { n: 'Jumlah santri', lebar: 9, tengah: 1 }, { n: 'Capai', lebar: 9, tengah: 1 }, { n: 'Tidak capai', lebar: 9, tengah: 1 }, { n: '% capaian', lebar: 12, tengah: 1 }, { n: '% kehadiran', lebar: 12, tengah: 1 }],
-      baris, catatan: [...catatanUmum(data), 'Capai = Tercapai + Khatam. % capaian dihitung dari santri terdata selain Murojaah. % kehadiran dari absensi halaqah bulan itu.'] }] }
+      baris, catatan: [...catatanUmum(data), 'Capai = Tercapai + Khatam. % capaian dihitung dari santri terdata selain Murojaah dan Tahsin. % kehadiran dari absensi halaqah bulan itu.'] }] }
     }
     case 'semester': {
       const bulanList = Object.keys(ctx.dataBulan || {}).sort()
       const per = new Map()
       for (const b of bulanList) for (const r of ctx.dataBulan[b]) {
         const k = r.halaqah_id || '-'; const x = per.get(k) || { halaqah: r.halaqah || 'Belum masuk halaqah', muhaffizh: r.muhaffizh, bulan: {} }
-        const m = x.bulan[b] || { capai: 0, dasar: 0 }; if (['tercapai', 'khatam'].includes(r.status)) m.capai++; if (!['tidak_terdata', 'murojaah'].includes(r.status)) m.dasar++
+        const m = x.bulan[b] || { capai: 0, dasar: 0 }; if (['tercapai', 'khatam'].includes(r.status)) m.capai++; if (!['tidak_terdata', 'murojaah', 'tahsin'].includes(r.status)) m.dasar++
         x.bulan[b] = m; per.set(k, x)
       }
       const sm = Number(pengaturan?.rekap_sangat_memuaskan ?? 90); const mm = Number(pengaturan?.rekap_memuaskan ?? 75)
