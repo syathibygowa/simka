@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.33 | 14.8.0: rute Rekam Kepegawaian (pegawai dan profil) | 18/10/2026
+// SIMKA PRO | src/router/index.js | v3.34 | 14.9.0: rute Rekam Kesantrian | 18/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu; meta.menu/meta.izin/meta.boleh mengikuti Hak Akses.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -40,6 +40,7 @@ const routes = [
       { path: 'santri/impor', component: () => import('@/pages/santri/ImporSantri.vue'), meta: { judul: 'Impor Data Santri', izin: 'kelola_santri', kembali: '/santri' } },
       { path: 'santri/portal-wali', redirect: '/portal-wali' },
       { path: 'portal-wali/:tab?', component: () => import('@/pages/santri/KelolaPortalWali.vue'), props: true, meta: { judul: 'Portal Wali', menu: 'portalwali', kembali: '/tugas' } },
+      { path: 'santri/:id/rekam', component: () => import('@/pages/santri/RekamSantri.vue'), meta: { judul: 'Rekam Kesantrian', kembali: '/santri' } },
       { path: 'santri/:id/ubah', component: () => import('@/pages/santri/FormSantri.vue'), meta: { judul: 'Ubah Data Santri', kembali: '/santri' } },
       { path: 'santri/:id', component: () => import('@/pages/santri/DetailSantri.vue'), meta: { judul: 'Biodata Santri', cetak: true, kembali: '/santri' } },
       { path: 'absensi-santri/isi/:group/:tanggal/:sesi', component: () => import('@/pages/absensisantri/IsiAbsensi.vue'), meta: { judul: 'Isi Absensi Santri', kembali: '/absensi-santri' } },

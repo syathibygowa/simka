@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.11 | 14.6.0: bagian Kedisiplinan (pelanggaran dan SP santri) | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.12 | 14.9.0: tombol Rekam Kesantrian | 18/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Biodata santri: identitas, kontak orang tua/wali (tombol WA), riwayat status dan mutasi;
@@ -11,7 +11,7 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   PhPencilSimple, PhTrash, PhEye, PhPrinter, PhClockCounterClockwise, PhArrowsLeftRight, PhSignOut, PhGraduationCap,
   PhCalendarBlank, PhIdentificationCard, PhUsersThree, PhArrowRight, PhFileText, PhToggleLeft, PhChalkboardTeacher, PhBed, PhBookOpenText, PhMedal, PhCheckSquareOffset, PhWarningCircle,
-  PhCamera, PhCards, PhEnvelopeSimple, PhArrowsClockwise, PhCaretRight, PhCertificate, PhSealCheck, PhStudent,
+  PhCamera, PhCards, PhEnvelopeSimple, PhArrowsClockwise, PhCaretRight, PhCertificate, PhSealCheck, PhStudent, PhFolderUser,
 } from '@phosphor-icons/vue'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
@@ -207,6 +207,7 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
         <router-link v-if="bolehUbah" :to="`/santri/${s.id}/ubah`" class="tombol-utama"><PhPencilSimple :size="20" weight="duotone" /> Ubah data</router-link>
         <button v-if="bolehKelola" class="tombol-garis w-pengajuan" @click="bukaStatus"><PhArrowsLeftRight :size="20" weight="duotone" style="color: var(--c)" /> Ubah status</button>
         <button v-if="bolehKelola && ['aktif', 'nonaktif'].includes(s.status)" class="tombol-garis w-klinik" @click="bukaMutasi"><PhSignOut :size="20" weight="duotone" style="color: var(--c)" /> Mutasi keluar</button>
+        <router-link :to="`/santri/${s.id}/rekam`" class="tombol-garis w-santri"><PhFolderUser :size="20" weight="duotone" style="color: var(--c)" /> Rekam kesantrian</router-link>
         <button class="tombol-garis" @click="pratinjauBio = true"><PhEye :size="20" weight="duotone" /> Pratinjau biodata</button>
         <button class="tombol-garis w-santri" @click="bukaKartu"><PhCards :size="20" weight="duotone" style="color: var(--c)" /> Kartu pelajar</button>
         <button v-if="ps.hak.susun" class="tombol-garis w-tatausaha" @click="lembarSurat = true"><PhEnvelopeSimple :size="20" weight="duotone" style="color: var(--c)" /> Buat surat</button>
