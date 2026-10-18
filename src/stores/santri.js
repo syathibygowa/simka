@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/santri.js | v1.3 | Perbaikan: foto santri dengan cadangan fungsi berkas | 16/10/2026
+// SIMKA PRO | src/stores/santri.js | v1.4 | 14.9.2: surat keterangan pindah ber-QR (kode validasi, demo) | 18/10/2026
 // Data santri: daftar (sesuai cakupan RLS), simpan beserta kontak, impor Excel, status, mutasi keluar,
 // riwayat, dan hapus (superadmin). Semua penulisan lewat fungsi SQL (tabel santri tidak dapat ditulis langsung).
 // v1.2: foto santri (bucket profil, santri/{id}/…; dipotong 3:4) dan data kartu pelajar berkode QR.
@@ -149,7 +149,7 @@ export const useSantri = defineStore('santri', {
       if (MODE_DEMO) {
         const s = this.cari(id); const nomor = `K.00${Math.floor(Math.random() * 9) + 1}/IL/${s.jenjang === 'sma' ? 'SMAS-IAS' : 'KW-IAS'}/IV/1448`
         await this.ubahStatus(id, 'mutasi_keluar', tanggal, `Mutasi keluar ke ${tujuan}: ${alasan}`)
-        this.riwayat[id].mutasi.unshift({ id: 'm' + Date.now(), jenis: 'keluar', tanggal, sekolah: tujuan, alasan, tingkat: s.tingkat, jenjang: s.jenjang, nomor_surat: nomor, kop: s.jenjang })
+        this.riwayat[id].mutasi.unshift({ id: 'm' + Date.now(), jenis: 'keluar', tanggal, sekolah: tujuan, alasan, tingkat: s.tingkat, jenjang: s.jenjang, nomor_surat: nomor, kop: s.jenjang, kode_validasi: 'DEMO-PNDH', created_at: new Date().toISOString() })
         return { nomor }
       }
       const { data, error } = await supabase.rpc('mutasi_keluar_santri', { p_id: id, p_tanggal: tanggal, p_tujuan: tujuan, p_alasan: alasan })

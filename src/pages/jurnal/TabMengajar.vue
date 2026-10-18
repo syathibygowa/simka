@@ -1,6 +1,8 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabMengajar.vue | v2.3 | 14.4.0: tujuan, kegiatan, alat, sumber belajar; isian wajib mengikuti pengaturan | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabMengajar.vue | v2.4 | 14.9.2: mengajar sebagai guru pengganti | 18/10/2026 -->
 <script setup>
 // Jurnal mengajar (sepaket dengan Jurnal Harian).
+// v2.4: "Mengajar sebagai pengganti" — guru memilih tanggal, lalu jam pelajaran guru lain yang ia gantikan, dan mengisi jurnalnya
+//       (tercatat sebagai guru pengganti). Guru pengampu melihat nama pengganti dan jurnal itu tidak dapat ia ubah.
 // v2.3: isian lengkap — tujuan pembelajaran, kegiatan, alat/perlengkapan, sumber belajar/referensi (pilihan ketuk + tambah sendiri);
 //       isian wajib mengikuti Jurnal → Pengaturan (tanda *). Alat dan sumber terisi otomatis dari pertemuan sebelumnya.
 // v2.2: pengaturan jurnal mengajar dipindah ke tab Jurnal → Pengaturan (tautan ikon roda gigi tetap ada bagi pengatur).
@@ -13,10 +15,10 @@
 //  * Absensi santri per pelajaran (bila diaktifkan): semua dianggap hadir; guru hanya menandai yang tidak hadir.
 //    Santri yang sudah tercatat tidak hadir di absensi kelas harian (wali kelas), sakit, atau izin keluar ditandai otomatis.
 //  * Batas pengisian mengikuti pengaturan (bawaan H+1); pengaturan dapat diubah superadmin/admin ber-izin Jadwal pelajaran.
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import {
   PhChalkboardTeacher, PhCheckCircle, PhLightning, PhFloppyDisk, PhListNumbers, PhXCircle, PhClock, PhCaretLeft, PhCaretRight, PhLockSimple,
-  PhGear, PhUsersThree, PhCaretDown, PhNotePencil, PhHourglass, PhWhatsappLogo,
+  PhGear, PhUsersThree, PhCaretDown, PhNotePencil, PhHourglass, PhWhatsappLogo, PhUserSwitch,
 } from '@phosphor-icons/vue'
 import { useJadwal } from '@/stores/jadwal'
 import { useSesi } from '@/stores/sesi'
@@ -24,6 +26,7 @@ import { useUI } from '@/stores/ui'
 import { blokMengajar, jamPendek } from '@/lib/jadwal'
 import { hariIniISO, formatHari, formatPendek, HARI } from '@/lib/tanggal'
 import LembarBawah from '@/components/LembarBawah.vue'
+import InputTanggal from '@/components/InputTanggal.vue'
 import LembarLaporanGrup from '@/components/LembarLaporanGrup.vue'
 import { laporanMengajar } from '@/lib/laporanGrup'
 
@@ -81,7 +84,11 @@ async function buka(x) {
     } catch (e) { ui.toast(e.message, 'galat') } finally { memuatPeserta.value = false }
   }
 }
-const bisaIsi = computed(() => b.value && ['belum', 'terisi', 'tidak'].includes(b.value.st) && pekan.value.find((h) => h.tanggal === b.value.tanggal)?.terbuka)
+const bisaIsi = computed(() => {
+  if (!b.value) return false
+  if (b.value.pengganti) return !!b.value.terbuka && !b.value.jurnal?.oleh_guru
+  return ['belum', 'terisi', 'tidak'].includes(b.value.st) && !!pekan.value.find((h) => h.tanggal === b.value.tanggal)?.terbuka && !b.value.jurnal?.pengganti
+})
 const togel = (arr, v) => { const i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v) }
 const setKode = (id, k) => { const a = { ...absen.value }; if (k === 'H') delete a[id]; else a[id] = k; absen.value = a }
 const tidakHadir = computed(() => peserta.value.filter((p) => absen.value[p.id] && absen.value[p.id] !== 'T'))
@@ -100,11 +107,12 @@ async function simpan() {
   proses.value = true
   try {
     const pakaiAbsen = x.status === 'terlaksana' && atur.value.absen_santri && peserta.value.length > 0
-    await jd.simpanJurnal(b.value.tanggal, b.value.slot.map((s) => ({ assignment_id: s.assignment_id, period_id: s.period_id, status: x.status, bab: x.bab.trim(), subbab: x.subbab.trim(),
+    await jd.simpanJurnal(b.value.tanggal, b.value.slot.map((s) => ({ assignment_id: s.assignment_id, period_id: s.period_id, status: x.status, pengganti: !!b.value.pengganti, bab: x.bab.trim(), subbab: x.subbab.trim(),
       metode: x.metode, media: x.media, alat: x.alat, sumber: x.sumber, tujuan: x.tujuan.trim(), kegiatan: x.kegiatan.trim(), plan_id: x.plan_id, keterangan: x.keterangan.trim(), absen: pakaiAbsen ? absen.value : undefined,
       jumlah_anggota: pakaiAbsen ? peserta.value.length : undefined, jumlah_hadir: pakaiAbsen ? peserta.value.length - tidakHadir.value.length : undefined,
       materi: [x.bab.trim(), x.subbab.trim()].filter(Boolean).join(' – ') })))
-    ui.toast(`Jurnal ${b.value.mapel} kelas ${b.value.kelas} tersimpan.`); lembar.value = false; await muat()
+    ui.toast(`Jurnal ${b.value.mapel} kelas ${b.value.kelas} tersimpan${b.value.pengganti ? ' sebagai guru pengganti' : ''}.`); lembar.value = false
+    if (b.value.pengganti) await muatPengganti(); else await muat()
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 
@@ -118,6 +126,20 @@ async function simpanRencana() {
   const topik = teksRencana.value.split('\n').map((x) => x.trim()).filter((x) => x.length >= 2)
   try { const n = await jd.simpanRencana(bR.value.assignment_id, topik); ui.toast(`${n} topik rencana materi disimpan.`); lembarR.value = false; await muat() } catch (e) { ui.toast(e.message, 'galat') }
 }
+
+// ---------- Guru pengganti ----------
+const lembarP = ref(false); const tglP = ref(hari); const slotP = ref([]); const memuatP = ref(false)
+async function muatPengganti() {
+  memuatP.value = true
+  try { slotP.value = await jd.slotPengganti(tglP.value) } catch (e) { slotP.value = []; ui.toast(e.message, 'galat') } finally { memuatP.value = false }
+}
+function bukaPengganti() { const ulang = tglP.value === hari; tglP.value = hari; lembarP.value = true; if (ulang) muatPengganti() }
+watch(tglP, () => { if (lembarP.value) muatPengganti() })
+const stP = (x) => (x.jurnal?.oleh_guru ? 'guru' : x.jurnal ? (x.jurnal.status === 'tidak_terlaksana' ? 'tidak' : 'terisi') : x.terbuka ? 'belum' : 'kunci')
+const STATUS_P = { guru: { n: 'Sudah diisi guru pengampu', w: 'hakakses' }, terisi: { n: 'Terisi', w: 'presensi' }, tidak: { n: 'Tidak terlaksana', w: 'klinik' },
+  belum: { n: 'Belum diisi', w: 'pengajuan' }, kunci: { n: 'Terkunci', w: 'klinik' } }
+const blokP = computed(() => blokMengajar(slotP.value).map((x) => ({ ...x, st: stP(x), pengganti: true })))
+function isiPengganti(x) { lembarP.value = false; buka(x) }
 
 // ---------- Pengaturan (superadmin/admin ber-izin Jadwal pelajaran) ----------
 const bolehAtur = computed(() => sesi.isSuperadmin || sesi.bolehAdmin('atur_jadwal'))
@@ -154,6 +176,7 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
       </div>
       <button v-if="!pekanIni" class="tombol-garis min-h-[40px] px-3 text-sm" @click="pindahPekan(0)">Pekan ini</button>
       <p class="min-w-[180px] flex-1 text-sm text-teks3">{{ ringkas.isi }}/{{ ringkas.n }} pertemuan terisi<template v-if="ringkas.belum"> · <b class="text-merah">{{ ringkas.belum }} belum diisi</b></template> · batas pengisian H+{{ atur.batas_hari }}</p>
+      <button class="tombol-garis w-gurumapel min-h-[40px] px-3 text-sm" @click="bukaPengganti"><PhUserSwitch :size="18" weight="duotone" style="color: var(--c)" /> Mengajar sebagai pengganti</button>
       <router-link v-if="bolehAtur" to="/jurnal/pengaturan" class="tombol-ikon h-10 w-10" aria-label="Pengaturan jurnal mengajar" title="Pengaturan jurnal mengajar (Jurnal → Pengaturan)"><PhGear :size="20" weight="duotone" /></router-link>
     </div>
 
@@ -172,7 +195,7 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
               <span class="chip-ikon h-10 w-10 shrink-0"><PhChalkboardTeacher :size="22" weight="duotone" /></span>
               <span class="min-w-0 flex-1">
                 <b class="block truncate">{{ x.mapel }} · Kelas {{ x.kelas }}</b>
-                <span class="flex items-center gap-1 truncate text-xs text-teks3"><PhClock :size="13" class="shrink-0" /> {{ jamPendek(x.jam_mulai) }}–{{ jamPendek(x.jam_selesai) }} · {{ jpLabel(x) }} ({{ x.slot.length }} JP)<template v-if="x.jurnal?.materi"> · {{ x.jurnal.materi }}</template></span>
+                <span class="flex items-center gap-1 truncate text-xs text-teks3"><PhClock :size="13" class="shrink-0" /> {{ jamPendek(x.jam_mulai) }}–{{ jamPendek(x.jam_selesai) }} · {{ jpLabel(x) }} ({{ x.slot.length }} JP)<template v-if="x.jurnal?.materi"> · {{ x.jurnal.materi }}</template><template v-if="x.jurnal?.pengganti"> · diisi pengganti {{ x.jurnal.pengganti }}</template></span>
               </span>
               <span class="lencana shrink-0"><component :is="STATUS[x.st].i" :size="14" weight="fill" /> <span class="hidden sm:inline">{{ STATUS[x.st].n }}</span></span>
             </button>
@@ -186,15 +209,17 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
     <LembarBawah v-model="lembar" lebar :judul="b ? `${b.mapel} · Kelas ${b.kelas}` : ''">
       <div v-if="b && f" class="space-y-3 pb-2">
         <p class="flex flex-wrap items-center gap-2 text-sm text-teks2"><PhClock :size="16" /> {{ formatHari(b.tanggal) }} · {{ jpLabel(b) }} · {{ jamPendek(b.jam_mulai) }}–{{ jamPendek(b.jam_selesai) }} ({{ b.slot.length }} JP)
-          <button class="tombol-teks ml-auto h-9 min-h-0 text-sm" @click="bukaRencana(b)"><PhListNumbers :size="16" /> Rencana materi</button></p>
+          <button v-if="!b.pengganti" class="tombol-teks ml-auto h-9 min-h-0 text-sm" @click="bukaRencana(b)"><PhListNumbers :size="16" /> Rencana materi</button></p>
+        <p v-if="b.pengganti" class="rounded-xl p-3 text-sm w-gurumapel" style="background: color-mix(in srgb, var(--c) 10%, transparent)"><PhUserSwitch :size="16" class="mr-1 inline" style="color: var(--c)" />
+          Anda mengisi sebagai <b>guru pengganti</b> untuk {{ b.guru }}. Pertemuan ini tercatat pada jurnal mengajar Anda.</p>
         <p v-if="!bisaIsi" class="rounded-xl bg-permukaan2 p-3 text-sm text-teks2"><PhLockSimple :size="16" class="mr-1 inline" />
-          {{ b.st === 'nanti' ? 'Pertemuan ini belum berlangsung; jurnal dapat diisi pada harinya.' : `Batas pengisian H+${atur.batas_hari} sudah lewat. Jurnal hanya dapat dilihat.` }}</p>
+          {{ b.pengganti && b.jurnal?.oleh_guru ? 'Jurnal jam ini sudah diisi guru pengampunya.' : !b.pengganti && b.jurnal?.pengganti ? `Jurnal ini diisi guru pengganti (${b.jurnal.pengganti}) dan hanya dapat dilihat.` : b.st === 'nanti' ? 'Pertemuan ini belum berlangsung; jurnal dapat diisi pada harinya.' : `Batas pengisian H+${atur.batas_hari} sudah lewat. Jurnal hanya dapat dilihat.` }}</p>
 
         <template v-if="bisaIsi">
           <button v-if="b.rencana && !b.jurnal" class="tombol-garis w-full justify-start text-left text-sm" @click="sesuaiRencana">
             <PhLightning :size="18" weight="duotone" class="shrink-0 text-[#B7791F]" /> Sesuai rencana: {{ b.rencana.topik }}</button>
-          <div class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" aria-label="Status pertemuan">
-            <button v-for="s in [{ k: 'terlaksana', n: 'Terlaksana' }, { k: 'tidak_terlaksana', n: 'Tidak terlaksana' }]" :key="s.k" type="button" role="radio"
+          <div :class="['grid gap-1 rounded-2xl bg-permukaan2 p-1', b.pengganti ? 'grid-cols-1' : 'grid-cols-2']" role="radiogroup" aria-label="Status pertemuan">
+            <button v-for="s in (b.pengganti ? [{ k: 'terlaksana', n: 'Terlaksana' }] : [{ k: 'terlaksana', n: 'Terlaksana' }, { k: 'tidak_terlaksana', n: 'Tidak terlaksana' }])" :key="s.k" type="button" role="radio"
               :aria-checked="f.status === s.k" @click="f.status = s.k"
               :class="['min-h-[42px] rounded-xl text-sm font-semibold', f.status === s.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ s.n }}</button>
           </div>
@@ -277,6 +302,24 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
           <div v-if="b.jurnal.jumlah_anggota != null"><dt class="inline font-semibold">Kehadiran: </dt><dd class="inline">{{ b.jurnal.jumlah_hadir }}/{{ b.jurnal.jumlah_anggota }} santri</dd></div>
           <div v-if="b.jurnal.keterangan"><dt class="inline font-semibold">Catatan: </dt><dd class="inline">{{ b.jurnal.keterangan }}</dd></div>
         </dl>
+      </div>
+    </LembarBawah>
+
+    <!-- Mengajar sebagai pengganti -->
+    <LembarBawah v-model="lembarP" judul="Mengajar sebagai guru pengganti">
+      <div class="space-y-3 pb-2">
+        <p class="text-sm text-teks2">Pilih tanggal, lalu jam pelajaran guru lain yang Anda gantikan. Jurnalnya tercatat atas nama Anda sebagai guru pengganti.</p>
+        <div class="sm:max-w-xs"><InputTanggal v-model="tglP" label="Tanggal mengajar" /></div>
+        <p v-if="memuatP" class="py-4 text-center text-sm text-teks3">Memuat jadwal…</p>
+        <ul v-else class="max-h-[55dvh] space-y-2 overflow-y-auto">
+          <li v-for="x in blokP" :key="x.kunci">
+            <button type="button" :class="['flex w-full items-center gap-3 rounded-xl border border-garis p-3 text-left hover:bg-permukaan2', 'w-' + STATUS_P[x.st].w]" @click="isiPengganti(x)">
+              <span class="chip-ikon h-10 w-10 shrink-0"><PhChalkboardTeacher :size="22" weight="duotone" /></span>
+              <span class="min-w-0 flex-1"><b class="block truncate">Kelas {{ x.kelas }} · {{ x.mapel }}</b>
+                <span class="block truncate text-xs text-teks3">{{ jamPendek(x.jam_mulai) }}–{{ jamPendek(x.jam_selesai) }} · {{ jpLabel(x) }} · guru {{ x.guru }}{{ x.jurnal?.pengganti ? ' · pengganti ' + x.jurnal.pengganti : '' }}</span></span>
+              <span class="lencana shrink-0">{{ STATUS_P[x.st].n }}</span></button></li>
+          <li v-if="!blokP.length" class="rounded-xl bg-permukaan2 p-4 text-center text-sm text-teks3">Tidak ada jam pelajaran guru lain pada tanggal ini (hari libur, Ahad, tanggal yang akan datang, atau belum ada jadwal).</li>
+        </ul>
       </div>
     </LembarBawah>
 

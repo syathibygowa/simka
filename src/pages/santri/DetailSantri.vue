@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.12 | 14.9.0: tombol Rekam Kesantrian | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.13 | 14.9.2: surat keterangan pindah ber-QR (Cek Keabsahan) | 18/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Biodata santri: identitas, kontak orang tua/wali (tombol WA), riwayat status dan mutasi;
@@ -348,7 +348,7 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
       <p style="margin-top: 6pt; text-align: justify">Demikian surat keterangan ini dibuat dengan sebenarnya untuk dipergunakan sebagaimana mestinya.</p>
       <template #ttd>
         <TandaTangan :tanggal="mutasiCetak.tanggal" :kiri="{ pengantar: 'Mengetahui,', jabatan: direktur.jabatan, nama: direktur.nama, niy: direktur.niy }"
-          :kanan="{ jabatan: pimpinan.jabatan, nama: pimpinan.nama, niy: pimpinan.niy }" />
+          :kanan="{ jabatan: pimpinan.jabatan, nama: pimpinan.nama, niy: pimpinan.niy, kode: mutasiCetak.kode_validasi || null, waktu: mutasiCetak.kode_validasi ? mutasiCetak.created_at : null }" />
       </template>
     </DokumenCetak>
 

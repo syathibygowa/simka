@@ -1,4 +1,4 @@
-// SIMKA PRO | gas/Kode.gs | v1.2 | Fase 2 – Tahap 6 Verval dan koreksi | 03/10/2026
+// SIMKA PRO | gas/Kode.gs | v1.3 | 14.9.2: backup bulanan (CSV dalam ZIP) untuk presensi, absensi, hafalan, nilai, jurnal, keuangan | 18/10/2026
 /**
  * SIMKA PRO · Jembatan Google Apps Script (Gmail pondok: syathiby.gowa@gmail.com)
  * ---------------------------------------------------------------------------
@@ -8,6 +8,8 @@
  *   3. heartbeatHarian   : menulis heartbeat ke Supabase + pemeriksaan kesehatan
  *   4. retensiHarian     : membuang foto yang melewati masa simpan (selfie 6 bulan, dll.)
  *   5. backupMingguan    : menyalin tabel penting ke Google Sheets
+ *   6. backupBulanan     : tanggal 1 setiap bulan, data kegiatan bulan lalu + data induk santri/nilai/keuangan
+ *                          disimpan sebagai berkas ZIP berisi CSV di Drive: SIMKA PRO/Backup/Bulanan/<tahun>/
  *
  * Script Properties (Project Settings → Script properties):
  *   SUPABASE_SERVICE_KEY  service_role key (RAHASIA) → satu-satunya yang diisi manual
@@ -18,11 +20,15 @@
  *   2. Jalankan aturAwal()     → membuat folder Drive "SIMKA PRO" dan GAS_SECRET.
  *   3. Jalankan ujiKoneksi()   → memeriksa Supabase, Drive, dan kuota email.
  *   4. Jalankan ujiEmail()     → mengirim email uji ke EMAIL_PERINGATAN.
- *   5. Jalankan pasangPemicu() → memasang 4 jadwal otomatis.
+ *   5. Jalankan pasangPemicu() → memasang 6 jadwal otomatis.
  *   6. Deploy → New deployment → Web app (Execute as: Me, Who has access: Anyone).
  *      Salin URL Web app ke Supabase secret GAS_URL; salin GAS_SECRET ke secret GAS_SECRET.
  *
  * Perubahan v1.1: email memakai MailApp (izin lebih sempit), tambah aturAwal() dan ujiEmail().
+ * Perubahan v1.3: backup bulanan (backupBulanan) — presensi pegawai, absensi santri, setoran hafalan, jurnal harian dan
+ *   jurnal mengajar, perizinan, security, klinik, tagihan/pembayaran/kas per bulan; ditambah salinan lengkap data induk
+ *   santri, kelompok, tahfizh, nilai dan rapor, beban kerja, keuangan, dan gaji. Pasang ulang pemicu: jalankan pasangPemicu().
+ *   Uji sekali dengan menjalankan backupBulanIni() (data bulan berjalan sampai hari ini).
  * Perubahan v1.2: aksi 'ambil_berkas' agar admin dapat melihat selfie di Drive lewat Edge Function "berkas".
  *   Setelah menempel kode ini: Deploy → Manage deployments → ikon pensil → Version: New version → Deploy
  *   (URL Web app tetap sama, tidak perlu mengubah secret GAS_URL).
@@ -37,7 +43,8 @@ const NAMA_PENGIRIM = 'SIMKA PRO Imam Asy-Syathiby';
 const TABEL_BACKUP = ['employees', 'employee_functions', 'employee_structurals', 'employment_history',
   'org_units', 'functional_positions', 'structural_positions', 'feature_grants', 'admin_permissions',
   'institution_settings', 'letterheads', 'signatories', 'signer_rules', 'holidays', 'academic_years',
-  'doc_number_formats', 'doc_counters', 'doc_numbers_issued', 'storage_objects'];
+  'doc_number_formats', 'doc_counters', 'doc_numbers_issued', 'storage_objects',
+  'students', 'student_contacts', 'student_groups', 'group_members', 'group_keepers', 'finance_accounts'];
 const SIMPAN_BACKUP = 8; // jumlah berkas backup mingguan yang disimpan
 
 function prop_(k) {
@@ -191,7 +198,7 @@ function heartbeatHarian() {
     const gagal = sb_('/rest/v1/storage_objects?status=eq.gagal&select=id', { headers: { Prefer: 'count=exact' } });
     if (gagal && gagal.length) masalah.push(gagal.length + ' berkas gagal dipindah ke Drive.');
   } catch (err) { masalah.push('Pemeriksaan antrian gagal: ' + err); }
-  if (ScriptApp.getProjectTriggers().length < 4) masalah.push('Jumlah pemicu GAS kurang dari 4. Jalankan pasangPemicu().');
+  if (ScriptApp.getProjectTriggers().length < 6) masalah.push('Jumlah pemicu GAS kurang dari 6. Jalankan pasangPemicu().');
 
   if (masalah.length) {
     MailApp.sendEmail(prop_('EMAIL_PERINGATAN'), '[SIMKA PRO] Peringatan pemeriksaan kesehatan',
@@ -255,6 +262,169 @@ function backupMingguan() {
 }
 
 // ---------------------------------------------------------------------------
+// 6. Backup bulanan (CSV dalam ZIP) — v1.3
+// ---------------------------------------------------------------------------
+// Data kegiatan: disalin per bulan menurut kolom tanggalnya. [tabel, kolom tanggal, urutan, keterangan]
+const BACKUP_KEGIATAN = [
+  ['attendances', 'tanggal', 'id', 'Presensi pegawai'],
+  ['attendance_events', 'tanggal', 'id', 'Rincian presensi (lokasi, selfie, perangkat)'],
+  ['leave_requests', 'mulai', 'id', 'Pengajuan izin/sakit/cuti/dinas luar'],
+  ['journal_entries', 'tanggal', 'id', 'Jurnal harian pegawai'],
+  ['journal_checks', 'tanggal', 'employee_id,tanggal,item_id', 'Ceklist jurnal harian'],
+  ['teaching_journals', 'tanggal', 'id', 'Jurnal mengajar guru'],
+  ['student_attendance_sessions', 'tanggal', 'id', 'Sesi absensi santri (kelas, halaqah, asrama, ekskul)'],
+  ['student_attendance_exceptions', 'student_attendance_sessions.tanggal', 'id', 'Santri tidak hadir per sesi (yang tidak tercatat = hadir)'],
+  ['memorization_sessions', 'tanggal', 'id', 'Sesi setoran hafalan'],
+  ['memorization_logs', 'tanggal', 'id', 'Setoran hafalan santri'],
+  ['monthly_achievements', 'bulan', 'student_id,bulan', 'Capaian hafalan bulanan'],
+  ['dorm_journals', 'tanggal', 'id', 'Jurnal musyrif'],
+  ['student_violations', 'tanggal', 'id', 'Pelanggaran santri'],
+  ['student_permits', 'keluar_pada', 'id', 'Perizinan santri'],
+  ['gate_logs', 'waktu', 'id', 'Keluar-masuk gerbang'],
+  ['parent_visits', 'datang_pada', 'id', 'Kunjungan orang tua'],
+  ['parcels', 'diterima_pada', 'id', 'Titipan santri'],
+  ['guest_logs', 'masuk_pada', 'id', 'Buku tamu'],
+  ['clinic_cases', 'dibuka_pada', 'id', 'Kasus klinik'],
+  ['incident_reports', 'created_at', 'id', 'Laporan ke bidang'],
+  ['bills', 'tanggal_tagih', 'id', 'Tagihan santri'],
+  ['payments', 'tanggal', 'id', 'Pembayaran santri'],
+  ['finance_entries', 'tanggal', 'id', 'Pemasukan dan pengeluaran'],
+  ['finance_transfers', 'tanggal', 'id', 'Pindah dana antarrekening'],
+];
+// Data induk: disalin lengkap setiap bulan. [tabel, urutan]
+const BACKUP_INDUK = [
+  ['students', 'id'], ['student_contacts', 'id'], ['student_status_history', 'id'], ['student_mutations', 'id'],
+  ['student_groups', 'id'], ['group_members', 'id'], ['group_keepers', 'id'],
+  ['student_tahfizh', 'student_id'], ['juz_achievements', 'id'], ['juz_proposals', 'id'], ['tahfizh_exams', 'id'], ['utas_results', 'id'],
+  ['subjects', 'id'], ['lesson_periods', 'id'], ['teaching_assignments', 'id'], ['class_schedules', 'id'],
+  ['grade_periods', 'id'], ['grade_categories', 'id'], ['grade_columns', 'id'], ['grade_scores', 'column_id,student_id'],
+  ['grade_finals', 'assignment_id,semester,student_id'], ['grade_objectives', 'id'],
+  ['report_subjects', 'id'], ['report_subject_sources', 'report_subject_id,subject_id'],
+  ['report_manual_scores', 'academic_year_id,semester,report_subject_id,student_id'],
+  ['report_extracurricular', 'academic_year_id,semester,group_id,student_id'], ['report_notes', 'academic_year_id,semester,student_id,jenis'],
+  ['report_decisions', 'academic_year_id,student_id'], ['report_cocurricular', 'academic_year_id,semester,student_id'],
+  ['student_achievements', 'id'], ['student_warnings', 'id'], ['employee_warnings', 'id'],
+  ['employee_workloads', 'id'], ['workload_snapshots', 'periode,employee_id'],
+  ['fee_types', 'id'], ['fee_subsidies', 'id'], ['finance_accounts', 'id'], ['clearance_letters', 'id'],
+  ['payroll_periods', 'id'], ['payroll_lines', 'id'], ['document_registry', 'id'],
+];
+
+/** Bulan lalu sebagai { kode: '2026-09', mulai: '2026-09-01', akhir: '2026-09-30' }. */
+function bulanLalu_() {
+  const k = Utilities.formatDate(new Date(), 'Asia/Makassar', 'yyyy-MM').split('-').map(Number);
+  const th = k[1] === 1 ? k[0] - 1 : k[0]; const bl = k[1] === 1 ? 12 : k[1] - 1;
+  return rentangBulan_(th + '-' + ('0' + bl).slice(-2));
+}
+function rentangBulan_(kode) {
+  const b = kode.split('-').map(Number);
+  const akhir = new Date(Date.UTC(b[0], b[1], 0)).getUTCDate();
+  return { kode: kode, mulai: kode + '-01', akhir: kode + '-' + ('0' + akhir).slice(-2) };
+}
+
+/** Ambil semua baris (per 1000) dari REST Supabase. */
+function ambilSemua_(tabel, saring, urut) {
+  let hasil = [], dari = 0;
+  while (true) {
+    const potong = sb_('/rest/v1/' + tabel + '?' + saring + (saring ? '&' : '') + 'order=' + urut.split(',').map(function (k) { return k + '.asc'; }).join(','),
+      { headers: { Range: dari + '-' + (dari + 999) } });
+    hasil = hasil.concat(potong);
+    if (potong.length < 1000) break;
+    dari += 1000;
+  }
+  return hasil;
+}
+
+/** Baris → teks CSV (UTF-8 dengan BOM agar terbaca benar di Excel). */
+function keCsv_(baris) {
+  if (!baris.length) return '﻿(kosong)\n';
+  const kolom = Object.keys(baris[0]);
+  const sel = function (v) {
+    if (v === null || v === undefined) return '';
+    const t = typeof v === 'object' ? JSON.stringify(v) : String(v);
+    return /[",\n\r;]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+  };
+  return '﻿' + [kolom.join(',')].concat(baris.map(function (r) { return kolom.map(function (k) { return sel(r[k]); }).join(','); })).join('\n') + '\n';
+}
+
+/** Simpan blob CSV ke satu ZIP di SIMKA PRO/Backup/Bulanan/<tahun>/ dan catat ringkasannya. */
+function simpanZip_(nama, berkas, ringkas, tahun) {
+  berkas.push(Utilities.newBlob('﻿' + ringkas.join('\n') + '\n', 'text/csv', '00-RINGKASAN.csv'));
+  const zip = Utilities.zip(berkas, nama + '.zip');
+  const folder = folderJalur_('SIMKA PRO/Backup/Bulanan/' + tahun);
+  const lama = folder.getFilesByName(nama + '.zip');
+  while (lama.hasNext()) lama.next().setTrashed(true); // backup ulang bulan yang sama menggantikan berkas lama
+  const f = folder.createFile(zip);
+  sb_('/rest/v1/heartbeat', { method: 'post', body: { sumber: 'gas-backup-bulanan', catatan: nama } });
+  return f;
+}
+
+function laporGagal_(judul, err) {
+  try {
+    MailApp.sendEmail(prop_('EMAIL_PERINGATAN'), '[SIMKA PRO] ' + judul + ' gagal',
+      judul + ' gagal dijalankan:\n\n' + err + '\n\nJalankan ulang fungsinya dari editor Apps Script. Waktu: ' +
+      Utilities.formatDate(new Date(), 'Asia/Makassar', 'dd/MM/yyyy HH:mm') + ' WITA');
+  } catch (e) { /* kuota email habis */ }
+}
+
+/** Data kegiatan satu bulan (bawaan: bulan lalu). */
+function backupBulananKegiatan(kode) {
+  const r = typeof kode === 'string' ? rentangBulan_(kode) : bulanLalu_();
+  try {
+    const berkas = []; const ringkas = ['Tabel,Keterangan,Jumlah baris,Periode'];
+    BACKUP_KEGIATAN.forEach(function (t, i) {
+      const kolom = t[1];
+      let saring;
+      if (kolom.indexOf('.') > 0) {
+        // Tabel anak: saring lewat tabel induknya (mis. ketidakhadiran → sesi absensi)
+        const induk = kolom.split('.')[0];
+        saring = 'select=*,' + induk + '!inner(tanggal)&' + kolom + '=gte.' + r.mulai + '&' + kolom + '=lte.' + r.akhir;
+      } else if (/_pada$|^waktu$|^created_at$/.test(kolom)) {
+        saring = 'select=*&' + kolom + '=gte.' + r.mulai + 'T00:00:00%2B08:00&' + kolom + '=lte.' + r.akhir + 'T23:59:59%2B08:00';
+      } else {
+        saring = 'select=*&' + kolom + '=gte.' + r.mulai + '&' + kolom + '=lte.' + r.akhir;
+      }
+      let baris = ambilSemua_(t[0], saring, t[2]);
+      if (kolom.indexOf('.') > 0) { const induk = kolom.split('.')[0]; baris = baris.map(function (x) { delete x[induk]; return x; }); }
+      berkas.push(Utilities.newBlob(keCsv_(baris), 'text/csv', ('0' + (i + 1)).slice(-2) + '-' + t[0] + '.csv'));
+      ringkas.push(t[0] + ',"' + t[3] + '",' + baris.length + ',' + r.kode);
+    });
+    const f = simpanZip_('Backup Bulanan SIMKA PRO ' + r.kode + ' - Kegiatan', berkas, ringkas, r.kode.slice(0, 4));
+    Logger.log('Backup kegiatan ' + r.kode + ' tersimpan: ' + f.getUrl());
+  } catch (err) { laporGagal_('Backup bulanan kegiatan ' + r.kode, err); throw err; }
+}
+
+/** Data induk lengkap (santri, kelompok, tahfizh, nilai dan rapor, beban kerja, keuangan, gaji). */
+function backupBulananInduk(kode) {
+  const r = typeof kode === 'string' ? rentangBulan_(kode) : bulanLalu_();
+  try {
+    const berkas = []; const ringkas = ['Tabel,Keterangan,Jumlah baris,Keadaan per'];
+    const per = Utilities.formatDate(new Date(), 'Asia/Makassar', 'dd/MM/yyyy HH:mm');
+    BACKUP_INDUK.forEach(function (t, i) {
+      const baris = ambilSemua_(t[0], 'select=*', t[1]);
+      berkas.push(Utilities.newBlob(keCsv_(baris), 'text/csv', ('0' + (i + 1)).slice(-2) + '-' + t[0] + '.csv'));
+      ringkas.push(t[0] + ',Salinan lengkap,' + baris.length + ',' + per);
+    });
+    const f = simpanZip_('Backup Bulanan SIMKA PRO ' + r.kode + ' - Data Induk', berkas, ringkas, r.kode.slice(0, 4));
+    Logger.log('Backup data induk ' + r.kode + ' tersimpan: ' + f.getUrl());
+  } catch (err) { laporGagal_('Backup bulanan data induk ' + r.kode, err); throw err; }
+}
+
+/** Dijalankan pemicu tanggal 1: keduanya untuk bulan lalu. */
+function backupBulanan() { backupBulananKegiatan(); backupBulananInduk(); }
+
+/** Uji/backup manual bulan berjalan (data sampai hari ini). */
+function backupBulanIni() {
+  const kode = Utilities.formatDate(new Date(), 'Asia/Makassar', 'yyyy-MM');
+  backupBulananKegiatan(kode); backupBulananInduk(kode);
+}
+
+/** Backup manual bulan tertentu: ubah teks bulan di bawah, lalu jalankan fungsi ini. */
+function backupBulanTertentu() {
+  const kode = '2026-09'; // format tahun-bulan
+  backupBulananKegiatan(kode); backupBulananInduk(kode);
+}
+
+// ---------------------------------------------------------------------------
 // Pemasangan pemicu (jalankan satu kali)
 // ---------------------------------------------------------------------------
 function pasangPemicu() {
@@ -264,6 +434,9 @@ function pasangPemicu() {
   ScriptApp.newTrigger('retensiHarian').timeBased().atHour(3).everyDays(1).inTimezone('Asia/Makassar').create();
   ScriptApp.newTrigger('backupMingguan').timeBased().onWeekDay(ScriptApp.WeekDay.SUNDAY).atHour(1)
     .inTimezone('Asia/Makassar').create();
+  // Backup bulanan: tanggal 1, data kegiatan pukul 04.00 dan data induk pukul 05.00 WITA (terpisah agar tidak melewati batas 6 menit)
+  ScriptApp.newTrigger('backupBulananKegiatan').timeBased().onMonthDay(1).atHour(4).inTimezone('Asia/Makassar').create();
+  ScriptApp.newTrigger('backupBulananInduk').timeBased().onMonthDay(1).atHour(5).inTimezone('Asia/Makassar').create();
   Logger.log('Pemicu terpasang: ' + ScriptApp.getProjectTriggers().length);
 }
 

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v4.2 | 14.6.0: menu Kedisiplinan Santri (pelanggaran dan surat peringatan santri) | 18/10/2026
+// SIMKA PRO | src/lib/menu.js | v4.3 | 14.9.2: menu Penilaian terbuka mulai hak Lihat (baca saja) | 18/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Fungsional, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -69,7 +69,7 @@ export const MENU = [
   { kode: 'disiplin',   nama: 'Kedisiplinan Santri', ikon: PhGavel,     warna: 'disiplin',   ke: '/disiplin-santri',   grup: 'Santri', fitur: 'disiplin_santri', admin: true, izin: 'kelola_disiplin',
     otomatis: (c) => c.kelompok || !!c.pimpinan || t(c, 'tata_usaha') >= 2 || t(c, 'gerbang') >= 2 },
   // Penilaian: pengaturan, rekap, dan permintaan ubah nilai. Pengisian nilai tetap di menu kerja penilai.
-  { kode: 'penilaian',  nama: 'Penilaian',       ikon: PhExam,           warna: 'penilaian',  ke: '/penilaian',         grup: 'Santri', fitur: 'nilai', min: 3, otomatis: (c) => !!c.penilaian },
+  { kode: 'penilaian',  nama: 'Penilaian',       ikon: PhExam,           warna: 'penilaian',  ke: '/penilaian',         grup: 'Santri', fitur: 'nilai', min: 1, otomatis: (c) => !!c.penilaian },
   { kode: 'klinik',     nama: 'Klinik',          ikon: PhFirstAidKit,    warna: 'klinik',     ke: '/klinik',            grup: 'Fungsional', fitur: 'klinik', admin: true,
     otomatis: (c) => c.kelompok || t(c, 'data_santri') >= 1 },
   { kode: 'izinsantri', nama: 'Perizinan', ikon: PhSignOut, warna: 'pengajuan', ke: '/izin-santri', grup: 'Layanan', fitur: 'perizinan_santri', admin: true, izin: 'kelola_izin_santri',

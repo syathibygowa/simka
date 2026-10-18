@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/hakAkses.js | v2.3 | 14.6.0: fitur Kedisiplinan santri dan izin admin kelola_disiplin | 18/10/2026
+// SIMKA PRO | src/lib/hakAkses.js | v2.4 | 14.9.2: arti tingkat 1–2 Penilaian kini berpengaruh | 18/10/2026
 // Katalog Hak Akses Fitur: SATU fitur untuk setiap menu (atau sekelompok menu yang tidak terpisahkan), dikelompokkan sesuai
 // grup menu di sidebar. Isi ini sama dengan migrasi 20261020011200_hak_akses_semua_fitur.sql (+ 20261021011300, 20261022011400) dan dipakai sebagai cadangan bila
 // kolom keterangan belum ada di database serta sebagai data mode demo.
@@ -76,7 +76,7 @@ export const KATALOG_FITUR = [
     keterangan: 'Pengasuh santri dan petugas Security otomatis dapat mencatat. Pimpinan Bidang Kesantrian otomatis tingkat Kelola. Surat diproses Tata Usaha dan ditandatangani Direktur.',
     izin: [{ kode: 'kelola_disiplin', min: 3 }] },
   { kode: 'nilai', nama: 'Penilaian dan rapor', kelompok: 'Santri', urutan: 5, menu: 'Penilaian',
-    arti: { 1: 'Belum berpengaruh (nilai diisi di menu kerja penilai)', 2: 'Belum berpengaruh (nilai diisi di menu kerja penilai)', 3: 'Membuka menu Penilaian: mengatur penilaian, mengelola nilai, dan mencetak rapor' },
+    arti: { 1: 'Membuka menu Penilaian (baca saja): rekap pengisian, pengaturan rapor, serta nilai dan rapor semua kelas', 2: 'Seperti Lihat, ditambah mengisi atau mengoreksi nilai mapel guru mana pun selama periode penilaian dibuka', 3: 'Membuka menu Penilaian: mengatur penilaian, mengelola nilai, dan mencetak rapor' },
     keterangan: 'Pengisian nilai tetap di menu kerja penilai (Guru Mapel, Tahfizh, Ekskul, Wali Kelas).', izin: [{ kode: 'atur_penilaian', min: 3 }, { kode: 'kelola_nilai', min: 3 }] },
   { kode: 'jadwal_mengajar', nama: 'Jadwal pelajaran dan guru mapel', kelompok: 'Santri', urutan: 6, menu: 'Jadwal Pelajaran, Guru Mapel',
     arti: { 1: 'Melihat jadwal pelajaran', 2: 'Sama dengan lihat', 3: 'Mengatur jadwal dan penugasan, memantau jurnal mengajar semua guru' },
