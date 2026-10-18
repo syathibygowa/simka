@@ -1,20 +1,23 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.4 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.5 | 14.9.1: konfirmasi WA ke penguji, antrian penguji, WA jadwal dan hasil ke muhaffizh, keterangan dan catatan perbaikan | 18/10/2026 -->
 <script setup>
 // Ujian tahfizh: kenaikan juz, sertifikasi berjenjang (5, 10, 15 … juz), dan UTAS (Fase 12, TabUtas.vue).
 // Muhaffizh merekomendasikan → penguji aktif menerima notifikasi (dan dapat dikabari WA) → penguji mengambil/menjadwalkan
 // atau admin menetapkan penguji → penguji menilai Tajwid & Itqan → Tuntas/Remidi. Kenaikan juz Tuntas otomatis menjadi
 // usulan capaian juz di tab Capaian. Muhaffizh tidak menguji santri halaqahnya sendiri. Daftar diperbarui langsung.
 // Tahap D: ujian Tuntas → penguji (atau pimpinan tahfizh/Tata Usaha) menerbitkan Suket Ujian Kenaikan Juz / Sertifikat Hafalan bernomor.
+// v1.5 (14.9.1): setelah rekomendasi muncul konfirmasi WA per santri ke penguji; penguji punya saringan "Antrian saya"; setelah menjadwalkan
+//   muncul WA jadwal ke muhaffizh; setelah menilai muncul WA hasil ke muhaffizh (nama, kelas, halaqah, muhaffizh, nilai, keterangan
+//   Lulus/Perbaikan/Tidak lulus, catatan perbaikan). Semua pesan dapat dipratinjau dan dikirim ulang dari kartu ujian.
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import {
   PhExam, PhCertificate, PhPaperPlaneTilt, PhHandGrabbing, PhPencilLine, PhX, PhWhatsappLogo, PhUserGear, PhCalendarBlank, PhMagnifyingGlass,
-  PhHourglass, PhCheckCircle, PhXCircle, PhUsersThree,
+  PhHourglass, PhCheckCircle, PhXCircle, PhUsersThree, PhListChecks,
 } from '@phosphor-icons/vue'
 import { useTahfizh } from '@/stores/tahfizh'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
-import { STATUS_UJIAN, HASIL_UJIAN, JENIS_PENGUJI, ringkasJuz, hitungNilai } from '@/lib/tahfizh'
-import { formatWaktu, hariIniISO } from '@/lib/tanggal'
+import { STATUS_UJIAN, HASIL_UJIAN, JENIS_PENGUJI, KETERANGAN_UJIAN, ringkasJuz, hitungNilai } from '@/lib/tahfizh'
+import { formatWaktu, formatHari, formatJam, hariIniISO } from '@/lib/tanggal'
 import { tautanWA, halamanAplikasi, pesanWA } from '@/lib/wa'
 import BilahTab from '@/components/BilahTab.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
@@ -22,6 +25,8 @@ import LembarBawah from '@/components/LembarBawah.vue'
 import GridJuz from '@/components/GridJuz.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import InputJam from '@/components/InputJam.vue'
+import PratinjauWA from '@/components/PratinjauWA.vue'
+import TombolWA from '@/components/TombolWA.vue'
 import TabUtas from './TabUtas.vue'
 import LembarTerbitTahfizh from './LembarTerbitTahfizh.vue'
 import CetakDokumenTahfizh from './CetakDokumenTahfizh.vue'
@@ -54,7 +59,12 @@ onMounted(async () => {
 })
 onBeforeUnmount(() => tz.berhentiUjian())
 
-const tampil = computed(() => { const q = cari.value.toLowerCase().trim(); return daftar.value.filter((u) => !q || `${u.nama} ${u.nis} ${u.halaqah || ''}`.toLowerCase().includes(q)) })
+// Antrian penguji: ujian yang dapat diambil/dinilai penguji ini, atau sudah dipegangnya
+const sayaPenguji = computed(() => !!(tz.hak[`penguji_${jenis.value}`]))
+const antrianSaya = ref(false)
+const jumlahAntrian = computed(() => daftar.value.filter((u) => ['menunggu', 'dijadwalkan'].includes(u.status) && (u.boleh_nilai || u.penguji_saya)).length)
+watch(sayaPenguji, (v) => { if (v && !pengelola.value) antrianSaya.value = true }, { immediate: true })
+const tampil = computed(() => { const q = cari.value.toLowerCase().trim(); return daftar.value.filter((u) => (!q || `${u.nama} ${u.nis} ${u.halaqah || ''}`.toLowerCase().includes(q)) && (!antrianSaya.value || u.boleh_nilai || u.penguji_saya)) })
 const statistik = computed(() => {
   const d = daftar.value
   return [
@@ -83,7 +93,8 @@ async function rekomendasikan() {
   try {
     await tz.rekomendasikanUjian(s.student_id, jenis.value, juzRek.value, jenis.value === 'sertifikasi' ? jenjangBerikut.value : null, catRek.value.trim())
     lembarRek.value = false; ui.toast('Rekomendasi terkirim. Penguji aktif menerima notifikasi.'); status.value = 'aktif'; await muat()
-    if (tz.penguji[jenis.value].some((p) => p.aktif && p.no_hp)) bukaWA()
+    const baru = daftar.value.find((u) => u.student_id === s.student_id && u.status === 'menunggu' && u.jenis === jenis.value)
+    if (baru) bukaKirim('rekomendasi', baru)
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 
@@ -106,24 +117,31 @@ async function ambil() {
   try {
     if (pengujiPilih.value) await tz.tetapkanPenguji(ujianPilih.value.id, pengujiPilih.value, jadwalISO())
     else await tz.ambilUjian(ujianPilih.value.id, jadwalISO())
+    const idUjian = ujianPilih.value.id
     lembarAmbil.value = false; ui.toast('Ujian dijadwalkan.'); await muat()
+    const u = daftar.value.find((x) => x.id === idUjian); if (u) bukaKirim('jadwal', u)
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 
 // ---------- Penilaian ----------
-const lembarNilai = ref(false); const tajwid = ref(''); const itqan = ref(''); const catNilai = ref('')
+const lembarNilai = ref(false); const tajwid = ref(''); const itqan = ref(''); const catNilai = ref(''); const ketNilai = ref('perbaikan'); const perbaikan = ref('')
 const pratinjau = computed(() => hitungNilai(tajwid.value, itqan.value, tz.pengaturan, tz.predikat))
-function bukaNilai(u) { ujianPilih.value = u; tajwid.value = ''; itqan.value = ''; catNilai.value = ''; lembarNilai.value = true }
+function bukaNilai(u) { ujianPilih.value = u; tajwid.value = ''; itqan.value = ''; catNilai.value = ''; ketNilai.value = 'perbaikan'; perbaikan.value = ''; lembarNilai.value = true }
+const ketPratinjau = computed(() => (!pratinjau.value ? null : pratinjau.value.hasil === 'tuntas' ? 'lulus' : ketNilai.value))
 async function simpanNilai() {
   const a = Number(tajwid.value); const b = Number(itqan.value)
   if (tajwid.value === '' || itqan.value === '' || !(a >= 0 && a <= 100) || !(b >= 0 && b <= 100)) return ui.toast('Nilai Tajwid dan Itqan harus 0–100.', 'galat')
-  if (!(await ui.konfirmasi({ judul: 'Simpan nilai ujian?', pesan: `${ujianPilih.value.nama}: nilai akhir ${pratinjau.value.akhir} (${pratinjau.value.huruf}) → ${HASIL_UJIAN[pratinjau.value.hasil].n}. Nilai tidak dapat diubah setelah disimpan.`, ya: 'Simpan nilai' }))) return
+  if (pratinjau.value.hasil === 'remidi' && !perbaikan.value.trim()) return ui.toast('Tuliskan catatan perbaikan untuk santri yang belum lulus.', 'galat')
+  if (!(await ui.konfirmasi({ judul: 'Simpan nilai ujian?', pesan: `${ujianPilih.value.nama}: nilai akhir ${pratinjau.value.akhir} (${pratinjau.value.huruf}) → ${KETERANGAN_UJIAN[ketPratinjau.value].n}. Nilai tidak dapat diubah setelah disimpan.`, ya: 'Simpan nilai' }))) return
   proses.value = true
   try {
-    const h = await tz.nilaiUjian(ujianPilih.value.id, a, b, catNilai.value.trim())
+    const idUjian = ujianPilih.value.id
+    const h = await tz.nilaiUjian(idUjian, a, b, catNilai.value.trim(), ketNilai.value, perbaikan.value)
     lembarNilai.value = false
-    ui.toast(`${ujianPilih.value.nama}: ${HASIL_UJIAN[h.hasil].n} (${h.nilai_akhir}, ${h.huruf}).${h.hasil === 'tuntas' && ujianPilih.value.jenis === 'kenaikan' ? ' Juz diusulkan untuk divalidasi.' : ''}`)
+    ui.toast(`${ujianPilih.value.nama}: ${KETERANGAN_UJIAN[h.keterangan || (h.hasil === 'tuntas' ? 'lulus' : 'perbaikan')].n} (${h.nilai_akhir}, ${h.huruf}).${h.hasil === 'tuntas' && ujianPilih.value.jenis === 'kenaikan' ? ' Juz diusulkan untuk divalidasi.' : ''}`)
+    if (status.value === 'aktif') status.value = 'selesai'
     await muat()
+    const u = daftar.value.find((x) => x.id === idUjian); if (u) bukaKirim('hasil', u)
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 
@@ -137,6 +155,36 @@ async function batal() {
   catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 const bolehBatal = (u) => ['menunggu', 'dijadwalkan'].includes(u.status) && (u.muhaffizh_saya || pengelola.value)
+
+// ---------- Pesan WhatsApp per ujian: rekomendasi → penguji, jadwal → muhaffizh, hasil → muhaffizh ----------
+const lembarKirim = ref(false); const kirim = ref({ mode: '', ujian: null })
+const JUDUL_KIRIM = { rekomendasi: 'Konfirmasi rekomendasi ke penguji', jadwal: 'Kabari muhaffizh: jadwal ujian', hasil: 'Teruskan hasil ujian ke muhaffizh' }
+const teksJadwal = (u) => (u.jadwal ? `${formatHari(u.jadwal)} pukul ${formatJam(u.jadwal)} WITA` : 'menyusul')
+const dataPesan = (u, nama) => ({ nama, jenis_ujian: JENIS_PENGUJI[u.jenis].toLowerCase(), nama_santri: u.nama, kelas: u.kelas, halaqah: u.halaqah, muhaffizh: u.muhaffizh,
+  materi: ketUjian(u), catatan: u.catatan_rekomendasi, jadwal: teksJadwal(u), penguji: u.penguji, tautan: halamanAplikasi('/tahfizh/ujian'),
+  nilai_tajwid: u.nilai_tajwid, nilai_itqan: u.nilai_itqan, nilai_akhir: u.nilai_akhir, predikat: [u.huruf, u.predikat].filter(Boolean).join(', '),
+  keterangan_ujian: KETERANGAN_UJIAN[u.keterangan]?.n || (u.hasil ? HASIL_UJIAN[u.hasil].n : ''), catatan_perbaikan: u.catatan_perbaikan || (u.keterangan === 'lulus' ? 'tidak ada' : '') })
+/** Penerima: rekomendasi → penguji aktif (penguji terpilih bila sudah ada); jadwal/hasil → muhaffizh halaqah, ditambah perekomendasi bila orangnya berbeda. */
+const penerimaKirim = computed(() => {
+  const u = kirim.value.ujian; if (!u) return []
+  const kode = { rekomendasi: 'ujian_rekomendasi', jadwal: 'ujian_jadwal', hasil: 'ujian_hasil' }[kirim.value.mode]
+  let daftarP = []
+  if (kirim.value.mode === 'rekomendasi') {
+    daftarP = u.penguji ? [{ nama: u.penguji, hp: u.hp_penguji, ket: 'Penguji' }]
+      : tz.penguji[u.jenis].filter((p) => p.aktif && p.employee_id !== sesi.pengguna?.id).map((p) => ({ nama: p.nama, hp: p.no_hp, ket: p.jabatan || 'Penguji aktif' }))
+  } else {
+    daftarP = [{ nama: u.muhaffizh || 'Muhaffizh', hp: u.hp_muhaffizh, ket: `Muhaffizh ${u.halaqah || ''}`.trim() }]
+    if (u.direkomendasikan_oleh && u.direkomendasikan_oleh !== u.muhaffizh) daftarP.push({ nama: u.direkomendasikan_oleh, hp: u.hp_perekomendasi, ket: 'Yang merekomendasikan' })
+  }
+  return daftarP.map((p) => ({ ...p, pesan: pesanWA(kode, dataPesan(u, p.nama)) }))
+})
+const pratinjauKe = ref(0)
+function bukaKirim(mode, u) { kirim.value = { mode, ujian: u }; pratinjauKe.value = 0; lembarKirim.value = true }
+const bolehKirim = (u) => ({
+  rekomendasi: u.status === 'menunggu' && (u.muhaffizh_saya || pengelola.value),
+  jadwal: u.status === 'dijadwalkan' && (u.penguji_saya || pengelola.value),
+  hasil: u.status === 'selesai' && (u.penguji_saya || pengelola.value),
+})
 </script>
 <template>
   <div>
@@ -151,6 +199,8 @@ const bolehBatal = (u) => ['menunggu', 'dijadwalkan'].includes(u.status) && (u.m
         <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri atau halaqah" aria-label="Cari santri" /></div>
       <button v-if="tz.hak.muhaffizh || pengelola" class="tombol-utama" @click="bukaRek"><PhPaperPlaneTilt :size="20" weight="duotone" /> Rekomendasikan</button>
       <button v-if="pengujiAktif.length" class="tombol-wa-garis w-presensi" @click="bukaWA"><PhWhatsappLogo :size="20" weight="duotone" /> Kabari penguji</button>
+      <button v-if="sayaPenguji" :class="['tombol-garis w-agenda', antrianSaya && 'font-bold ring-2 ring-[var(--c)]']" :aria-pressed="antrianSaya" @click="antrianSaya = !antrianSaya">
+        <PhListChecks :size="20" weight="duotone" style="color: var(--c)" /> Antrian saya <span class="lencana w-agenda">{{ jumlahAntrian }}</span></button>
     </div>
 
     <div class="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
@@ -175,6 +225,8 @@ const bolehBatal = (u) => ['menunggu', 'dijadwalkan'].includes(u.status) && (u.m
               <div class="rounded-lg bg-permukaan2 p-1.5"><b class="block text-base tabular-nums" style="color: var(--c)">{{ u.nilai_akhir }}</b>Akhir</div>
               <div class="rounded-lg bg-permukaan2 p-1.5"><b class="block text-base">{{ u.huruf || '–' }}</b>{{ u.predikat || '' }}</div>
             </div>
+            <p v-if="u.keterangan" class="mt-2 flex flex-wrap items-center gap-1.5 text-sm">Keterangan: <span :class="['lencana', 'w-' + KETERANGAN_UJIAN[u.keterangan].w]">{{ KETERANGAN_UJIAN[u.keterangan].n }}</span></p>
+            <p v-if="u.catatan_perbaikan" class="mt-1 text-sm"><b>Catatan perbaikan:</b> {{ u.catatan_perbaikan }}</p>
             <p v-if="u.catatan_penguji" class="mt-1 text-xs text-teks3">Catatan penguji: {{ u.catatan_penguji }}</p>
             <p v-if="u.alasan_batal" class="mt-1 text-xs text-teks3">Dibatalkan: {{ u.alasan_batal }}</p>
             <div v-if="u.hasil === 'tuntas' && (dokUjian[u.id] || bolehTerbit(u))" class="mt-3 flex flex-wrap items-center gap-2">
@@ -189,6 +241,11 @@ const bolehBatal = (u) => ['menunggu', 'dijadwalkan'].includes(u.status) && (u.m
               <button v-else-if="pengelola && u.status === 'menunggu'" class="tombol-garis min-h-[38px] px-3 text-sm" @click="bukaAmbil(u)"><PhUserGear :size="18" /> Tetapkan penguji</button>
               <button v-if="u.boleh_nilai" class="tombol-utama min-h-[38px] px-3 text-sm" @click="bukaNilai(u)"><PhPencilLine :size="18" /> Nilai</button>
               <button v-if="bolehBatal(u)" class="tombol-garis min-h-[38px] px-3 text-sm" @click="bukaBatal(u)"><PhX :size="18" /> Batalkan</button>
+            </div>
+            <div v-if="bolehKirim(u).rekomendasi || bolehKirim(u).jadwal || bolehKirim(u).hasil" class="mt-2 flex flex-wrap gap-2">
+              <button v-if="bolehKirim(u).rekomendasi" class="tombol-wa-garis w-presensi min-h-[38px] px-3 text-sm" @click="bukaKirim('rekomendasi', u)"><PhWhatsappLogo :size="18" weight="duotone" /> Konfirmasi ke penguji</button>
+              <button v-if="bolehKirim(u).jadwal" class="tombol-wa-garis w-presensi min-h-[38px] px-3 text-sm" @click="bukaKirim('jadwal', u)"><PhWhatsappLogo :size="18" weight="duotone" /> WA jadwal ke muhaffizh</button>
+              <button v-if="bolehKirim(u).hasil" class="tombol-wa-garis w-presensi min-h-[38px] px-3 text-sm" @click="bukaKirim('hasil', u)"><PhWhatsappLogo :size="18" weight="duotone" /> WA hasil ke muhaffizh</button>
             </div>
           </div>
         </div>
@@ -248,9 +305,16 @@ const bolehBatal = (u) => ['menunggu', 'dijadwalkan'].includes(u.status) && (u.m
         </div>
         <div v-if="pratinjau" class="rounded-xl p-3 text-center" :class="'w-' + HASIL_UJIAN[pratinjau.hasil].w" style="background: color-mix(in srgb, var(--c) 12%, transparent)">
           <p class="text-3xl font-extrabold tabular-nums" style="color: var(--c)">{{ pratinjau.akhir }}</p>
-          <p class="text-sm font-semibold">{{ pratinjau.huruf }} · {{ pratinjau.predikat }} · <b>{{ HASIL_UJIAN[pratinjau.hasil].n }}</b></p>
+          <p class="text-sm font-semibold">{{ pratinjau.huruf }} · {{ pratinjau.predikat }} · <b>{{ HASIL_UJIAN[pratinjau.hasil].n }} ({{ KETERANGAN_UJIAN[ketPratinjau].n }})</b></p>
         </div>
-        <div><label class="label-isian" for="nl-cat">Catatan penguji</label><textarea id="nl-cat" v-model="catNilai" rows="2" class="isian" placeholder="Contoh: makhraj huruf ص perlu diperbaiki" /></div>
+        <fieldset v-if="pratinjau?.hasil === 'remidi'"><legend class="label-isian">Keterangan</legend>
+          <div class="grid grid-cols-2 gap-2">
+            <label v-for="k in ['perbaikan', 'tidak_lulus']" :key="k" :class="['flex min-h-[48px] cursor-pointer items-center gap-2 rounded-xl border p-3 text-sm', ketNilai === k ? 'border-[var(--c)] font-bold' : 'border-garis', 'w-' + KETERANGAN_UJIAN[k].w]">
+              <input v-model="ketNilai" type="radio" :value="k" class="h-5 w-5" style="accent-color: var(--c)" />{{ KETERANGAN_UJIAN[k].n }}</label></div>
+          <p class="mt-1 text-xs text-teks3">Perbaikan: diuji ulang setelah bagian yang dicatat diperbaiki. Tidak lulus: perlu mengulang persiapan dari awal.</p></fieldset>
+        <div><label class="label-isian" for="nl-pb">Catatan perbaikan{{ pratinjau?.hasil === 'remidi' ? ' (wajib)' : ' (bila ada)' }}</label>
+          <textarea id="nl-pb" v-model="perbaikan" rows="2" class="isian" placeholder="Contoh: juz 3 halaman 5–7 belum lancar; mad wajib muttashil" /></div>
+        <div><label class="label-isian" for="nl-cat">Catatan penguji (umum)</label><textarea id="nl-cat" v-model="catNilai" rows="2" class="isian" placeholder="Contoh: makhraj huruf ص perlu diperbaiki" /></div>
         <button class="tombol-utama w-full" :disabled="proses || !pratinjau" @click="simpanNilai"><PhPencilLine :size="20" weight="duotone" /> Simpan nilai</button>
       </div>
     </LembarBawah>
@@ -273,6 +337,20 @@ const bolehBatal = (u) => ['menunggu', 'dijadwalkan'].includes(u.status) && (u.m
             <a v-if="p.no_hp" :href="tautanWA(p.no_hp, pesanPenguji(p))" target="_blank" rel="noopener" class="tombol-wa-garis w-presensi min-h-[38px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" /> Kirim</a>
           </li>
         </ul>
+      </div>
+    </LembarBawah>
+    <!-- WA per ujian -->
+    <LembarBawah v-model="lembarKirim" :judul="JUDUL_KIRIM[kirim.mode] || ''">
+      <div v-if="kirim.ujian" class="space-y-3 pb-2">
+        <p class="text-sm text-teks2"><b>{{ kirim.ujian.nama }}</b> · {{ ketUjian(kirim.ujian) }} · {{ kirim.ujian.halaqah || '–' }}</p>
+        <ul class="divide-y divide-garis rounded-xl border border-garis">
+          <li v-for="(p, i) in penerimaKirim" :key="i" class="flex items-center gap-3 px-3 py-2.5 text-sm">
+            <button type="button" class="min-w-0 flex-1 text-left" @click="pratinjauKe = i"><b class="block truncate">{{ p.nama }}</b><span class="text-xs text-teks3">{{ p.ket }} · {{ p.hp || 'nomor HP belum diisi' }}{{ pratinjauKe === i ? ' · dipratinjau' : '' }}</span></button>
+            <TombolWA kecil :hp="p.hp" :pesan="p.pesan" label="Kirim" /></li>
+          <li v-if="!penerimaKirim.length" class="px-3 py-2.5 text-sm text-teks3">Belum ada penerima. Pastikan penguji aktif atau muhaffizh halaqah sudah diatur.</li>
+        </ul>
+        <PratinjauWA v-if="penerimaKirim[pratinjauKe]" :teks="penerimaKirim[pratinjauKe].pesan" />
+        <p class="text-xs text-teks3">Pesan dapat diubah di WhatsApp sebelum dikirim. Template diatur di Setelan → Template WA.</p>
       </div>
     </LembarBawah>
   </template>

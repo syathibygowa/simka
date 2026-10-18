@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/wa.js | v1.14 | Fase 13 – Template WA tagihan baru dan pengingat jatuh tempo | 11/10/2026
+// SIMKA PRO | src/lib/wa.js | v1.15 | 14.9.1: template WA ujian tahfizh (rekomendasi, jadwal, hasil) | 18/10/2026
 // Tautan WhatsApp wa.me dari WA pribadi pegawai (Bagian 25). Isi pesan diambil dari template WA yang
 // dikelola superadmin (Setelan → Template WA); bila belum dimuat, dipakai isi bawaan di bawah.
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -42,6 +42,9 @@ export const BAWAAN_WA = {
   tagihan_baru: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan tagihan baru untuk ananda *{nama_santri}* ({kelas}):\n{rincian}\n\n*Jumlah: {total}*\nJatuh tempo: {batas_bayar}\n\nPembayaran dapat ditransfer ke:\n{rekening}\n\nMohon kirimkan bukti transfer melalui nomor ini.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   pengingat_jatuh_tempo: '{salam}, Bapak/Ibu {nama_wali}.\n\nMengingatkan dengan hormat, tagihan ananda *{nama_santri}* ({kelas}) akan jatuh tempo pada *{batas_bayar}*:\n{rincian}\n\n*Jumlah: {total}*\n\nPembayaran dapat ditransfer ke:\n{rekening}\n\nApabila sudah membayar, mohon abaikan pesan ini.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   tunggakan_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nMohon maaf mengganggu. Berdasarkan catatan kami, terdapat tagihan ananda *{nama_santri}* ({kelas}) yang telah melewati jatuh tempo:\n{rincian}\n\n*Jumlah: {total}*\n\nPembayaran dapat ditransfer ke:\n{rekening}\n\nApabila sudah membayar, mohon kirimkan bukti transfer melalui nomor ini. Bila ada kendala, silakan menghubungi kami.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  ujian_rekomendasi: '{salam}, {nama}.\n\nMohon izin, kami merekomendasikan santri berikut untuk *{jenis_ujian}*:\n• Nama: *{nama_santri}*\n• Kelas: {kelas}\n• Halaqah: {halaqah}\n• Materi ujian: {materi}\n• Catatan: {catatan}\n\nMohon berkenan menjadwalkan ujiannya di SIMKA PRO (Tahfizh → Ujian): {tautan}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  ujian_jadwal: '{salam}, {nama}.\n\nJadwal *{jenis_ujian}* santri berikut telah ditetapkan:\n• Nama: *{nama_santri}*\n• Kelas: {kelas}\n• Halaqah: {halaqah}\n• Materi ujian: {materi}\n• Jadwal: *{jadwal}*\n• Penguji: {penguji}\n\nMohon santri disiapkan dan hadir tepat waktu.\n{penutup}\n{pengirim}',
+  ujian_hasil: '{salam}, {nama}.\n\nBerikut hasil *{jenis_ujian}*:\n• Nama: *{nama_santri}*\n• Kelas: {kelas}\n• Halaqah: {halaqah}\n• Muhaffizh: {muhaffizh}\n• Materi ujian: {materi}\n• Nilai: Tajwid {nilai_tajwid}, Itqan {nilai_itqan}, nilai akhir *{nilai_akhir}*, predikat {predikat}\n• Keterangan: *{keterangan_ujian}*\n• Catatan perbaikan: {catatan_perbaikan}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   verval_presensi: '{salam}, {nama}.\n\nPresensi Anda pada sesi {sesi}, {tanggal} telah diverval dengan status *{status_presensi}*.\nCatatan: {catatan_verval}\n\n{penutup}\n{pengirim}',
 }
 
@@ -79,7 +82,9 @@ export const ISIAN_WA = [
   { grup: 'Santri dan wali', isian: [['nama_wali', 'Nama orang tua/wali penerima'], ['hubungan', 'Hubungan (Ayah/Ibu/Wali)'], ['nama_santri', 'Nama santri'], ['nis', 'NIS santri'], ['kelas', 'Kelas santri'],
     ['kegiatan', 'Kegiatan absensi (mis. halaqah subuh)'], ['periode', 'Periode rekap'], ['rekap', 'Ringkasan kehadiran per kegiatan']] },
   { grup: 'Tahfizh', isian: [['halaqah', 'Nama halaqah santri'], ['posisi', 'Posisi hafalan (juz dan halaman)'], ['total_juz', 'Jumlah juz hafalan resmi'],
-    ['capaian', 'Capaian periode (penambahan dan status)'], ['jenis_ujian', 'Jenis ujian (kenaikan juz/sertifikasi)'], ['jumlah', 'Jumlah santri'], ['daftar', 'Daftar santri menunggu ujian']] },
+    ['capaian', 'Capaian periode (penambahan dan status)'], ['jenis_ujian', 'Jenis ujian (kenaikan juz/sertifikasi)'], ['jumlah', 'Jumlah santri'], ['daftar', 'Daftar santri menunggu ujian'],
+    ['materi', 'Materi ujian (juz/jenjang sertifikasi)'], ['jadwal', 'Jadwal ujian'], ['penguji', 'Nama penguji'], ['muhaffizh', 'Nama muhaffizh halaqah'], ['catatan', 'Catatan rekomendasi'],
+    ['nilai_tajwid', 'Nilai tajwid'], ['nilai_itqan', 'Nilai itqan'], ['nilai_akhir', 'Nilai akhir ujian'], ['predikat', 'Huruf dan predikat'], ['keterangan_ujian', 'Lulus/Perbaikan/Tidak lulus'], ['catatan_perbaikan', 'Catatan perbaikan dari penguji']] },
   { grup: 'Asrama (Musyrif)', isian: [['kamar', 'Nama kamar'], ['ketidakhadiran', 'Rincian tanggal ketidakhadiran santri'], ['persen', 'Rata-rata kehadiran kamar'],
     ['jumlah_sesi', 'Jumlah sesi terlaksana'], ['hadir_penuh', 'Jumlah santri hadir penuh'], ['rincian', 'Rincian per santri (salin grup)']] },
   { grup: 'Perizinan santri', isian: [['jenis_izin', 'Jenis izin (pulang/keluar)'], ['waktu_keluar', 'Waktu keluar'],

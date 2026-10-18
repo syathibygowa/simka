@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/tahfizh.js | v1.6 | Tahap D: dokumen tahfizh (suket kenaikan juz, sertifikat hafalan, Sertifikat Tahfizhul Quran) | 16/10/2026
+// SIMKA PRO | src/stores/tahfizh.js | v1.7 | 14.9.1: nilai ujian dengan keterangan dan catatan perbaikan; data WA ujian (demo) | 18/10/2026
 // Tahfizh: hak pengguna, pengaturan per tahun ajaran (KKM, bobot, target, predikat, pekan efektif), penguji,
 // daftar santri beserta program, posisi hafalan, dan capaian juz resmi. Penulisan hanya lewat fungsi SQL.
 import { defineStore } from 'pinia'
@@ -308,7 +308,8 @@ export const useTahfizh = defineStore('tahfizh', {
         if (ujianDemo().some((u) => u.student_id === id && u.jenis === jenis && ['menunggu', 'dijadwalkan'].includes(u.status))) throw new Error(`${s.nama} masih memiliki ujian yang belum selesai.`)
         ujianDemo().unshift({ id: 'uj' + Date.now(), jenis, student_id: id, nis: s.nis, nama: s.nama, jenis_kelamin: s.jenis_kelamin, kelas: s.kelas, halaqah: s.halaqah, juz, jenjang,
           status: 'menunggu', ujian_ke: 1, direkomendasikan_oleh: nama, direkomendasikan_pada: new Date().toISOString(), catatan_rekomendasi: catatan, penguji_id: null, penguji: null,
-          jadwal: null, total_resmi: s.total_resmi, penguji_saya: false, boleh_nilai: useSesi().peran !== 'pegawai', muhaffizh_saya: useSesi().peran === 'pegawai' })
+          jadwal: null, total_resmi: s.total_resmi, penguji_saya: false, boleh_nilai: useSesi().peran !== 'pegawai', muhaffizh_saya: useSesi().peran === 'pegawai',
+          muhaffizh: 'Ust. Hasanuddin, S.Q.', hp_muhaffizh: '081234500001', hp_perekomendasi: '081234500001', hp_penguji: null, keterangan: null, catatan_perbaikan: null })
         return
       }
       return rpc('rekomendasikan_ujian', { p_santri: id, p_jenis: jenis, p_juz: juz, p_jenjang: jenjang, p_catatan: catatan || null })
@@ -321,16 +322,18 @@ export const useTahfizh = defineStore('tahfizh', {
       if (MODE_DEMO) { const u = ujianDemo().find((x) => x.id === id); const p = [...this.penguji.kenaikan, ...this.penguji.sertifikasi].find((x) => x.employee_id === employeeId); Object.assign(u, { status: 'dijadwalkan', penguji: p?.nama, penguji_id: employeeId, jadwal: jadwal || null }); return }
       return rpc('tetapkan_penguji_ujian', { p_id: id, p_employee: employeeId, p_jadwal: jadwal || null })
     },
-    async nilaiUjian(id, tajwid, itqan, catatan) {
+    async nilaiUjian(id, tajwid, itqan, catatan, keterangan = null, perbaikan = '') {
       if (MODE_DEMO) {
         if (!this.pengaturan) await this.muatPengaturan()
         const u = ujianDemo().find((x) => x.id === id); const h = hitungNilai(tajwid, itqan, this.pengaturan, this.predikat)
-        Object.assign(u, { status: 'selesai', nilai_tajwid: tajwid, nilai_itqan: itqan, nilai_akhir: h.akhir, huruf: h.huruf, predikat: h.predikat, hasil: h.hasil, kkm: this.pengaturan.kkm,
+        if (h.hasil === 'remidi' && !String(perbaikan || '').trim()) throw new Error('Tuliskan catatan perbaikan untuk santri yang belum lulus.')
+        const ket = h.hasil === 'tuntas' ? 'lulus' : keterangan === 'tidak_lulus' ? 'tidak_lulus' : 'perbaikan'
+        Object.assign(u, { status: 'selesai', nilai_tajwid: tajwid, nilai_itqan: itqan, nilai_akhir: h.akhir, huruf: h.huruf, predikat: h.predikat, hasil: h.hasil, kkm: this.pengaturan.kkm, keterangan: ket, catatan_perbaikan: String(perbaikan || '').trim() || null,
           catatan_penguji: catatan, diuji_pada: new Date().toISOString(), penguji: u.penguji || useSesi().pengguna?.nama_lengkap, boleh_nilai: false })
         if (u.jenis === 'kenaikan' && h.hasil === 'tuntas') u.juz.forEach((j) => capaianDemo().usulan.unshift({ id: 'u' + Date.now() + j, student_id: u.student_id, nis: u.nis, nama: u.nama, halaqah: u.halaqah, juz: j, sumber: 'ujian', status: 'menunggu', catatan: `Ujian kenaikan juz: nilai ${h.akhir} (${h.huruf})`, diusulkan_oleh: u.penguji, diusulkan_pada: new Date().toISOString(), total_resmi: u.total_resmi }))
-        return { nilai_akhir: h.akhir, huruf: h.huruf, predikat: h.predikat, hasil: h.hasil }
+        return { nilai_akhir: h.akhir, huruf: h.huruf, predikat: h.predikat, hasil: h.hasil, keterangan: ket }
       }
-      return rpc('nilai_ujian', { p_id: id, p_tajwid: tajwid, p_itqan: itqan, p_catatan: catatan || null })
+      return rpc('nilai_ujian', { p_id: id, p_tajwid: tajwid, p_itqan: itqan, p_catatan: catatan || null, p_keterangan: keterangan || null, p_perbaikan: String(perbaikan || '').trim() || null })
     },
     async batalkanUjian(id, alasan) {
       if (MODE_DEMO) { Object.assign(ujianDemo().find((x) => x.id === id), { status: 'dibatalkan', alasan_batal: alasan, boleh_nilai: false }); return }

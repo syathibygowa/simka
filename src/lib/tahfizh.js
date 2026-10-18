@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/tahfizh.js | v1.4 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026
+// SIMKA PRO | src/lib/tahfizh.js | v1.5 | 14.9.1: keterangan hasil ujian (lulus/perbaikan/tidak lulus) | 18/10/2026
 // Konversi posisi hafalan (Juz + Halaman ↔ total halaman), rentang juz, label program, dan penanda tangan tahfizh.
 // Posisi disimpan di server sebagai TOTAL HALAMAN: 20 halaman = 1 juz (10 juz 2 halaman = 202).
 import { supabase, MODE_DEMO } from './supabase'
@@ -117,6 +117,8 @@ export const STATUS_UJIAN = {
   selesai: { n: 'Selesai', w: 'presensi' }, dibatalkan: { n: 'Dibatalkan', w: 'hakakses' },
 }
 export const HASIL_UJIAN = { tuntas: { n: 'Tuntas', w: 'presensi' }, remidi: { n: 'Remidi', w: 'klinik' } }
+/** Keterangan hasil ujian untuk muhaffizh: Tuntas = Lulus; Remidi = Perbaikan (ujian ulang setelah diperbaiki) atau Tidak lulus. */
+export const KETERANGAN_UJIAN = { lulus: { n: 'Lulus', w: 'presensi' }, perbaikan: { n: 'Perbaikan', w: 'laporan' }, tidak_lulus: { n: 'Tidak lulus', w: 'klinik' } }
 export const JENJANG_SERTIFIKASI = [5, 10, 15, 20, 25, 30]
 /** Pratinjau nilai akhir sesuai bobot pengaturan (perhitungan resmi tetap di server). */
 export function hitungNilai(tajwid, itqan, pengaturan, rentang = []) {
