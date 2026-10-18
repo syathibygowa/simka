@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/main.css | v1.4 | 14.2.0: tombol WhatsApp hijau, huruf HP lebih ringkas | 17/10/2026 */
+/* SIMKA PRO | src/styles/main.css | v1.5 | 14.3.0: warna baris kehadiran di bawah ambang | 17/10/2026 */
 @import './token.css';
 @import './cetak.css';
 @tailwind base;
@@ -48,6 +48,10 @@
   .tombol-utama { @apply tombol text-white; background: #C7332F; }
   .tombol-utama:hover { background: #A82824; }
   .tombol-garis { @apply tombol border border-garis text-teks bg-permukaan hover:bg-permukaan2; }
+  /* 14.3.0: kehadiran di bawah ambang (layar). Baris tabel/kartu bernuansa merah; angka persen merah tebal. */
+  tr.baris-ambang > td { background: color-mix(in srgb, #C7332F 9%, transparent); }
+  .kartu.baris-ambang, li.baris-ambang { box-shadow: inset 4px 0 0 #C7332F; background: color-mix(in srgb, #C7332F 6%, rgb(var(--permukaan))); }
+  .persen-ambang { color: rgb(var(--merah)); font-weight: 800; }
   /* 14.2.0: tombol WhatsApp selalu hijau (utama: latar hijau; garis: tepi dan teks hijau) */
   .tombol-wa { @apply tombol text-white; background: #1A8F4A; }
   .tombol-wa:hover { background: #157A3E; }

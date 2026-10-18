@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/TabRekapAbsensi.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/TabRekapAbsensi.vue | v1.3 | 14.3.0: baris kehadiran di bawah ambang berwarna (layar, cetak, Excel) | 17/10/2026 -->
 <script setup>
 // Rekap kehadiran santri per kelompok dan periode: kelas, halaqah, asrama, dan gabungan program pokok
 // (Terlambat dan Bolos dihitung hadir). Ekspor Excel, cetak F4 mendatar, WA rekap ke wali, salin rekap umum untuk grup.
@@ -6,6 +6,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import * as XLSX from 'xlsx'
 import { PhDownloadSimple, PhEye, PhWhatsappLogo, PhCopy } from '@phosphor-icons/vue'
 import { useAbsensiSantri } from '@/stores/absensiSantri'
+import { useAmbang, unduhExcelAmbang } from '@/stores/ambang'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
@@ -22,6 +23,7 @@ import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
 
 const props = defineProps({ semua: Boolean, group: { type: String, default: '' } })   // group: kunci pada satu kelompok (menu Wali Kelas)
 const abs = useAbsensiSantri(); const kel = useKelompokSantri(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
+const amb = useAmbang(); amb.muat()
 const awalBulan = () => hariIniISO().slice(0, 8) + '01'
 const mulai = ref(awalBulan()); const selesai = ref(hariIniISO()); const groupId = ref(''); const baris = ref([]); const memuat = ref(false)
 const pratinjau = ref(false); const lembarWA = ref(false); const penanda = ref({ jabatan: '', nama: '', niy: '' })
@@ -68,7 +70,8 @@ function ekspor() {
   const ws = XLSX.utils.aoa_to_sheet([[`Rekap kehadiran ${judulKelompok(g.value)} – ${teksPeriode.value}`], [], kolom, ...isi])
   ws['!cols'] = kolom.map((k, i) => ({ wch: i === 2 ? 30 : Math.max(8, k.length + 2) }))
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Rekap')
-  XLSX.writeFile(wb, `Rekap-Kehadiran-${judulKelompok(g.value).replace(/[^\w.-]+/g, '-')}-${formatPendek(mulai.value).replace(/\//g, '')}-${formatPendek(selesai.value).replace(/\//g, '')}.xlsx`)
+  unduhExcelAmbang(wb, `Rekap-Kehadiran-${judulKelompok(g.value).replace(/[^\w.-]+/g, '-')}-${formatPendek(mulai.value).replace(/\//g, '')}-${formatPendek(selesai.value).replace(/\//g, '')}.xlsx`,
+    data.value.map(({ r }, i) => ({ r: 3 + i, persen: persen(r?.pokok.hadir, r?.pokok.sesi) })))
 }
 // Rekap umum untuk grup WA: tanpa rincian sakit atau alasan pribadi santri
 async function salinGrup() {
@@ -117,14 +120,14 @@ const pesanKe = (p) => pesanWA('rekap_santri', { nama_wali: p.k?.nama, nama_sant
             <th class="px-3 py-2.5 text-center font-bold">A</th><th class="px-3 py-2.5 text-center font-bold">T</th><th class="px-3 py-2.5 text-center font-bold">%</th></tr>
         </thead>
         <tbody class="divide-y divide-garis">
-          <tr v-for="({ s, r }, i) in data" :key="s.id">
+          <tr v-for="({ s, r }, i) in data" :key="s.id" :class="amb.kelas(persen(r?.pokok.hadir, r?.pokok.sesi))">
             <td class="px-3 py-2 tabular-nums text-teks3">{{ i + 1 }}</td>
             <td class="px-3 py-2"><router-link :to="`/santri/${s.id}`" class="font-semibold hover:underline">{{ s.nama_lengkap }}</router-link></td>
             <td v-for="j in jenisTampil" :key="j" class="px-3 py-2 text-center tabular-nums">{{ sel(r, j) }}</td>
             <td class="px-3 py-2 text-center tabular-nums">{{ r?.pokok.izin || '' }}</td><td class="px-3 py-2 text-center tabular-nums">{{ r?.pokok.sakit || '' }}</td>
             <td class="px-3 py-2 text-center tabular-nums">{{ r?.pokok.bolos || '' }}</td><td class="px-3 py-2 text-center tabular-nums font-semibold text-merah">{{ r?.pokok.absen || '' }}</td>
             <td class="px-3 py-2 text-center tabular-nums">{{ r?.pokok.terlambat || '' }}</td>
-            <td class="px-3 py-2 text-center font-bold tabular-nums">{{ teksPersen(persen(r?.pokok.hadir, r?.pokok.sesi)) }}</td>
+            <td :class="['px-3 py-2 text-center font-bold tabular-nums', amb.bawah(persen(r?.pokok.hadir, r?.pokok.sesi)) && 'persen-ambang']">{{ teksPersen(persen(r?.pokok.hadir, r?.pokok.sesi)) }}</td>
           </tr>
         </tbody>
       </table>
@@ -139,7 +142,7 @@ const pesanKe = (p) => pesanWA('rekap_santri', { nama_wali: p.k?.nama, nama_sant
           <th v-for="j in jenisTampil" :key="j" style="width:9%">{{ JENIS_ABSENSI[j].n }} (hadir/sesi)</th>
           <th style="width:6%">Izin</th><th style="width:6%">Sakit</th><th style="width:6%">Bolos</th><th style="width:6%">Absen</th><th style="width:7%">Terlambat</th><th style="width:8%">Kehadiran</th></tr></thead>
         <tbody>
-          <tr v-for="({ s, r }, i) in data" :key="s.id">
+          <tr v-for="({ s, r }, i) in data" :key="s.id" :class="amb.kelasCetak(persen(r?.pokok.hadir, r?.pokok.sesi))">
             <td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ s.nis }}</td><td>{{ s.nama_lengkap }}</td>
             <td v-for="j in jenisTampil" :key="j" class="tengah">{{ sel(r, j) }}</td>
             <td class="tengah">{{ r?.pokok.izin || 0 }}</td><td class="tengah">{{ r?.pokok.sakit || 0 }}</td><td class="tengah">{{ r?.pokok.bolos || 0 }}</td>

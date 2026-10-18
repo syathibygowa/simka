@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/jadwal.js | v1.3 | Perbaikan 13.6.0: pembagian jam pelajaran per hari (reguler/Jumat/Sabtu) | 15/10/2026
+// SIMKA PRO | src/stores/jadwal.js | v1.4 | 14.3.0: rekap kehadiran santri per mapel | 17/10/2026
 // Mata pelajaran, jam pelajaran, penugasan mengajar, jadwal pelajaran per kelas/guru, jurnal mengajar, dan rekap.
 // Penulisan lewat fungsi SQL (hak atur_jadwal; guru menulis jurnal dan rencana materinya sendiri).
 import { defineStore } from 'pinia'
@@ -191,6 +191,19 @@ export const useJadwal = defineStore('jadwal', {
       return (await rpc('rekap_mengajar', { p_mulai: mulai, p_selesai: selesai, p_emp: emp })) || []
     },
     /** Setiap jam pelajaran terjadwal pada rentang beserta status jurnal (terlaksana | tidak_terlaksana | belum) dan lewat. */
+    /** 14.3.0: matriks kehadiran santri × mapel dari absensi guru mapel. p: { group_id | assignment_id, mulai, selesai } */
+    async rekapKehadiranMapel(p) {
+      if (!MODE_DEMO) return rpc('rekap_kehadiran_mapel', { p })
+      await this.muat(); const d = dataJadwalDemo(); const san = useSantri(); await san.muat(); const kel = dataKelompokDemo(san.daftar)
+      const grup = p.group_id || d.penugasan.find((x) => x.id === p.assignment_id)?.group_id
+      const tugas = d.penugasan.filter((t) => t.group_id === grup && (!p.assignment_id || t.id === p.assignment_id))
+      const anggota = kel.anggota.filter((a) => a.group_id === grup && !a.selesai).map((a) => san.cari(a.student_id)).filter(Boolean)
+      const mapel = tugas.map((t, i) => ({ assignment_id: t.id, mapel: this.cariMapel(t.subject_id)?.nama || 'Mapel', kode: this.cariMapel(t.subject_id)?.kode || '', guru: t.guru || t.nama_guru || '', pertemuan: 8 + (i % 4) }))
+      return { mulai: p.mulai, selesai: p.selesai, kelas: { id: grup, nama: kel.kelompok.find((g) => g.id === grup)?.nama || 'Kelas' },
+        mapel, santri: anggota.map((st, si) => ({ student_id: st.id, nis: st.nis, nama: st.nama_lengkap, jk: st.jenis_kelamin,
+          mapel: Object.fromEntries(mapel.map((m, mi) => { const tidak = (si * 3 + mi * 5) % 7 === 0 ? 3 : (si + mi) % 5 === 0 ? 1 : 0; const h = m.pertemuan - tidak
+            return [m.assignment_id, { p: m.pertemuan, h, t: (si + mi) % 6 === 0 ? 1 : 0, s: tidak > 1 ? 1 : 0, i: tidak > 2 ? 1 : 0, a: tidak ? 1 : 0, b: 0, persen: Math.round((1000 * h) / m.pertemuan) / 10 }] })) })) }
+    },
     async slot(mulai, selesai, group = null, emp = null) {
       if (!MODE_DEMO) return (await rpc('slot_mengajar', { p_mulai: mulai, p_selesai: selesai, p_group: group, p_emp: emp })) || []
       await this.muat(); const d = dataJadwalDemo(); const kel = useKelompokSantri(); await kel.muat()

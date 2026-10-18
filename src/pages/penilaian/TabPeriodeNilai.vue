@@ -1,7 +1,8 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabPeriodeNilai.vue | v1.1 | Fase 12 – Tahap 6 Penanda kunci otomatis batas pengisian | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabPeriodeNilai.vue | v1.2 | 14.3.0: rentang tanggal semester (dasar komponen Kehadiran) | 17/10/2026 -->
 <script setup>
 // Periode penilaian per jenis rapor × semester: status (Disiapkan → Dibuka → Ditutup), batas pengisian, tanggal rapor
 // (dicetak di atas tanda tangan), hari efektif (otomatis dari kalender, dapat diubah), dan tema kokurikuler (SMA).
+// v1.2: awal/akhir semester (kosong = otomatis 6 bulan) — rentang penghitungan komponen nilai Kehadiran.
 import { ref, computed, watch } from 'vue'
 import { PhFloppyDisk, PhLockSimple, PhLockSimpleOpen, PhHourglassMedium, PhInfo } from '@phosphor-icons/vue'
 import { usePenilaian } from '@/stores/penilaian'
@@ -13,7 +14,7 @@ import InputTanggal from '@/components/InputTanggal.vue'
 const pn = usePenilaian(); const ui = useUI(); const proses = ref('')
 const form = ref({})
 function salinForm() {
-  form.value = Object.fromEntries(pn.periode.map((p) => [p.id, { batas_isi: p.batas_isi || '', tanggal_rapor: p.tanggal_rapor || '', hari_efektif: p.hari_efektif ?? '', tema_kokurikuler: p.tema_kokurikuler || '' }]))
+  form.value = Object.fromEntries(pn.periode.map((p) => [p.id, { batas_isi: p.batas_isi || '', tanggal_rapor: p.tanggal_rapor || '', hari_efektif: p.hari_efektif ?? '', tema_kokurikuler: p.tema_kokurikuler || '', tanggal_mulai: p.tanggal_mulai || '', tanggal_selesai: p.tanggal_selesai || '' }]))
 }
 watch(() => pn.periode, salinForm, { immediate: true })
 const kelompok = computed(() => Object.keys(JENIS_RAPOR).map((j) => ({ j, info: JENIS_RAPOR[j], baris: pn.periode.filter((p) => p.jenis === j).sort((a, b) => a.semester - b.semester) })))
@@ -34,7 +35,8 @@ async function simpan(p) {
   proses.value = p.id
   try {
     await pn.simpanPeriode(p.id, { batas_isi: f.batas_isi || '', tanggal_rapor: f.tanggal_rapor || '', hari_efektif: f.hari_efektif === '' ? '' : Number(f.hari_efektif),
-      ...(p.jenis === 'sma' ? { tema_kokurikuler: f.tema_kokurikuler } : {}) })
+      ...(p.jenis === 'sma' ? { tema_kokurikuler: f.tema_kokurikuler } : {}),
+      ...(p.jenis !== 'tahfizh' ? { tanggal_mulai: f.tanggal_mulai || '', tanggal_selesai: f.tanggal_selesai || '' } : {}) })
     ui.toast('Periode disimpan.')
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = '' }
 }
@@ -63,6 +65,11 @@ async function simpan(p) {
             <div><label class="label-isian" :for="`hef-${p.id}`">Hari efektif</label>
               <input :id="`hef-${p.id}`" v-model="form[p.id].hari_efektif" type="number" min="1" max="200" class="isian tabular-nums" :placeholder="`Otomatis: ${p.hari_otomatis} hari`" :disabled="!boleh(k.j)" />
               <p class="mt-1 text-xs text-teks3">Kosongkan untuk hitungan otomatis dari kalender ({{ p.hari_otomatis }} hari, ±{{ Math.round(p.hari_otomatis / 6) }} pekan).</p></div>
+            <template v-if="k.j !== 'tahfizh'">
+              <InputTanggal v-model="form[p.id].tanggal_mulai" label="Awal semester (kosong = otomatis)" bawaan-kosong />
+              <InputTanggal v-model="form[p.id].tanggal_selesai" label="Akhir semester (kosong = otomatis)" bawaan-kosong />
+              <p class="text-xs text-teks3 sm:col-span-2">Rentang ini dipakai untuk menghitung komponen nilai <b>Kehadiran</b> (absensi pelajaran). Bila kosong: semester 1 = 6 bulan pertama tahun ajaran, semester 2 = sisanya.</p>
+            </template>
             <div v-if="k.j === 'sma'"><label class="label-isian" :for="`tema-${p.id}`">Tema kokurikuler</label>
               <input :id="`tema-${p.id}`" v-model="form[p.id].tema_kokurikuler" class="isian" placeholder="Contoh: Generasi Sehat dan Bugar" :disabled="!boleh(k.j)" /></div>
           </div>

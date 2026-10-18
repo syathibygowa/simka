@@ -1,10 +1,12 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabKomponenNilai.vue | v1.1 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabKomponenNilai.vue | v1.2 | 14.3.0: komponen Kehadiran otomatis | 17/10/2026 -->
 <script setup>
 // Komponen isian nilai guru mapel per jenis rapor: kategori (Harian, Ulangan, UTS, UAS, …) beserta bobot (jumlah 100% per aspek),
 // "berulang" (guru boleh menambah Harian 1, Harian 2, … yang dirata-rata), dan cara menentukan nilai rapor
 // (tunggal / akumulasi / rekomendasi). Wustha: aspek keterampilan, bawaan mengikuti nilai pengetahuan.
+// v1.2: komponen "Kehadiran" (paling banyak satu per aspek) — nilainya otomatis = persentase kehadiran santri pada mapel itu
+//       dari absensi guru mapel di jurnal mengajar selama semester; bobotnya ikut dalam nilai akhir.
 import { ref, computed, watch } from 'vue'
-import { PhPlus, PhTrash, PhFloppyDisk, PhCalculator, PhInfo, PhArrowUp, PhArrowDown } from '@phosphor-icons/vue'
+import { PhPlus, PhTrash, PhFloppyDisk, PhCalculator, PhInfo, PhArrowUp, PhArrowDown, PhUserCheck } from '@phosphor-icons/vue'
 import { usePenilaian } from '@/stores/penilaian'
 import { useUI } from '@/stores/ui'
 import { JENIS_RAPOR, MODE_NILAI, ASPEK } from '@/lib/penilaian'
@@ -22,7 +24,9 @@ watch([jenis, () => pn.kategori, () => pn.ketentuan], salinForm, { immediate: tr
 const aspekTampil = computed(() => (ket.value.pakai_keterampilan ? ['pengetahuan', 'keterampilan'] : ['pengetahuan']))
 const baris = (a) => daftar.value.filter((c) => c.aspek === a)
 const jumlah = (a) => baris(a).filter((c) => c.aktif).reduce((n, c) => n + Number(c.bobot || 0), 0)
-function tambah(a) { daftar.value.push({ nama: '', aspek: a, bobot: 0, berulang: true, aktif: true }) }
+function tambah(a) { daftar.value.push({ nama: '', aspek: a, bobot: 0, berulang: true, aktif: true, sumber: 'isian' }) }
+const adaHadir = (a) => baris(a).some((c) => c.sumber === 'kehadiran')
+function tambahHadir(a) { daftar.value.push({ nama: 'Kehadiran', aspek: a, bobot: 10, berulang: false, aktif: true, sumber: 'kehadiran' }) }
 function hapus(c) { daftar.value.splice(daftar.value.indexOf(c), 1) }
 function geser(c, arah) {
   const b = baris(c.aspek); const i = b.indexOf(c); const j = i + arah; if (j < 0 || j >= b.length) return
@@ -33,7 +37,7 @@ async function simpanKomponen() {
   if (daftar.value.some((c) => !String(c.nama).trim())) return ui.toast('Setiap komponen wajib bernama.', 'galat')
   for (const a of aspekTampil.value) if (baris(a).some((c) => c.aktif) && jumlah(a) !== 100) return ui.toast(`Bobot komponen ${ASPEK[a].toLowerCase()} harus berjumlah 100% (sekarang ${jumlah(a)}%).`, 'galat')
   proses.value = 'komponen'
-  try { await pn.simpanKomponen(jenis.value, daftar.value.map((c) => ({ id: c.id, kode: c.kode, nama: String(c.nama).trim(), aspek: c.aspek, bobot: Number(c.bobot), berulang: !!c.berulang, aktif: !!c.aktif }))); ui.toast('Komponen nilai disimpan.') }
+  try { await pn.simpanKomponen(jenis.value, daftar.value.map((c) => ({ id: c.id, kode: c.kode, nama: String(c.nama).trim(), aspek: c.aspek, bobot: Number(c.bobot), berulang: c.sumber === 'kehadiran' ? false : !!c.berulang, aktif: !!c.aktif, sumber: c.sumber || 'isian' }))); ui.toast('Komponen nilai disimpan.') }
   catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = '' }
 }
 async function simpanCara() {
@@ -80,6 +84,7 @@ const contoh = computed(() => {
             <p class="flex-1 font-bold">Komponen {{ ASPEK[a].toLowerCase() }}</p>
             <span :class="['lencana', jumlah(a) === 100 ? 'w-presensi' : 'w-klinik']">Jumlah bobot {{ jumlah(a) }}%</span>
             <button v-if="boleh" class="tombol-garis min-h-[36px] px-3 text-sm" @click="tambah(a)"><PhPlus :size="16" weight="bold" /> Komponen</button>
+            <button v-if="boleh && !adaHadir(a)" class="tombol-garis min-h-[36px] px-3 text-sm" @click="tambahHadir(a)"><PhUserCheck :size="16" weight="duotone" /> Kehadiran</button>
           </div>
           <ul class="space-y-2">
             <li v-for="c in baris(a)" :key="c.id || daftar.indexOf(c)" :class="['grid grid-cols-[1fr_6.5rem_auto] items-center gap-2 rounded-xl border border-garis p-2 sm:grid-cols-[1fr_6.5rem_auto_auto_auto]', !c.aktif && 'opacity-60']">
@@ -88,14 +93,16 @@ const contoh = computed(() => {
               <div v-if="boleh" class="flex sm:order-last"><button class="tombol-ikon h-9 w-9" :aria-label="`Naikkan ${c.nama}`" @click="geser(c, -1)"><PhArrowUp :size="15" /></button>
                 <button class="tombol-ikon h-9 w-9" :aria-label="`Turunkan ${c.nama}`" @click="geser(c, 1)"><PhArrowDown :size="15" /></button>
                 <button class="tombol-ikon h-9 w-9" :aria-label="`Hapus ${c.nama}`" @click="hapus(c)"><PhTrash :size="15" /></button></div>
-              <label class="col-span-3 flex min-h-[36px] items-center gap-2 text-xs sm:col-span-1"><input v-model="c.berulang" type="checkbox" class="h-4 w-4 accent-[#1D4ED8]" :disabled="!boleh" /> Boleh beberapa kali</label>
+              <span v-if="c.sumber === 'kehadiran'" class="col-span-3 flex min-h-[36px] items-center gap-1.5 text-xs font-semibold text-[#1E7D4F] dark:text-[#5BD69A] sm:col-span-1"><PhUserCheck :size="16" weight="duotone" /> Otomatis dari absensi pelajaran</span>
+              <label v-else class="col-span-3 flex min-h-[36px] items-center gap-2 text-xs sm:col-span-1"><input v-model="c.berulang" type="checkbox" class="h-4 w-4 accent-[#1D4ED8]" :disabled="!boleh" /> Boleh beberapa kali</label>
               <label class="col-span-3 flex min-h-[36px] items-center gap-2 text-xs sm:col-span-1"><input v-model="c.aktif" type="checkbox" class="h-4 w-4 accent-[#1D4ED8]" :disabled="!boleh" /> Aktif</label>
             </li>
           </ul>
           <p v-if="a === 'keterampilan' && ikut" class="mt-1 text-xs text-teks3">Selama "sama dengan nilai pengetahuan" dicentang, komponen keterampilan hanya dipakai bila guru memilih mengisi terpisah.</p>
         </div>
         <p class="flex gap-2 text-xs text-teks3"><PhInfo :size="16" class="shrink-0" />
-          <span>"Boleh beberapa kali": guru dapat menambah isian sendiri dalam komponen ini (mis. Harian 1, Harian 2, Kuis), lalu dirata-rata sebelum dikalikan bobot. Komponen tanpa centang hanya diisi sekali (mis. UTS, UAS).</span></p>
+          <span><b>Kehadiran</b>: nilainya otomatis = persentase kehadiran santri pada mapel itu selama semester (hadir ÷ pertemuan; sakit, izin, alfa, bolos mengurangi), dari absensi guru mapel di Jurnal mengajar. Guru tidak perlu mengisinya.
+            "Boleh beberapa kali": guru dapat menambah isian sendiri dalam komponen ini (mis. Harian 1, Harian 2, Kuis), lalu dirata-rata sebelum dikalikan bobot. Komponen tanpa centang hanya diisi sekali (mis. UTS, UAS).</span></p>
         <button v-if="boleh" class="tombol-utama w-full" :disabled="!!proses" @click="simpanKomponen"><PhFloppyDisk :size="20" weight="duotone" /> {{ proses === 'komponen' ? 'Menyimpan…' : 'Simpan komponen nilai' }}</button>
       </section>
 

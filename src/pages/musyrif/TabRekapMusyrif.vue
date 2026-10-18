@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.3 | 14.3.0: baris kehadiran di bawah ambang berwarna; tombol WA hijau | 17/10/2026 -->
 <script setup>
 // Rekap kehadiran asrama satu kamar. Empat tampilan:
 //   kamar   : per santri pada rentang (sesi, hadir, I, S, B, A, T, %)
@@ -11,6 +11,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import * as XLSX from 'xlsx'
 import { PhDownloadSimple, PhEye, PhWhatsappLogo, PhCopy, PhUsersThree, PhCalendarDots, PhCalendarBlank, PhUser, PhArrowSquareOut } from '@phosphor-icons/vue'
 import { useMusyrif } from '@/stores/musyrif'
+import { useAmbang, unduhExcelAmbang } from '@/stores/ambang'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
@@ -31,6 +32,7 @@ import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
 const props = defineProps({ santriAwal: { type: String, default: '' } })
 const mu = useMusyrif(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
+const amb = useAmbang(); amb.muat()
 const mode = ref(props.santriAwal ? 'individu' : 'kamar')
 const MODE = [{ k: 'kamar', n: 'Per santri', ikon: PhUsersThree, w: 'santri' }, { k: 'pekan', n: 'Per pekan', ikon: PhCalendarDots, w: 'agenda' },
   { k: 'bulan', n: 'Per bulan', ikon: PhCalendarBlank, w: 'laporan' }, { k: 'individu', n: 'Individu', ikon: PhUser, w: 'profil' }]
@@ -120,7 +122,7 @@ async function salin(buka) {
 }
 
 // ---------- Excel ----------
-function ekspor() {
+async function ekspor() {
   const wb = XLSX.utils.book_new(); const judul = `Rekap kehadiran asrama ${kamar.value?.nama} – ${teksPeriode.value}`
   if (mode.value === 'individu' && sIndividu.value) {
     const isi = tanggalMatriks.value.map((t) => [formatPendek(t), namaHari(t), ...kodeSesi.value.map((k) => selIndividu(t, k)?.kode || (diisiPada(t, k) ? '' : 'tidak diisi'))])
@@ -137,7 +139,8 @@ function ekspor() {
     const ws = XLSX.utils.aoa_to_sheet([[judul], [], kolom, ...isi, ['', '', 'Rata-rata kamar', ...olahPeriode.value.map((p) => rataPeriode(p) ?? '')]])
     XLSX.utils.book_append_sheet(wb, ws, mode.value === 'pekan' ? 'Per pekan' : 'Per bulan')
   }
-  XLSX.writeFile(wb, `Rekap-Asrama-${(kamar.value?.nama || '').replace(/[^\w.-]+/g, '-')}-${formatPendek(mulai.value).replace(/\//g, '')}-${formatPendek(selesai.value).replace(/\//g, '')}.xlsx`)
+  await unduhExcelAmbang(wb, `Rekap-Asrama-${(kamar.value?.nama || '').replace(/[^\w.-]+/g, '-')}-${formatPendek(mulai.value).replace(/\//g, '')}-${formatPendek(selesai.value).replace(/\//g, '')}.xlsx`,
+    mode.value === 'kamar' ? santri.value.map((s, i) => ({ r: 3 + i, persen: persenDari(totalDari(s.id)) })) : [])
 }
 
 // ---------- Cetak ----------
@@ -182,7 +185,7 @@ const subjudulCetak = computed(() => `${kamar.value?.nama || ''} · ${teksPeriod
             <th class="px-3 py-2.5 font-bold">No.</th><th class="px-3 py-2.5 font-bold">Nama</th><th class="px-3 py-2.5 text-center font-bold">Hadir/sesi</th>
             <th v-for="k in ['I', 'S', 'B', 'A', 'T']" :key="k" class="px-3 py-2.5 text-center font-bold" :title="KODE[k].n">{{ k }}</th><th class="px-3 py-2.5 text-center font-bold">%</th></tr></thead>
           <tbody class="divide-y divide-garis">
-            <tr v-for="(s, i) in santri" :key="s.id">
+            <tr v-for="(s, i) in santri" :key="s.id" :class="amb.kelas(persenDari(totalDari(s.id)))">
               <td class="px-3 py-2 tabular-nums text-teks3">{{ i + 1 }}</td>
               <td class="px-3 py-2"><button class="text-left font-semibold hover:underline" @click="santriPilih = s.id; mode = 'individu'">{{ s.nama }}</button>
                 <span v-if="!s.aktif_di_kamar" class="lencana w-hakakses ml-1">pindah</span></td>
@@ -300,7 +303,7 @@ const subjudulCetak = computed(() => `${kamar.value?.nama || ''} · ${teksPeriod
       <table v-else-if="mode === 'kamar'" class="tabel kecil">
         <thead><tr><th style="width:5%">No.</th><th style="width:11%">NIS</th><th>Nama</th><th style="width:7%">Sesi</th><th style="width:7%">Hadir</th>
           <th style="width:7%">Izin</th><th style="width:7%">Sakit</th><th style="width:7%">Bolos</th><th style="width:7%">Absen</th><th style="width:8%">Terlambat</th><th style="width:9%">Kehadiran</th></tr></thead>
-        <tbody><tr v-for="(s, i) in santri" :key="s.id"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ s.nis }}</td><td>{{ s.nama }}</td>
+        <tbody><tr v-for="(s, i) in santri" :key="s.id" :class="amb.kelasCetak(persenDari(totalDari(s.id)))"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ s.nis }}</td><td>{{ s.nama }}</td>
           <td class="tengah">{{ totalDari(s.id).sesi }}</td><td class="tengah">{{ hadirDari(totalDari(s.id)) }}</td>
           <td v-for="k in ['I', 'S', 'B', 'A', 'T']" :key="k" class="tengah">{{ totalDari(s.id)[k] }}</td><td class="tengah">{{ teksPersen(persenDari(totalDari(s.id))) }}</td></tr></tbody>
       </table>

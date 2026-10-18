@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.6 | 14.2.0: saringan dilipat (corong) di HP setelah hasil tampil | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.7 | 14.3.0: baris di bawah ambang berwarna (layar, cetak, Excel) | 17/10/2026 -->
 <script setup>
 // Laporan kehadiran santri (menu Dokumen → Kehadiran santri), absensi HISBAT.
 // Jenis: rekap ringkas, rekap matriks (F4 mendatar), laporan individu, daftar perhatian, kepatuhan pengisian (pemantau).
@@ -22,6 +22,7 @@ import KartuStatistik from '@/components/KartuStatistik.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import SaringCorong from '@/components/SaringCorong.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
+import { useAmbang, unduhExcelAmbang } from '@/stores/ambang'
 import TtdResmi from '@/components/cetak/TtdResmi.vue'
 import PanelResmi from '@/components/PanelResmi.vue'
 import { useDokumenResmi } from '@/stores/dokumenResmi'
@@ -40,7 +41,9 @@ const JENIS = computed(() => Object.keys(JENIS_LAP).filter((k) => k !== 'pengisi
 const jenis = ref('ringkas'); const kegiatan = ref('pokok')
 const cakupan = ref(pemantau.value ? 'semua' : 'kelompok'); const kelompok = ref(''); const jenjang = ref('wustha'); const santriId = ref('')
 const awal = periodeCepat('bulan'); const mulai = ref(awal.mulai); const selesai = ref(awal.selesai); const cepat = ref('bulan')
-const ambang = ref(80); const cari = ref('')
+const amb = useAmbang(); const ambang = ref(80); const cari = ref('')
+// 14.3.0: ambang perhatian bawaan mengikuti Setelan → Ambang kehadiran
+onMounted(async () => { await amb.muat(); ambang.value = amb.batas('santri') })
 
 const kelompokPilihan = computed(() => kel.dariTA.filter((g) => g.aktif && ['kelas', 'halaqah', 'kamar', 'ekskul'].includes(g.jenis) && (pemantau.value || g.asuhan_saya))
   .filter((g) => kegiatan.value === 'pokok' ? g.jenis !== 'ekskul' : g.jenis === (kegiatan.value === 'asrama' ? 'kamar' : kegiatan.value)))
@@ -127,7 +130,9 @@ async function excel() {
   const ws = XLSX.utils.aoa_to_sheet([[judul], [per], [`Cakupan: ${namaCakupan.value}`], [], kepala, ...isi])
   ws['!cols'] = lebar.map((w) => ({ wch: w }))
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, JENIS_LAP[jenis.value].n.slice(0, 30))
-  XLSX.writeFile(wb, `${JENIS_LAP[jenis.value].n.replace(/\s+/g, '-')}-Santri-${namaCakupan.value.replace(/[^A-Za-z0-9]+/g, '-')}-${ls.data.mulai}-sd-${ls.data.selesai}.xlsx`)
+  const sumber = jenis.value === 'matriks' ? santri.value : jenis.value === 'pengisian' || jenis.value === 'individu' ? [] : baris.value
+  await unduhExcelAmbang(wb, `${JENIS_LAP[jenis.value].n.replace(/\s+/g, '-')}-Santri-${namaCakupan.value.replace(/[^A-Za-z0-9]+/g, '-')}-${ls.data.mulai}-sd-${ls.data.selesai}.xlsx`,
+    sumber.map((x, i) => ({ r: 5 + i, persen: x.persen, jenis: 'santri' })))
 }
 
 // ---------- Cetak ----------
@@ -239,10 +244,10 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
         <div class="grid grid-cols-2 gap-3 lg:grid-cols-4"><KartuStatistik v-for="s in statistik" :key="s.judul" v-bind="s" /></div>
         <p v-if="!baris.length" class="kartu p-8 text-center text-teks3">{{ jenis === 'perhatian' ? `Tidak ada santri dengan kehadiran di bawah ${ambang}%.` : 'Belum ada absensi tercatat pada periode ini.' }}</p>
         <ul v-else class="space-y-2 lg:hidden">
-          <li v-for="s in baris" :key="s.student_id" class="kartu p-3.5">
+          <li v-for="s in baris" :key="s.student_id" :class="['kartu p-3.5', amb.kelas(s.persen)]">
             <div class="flex items-center gap-3"><span class="min-w-0 flex-1"><span class="block text-xs font-semibold tabular-nums text-teks3">{{ s.nis }}</span><span class="block font-bold">{{ s.nama }}</span>
               <span class="block truncate text-xs text-teks3">{{ [s.jenis_kelamin, s.kelas, s.kamar].filter(Boolean).join(' · ') || '–' }} · {{ s.sesi }} sesi</span></span>
-              <span :class="['text-xl font-extrabold tabular-nums', (s.persen ?? 100) < ambang ? 'text-[rgb(var(--merah))]' : '']">{{ persenTeks(s.persen) }}</span></div>
+              <span :class="['text-xl font-extrabold tabular-nums', amb.bawah(s.persen) ? 'text-[rgb(var(--merah))]' : '']">{{ persenTeks(s.persen) }}</span></div>
             <div class="mt-2 h-2 overflow-hidden rounded-full bg-permukaan2"><div class="h-full rounded-full bg-[#1E7D4F]" :style="{ width: (s.persen || 0) + '%' }" /></div>
             <div class="mt-2 flex flex-wrap gap-1">
               <span v-for="(m, k) in { T: 'terlambat', B: 'bolos', I: 'izin', S: 'sakit', A: 'absen' }" v-show="s[m]" :key="k" :class="['lencana', 'w-' + STATUS_SANTRI[k].w]">{{ STATUS_SANTRI[k].n }} {{ s[m] }}</span></div>
@@ -253,12 +258,12 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
             <thead><tr class="border-b border-garis text-left [&>th]:p-2.5"><th>NIS</th><th>Nama</th><th>JK</th><th>Kelas</th><th>Kamar</th><th class="text-right">Sesi</th><th class="text-right">Hadir</th><th class="text-right">Terlambat</th>
               <th class="text-right">Bolos</th><th class="text-right">Izin</th><th class="text-right">Sakit</th><th class="text-right">Absen</th><th class="text-right">Kehadiran</th><th v-if="kegiatan === 'pokok'">Per kegiatan</th></tr></thead>
             <tbody>
-              <tr v-for="s in baris" :key="s.student_id" class="border-b border-garis last:border-0 [&>td]:p-2.5">
+              <tr v-for="s in baris" :key="s.student_id" :class="['border-b border-garis last:border-0 [&>td]:p-2.5', amb.kelas(s.persen)]">
                 <td class="tabular-nums">{{ s.nis }}</td><td class="font-semibold">{{ s.nama }}</td><td>{{ s.jenis_kelamin || '–' }}</td>
                 <td class="text-xs">{{ s.kelas || '–' }}</td><td class="text-xs">{{ s.kamar || '–' }}</td>
                 <td class="text-right tabular-nums">{{ s.sesi }}</td><td class="text-right tabular-nums">{{ s.hadir }}</td><td class="text-right tabular-nums">{{ s.terlambat }}</td>
                 <td class="text-right tabular-nums">{{ s.bolos }}</td><td class="text-right tabular-nums">{{ s.izin }}</td><td class="text-right tabular-nums">{{ s.sakit }}</td><td class="text-right tabular-nums">{{ s.absen }}</td>
-                <td :class="['text-right font-bold tabular-nums', (s.persen ?? 100) < ambang ? 'text-[rgb(var(--merah))]' : '']">{{ persenTeks(s.persen) }}</td>
+                <td :class="['text-right font-bold tabular-nums', amb.bawah(s.persen) ? 'persen-ambang' : '']">{{ persenTeks(s.persen) }}</td>
                 <td v-if="kegiatan === 'pokok'" class="text-xs text-teks3">
                   <span v-for="x in kodeKegiatan(s.per_kegiatan || {})" :key="x.k" class="mr-2 whitespace-nowrap">{{ x.n }} {{ s.per_kegiatan[x.k].hadir }}/{{ s.per_kegiatan[x.k].sesi }}</span></td>
               </tr>
@@ -273,7 +278,7 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
           <table class="matriks text-xs">
             <thead><tr><th class="nis">NIS</th><th class="lekat">Nama</th><th v-for="t in tanggal" :key="t" class="tgl"><span class="block font-bold">{{ t.slice(8, 10) }}</span><span class="block font-normal text-teks3">{{ hariSingkat(t) }}</span></th><th>Persen</th></tr></thead>
             <tbody>
-              <tr v-for="s in santri" :key="s.student_id">
+              <tr v-for="s in santri" :key="s.student_id" :class="amb.kelas(s.persen)">
                 <td class="nis tabular-nums text-teks3">{{ s.nis }}</td><td class="lekat font-semibold">{{ s.nama }}</td>
                 <td v-for="t in tanggal" :key="t" class="tgl"><span v-if="matriks[s.student_id]?.[t]" :class="['sel', 'w-' + STATUS_SANTRI[matriks[s.student_id][t]].w]">{{ matriks[s.student_id][t] }}</span></td>
                 <td class="text-right font-bold tabular-nums">{{ persenTeks(s.persen) }}</td>
@@ -340,7 +345,7 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
           <colgroup><col style="width:4%"><col style="width:8%"><col style="width:17%"><col style="width:4%"><col style="width:6%"><col style="width:5%"><col style="width:5%"><col style="width:6%"><col style="width:5%"><col style="width:4%"><col style="width:5%"><col style="width:5%"><col style="width:7%"><col style="width:19%"></colgroup>
           <thead><tr><th>No.</th><th>NIS</th><th>Nama</th><th>JK</th><th>Kelas</th><th>Sesi wajib</th><th>Hadir</th><th>Terlambat</th><th>Bolos</th><th>Izin</th><th>Sakit</th><th>Absen</th><th>Kehadiran</th><th>Keterangan</th></tr></thead>
           <tbody>
-            <tr v-for="(s, i) in baris" :key="s.student_id">
+            <tr v-for="(s, i) in baris" :key="s.student_id" :class="amb.kelasCetak(s.persen)">
               <td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ s.nis }}</td><td>{{ s.nama }}</td><td class="tengah">{{ s.jenis_kelamin || '–' }}</td><td class="tengah">{{ s.kelas || '–' }}</td>
               <td class="tengah">{{ s.sesi }}</td><td class="tengah">{{ s.hadir }}</td><td class="tengah">{{ s.terlambat }}</td><td class="tengah">{{ s.bolos }}</td>
               <td class="tengah">{{ s.izin }}</td><td class="tengah">{{ s.sakit }}</td><td class="tengah">{{ s.absen }}</td><td class="tengah">{{ persenTeks(s.persen) }}</td><td>{{ keteranganSantri(s) }}</td>
@@ -353,7 +358,7 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
         <table class="tabel kecil matriks-cetak">
           <thead><tr><th style="width:3%">No.</th><th style="width:6%">NIS</th><th style="width:14%">Nama</th><th style="width:2.5%">JK</th><th v-for="t in tanggal" :key="t">{{ t.slice(8, 10) }}</th><th>H</th><th>T</th><th>B</th><th>I</th><th>S</th><th>A</th><th style="width:5%">%</th></tr></thead>
           <tbody>
-            <tr v-for="(s, i) in santri" :key="s.student_id">
+            <tr v-for="(s, i) in santri" :key="s.student_id" :class="amb.kelasCetak(s.persen)">
               <td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ s.nis }}</td><td>{{ s.nama }}</td><td class="tengah">{{ s.jenis_kelamin || '' }}</td>
               <td v-for="t in tanggal" :key="t" class="tengah">{{ matriks[s.student_id]?.[t] || '' }}</td>
               <td class="tengah">{{ s.hadir }}</td><td class="tengah">{{ s.terlambat }}</td><td class="tengah">{{ s.bolos }}</td><td class="tengah">{{ s.izin }}</td><td class="tengah">{{ s.sakit }}</td><td class="tengah">{{ s.absen }}</td>

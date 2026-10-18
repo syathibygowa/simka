@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/cetak.css | v1.9 | Perbaikan: catatan cetak di kaki halaman | 14/10/2026 */
+/* SIMKA PRO | src/styles/cetak.css | v1.10 | 14.3.0: baris kehadiran di bawah ambang berwarna pada cetakan | 17/10/2026 */
 /* =====================================================================
    SIMKA PRO · Standar cetak dokumen
    Kertas F4 215 × 330 mm, margin 2 cm, garis tabel ½ pt,
@@ -129,3 +129,6 @@
 /* Tabel rekap banyak kolom pada F4 tegak: judul kolom lebih kecil agar tidak bertumpuk */
 .dok table.tabel.rapat th { font-size: 6.8pt; padding: 2pt 1.5pt; line-height: 1.15; hyphens: none; }
 .dok table.tabel.rapat td { padding: 2pt 2pt; }
+
+/* 14.3.0: kehadiran di bawah ambang. Di dokumen cetak hanya berwarna bila pengaturan "cetak" aktif (kelas .cetak-ambang). */
+.dok table.tabel tr.cetak-ambang td { background: #FDE2E1; color: #9B1C1C; -webkit-print-color-adjust: exact; print-color-adjust: exact; }

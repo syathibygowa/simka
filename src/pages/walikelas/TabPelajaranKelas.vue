@@ -1,9 +1,11 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabPelajaranKelas.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabPelajaranKelas.vue | v1.4 | 14.3.0: tampilan Kehadiran per mapel | 17/10/2026 -->
 <script setup>
 // Pelajaran di satu kelas berdasarkan jurnal mengajar guru: rekap keterlaksanaan per mapel/guru, materi per tanggal,
 // dan roster (jadwal pelajaran pekanan). Wali kelas dapat memantau mapel yang kosong; cetak F4 rekap keterlaksanaan.
+// v1.4: tampilan "Kehadiran per mapel" — kehadiran setiap santri pada setiap mata pelajaran (absensi guru mapel).
 import { ref, computed, watch, onMounted } from 'vue'
-import { PhListChecks, PhCalendarDots, PhGridFour, PhPrinter } from '@phosphor-icons/vue'
+import { PhListChecks, PhCalendarDots, PhGridFour, PhPrinter, PhUserCheck } from '@phosphor-icons/vue'
+import RekapKehadiranMapel from '@/components/RekapKehadiranMapel.vue'
 import { useWaliKelas } from '@/stores/waliKelas'
 import { useJadwal } from '@/stores/jadwal'
 import { useLembaga } from '@/stores/lembaga'
@@ -28,7 +30,7 @@ watch(periode, muat)
 const rekap = computed(() => rekapPenugasan(slot.value))
 const total = computed(() => rekap.value.reduce((a, r) => ({ terjadwal: a.terjadwal + r.terjadwal, terlaksana: a.terlaksana + r.terlaksana, tidak: a.tidak + r.tidak, kosong: a.kosong + r.kosong }), { terjadwal: 0, terlaksana: 0, tidak: 0, kosong: 0 }))
 const perTanggal = computed(() => { const m = {}; for (const s of slot.value) (m[s.tanggal] ||= []).push(s); return Object.entries(m).sort((a, b) => b[0].localeCompare(a[0])) })
-const TAMPILAN = [{ k: 'rekap', n: 'Per mapel', ikon: PhListChecks }, { k: 'tanggal', n: 'Per tanggal', ikon: PhCalendarDots }, { k: 'roster', n: 'Jadwal pelajaran', ikon: PhGridFour }]
+const TAMPILAN = [{ k: 'rekap', n: 'Per mapel', ikon: PhListChecks }, { k: 'tanggal', n: 'Per tanggal', ikon: PhCalendarDots }, { k: 'hadir', n: 'Kehadiran per mapel', ikon: PhUserCheck }, { k: 'roster', n: 'Jadwal pelajaran', ikon: PhGridFour }]
 const waliKelas = computed(() => wk.kelasPilih?.wali?.[0] || {})
 const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan === 'DIREKTUR' || /^direktur/i.test(s.jabatan_tertulis)) || {})
 </script>
@@ -39,7 +41,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
         <button v-for="t in TAMPILAN" :key="t.k" type="button" role="tab" :aria-selected="tampilan === t.k" @click="tampilan = t.k"
           :class="['tab-garis', tampilan === t.k && 'aktif']"><component :is="t.ikon" :size="18" weight="duotone" /><span>{{ t.n }}</span></button>
       </div>
-      <template v-if="tampilan !== 'roster'">
+      <template v-if="!['roster', 'hadir'].includes(tampilan)">
         <div class="bilah-tab kecil" role="tablist" aria-label="Periode"><button v-for="x in PERIODE" :key="x.k" :class="['tab-garis', periode === x.k && 'aktif']" type="button" role="tab" :aria-selected="periode === x.k" @click="periode = x.k">{{ x.n }}</button></div>
         <span class="text-xs text-teks3">{{ teksRentang(p.m, p.s) }}</span>
         <span class="flex-1" />
@@ -47,7 +49,8 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
       </template>
     </div>
 
-    <div v-if="tampilan === 'roster'" class="kartu p-3">
+    <RekapKehadiranMapel v-if="tampilan === 'hadir'" :group-id="wk.pilih" :ttd-kanan="{ jabatan: `Wali Kelas ${wk.kelasPilih?.nama || ''}`, nama: waliKelas.nama || '', niy: waliKelas.niy }" />
+    <div v-else-if="tampilan === 'roster'" class="kartu p-3">
       <GridJadwal v-if="jd.dimuat" mode="kelas" :group-id="wk.pilih" :jenjang="wk.kelasPilih?.jenjang || 'wustha'" />
       <p v-else class="p-6 text-center text-sm text-teks3">Memuat jadwal pelajaran…</p>
     </div>

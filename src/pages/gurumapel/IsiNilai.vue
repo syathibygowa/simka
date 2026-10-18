@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/IsiNilai.vue | v1.2 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/IsiNilai.vue | v1.3 | 14.3.0: komponen Kehadiran otomatis dari absensi pelajaran | 17/10/2026 -->
 <script setup>
 // Lembar nilai satu kelas–mapel × semester (Guru Mapel → Nilai). Bagian:
 //   Isian nilai : isian per komponen (Harian 1, Harian 2, Ulangan, UTS, UAS, …) yang ditambah guru sendiri; tampilan tabel
@@ -17,6 +17,7 @@ import { useNilai } from '@/stores/nilai'
 import { useUI } from '@/stores/ui'
 import { MODE_NILAI, STATUS_PERIODE, ASPEK, predikatDari } from '@/lib/penilaian'
 import { hitungAkumulasi, deskripsiOtomatis, LABEL_SEMESTER } from '@/lib/nilai'
+import { useAmbang } from '@/stores/ambang'
 import { JENJANG_PENDEK } from '@/lib/santri'
 import { hariIniISO, formatPendek } from '@/lib/tanggal'
 import BilahTab from '@/components/BilahTab.vue'
@@ -44,6 +45,10 @@ const dua = computed(() => !!ket.value.pakai_keterampilan)
 const aspekAda = computed(() => (dua.value ? ['pengetahuan', 'keterampilan'] : ['pengetahuan']))
 const kolomAspek = (a) => kategori.value.filter((k) => k.aspek === a).flatMap((k) => kolom.value.filter((c) => c.category_id === k.id).map((c) => ({ ...c, kat: k })))
 const namaKat = (id) => kategori.value.find((k) => k.id === id)?.nama || ''
+// 14.3.0: komponen Kehadiran (sumber 'kehadiran') dihitung otomatis dari absensi guru mapel pada rentang semester
+const kehadiran = computed(() => L.value?.kehadiran?.santri || {})
+const katHadir = computed(() => kategori.value.filter((k) => k.sumber === 'kehadiran' && k.aktif))
+const amb = useAmbang(); amb.muat()
 
 // ---------- Salinan lokal ----------
 const skor = ref(new Map()); const ubahSkor = ref(new Map())
@@ -62,7 +67,7 @@ function isiSel(c, s, v) {
   const m = new Map(ubahSkor.value); if (String(v) === String(lama)) m.delete(k); else m.set(k, v === '' ? '' : Number(v)); ubahSkor.value = m
 }
 const petaGabung = computed(() => { const m = new Map(skor.value); for (const [k, v] of ubahSkor.value) { if (v === '') m.delete(k); else m.set(k, v) } return m })
-const saran = (s, aspek = 'pengetahuan') => hitungAkumulasi({ kategori: kategori.value, kolom: kolom.value, skor: petaGabung.value, santriId: s, aspek, desimal: ket.value.desimal || 0 })
+const saran = (s, aspek = 'pengetahuan') => hitungAkumulasi({ kategori: kategori.value, kolom: kolom.value, skor: petaGabung.value, santriId: s, aspek, desimal: ket.value.desimal || 0, kehadiran: kehadiran.value })
 function setAkhir(s, f, v) { akhir.value[s][f] = v; ubahAkhir.value = new Set([...ubahAkhir.value, s]) }
 const nilaiRapor = (s) => (akumulasi.value ? saran(s).nilai : akhir.value[s]?.nilai === '' ? null : Number(akhir.value[s]?.nilai))
 const nilaiKet = (s) => { const v = akhir.value[s]?.keterampilan; return v === '' || v == null ? nilaiRapor(s) : Number(v) }
@@ -103,7 +108,7 @@ async function hapusKolom() {
   if (!(await ui.konfirmasi({ judul: `Hapus isian ${fk.value.nama}?`, pesan: 'Semua nilai santri pada isian ini ikut terhapus.', ya: 'Hapus', bahaya: true }))) return
   try { await nl.hapusKolom(fk.value.id); lembarKolom.value = false; reset(); ui.toast('Isian dihapus.') } catch (e) { ui.toast(e.message, 'galat') }
 }
-const bolehTambah = (k) => k.aktif && (k.berulang || !kolom.value.some((c) => c.category_id === k.id))
+const bolehTambah = (k) => k.sumber !== 'kehadiran' && k.aktif && (k.berulang || !kolom.value.some((c) => c.category_id === k.id))
 
 // ---------- Simpan ----------
 async function simpanSemua() {
@@ -180,6 +185,7 @@ const ringkasSaran = computed(() => { const v = santri.value.map((s) => saran(s.
                 <div class="flex flex-wrap gap-1">
                   <button v-for="c in kolom.filter((x) => x.category_id === k.id)" :key="c.id" type="button" :class="['flex min-h-[34px] items-center gap-1 rounded-lg border px-2 text-xs font-semibold', kolomPilih === c.id && tampil === 'per' ? 'border-[color:var(--c)] bg-permukaan2' : 'border-garis']"
                     @click="kolomPilih = c.id; tampil = 'per'">{{ c.nama }}<PhPencilSimple v-if="boleh" :size="12" class="text-teks3" @click.stop="bukaKolom(k, c)" /></button>
+                  <span v-if="k.sumber === 'kehadiran'" class="text-xs text-teks3">Otomatis dari absensi pelajaran{{ L.kehadiran ? ` (${formatPendek(L.kehadiran.mulai)} – ${formatPendek(L.kehadiran.selesai)})` : '' }}</span>
                   <button v-if="boleh && bolehTambah(k)" type="button" class="flex min-h-[34px] items-center gap-1 rounded-lg border border-dashed border-garis px-2 text-xs font-semibold text-teks2" @click="bukaKolom(k)"><PhPlus :size="12" weight="bold" /> Isian</button>
                 </div>
               </div>
@@ -203,6 +209,7 @@ const ringkasSaran = computed(() => { const v = santri.value.map((s) => saran(s.
             <thead class="sticky top-0 z-10 bg-permukaan2 text-xs text-teks2">
               <tr><th class="sticky left-0 z-20 bg-permukaan2 px-2 py-2 text-left">NIS</th><th class="px-2 text-left">Nama</th>
                 <th v-for="c in aspekAda.flatMap(kolomAspek)" :key="c.id" class="px-1 text-center" :title="`${c.kat.nama}${c.tanggal ? ' · ' + formatPendek(c.tanggal) : ''}`">{{ c.nama }}</th>
+                <th v-if="katHadir.length" class="px-2 text-center" title="Persentase kehadiran pelajaran (otomatis)">Hadir</th>
                 <th class="px-2 text-center">Saran</th><th v-if="dua" class="px-2 text-center">Saran ket.</th></tr></thead>
             <tbody class="divide-y divide-garis">
               <tr v-for="s in santri" :key="s.id" :class="!s.aktif && 'opacity-60'">
@@ -212,6 +219,8 @@ const ringkasSaran = computed(() => { const v = santri.value.map((s) => saran(s.
                   <input :value="nilaiSel(c.id, s.id)" type="number" min="0" max="100" inputmode="decimal" :disabled="!boleh"
                     :class="['h-9 w-16 rounded-lg border bg-permukaan px-1 text-center tabular-nums', ubahSkor.has(`${c.id}|${s.id}`) ? 'border-[color:var(--c)] bg-permukaan2' : 'border-garis']"
                     :aria-label="`${c.nama} ${s.nama}`" @change="isiSel(c.id, s.id, $event.target.value)" /></td>
+                <td v-if="katHadir.length" :class="['px-2 text-center tabular-nums', amb.bawah(kehadiran[s.id]?.persen) && 'persen-ambang']"
+                  :title="kehadiran[s.id] ? `Hadir ${kehadiran[s.id].h}/${kehadiran[s.id].p} pertemuan` : 'Belum ada absensi pelajaran'">{{ kehadiran[s.id]?.p ? kehadiran[s.id].persen : '–' }}</td>
                 <td class="px-2 text-center font-bold tabular-nums">{{ saran(s.id).nilai ?? '–' }}</td>
                 <td v-if="dua" class="px-2 text-center font-bold tabular-nums">{{ saran(s.id, 'keterampilan').nilai ?? '–' }}</td>
               </tr>
@@ -225,7 +234,7 @@ const ringkasSaran = computed(() => { const v = santri.value.map((s) => saran(s.
           <ul class="divide-y divide-garis">
             <li v-for="(s, i) in santri" :key="s.id" class="flex items-center gap-3 py-2">
               <span class="w-6 text-right text-xs text-teks3 tabular-nums">{{ i + 1 }}</span>
-              <div class="min-w-0 flex-1"><p class="truncate text-sm font-semibold">{{ s.nama }}</p><p class="text-xs text-teks3">{{ s.nis }} · saran {{ saran(s.id).nilai ?? '–' }}</p></div>
+              <div class="min-w-0 flex-1"><p class="truncate text-sm font-semibold">{{ s.nama }}</p><p class="text-xs text-teks3">{{ s.nis }} · saran {{ saran(s.id).nilai ?? '–' }}<template v-if="katHadir.length"> · hadir <span :class="amb.bawah(kehadiran[s.id]?.persen) && 'persen-ambang'">{{ kehadiran[s.id]?.p ? kehadiran[s.id].persen + '%' : '–' }}</span></template></p></div>
               <input :value="nilaiSel(kolomPilih, s.id)" type="number" min="0" max="100" inputmode="decimal" :disabled="!boleh"
                 :class="['h-11 w-20 rounded-xl border bg-permukaan text-center text-base tabular-nums', ubahSkor.has(`${kolomPilih}|${s.id}`) ? 'border-[color:var(--c)] bg-permukaan2' : 'border-garis']"
                 :aria-label="`Nilai ${s.nama}`" @change="isiSel(kolomPilih, s.id, $event.target.value)" />
