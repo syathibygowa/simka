@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/DetailPegawai.vue | v1.6 | 14.1.0: riwayat surat teguran (bagi yang berhak melihat) | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/DetailPegawai.vue | v1.7 | 14.8.0: tombol Rekam kepegawaian | 18/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Biodata pegawai: kepala profil (foto, nama, NIY, status akun), ringkasan jabatan, profil lengkap per bagian
@@ -8,7 +8,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   PhIdentificationCard, PhBriefcase, PhCalendarBlank, PhBuildings, PhEye, PhPencilSimple, PhTrash, PhClockCounterClockwise, PhUser, PhAddressBook,
-  PhUsersThree, PhFileText, PhWarningOctagon,
+  PhUsersThree, PhFileText, PhWarningOctagon, PhStethoscope,
 } from '@phosphor-icons/vue'
 import { useUI } from '@/stores/ui'
 import { useOrganisasi } from '@/stores/organisasi'
@@ -111,6 +111,7 @@ const baris = computed(() => BAGIAN.value.flatMap((b) => b.isi).filter(([k]) => 
       </section>
       <div class="mt-4 flex flex-wrap gap-2">
         <router-link :to="`/pegawai/${p.id}/ubah`" class="tombol-utama"><PhPencilSimple :size="20" weight="duotone" /> Ubah data</router-link>
+        <router-link :to="`/pegawai/${p.id}/rekam`" class="tombol-garis"><PhStethoscope :size="20" weight="duotone" /> Rekam kepegawaian</router-link>
         <button class="tombol-garis" @click="pratinjauCv = true"><PhFileText :size="20" weight="duotone" /> Cetak CV</button>
         <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Cetak biodata</button>
         <button v-if="bolehHapus" class="tombol-garis" @click="hapus"><PhTrash :size="20" weight="duotone" /> Hapus</button>

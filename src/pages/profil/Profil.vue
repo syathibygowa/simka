@@ -1,8 +1,8 @@
-<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.11 | 14.1.0: tautan Surat Teguran (hanya bila pegawai memiliki SP) | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/profil/Profil.vue | v1.12 | 14.8.0: tautan Rekam kepegawaian saya | 18/10/2026 -->
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhSignOut, PhPalette, PhBell, PhInfo, PhLockKey, PhCamera, PhIdentificationCard, PhIdentificationBadge, PhWarningOctagon } from '@phosphor-icons/vue'
+import { PhSignOut, PhPalette, PhBell, PhInfo, PhLockKey, PhCamera, PhIdentificationCard, PhIdentificationBadge, PhWarningOctagon, PhStethoscope } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import { useNotifikasi } from '@/stores/notifikasi'
 import { MODE_DEMO } from '@/lib/supabase'
@@ -63,6 +63,11 @@ function ganti(p) { sesi.masukDemo(p); notif.berhenti(); pengumuman.berhenti(); 
     <router-link to="/kartu" class="kartu w-profil flex items-center gap-3 p-5 hover:bg-permukaan2">
       <span class="chip-ikon h-10 w-10"><PhIdentificationBadge :size="22" weight="duotone" /></span>
       <span class="flex-1"><span class="block font-bold">Kartu pegawai</span><span class="block text-sm text-teks3">Lihat, cetak, atau unduh kartu pegawai Anda</span></span>
+    </router-link>
+
+    <router-link v-if="!sesi.isSuperadmin" to="/profil/rekam" class="kartu w-pegawai flex items-center gap-3 p-5 hover:bg-permukaan2">
+      <span class="chip-ikon h-10 w-10"><PhStethoscope :size="22" weight="duotone" /></span>
+      <span class="flex-1"><span class="block font-bold">Rekam kepegawaian saya</span><span class="block text-sm text-teks3">Kehadiran, pengajuan, jurnal, mengajar, dan beban kerja dalam satu laporan</span></span>
     </router-link>
 
     <KartuSlipProfil v-if="!sesi.isSuperadmin" />

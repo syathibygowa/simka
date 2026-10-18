@@ -1,8 +1,8 @@
-// SIMKA PRO | src/lib/versi.js | v14.7.0 | 14.7.0: rekening/kas, pengeluaran, buku kas, laporan, bebas tunggakan, WA berurutan | 18/10/2026
+// SIMKA PRO | src/lib/versi.js | v14.8.0 | 14.8.0: Rekam Kepegawaian individu (tabel, grafik, temuan, cetak F4) | 18/10/2026
 // Nomor versi aplikasi yang tampil di halaman Profil. Naikkan setiap kali kode diunggah ke GitHub.
 // Keterangan versi tampil kepada pengguna, jadi ditulis tanpa kata "Fase".
-export const VERSI_APLIKASI = '14.7.0'
-export const KETERANGAN_VERSI = 'Keuangan: banyak rekening dan kas, pengeluaran dan pemasukan lain, pindah dana, buku kas/rekening koran, laporan satu halaman, tagihan ringkas per santri, Surat Keterangan Bebas Tunggakan, dan pengirim WA tagihan berurutan'
+export const VERSI_APLIKASI = '14.8.0'
+export const KETERANGAN_VERSI = 'Rekam Kepegawaian: laporan menyeluruh satu pegawai pada satu periode (kehadiran, pengajuan, jurnal, mengajar, tugas, beban kerja, teguran) dengan grafik, temuan otomatis, cetak F4, dan Excel'
 
 // Waktu kode dibangun oleh GitHub Actions; dipakai untuk memastikan versi yang tayang adalah yang terbaru.
 /* global __WAKTU_BUILD__ */

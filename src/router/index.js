@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.32 | 14.6.0: rute /disiplin-santri (Kedisiplinan Santri) | 18/10/2026
+// SIMKA PRO | src/router/index.js | v3.33 | 14.8.0: rute Rekam Kepegawaian (pegawai dan profil) | 18/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu; meta.menu/meta.izin/meta.boleh mengikuti Hak Akses.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -25,11 +25,13 @@ const routes = [
       { path: 'tugas', component: () => import('@/pages/umum/Tugas.vue'), meta: { judul: 'Tugas dan menu' } },
       { path: 'profil', component: () => import('@/pages/profil/Profil.vue'), meta: { judul: 'Profil' } },
       { path: 'profil/data', component: () => import('@/pages/profil/DataSaya.vue'), meta: { judul: 'Data Kepegawaian Saya', kembali: '/profil' } },
+      { path: 'profil/rekam', component: () => import('@/pages/pegawai/RekamPegawai.vue'), meta: { judul: 'Rekam Kepegawaian Saya', kembali: '/profil' } },
       { path: 'profil/teguran', component: () => import('@/pages/profil/TeguranSaya.vue'), meta: { judul: 'Surat Teguran Saya', cetak: false, kembali: '/profil' } },
       { path: 'pegawai', component: () => import('@/pages/pegawai/DaftarPegawai.vue'), meta: { judul: 'Data Pegawai', menu: 'pegawai', cetak: true, kembali: '/tugas' } },
       { path: 'pegawai/baru', component: () => import('@/pages/pegawai/FormPegawai.vue'), meta: { judul: 'Tambah Pegawai', menu: 'pegawai', izin: 'kelola_pegawai', kembali: '/pegawai' } },
       { path: 'pegawai/impor', component: () => import('@/pages/pegawai/ImporPegawai.vue'), meta: { judul: 'Impor Data Pegawai', menu: 'pegawai', izin: 'kelola_pegawai', kembali: '/pegawai' } },
       { path: 'pegawai/rekap', component: () => import('@/pages/pegawai/RekapPegawai.vue'), meta: { judul: 'Rekap Kepegawaian', menu: 'pegawai', cetak: true, kembali: '/pegawai' } },
+      { path: 'pegawai/:id/rekam', component: () => import('@/pages/pegawai/RekamPegawai.vue'), meta: { judul: 'Rekam Kepegawaian', kembali: '/pegawai' } },
       { path: 'pegawai/:id/ubah', component: () => import('@/pages/pegawai/FormPegawai.vue'), meta: { judul: 'Ubah Data Pegawai', menu: 'pegawai', izin: 'kelola_pegawai', kembali: '/pegawai' } },
       { path: 'pegawai/:id', component: () => import('@/pages/pegawai/DetailPegawai.vue'), meta: { judul: 'Biodata Pegawai', menu: 'pegawai', cetak: true, kembali: '/pegawai' } },
       { path: 'santri', component: () => import('@/pages/santri/DaftarSantri.vue'), meta: { judul: 'Data Santri', cetak: true, kembali: '/tugas' } },
