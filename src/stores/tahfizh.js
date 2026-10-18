@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/tahfizh.js | v1.7 | 14.9.1: nilai ujian dengan keterangan dan catatan perbaikan; data WA ujian (demo) | 18/10/2026
+// SIMKA PRO | src/stores/tahfizh.js | v1.8 | 14.9.3: Data hafalan hanya santri aktif (demo) | 18/10/2026
 // Tahfizh: hak pengguna, pengaturan per tahun ajaran (KKM, bobot, target, predikat, pekan efektif), penguji,
 // daftar santri beserta program, posisi hafalan, dan capaian juz resmi. Penulisan hanya lewat fungsi SQL.
 import { defineStore } from 'pinia'
@@ -133,7 +133,7 @@ export const useTahfizh = defineStore('tahfizh', {
       try {
         if (MODE_DEMO) {
           const san = useSantri(); const kel = useKelompokSantri(); await san.muat(); await kel.muat()
-          const aktif = san.daftar.filter((s) => ['aktif', 'nonaktif'].includes(s.status))
+          const aktif = san.daftar.filter((s) => s.status === 'aktif')
           const d = isiSantriDemo(aktif)
           const terlihat = useSesi().peran === 'pegawai' ? aktif.filter((s) => (s.kelompok || []).some((k) => k.id === 'g-hhb')) : aktif
           this.santri = terlihat.map((s) => {

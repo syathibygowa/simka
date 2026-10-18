@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.13 | 14.9.2: surat keterangan pindah ber-QR (Cek Keabsahan) | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.14 | 14.9.3: keterangan dampak status nonaktif terhadap kelompok | 18/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Biodata santri: identitas, kontak orang tua/wali (tombol WA), riwayat status dan mutasi;
@@ -393,6 +393,8 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
               :class="['min-h-[44px] rounded-xl border-2 px-3 text-sm font-semibold', 'w-' + STATUS_SANTRI[k].w, st.status === k ? 'text-teks' : 'border-garis text-teks2']"
               :style="st.status === k ? 'border-color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent)' : ''">{{ STATUS_SANTRI[k].n }}</button>
           </div></div>
+        <p v-if="st.status && st.status !== 'aktif'" class="rounded-xl bg-permukaan2 p-3 text-xs text-teks2">Mulai tanggal berlaku, santri dikeluarkan dari kelas, kamar, halaqah, dan ekskul sehingga tidak lagi tampil di absensi, setoran, nilai, dan laporan. Riwayat dan tagihannya tetap tersimpan.{{ st.status === 'nonaktif' ? ' Bila kelak diaktifkan kembali, kelompoknya dipulihkan otomatis.' : '' }}</p>
+        <p v-else-if="st.status === 'aktif' && s.status === 'nonaktif'" class="rounded-xl bg-permukaan2 p-3 text-xs text-teks2">Kelas, kamar, halaqah, dan ekskul sebelum nonaktif dipulihkan otomatis mulai tanggal berlaku (bila kelompoknya masih berjalan).</p>
         <InputTanggal v-model="st.tanggal" label="Berlaku mulai" wajib />
         <div><label class="label-isian" for="st-alasan">Alasan <span class="text-merah">*</span></label>
           <textarea id="st-alasan" v-model="st.alasan" class="isian min-h-[80px]" rows="3" placeholder="Contoh: kembali aktif setelah izin panjang" /></div>

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/utas.js | v1.1 | Fase 12 – Tahap 4 UTAS per kelas atau per halaqah | 13/10/2026
+// SIMKA PRO | src/stores/utas.js | v1.2 | 14.9.3: data demo hanya santri aktif | 18/10/2026
 // v1.1: aturMode (pembagian per kelas/halaqah per semester; muhaffizh tidak menguji halaqahnya sendiri).
 // Ujian Tahfizh Akhir Semester (UTAS): penguji per kelas/halaqah, pembagian peserta, juz diujikan (otomatis menurut SOP), nilai
 // Tajwid/Itqan, nilai akhir, predikat, dan status draf/final. Penulisan hanya lewat fungsi SQL.
@@ -24,7 +24,7 @@ function juzUsulDemo(s) {
   return j.slice(-(s.jenjang === 'sma' ? 5 : 3)).sort((a, b) => a - b)
 }
 function dataDemo(smt) {
-  const san = useSantri(); const kel = dataKelompokDemo(san.daftar); isiSantriDemo(san.daftar.filter((s) => ['aktif', 'nonaktif'].includes(s.status)))
+  const san = useSantri(); const kel = dataKelompokDemo(san.daftar); isiSantriDemo(san.daftar.filter((s) => s.status === 'aktif'))
   const pn = dataPenilaianDemo(); const ket = pn.ketentuan.tahfizh; const sesi = useSesi()
   const saya = sesi.peran === 'pegawai' ? 'p1' : null; const semua = sesi.isAdmin
   const mode = demo.mode[smt] || 'kelas'

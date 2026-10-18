@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/rapor.js | v1.2 | Tahap C: rapor dilengkapi foto santri dan prestasi semester | 16/10/2026
+// SIMKA PRO | src/stores/rapor.js | v1.3 | 14.9.3: data demo hanya santri aktif | 18/10/2026
 // v1.1: dataRapor (rapor SMA/Wustha, leger, sampul), dataRaporTahfizh, simpanNilaiManual, simpanKeputusan.
 // v1.2: dataRapor menambah foto_id dan prestasi (bertanda masuk rapor, dalam rentang semester) per santri (pelengkap_rapor).
 // Isian pelengkap rapor oleh pengasuh kelompok:
@@ -23,7 +23,7 @@ const demo = { pd: {}, kok: {}, cat: {}, manual: {}, kep: {} }
 const ACAK = (t) => { let h = 2166136261; for (const c of t) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) } h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); return ((h ^ (h >>> 15)) >>> 0) / 4294967296 }
 const antara = (t, a, b) => Math.round(a + ACAK(t) * (b - a))
 function siapDemo() {
-  const san = useSantri(); const kel = dataKelompokDemo(san.daftar); isiSantriDemo(san.daftar.filter((s) => ['aktif', 'nonaktif'].includes(s.status)))
+  const san = useSantri(); const kel = dataKelompokDemo(san.daftar); isiSantriDemo(san.daftar.filter((s) => s.status === 'aktif'))
   return { san, kel, pn: dataPenilaianDemo(), sesi: useSesi() }
 }
 const asuhanDemo = (g) => useSesi().peran !== 'pegawai' || (g.pengasuh || []).some((p) => p.employee_id === 'p1')

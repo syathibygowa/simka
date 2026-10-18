@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoKelompok.js | v1.3 | Perbaikan 13.7.0: saringan kategori ekskul indoor/outdoor | 16/10/2026
+// SIMKA PRO | src/lib/demoKelompok.js | v1.4 | 14.9.3: anggota kelompok demo hanya santri aktif | 18/10/2026
 // Kelompok santri contoh untuk MODE DEMO (dibangun dari data santri contoh). Pengasuh memakai id pegawai contoh (p1 = Ust. Hasan Basri).
 const TA = { id: 'ta1', nama: '2026/2027', mulai: '2026-07-13', selesai: '2027-06-30', aktif: true, terkunci: false }
 const hariIni = () => new Date().toISOString().slice(0, 10)
@@ -33,7 +33,7 @@ export function dataKelompokDemo(santri) {
   kelompok.forEach((k) => { k.pengasuh = (pengasuh[k.id] || []).map(([e, peran]) => ({ employee_id: e, nama: NAMA_P[e], niy: null, peran, mulai: null, sampai: null, berlaku: true, no_hp: '081234500000' })) })
   const anggota = []
   const masuk = (gid, sid) => anggota.push({ id: `m${anggota.length + 1}`, group_id: gid, student_id: sid, mulai: '2026-07-13', selesai: null, alasan_keluar: null })
-  santri.filter((s) => ['aktif', 'nonaktif'].includes(s.status)).forEach((s, i) => {
+  santri.filter((s) => s.status === 'aktif').forEach((s, i) => {
     const kelas = kelompok.find((k) => k.jenis === 'kelas' && k.tingkat === s.tingkat && (!k.jenis_kelamin || k.jenis_kelamin === s.jenis_kelamin))
     if (kelas && i % 9 !== 4) masuk(kelas.id, s.id)
     const kamar = kelompok.filter((k) => k.jenis === 'kamar' && k.jenis_kelamin === s.jenis_kelamin)
