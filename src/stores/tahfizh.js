@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/tahfizh.js | v1.8 | 14.9.3: Data hafalan hanya santri aktif (demo) | 18/10/2026
+// SIMKA PRO | src/stores/tahfizh.js | v1.9 | 14.10.0: khataman 30 juz (usul, putuskan, jadwal ulang, selesai, batal) | 18/10/2026
 // Tahfizh: hak pengguna, pengaturan per tahun ajaran (KKM, bobot, target, predikat, pekan efektif), penguji,
 // daftar santri beserta program, posisi hafalan, dan capaian juz resmi. Penulisan hanya lewat fungsi SQL.
 import { defineStore } from 'pinia'
@@ -12,7 +12,7 @@ import { useKelompokSantri } from './kelompokSantri'
 import { useAbsensiSantri } from './absensiSantri'
 import { setoranDemo, capaianDemo, ujianDemo } from '@/lib/demoTahfizh'
 import { hitungNilai } from '@/lib/tahfizh'
-import { PENGATURAN_SERTIFIKAT } from '@/lib/dokumenTahfizh'
+import { PENGATURAN_SERTIFIKAT, PENGATURAN_KHATAMAN } from '@/lib/dokumenTahfizh'
 import { hariIniISO } from '@/lib/tanggal'
 
 // ---------- Mode demo: dokumen tahfizh ----------
@@ -23,9 +23,10 @@ const DIREKTUR_DEMO = { nama: 'Siswandi Safari, S.Pd.I., Lc., S.H., M.Ag.', niy:
 let urutDemo = 0
 function dokDemoBaru(jenis, s, x = {}, mode = 'elektronik') {
   const sesi = useSesi(); urutDemo++
-  const ttd = (jenis === 'sertifikat_tahfizh' ? [DIREKTUR_DEMO] : [KEPALA_DEMO, { nama: x.penguji || sesi.pengguna?.nama_lengkap, niy: '2019070101', jabatan: 'Penguji' }])
+  const ttd = (jenis === 'sertifikat_tahfizh' ? [DIREKTUR_DEMO] : jenis === 'sertifikat_khataman' ? [{ ...DIREKTUR_DEMO, pengantar: 'Mengetahui,' }, { ...KEPALA_DEMO, pengantar: '' }]
+    : [KEPALA_DEMO, { nama: x.penguji || sesi.pengguna?.nama_lengkap, niy: '2019070101', jabatan: 'Penguji' }])
     .map((t, i) => ({ urutan: i + 1, ...t, status: mode === 'basah' || (i === 1) ? 'ditandatangani' : 'menunggu', waktu: mode === 'basah' ? null : i === 1 ? new Date().toISOString() : null, basah: mode === 'basah' }))
-  const pref = { suket_juz: 'SKJ', sertifikat_hafalan: 'SH', sertifikat_tahfizh: 'K' }[jenis]
+  const pref = { suket_juz: 'SKJ', sertifikat_hafalan: 'SH', sertifikat_tahfizh: 'K', sertifikat_khataman: 'SKH' }[jenis]
   return { id: 'dt' + Date.now() + urutDemo, jenis, student_id: s.student_id, exam_id: x.exam_id || null, nomor: `${pref}.${String(urutDemo).padStart(3, '0')}/PPTQ-IAS/V/1448`, tanggal: x.tanggal || hariIniISO(),
     tanggal_hijriah: '4 Jumadil Awal 1448', mode_ttd: mode, status: 'terbit', kode: kodeDemoDok(), status_dokumen: ttd.every((t) => t.status === 'ditandatangani') ? 'sah' : 'draf',
     diterbitkan_oleh: sesi.pengguna?.nama_lengkap, created_at: new Date().toISOString(), ttd, boleh_cabut: true,
@@ -42,6 +43,10 @@ function dokDemo(tz) {
   ] : []
   return DOK_DEMO
 }
+// ---------- Mode demo: khataman ----------
+let KHT_DEMO = null
+const khtDemo = () => (KHT_DEMO || (KHT_DEMO = []))
+const hakKhtDemo = () => useSesi().peran !== 'pegawai'
 const hariIniBulan = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01` }
 
 const rpc = async (nama, arg) => { const { data, error } = await supabase.rpc(nama, arg); if (error) throw new Error(pesanGalat(error)); return data }
@@ -341,6 +346,72 @@ export const useTahfizh = defineStore('tahfizh', {
     },
 
     // ---------- Dokumen tahfizh (Tahap D) ----------
+    // ---------- Khataman Al-Qur'an 30 juz ----------
+    async calonKhataman() {
+      if (MODE_DEMO) {
+        if (!this.santri.length) await this.muatSantri()
+        const ada = new Set(khtDemo().filter((k) => ['diusulkan', 'dijadwalkan', 'selesai'].includes(k.status)).map((k) => k.student_id))
+        // Demo: tiga santri dengan hafalan terbanyak dianggap sudah khatam 30 juz
+        return [...this.santri].sort((a, b) => b.total_resmi - a.total_resmi).slice(0, 3).filter((s) => !ada.has(s.student_id))
+          .map((s) => ({ student_id: s.student_id, nis: s.nis, nama: s.nama, jenis_kelamin: s.jenis_kelamin, kelas: s.kelas, halaqah: s.halaqah, total_resmi: 30, sabaq_hal: 600 }))
+      }
+      return (await rpc('calon_khataman')) || []
+    },
+    async daftarKhataman(status = null) {
+      if (MODE_DEMO) return khtDemo().filter((k) => !status || k.status === status || (status === 'berjalan' && ['diusulkan', 'dijadwalkan'].includes(k.status))).map((k) => {
+        const pk = hakKhtDemo(); const saya = k.pengusul === useSesi().pengguna?.nama_lengkap
+        return { ...JSON.parse(JSON.stringify(k)), boleh_putus: pk && k.status === 'diusulkan', boleh_ubah: ['diusulkan', 'dijadwalkan'].includes(k.status) && (pk || (k.status === 'diusulkan' && saya)),
+          boleh_selesai: k.status === 'dijadwalkan' && (pk || saya), boleh_batal: ['diusulkan', 'dijadwalkan'].includes(k.status) && (pk || (k.status === 'diusulkan' && saya)) }
+      })
+      return (await rpc('daftar_khataman', { p_status: status })) || []
+    },
+    /** p: { student_id, jadwal (ISO), tempat, catatan } */
+    async usulkanKhataman(p) {
+      if (MODE_DEMO) {
+        const s = (await this.calonKhataman()).find((x) => x.student_id === p.student_id); if (!s) throw new Error('Santri belum tercatat khatam 30 juz atau sudah diusulkan.')
+        if (!p.jadwal) throw new Error('Isi usulan tanggal dan jam khataman.')
+        khtDemo().unshift({ id: 'kh' + Date.now(), ...s, status: 'diusulkan', jadwal: p.jadwal, tempat: p.tempat || PENGATURAN_KHATAMAN.tempat_bawaan, catatan_usul: p.catatan || null,
+          pengusul: useSesi().pengguna?.nama_lengkap, hp_pengusul: '081234500001', diusulkan_pada: new Date().toISOString(), riwayat_jadwal: [], muhaffizh: 'Ust. Hasanuddin, S.Q.', hp_muhaffizh: '081234500001',
+          wali: { nama: 'Bapak ' + s.nama.split(' ')[0], hubungan: 'ayah', no_hp: '081355500123' }, undangan: null, sertifikat: null })
+        return
+      }
+      return rpc('usulkan_khataman', { p })
+    },
+    async putuskanKhataman(id, setuju, p = {}) {
+      if (MODE_DEMO) {
+        const k = khtDemo().find((x) => x.id === id)
+        if (!setuju) { if (String(p.alasan || '').trim().length < 5) throw new Error('Tuliskan alasan penolakan (minimal 5 huruf).'); Object.assign(k, { status: 'ditolak', alasan_tolak: p.alasan }); return }
+        Object.assign(k, { status: 'dijadwalkan', jadwal: p.jadwal || k.jadwal, tempat: p.tempat || k.tempat, pemutus: useSesi().pengguna?.nama_lengkap, diputus_pada: new Date().toISOString() })
+        this._dokKhtDemo(k); return
+      }
+      return rpc('putuskan_khataman', { p_id: id, p_setuju: setuju, p })
+    },
+    _dokKhtDemo(k) {
+      const tgl = new Date(new Date(k.jadwal).getTime() + 8 * 3600e3).toISOString().slice(0, 10)
+      k.undangan = { nomor: k.undangan?.nomor || `D.00${Math.floor(Math.random() * 9) + 1}/DW/PPTQ-IAS/V/1448`, kode: k.undangan?.kode || kodeDemoDok(), status: 'sah',
+        ttd: [{ ...KEPALA_DEMO, status: 'ditandatangani', waktu: new Date().toISOString() }] }
+      const d = dokDemo(this); const lama = d.find((x) => x.id === k.sertifikat?.id)
+      const x = dokDemoBaru('sertifikat_khataman', k, { total_juz: 30, tanggal: tgl, tanggal_khataman: tgl, tempat: k.tempat, pengaturan: PENGATURAN_KHATAMAN })
+      if (lama) Object.assign(lama, { ...x, id: lama.id, nomor: lama.nomor, kode: lama.kode }); else d.unshift(x)
+      const dok = lama || x; k.sertifikat = { id: dok.id, nomor: dok.nomor, kode: dok.kode, status: 'terbit', status_dokumen: dok.status_dokumen }
+    },
+    async ubahJadwalKhataman(id, jadwal, tempat, alasan) {
+      if (MODE_DEMO) {
+        const k = khtDemo().find((x) => x.id === id); if (k.status === 'dijadwalkan' && String(alasan || '').trim().length < 5) throw new Error('Tuliskan alasan perubahan jadwal (minimal 5 huruf).')
+        k.riwayat_jadwal.push({ jadwal_lama: k.jadwal, tempat_lama: k.tempat, jadwal_baru: jadwal, tempat_baru: tempat || k.tempat, alasan, oleh: useSesi().pengguna?.nama_lengkap, waktu: new Date().toISOString() })
+        Object.assign(k, { jadwal, tempat: tempat || k.tempat }); if (k.status === 'dijadwalkan') this._dokKhtDemo(k); return
+      }
+      return rpc('ubah_jadwal_khataman', { p_id: id, p_jadwal: jadwal, p_tempat: tempat || null, p_alasan: alasan || null })
+    },
+    async selesaikanKhataman(id, catatan) {
+      if (MODE_DEMO) { const k = khtDemo().find((x) => x.id === id); if (new Date(k.jadwal) > new Date(Date.now() + 864e5)) throw new Error('Tandai terlaksana pada atau setelah hari pelaksanaan.'); Object.assign(k, { status: 'selesai', selesai_pada: new Date().toISOString(), catatan_selesai: catatan || null }); return }
+      return rpc('selesaikan_khataman', { p_id: id, p_catatan: catatan || null })
+    },
+    async batalkanKhataman(id, alasan) {
+      if (MODE_DEMO) { if (String(alasan || '').trim().length < 5) throw new Error('Tuliskan alasan pembatalan (minimal 5 huruf).'); Object.assign(khtDemo().find((x) => x.id === id), { status: 'dibatalkan', alasan_batal: alasan }); return }
+      return rpc('batalkan_khataman', { p_id: id, p_alasan: alasan })
+    },
+
     async daftarDokumen({ mulai = null, selesai = null, id = null } = {}) {
       if (MODE_DEMO) { if (!this.santri.length) await this.muatSantri(); return dokDemo(this).filter((d) => (!id || d.id === id) && (id || ((!mulai || d.tanggal >= mulai) && (!selesai || d.tanggal <= selesai)))).map((d) => JSON.parse(JSON.stringify(d))) }
       return (await rpc('daftar_dokumen_tahfizh', { p_mulai: mulai, p_selesai: selesai, p_id: id })) || []

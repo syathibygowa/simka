@@ -1,10 +1,11 @@
-<!-- SIMKA PRO | src/pages/tahfizh/CetakDokumenTahfizh.vue | v1.3 | Perbaikan 13.6.0: logo dipilih dari daftar logo terpusat | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/CetakDokumenTahfizh.vue | v1.4 | 14.10.0: Sertifikat Penghargaan Khataman (portrait) | 18/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Cetak dokumen tahfizh F4 dari salinan beku (data) dokumen yang sudah terbit:
 //   suket_juz          Surat Keterangan Ujian Kenaikan Juz — berkop pondok; tanda tangan Kepala Bidang Tahfizh (kiri) dan Penguji (kanan)
 //   sertifikat_hafalan Sertifikat Hafalan (sertifikasi 5, 10, 15 … juz) — bingkai sertifikat; Kepala Bidang Tahfizh dan Penguji
 //   sertifikat_tahfizh Sertifikat Tahfizhul Quran (ijazah hafalan akhir jenjang) — mengikuti format pondok; Direktur
+//   sertifikat_khataman Sertifikat Penghargaan Khataman Al-Qur'an 30 juz — bingkai portrait; Direktur (Mengetahui) dan Kepala Bidang Tahfizh
 // Tanda tangan elektronik tampil sebagai QR Cek Keabsahan; tanda tangan basah dikosongkan. Draf/dicabut diberi catatan.
 import { computed, ref, onMounted } from 'vue'
 import { useTahfizh } from '@/stores/tahfizh'
@@ -13,7 +14,7 @@ import { formatPanjang, formatPendek, formatJam } from '@/lib/tanggal'
 import { svgQR, alamatCek } from '@/lib/dokumen'
 import { alamatAset } from '@/lib/penyimpanan'
 import { ringkasJuz } from '@/lib/tahfizh'
-import { PENGATURAN_SERTIFIKAT, miring } from '@/lib/dokumenTahfizh'
+import { PENGATURAN_SERTIFIKAT, PENGATURAN_KHATAMAN, miring } from '@/lib/dokumenTahfizh'
 import logoLokal from '@/assets/logo-pondok.png'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -41,7 +42,8 @@ const angka = (n) => (n == null ? '–' : String(n).replace('.', ','))
 const kota = computed(() => lembaga.identitas?.kota_surat || 'Gowa')
 const tglGanda = (m, h) => [m ? formatPanjang(m) : '', h].filter(Boolean).join('/')
 // Pengaturan kepala sertifikat (dibekukan saat terbit untuk Sertifikat Tahfizhul Quran)
-const atur = computed(() => ({ ...PENGATURAN_SERTIFIKAT, ...(d.value.pengaturan || {}) }))
+const atur = computed(() => ({ ...PENGATURAN_SERTIFIKAT, ...(props.dok.jenis === 'sertifikat_khataman' ? {} : d.value.pengaturan || {}) }))
+const kh = computed(() => ({ ...PENGATURAN_KHATAMAN, ...(props.dok.jenis === 'sertifikat_khataman' ? d.value.pengaturan || {} : {}) }))
 // Logo selalu dari pengaturan terkini (logo bukan isi resmi sertifikat): logo utama (kosong = logo pondok) dan logo tambahan (opsional)
 const tz = useTahfizh(); const aturKini = ref(null)
 onMounted(async () => { try { aturKini.value = await tz.pengaturanSertifikat() } catch { aturKini.value = null } })
@@ -52,7 +54,7 @@ const logoKiri = computed(() => (bukanLama(sumberLogo.value.logo_kiri) ? lembaga
 const logoKanan = computed(() => lembaga.urlLogo(bukanLama(sumberLogo.value.logo_kanan) || 'logo:pondok') || logoLokal)
 // Logo dari situs lain yang gagal dimuat diganti logo pondok bawaan aplikasi
 const ganti = (e) => { if (!e.target.src.endsWith(logoLokal)) e.target.src = logoLokal }
-const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kenaikan Juz', sertifikat_hafalan: 'Sertifikat Hafalan', sertifikat_tahfizh: 'Sertifikat Tahfizhul Quran' }[props.dok.jenis]))
+const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kenaikan Juz', sertifikat_hafalan: 'Sertifikat Hafalan', sertifikat_tahfizh: 'Sertifikat Tahfizhul Quran', sertifikat_khataman: 'Sertifikat Penghargaan Khataman' }[props.dok.jenis]))
 </script>
 <template>
   <!-- ============ SURAT KETERANGAN UJIAN KENAIKAN JUZ ============ -->
@@ -119,6 +121,30 @@ const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kena
             </div>
           </template>
 
+          <!-- Sertifikat Penghargaan Khataman 30 juz -->
+          <template v-else-if="dok.jenis === 'sertifikat_khataman'">
+            <h1 class="judul kecil">{{ kh.judul }}</h1>
+            <p class="subjudul-kh">{{ kh.subjudul }}</p>
+            <p class="nomor">Nomor {{ dok.nomor }}</p>
+            <p class="teks" v-html="miring(kh.pembuka)" />
+            <p class="nama">{{ String(d.nama || '').toUpperCase() }}</p>
+            <p class="teks rapat">{{ ttl }}</p>
+            <p class="teks rapat">{{ nisNisn }}{{ d.halaqah ? ' · ' + d.halaqah : '' }}</p>
+            <p class="teks">{{ kh.isi }} pada {{ d.tanggal_khataman ? formatPanjang(d.tanggal_khataman) : '–' }}{{ d.tempat ? ' di ' + d.tempat : '' }}.</p>
+            <p class="mahkota">KHATAM 30 JUZ</p>
+            <p class="teks"><i>{{ kh.doa }}</i></p>
+            <p class="teks rapat" style="margin-top: 4mm">{{ kota }}, {{ tglGanda(dok.tanggal, dok.tanggal_hijriah) }}</p>
+            <div class="ttd-dua">
+              <div v-for="(t, i) in ttd.slice(0, 2)" :key="i">
+                <p>{{ i === 0 ? 'Mengetahui,' : '&nbsp;' }}</p>
+                <p>{{ t.jabatan }}</p>
+                <div class="ruang"><div v-if="qr(t)" class="qr-el"><span class="qr" v-html="qr(t)" /><span class="ket">Ditandatangani secara elektronik<br>{{ waktuEl(t) }}</span></div></div>
+                <p class="nm">{{ t.nama }}</p>
+                <p v-if="t.niy" class="ni">NIY. {{ t.niy }}</p>
+              </div>
+            </div>
+          </template>
+
           <!-- Sertifikat Hafalan (sertifikasi berjenjang) -->
           <template v-else>
             <h1 class="judul kecil">SERTIFIKAT HAFALAN<br>AL-QUR'AN {{ d.jenjang_juz }} JUZ</h1>
@@ -169,6 +195,8 @@ const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kena
 .judul { position: relative; margin: 5mm 0 2mm; font-family: 'Times New Roman', Times, serif; font-weight: 400; font-size: 37pt; line-height: 1.05; letter-spacing: .2mm; white-space: nowrap; }
 .judul.kecil { font-size: 27pt; }
 .nomor { font-size: 11pt; margin-bottom: 4mm !important; }
+.subjudul-kh { font-family: 'Times New Roman', Times, serif; font-size: 17pt; font-weight: 700; letter-spacing: .4mm; color: #0B6B57; margin-bottom: 1mm !important; }
+.mahkota { margin-top: 4mm !important; padding: 1.5mm 8mm; border: 0.5mm solid #C9A227; border-radius: 2mm; font-family: 'Times New Roman', Times, serif; font-size: 16pt; font-weight: 700; letter-spacing: .6mm; color: #8C6200; }
 .teks { font-size: 13pt; line-height: 1.38; margin-top: 2.5mm !important; max-width: 160mm; }
 .teks.rapat { margin-top: 0.5mm !important; }
 .nama { margin-top: 4mm !important; font-family: 'Times New Roman', Times, serif; font-size: 22pt; font-weight: 700; letter-spacing: .3mm; }

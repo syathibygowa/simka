@@ -1,9 +1,21 @@
-// SIMKA PRO | src/lib/dokumenTahfizh.js | v1.2 | Perbaikan 13.6.0: logo dipilih dari daftar logo terpusat | 15/10/2026
+// SIMKA PRO | src/lib/dokumenTahfizh.js | v1.3 | 14.10.0: Sertifikat Penghargaan Khataman dan status khataman | 18/10/2026
 // Istilah jenis dan status dokumen tahfizh, serta pengaturan bawaan kepala Sertifikat Tahfizhul Quran.
 export const JENIS_DOK_TAHFIZH = {
   suket_juz: { n: 'Suket kenaikan juz', panjang: 'Surat Keterangan Ujian Kenaikan Juz', w: 'agenda' },
   sertifikat_hafalan: { n: 'Sertifikat hafalan', panjang: 'Sertifikat Hafalan', w: 'tahfizh' },
   sertifikat_tahfizh: { n: 'Sertifikat Tahfizhul Quran', panjang: 'Sertifikat Tahfizhul Quran', w: 'prestasi' },
+  sertifikat_khataman: { n: 'Sertifikat khataman', panjang: 'Sertifikat Penghargaan Khataman', w: 'libursantri' },
+}
+/** Khataman Al-Qur'an 30 juz. */
+export const STATUS_KHATAMAN = {
+  diusulkan: { n: 'Menunggu persetujuan', w: 'pengajuan' }, dijadwalkan: { n: 'Dijadwalkan', w: 'agenda' }, selesai: { n: 'Terlaksana', w: 'presensi' },
+  ditolak: { n: 'Ditolak', w: 'klinik' }, dibatalkan: { n: 'Dibatalkan', w: 'hakakses' },
+}
+export const PENGATURAN_KHATAMAN = {
+  tempat_bawaan: 'Masjid Pondok Pesantren Imam Asy-Syathiby', judul: 'SERTIFIKAT PENGHARGAAN', subjudul: "KHATAMAN AL-QUR'AN 30 JUZ",
+  pembuka: "Dengan memohon ridho Allah _Subhanahu Wata'ala_, Pondok Pesantren Tahfizhul Quran Imam Asy-Syathiby Wahdah Islamiyah Gowa memberikan penghargaan kepada:",
+  isi: "atas kesungguhan dan ketekunannya dalam menghafal Al-Qur'an hingga menuntaskan hafalan 30 juz, yang dikhatamkan di hadapan para asatidzah dan santri",
+  doa: "Semoga Allah menjaga hafalannya, menjadikannya ahlul Qur'an, dan memberkahi kedua orang tuanya dengan mahkota kemuliaan.",
 }
 /** Status gabungan: dokumen tahfizh (terbit/dicabut) + registri (draf/sah/ditolak). */
 export function statusDok(d) {
