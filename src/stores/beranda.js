@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/beranda.js | v1.0 | Fase 3 – Tahap 6 Dashboard per peran | 04/10/2026
+// SIMKA PRO | src/stores/beranda.js | v1.1 | 14.12.0: muat ulang beranda tiap 2 menit saat terlihat | 18/10/2026
 // Ringkasan beranda per peran (pribadi, pimpinan, pengelola) dalam satu panggilan, disegarkan tiap 60 detik
 // dan saat aplikasi kembali dibuka.
 import { defineStore } from 'pinia'
@@ -35,7 +35,7 @@ export const useBeranda = defineStore('beranda', {
     },
     mulai() {
       this.muat()
-      clearInterval(detak); detak = setInterval(() => document.visibilityState === 'visible' && this.muat(), 60000)
+      clearInterval(detak); detak = setInterval(() => document.visibilityState === 'visible' && this.muat(), 120000)
       document.addEventListener('visibilitychange', this._lihat ||= () => document.visibilityState === 'visible' && this.muat())
     },
     berhenti() { clearInterval(detak); detak = null; if (this._lihat) document.removeEventListener('visibilitychange', this._lihat) },

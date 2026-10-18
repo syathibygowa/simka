@@ -1,8 +1,9 @@
-<!-- SIMKA PRO | src/pages/absensisantri/AbsensiSantri.vue | v1.4 | Tab Perlu perhatian: santri sakit/izin/alfa/bolos/terlambat berulang | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/AbsensiSantri.vue | v1.5 | 14.12.0: muat berkala hanya saat layar terlihat | 18/10/2026 -->
 <script setup>
 // Absensi santri HISBAT. Tab: Sesi saya (pengasuh), Pantauan (admin/pimpinan: semua kelompok, langsung),
 // Rekap (per kelompok dan periode; Excel, cetak F4, WA ke wali).
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { berkala } from '@/lib/hemat'
 import { useRouter } from 'vue-router'
 import BilahTab from '@/components/BilahTab.vue'
 import { PhListChecks, PhBroadcast, PhChartBar, PhCaretRight, PhCheckCircle, PhHourglassMedium, PhWarningCircle, PhUsersThree, PhUserSwitch } from '@phosphor-icons/vue'
@@ -31,8 +32,8 @@ const tanggal = ref(hariIniISO()); const saringJenis = ref(''); const saringStat
 const semua = computed(() => aktif.value === 'pantauan')
 async function muat() { if (!['rekap', 'perhatian'].includes(aktif.value)) await abs.muatSesi(tanggal.value, semua.value) }
 let jeda = null
-onMounted(() => { muat(); abs.dengarkan(() => muat()); jeda = setInterval(() => { if (!['rekap', 'perhatian'].includes(aktif.value)) muat() }, 60000) })
-onBeforeUnmount(() => { clearInterval(jeda); abs.berhenti() })
+onMounted(() => { muat(); abs.dengarkan(() => muat()); jeda = berkala(() => { if (!['rekap', 'perhatian'].includes(aktif.value)) muat() }, 180000) })
+onBeforeUnmount(() => { jeda?.(); abs.berhenti() })
 watch([aktif, tanggal], muat)
 
 const daftar = computed(() => abs.sesiHari.filter((s) => (!saringJenis.value || s.jenis === saringJenis.value) && (!saringStatus.value || s.status === saringStatus.value)))

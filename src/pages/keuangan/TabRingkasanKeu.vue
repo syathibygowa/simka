@@ -1,8 +1,9 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabRingkasanKeu.vue | v1.1 | 14.7.0: kartu saldo seluruh rekening dan pengeluaran bulan ini | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabRingkasanKeu.vue | v1.2 | 14.12.0: ringkasan dimuat tiap 5 menit saat layar terlihat | 18/10/2026 -->
 <script setup>
 // Ringkasan: kartu statistik langsung (diperbarui setiap menit), capaian per jenis biaya, pemasukan 6 bulan,
 // dan tagihan yang akan jatuh tempo (ketuk untuk membuka rincian santri).
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { berkala } from '@/lib/hemat'
 import { useRouter, useRoute } from 'vue-router'
 import { PhHandCoins, PhCalendarCheck, PhWallet, PhWarningCircle, PhUsersThree, PhClockCountdown, PhInvoice, PhReceipt, PhCaretRight, PhBank, PhArrowCircleUp } from '@phosphor-icons/vue'
 import { useKeuangan } from '@/stores/keuangan'
@@ -17,8 +18,8 @@ async function muat() {
   try { r.value = await keu.ringkasan(); diperbarui.value = formatJam(sekarang()) } catch (e) { ui.toast(e.message, 'galat') }
 }
 let jam
-onMounted(() => { muat(); jam = setInterval(muat, 60000) })
-onBeforeUnmount(() => clearInterval(jam))
+onMounted(() => { muat(); jam = berkala(muat, 300000) })
+onBeforeUnmount(() => jam?.())
 const persen = (a, b) => (Number(b) ? Math.round((100 * Number(a)) / Number(b)) : 0)
 const maks = computed(() => Math.max(1, ...(r.value?.per_bulan || []).map((x) => Number(x.masuk))))
 const buka = (sid) => router.replace({ query: { ...route.query, santri: sid } })

@@ -1,4 +1,4 @@
-// SIMKA PRO | gas/Kode.gs | v1.4 | 14.11.0: backup bulanan memuat tahsin, khataman, dan dokumen tahfizh | 18/10/2026
+// SIMKA PRO | gas/Kode.gs | v1.5 | 14.12.0: backup mingguan berisi 18 lembar ringkas mudah dibaca (santri, pegawai, kelompok, hafalan, kegiatan sepekan, dll.) | 18/10/2026
 /**
  * SIMKA PRO · Jembatan Google Apps Script (Gmail pondok: syathiby.gowa@gmail.com)
  * ---------------------------------------------------------------------------
@@ -225,13 +225,65 @@ function retensiHarian() {
 // ---------------------------------------------------------------------------
 // 5. Backup mingguan ke Google Sheets
 // ---------------------------------------------------------------------------
+// Kolom yang harus tetap teks (angka panjang atau berawalan 0): NIS, NIY, nomor HP, dll.
+const TEKS_RINGKAS = ['NIS', 'NISN', 'NIY', 'NIK', 'HP', 'HP wali'];
+const TEKS_DATA = ['nis', 'nisn', 'niy', 'nik', 'no_hp', 'hp', 'no_kk', 'hp_penjemput'];
+
+function tulisLembar_(sheet, baris, teks) {
+  if (!baris || !baris.length) { sheet.getRange(1, 1).setValue('(tidak ada data)'); return; }
+  const kolom = Object.keys(baris[0]);
+  kolom.forEach(function (k, i) { if (teks.indexOf(k) >= 0) sheet.getRange(1, i + 1, baris.length + 1, 1).setNumberFormat('@'); });
+  const nilai = [kolom].concat(baris.map(function (r) {
+    return kolom.map(function (k) {
+      const v = r[k];
+      return v === null || v === undefined ? '' : (typeof v === 'object' ? JSON.stringify(v) : v);
+    });
+  }));
+  sheet.getRange(1, 1, nilai.length, kolom.length).setValues(nilai);
+  sheet.setFrozenRows(1);
+  sheet.getRange(1, 1, 1, kolom.length).setFontWeight('bold').setBackground('#E6EFE0');
+}
+
+/** v1.5: 18 lembar ringkas (nama, bukan kode) di depan; kegiatan = 7 hari sebelum hari backup. */
+function lembarRingkas_(ss, daftarIsi) {
+  const tz = 'Asia/Makassar';
+  const tMulai = new Date(Date.now() - 7 * 864e5), tSelesai = new Date(Date.now() - 864e5);
+  const mulai = Utilities.formatDate(tMulai, tz, 'yyyy-MM-dd'), selesai = Utilities.formatDate(tSelesai, tz, 'yyyy-MM-dd');
+  const daftar = sb_('/rest/v1/rpc/daftar_lembar_backup', { method: 'post', body: {} }) || [];
+  const isi = [];
+  daftar.forEach(function (l, i) {
+    let baris;
+    try { baris = sb_('/rest/v1/rpc/lembar_backup', { method: 'post', body: { p_jenis: l.kode, p_mulai: mulai, p_selesai: selesai } }) || []; }
+    catch (e) { baris = [{ Galat: String(e.message || e) }]; }
+    const nama = (i + 1) + '. ' + l.judul;
+    const sh = ss.insertSheet(nama, ss.getNumSheets());
+    tulisLembar_(sh, baris, TEKS_RINGKAS);
+    if (baris.length && baris.length <= 3000) sh.autoResizeColumns(1, Object.keys(baris[0]).length);
+    isi.push([i + 1, nama, l.ket, baris.length]);
+  });
+  daftarIsi.setName('Daftar isi');
+  daftarIsi.getRange(1, 1).setValue(ss.getName()).setFontWeight('bold').setFontSize(14);
+  daftarIsi.getRange(2, 1).setValue('Kegiatan sepekan: ' + Utilities.formatDate(tMulai, tz, 'dd/MM/yyyy') + ' – ' + Utilities.formatDate(tSelesai, tz, 'dd/MM/yyyy') +
+    '. Data lengkap per bulan tersimpan di folder SIMKA PRO/Backup/Bulanan.');
+  daftarIsi.getRange(4, 1, 1, 4).setValues([['No.', 'Lembar', 'Isi', 'Jumlah baris']]).setFontWeight('bold').setBackground('#E6EFE0');
+  if (isi.length) daftarIsi.getRange(5, 1, isi.length, 4).setValues(isi);
+  const r = 6 + isi.length;
+  daftarIsi.getRange(r, 1).setValue('Lembar sesudahnya berisi data mentah per tabel (nama tabel database) untuk pemulihan.').setFontStyle('italic');
+  daftarIsi.autoResizeColumns(1, 4);
+}
+
 function backupMingguan() {
   const folder = folderJalur_('SIMKA PRO/Backup');
   const nama = 'Backup SIMKA PRO ' + Utilities.formatDate(new Date(), 'Asia/Makassar', 'yyyy-MM-dd');
   const ss = SpreadsheetApp.create(nama);
+  ss.setSpreadsheetLocale('id_ID');
+  ss.setSpreadsheetTimeZone('Asia/Makassar');
   DriveApp.getFileById(ss.getId()).moveTo(folder);
 
-  TABEL_BACKUP.forEach(function (tabel, i) {
+  lembarRingkas_(ss, ss.getSheets()[0]);
+
+  // Data mentah per tabel (untuk pemulihan)
+  TABEL_BACKUP.forEach(function (tabel) {
     let baris = [], dari = 0;
     while (true) {
       const potong = sb_('/rest/v1/' + tabel + '?select=*', { headers: { Range: dari + '-' + (dari + 999) } });
@@ -239,17 +291,7 @@ function backupMingguan() {
       if (potong.length < 1000) break;
       dari += 1000;
     }
-    const sheet = i === 0 ? ss.getSheets()[0].setName(tabel) : ss.insertSheet(tabel);
-    if (!baris.length) { sheet.getRange(1, 1).setValue('(kosong)'); return; }
-    const kolom = Object.keys(baris[0]);
-    const nilai = [kolom].concat(baris.map(function (r) {
-      return kolom.map(function (k) {
-        const v = r[k];
-        return v === null ? '' : (typeof v === 'object' ? JSON.stringify(v) : v);
-      });
-    }));
-    sheet.getRange(1, 1, nilai.length, kolom.length).setValues(nilai);
-    sheet.setFrozenRows(1);
+    tulisLembar_(ss.insertSheet(tabel, ss.getNumSheets()), baris, TEKS_DATA);
   });
 
   // simpan 8 backup terakhir

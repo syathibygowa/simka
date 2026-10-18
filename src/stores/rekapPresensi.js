@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/rekapPresensi.js | v1.0 | Fase 2 – Tahap 7 Statistik, rekap, pengingat | 03/10/2026
+// SIMKA PRO | src/stores/rekapPresensi.js | v1.1 | 14.12.0: muat berkala hanya saat layar terlihat, tiap 2 menit | 18/10/2026
 // Statistik presensi langsung (Realtime tabel attendances + penyegaran berkala) dan rekap harian/periode.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -11,6 +11,7 @@ async function rpc(nama, isi) {
   if (error) throw new Error(error.hint && error.message ? error.message : pesanGalat(error))
   return data
 }
+import { berkala as muatBerkala } from '@/lib/hemat'
 let kanal = null; let berkala = null; let tunda = null
 
 // ---------- Mode demo: angka contoh yang wajar ----------
@@ -72,9 +73,9 @@ export const useRekapPresensi = defineStore('rekapPresensi', {
       kanal = supabase.channel('statistik-presensi')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'attendances' }, segarkan)
         .subscribe()
-      berkala = setInterval(() => this.muatStatistik(), 60000)
+      berkala = muatBerkala(() => this.muatStatistik(), 120000)
     },
-    berhenti() { kanal?.unsubscribe(); kanal = null; clearInterval(berkala); clearTimeout(tunda) },
+    berhenti() { kanal?.unsubscribe(); kanal = null; if (typeof berkala === 'function') berkala(); else clearInterval(berkala); berkala = null; clearTimeout(tunda) },
 
     async harian(tanggal) {
       if (MODE_DEMO) { const peg = usePegawai(); if (!peg.daftar.length) await peg.muat(); return harianDemo(tanggal) }

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/Persuratan.vue | v1.4 | 14.1.0: tab Surat teguran (SP1–SP3); ?sp=<id> membuka rinciannya | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/Persuratan.vue | v1.5 | 14.12.0: ringkasan dimuat berkala hanya saat layar terlihat | 18/10/2026 -->
 <script setup>
 // Persuratan (Blueprint Bagian 35), satu menu bertab:
 //   Untuk saya  : surat yang perlu saya disposisikan dan disposisi yang ditujukan kepada saya
@@ -11,6 +11,7 @@
 // ?surat=<id> membuka rincian surat (dipakai notifikasi); pada tab Surat keluar ?resmi=<id dokumen> dari kotak Tanda tangan.
 // ?templat=<kode>&santri=<id>&nis=<nis>[&prestasi=<teks>] membuka susun surat dengan template dan santri terpilih (dari biodata santri).
 import { computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue'
+import { berkala } from '@/lib/hemat'
 import { useRoute, useRouter } from 'vue-router'
 import { PhTray, PhEnvelopeOpen, PhBookBookmark, PhListChecks, PhHandPointing, PhPaperPlaneTilt, PhStamp, PhWarningCircle, PhCheckCircle, PhCalendarBlank, PhPaperPlaneRight, PhFileText, PhSignature, PhNotePencil, PhSealCheck, PhWarningOctagon } from '@phosphor-icons/vue'
 import { usePersuratan } from '@/stores/persuratan'
@@ -49,7 +50,7 @@ const segarkan = () => { versi.value++; muatRingkas() }
 let jeda
 onMounted(async () => {
   try { if (!ps.hakDimuat) await ps.muatHak() } catch (e) { ui.toast(e.message, 'galat') }
-  muatRingkas(); ps.dengarkan(segarkan); jeda = setInterval(muatRingkas, 60000)
+  muatRingkas(); ps.dengarkan(segarkan); jeda = berkala(muatRingkas, 180000)
   bukaDariQuery()
 })
 // Susun surat santri dari biodata/prestasi (?templat=…&santri=…&nis=…&prestasi=…)
@@ -65,7 +66,7 @@ async function bukaDariQuery() {
   router.replace({ path: '/persuratan/keluar', query: {} })
 }
 watch(() => route.query.templat, (v) => { if (v) bukaDariQuery() })
-onBeforeUnmount(() => { ps.berhenti(); clearInterval(jeda) })
+onBeforeUnmount(() => { ps.berhenti(); jeda?.() })
 const kartu = computed(() => {
   const r = ringkas.value; const muat = r.menunggu_disposisi === undefined ? '…' : null
   const umum = [

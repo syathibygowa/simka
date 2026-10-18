@@ -1,3 +1,4 @@
+// SIMKA PRO | src/stores/statistik.js | v1.1 | 14.12.0: muat berkala hanya saat layar terlihat, tiap 3 menit | 18/10/2026
 // Statistik beranda yang diperbarui langsung: Supabase Realtime memicu muat ulang
 // fungsi statistik_beranda() setiap kali data pegawai atau notifikasi berubah,
 // ditambah penyegaran berkala sebagai cadangan.
@@ -5,6 +6,7 @@ import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { statistikDemo } from '@/lib/demo'
 
+import { berkala as muatBerkala } from '@/lib/hemat'
 let kanal = null, berkala = null, tunda = null
 
 export const useStatistik = defineStore('statistik', {
@@ -48,9 +50,9 @@ export const useStatistik = defineStore('statistik', {
       kanal = supabase.channel('statistik-beranda')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, segarkan)
         .subscribe()
-      berkala = setInterval(() => this.muat(), 60000)
+      berkala = muatBerkala(() => this.muat(), 180000)
     },
 
-    berhenti() { kanal?.unsubscribe(); kanal = null; clearInterval(berkala); clearTimeout(tunda) },
+    berhenti() { kanal?.unsubscribe(); kanal = null; if (typeof berkala === 'function') berkala(); else clearInterval(berkala); berkala = null; clearTimeout(tunda) },
   },
 })

@@ -1,7 +1,8 @@
-// SIMKA PRO | src/lib/supabase.js | v1.1 | Fase 2 – Tahap 4 Halaman presensi | 03/10/2026
+// SIMKA PRO | src/lib/supabase.js | v1.2 | 14.12.0: pembaruan langsung diredam (hemat permintaan dan log server) | 18/10/2026
 // Klien Supabase. Tanpa VITE_SUPABASE_URL aplikasi berjalan dalam MODE DEMO
 // (data contoh di memori) agar tampilan dapat dicoba sebelum server siap.
 import { createClient } from '@supabase/supabase-js'
+import { redam } from './hemat'
 
 const url = import.meta.env.VITE_SUPABASE_URL
 const anon = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -10,6 +11,18 @@ export const MODE_DEMO = !url || !anon || import.meta.env.MODE === 'demo'
 export const supabase = MODE_DEMO
   ? null
   : createClient(url, anon, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'simka.sesi' } })
+
+// Pembaruan langsung (postgres_changes) yang hanya memicu "muat ulang" (fungsi tanpa argumen) diredam: perubahan beruntun
+// digabung menjadi paling banyak satu muat ulang per 10 detik dan ditunda saat layar tidak terlihat. Penangan yang membaca
+// isi perubahan (mis. notifikasi baru) tetap menerima setiap kejadian.
+if (supabase) {
+  const kanalAsli = supabase.channel.bind(supabase)
+  supabase.channel = (...arg) => {
+    const ch = kanalAsli(...arg); const onAsli = ch.on.bind(ch)
+    ch.on = (jenis, saring, fn) => onAsli(jenis, saring, jenis === 'postgres_changes' && typeof fn === 'function' && fn.length === 0 ? redam(fn) : fn)
+    return ch
+  }
+}
 
 /** Memanggil Edge Function dan mengembalikan JSON; galat dari server dilempar sebagai Error berbahasa Indonesia. */
 export async function panggilFungsi(nama, isi = {}) {
