@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/absensiSantri.js | v1.6 | 14.14.0: rekapKelompok (rekap per kelompok tanpa batas 1.000 baris) | 19/10/2026
+// SIMKA PRO | src/stores/absensiSantri.js | v1.7 | 14.16.0: penanda santri yang sudah dirujuk dan menunggu pemeriksaan klinik | 19/10/2026
 // Absensi santri HISBAT: sesi hari ini (pengasuh) atau semua kelompok (pantauan), detail sesi, simpan
 // (hanya pengecualian), rekap per santri, dan riwayat ketidakhadiran. Penulisan lewat fungsi SQL.
 // v1.2: detail() menyertakan "otomatis" — santri yang sedang sakit (Klinik → S) atau izin (Perizinan → I).
@@ -52,12 +52,13 @@ export const useAbsensiSantri = defineStore('absensiSantri', {
           pengecualian: sa?.pengecualian || [], log: sa?.log || [], tempat: def.tempat || null, jurnal: sa?.jurnal || null,
           otomatis: await this.otomatisDemo(anggota) }
       }
-      const [{ data, error }, oto] = await Promise.all([
+      const [{ data, error }, oto, tunggu] = await Promise.all([
         supabase.rpc('detail_absensi', { p_group: group, p_tanggal: tanggal, p_sesi: sesi }),
         supabase.rpc('status_otomatis_sesi', { p_group: group, p_tanggal: tanggal, p_sesi: sesi }),
+        supabase.rpc('rujukan_menunggu_kelompok', { p_group: group, p_tanggal: tanggal }),   // 14.16.0: sudah dirujuk, menunggu klinik
       ])
       if (error) throw new Error(pesanGalat(error))
-      return { ...data, otomatis: oto.error ? [] : oto.data || [] }
+      return { ...data, otomatis: oto.error ? [] : oto.data || [], menunggu: tunggu.error ? [] : tunggu.data || [] }
     },
     /** Dasbor ekskul: ringkasan setiap ekskul (pertemuan terjadwal/terlaksana, kehadiran, jurnal materi). */
     async ringkasanEkskul(mulai, selesai) {

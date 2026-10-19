@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.10 | 14.14.0: penjaga isian bersamaan (tidak menimpa absensi yang baru disimpan pengasuh lain) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.11 | 14.16.0: penanda sembuh/kembali dan menunggu klinik; riwayat penyelarasan otomatis | 19/10/2026 -->
 <script setup>
 // Pengisian absensi satu sesi: semua santri bawaan Hadir, ketuk kode HISBAT bagi yang tidak.
 // Pengampu halaqah/ekskul diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi (asrama tidak).
@@ -88,7 +88,11 @@ onMounted(muat)
 const jenis = computed(() => JENIS_ABSENSI[d.value?.jenis] || JENIS_ABSENSI.kelas)
 /** Status otomatis per santri: { kode, sumber: klinik|izin, keterangan } — terkunci, tidak dapat diubah pengasuh. */
 const oto = computed(() => Object.fromEntries((d.value?.otomatis || []).map((o) => [o.student_id, o])))
-const perluKeluhan = (id) => rujukKlinik.value && isian.value[id] === 'S' && !oto.value[id]
+// 14.16.0: isian Sakit/Izin tersimpan dari klinik/izin yang sudah berakhir (santri sembuh/kembali di tengah sesi) — dapat diubah
+const pernahOto = computed(() => Object.fromEntries((d.value?.pengecualian || []).filter((p) => p.otomatis && !oto.value[p.student_id]).map((p) => [p.student_id, p])))
+// 14.16.0: santri yang sudah dirujuk dan menunggu pemeriksaan klinik (tidak perlu dirujuk ulang)
+const menunggu = computed(() => Object.fromEntries((d.value?.menunggu || []).map((m) => [m.student_id, m])))
+const perluKeluhan = (id) => rujukKlinik.value && isian.value[id] === 'S' && !oto.value[id] && !menunggu.value[id] && pernahOto.value[id]?.otomatis !== 'klinik'
 const modeAtasNama = computed(() => d.value && !d.value.pengasuh_saya && d.value.boleh_atas_nama)
 const bolehIsi = computed(() => d.value && (d.value.pengasuh_saya || d.value.boleh_atas_nama))
 const kini = computed(() => new Date(d.value?.sekarang || Date.now()))
@@ -132,7 +136,7 @@ async function simpan() {
   } catch (e) {
     ui.toast(e.message, 'galat')
     // 14.14.0: sesi sudah disimpan pengasuh lain setelah formulir ini dibuka → muat ulang agar isiannya tidak tertimpa
-    if (/baru saja disimpan oleh/.test(e.message)) await muat()
+    if (/baru saja (disimpan oleh|diperbarui otomatis)/.test(e.message)) await muat()
   } finally { proses.value = false }
 }
 
@@ -301,6 +305,8 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
                 <component :is="oto[a.id].sumber === 'klinik' ? PhFirstAidKit : PhSignOut" :size="13" weight="fill" /> {{ oto[a.id].sumber === 'klinik' ? 'Klinik' : 'Izin' }}</span>
             </div>
             <p v-if="oto[a.id]" class="mt-1.5 flex items-center gap-1.5 pl-9 text-xs text-teks2"><PhLockSimple :size="14" class="shrink-0" /> {{ oto[a.id].keterangan }} · otomatis, tidak perlu diisi</p>
+            <p v-else-if="pernahOto[a.id]" class="mt-1.5 flex items-center gap-1.5 pl-9 text-xs text-teks2"><PhFirstAidKit :size="14" class="shrink-0" /> {{ pernahOto[a.id].otomatis === 'klinik' ? 'Tercatat sakit dari klinik; santri sudah dinyatakan sembuh' : 'Tercatat izin; santri sudah kembali' }}. Ubah bila santri hadir.</p>
+            <p v-else-if="menunggu[a.id]" class="mt-1.5 flex items-center gap-1.5 pl-9 text-xs text-teks2"><PhFirstAidKit :size="14" class="shrink-0" /> Sudah dirujuk ke klinik ({{ menunggu[a.id].keluhan }}), menunggu pemeriksaan. Tidak perlu dirujuk ulang.</p>
             <div v-if="!oto[a.id]" class="mt-2 grid grid-cols-6 gap-1 pl-9" role="radiogroup" :aria-label="`Kehadiran ${a.nama}`">
               <button v-for="k in URUT_KODE" :key="k" type="button" role="radio" :aria-checked="(isian[a.id] || 'H') === k" :disabled="!bolehIsi || lewatBatas || belumBuka"
                 :title="KODE[k].n" :aria-label="KODE[k].n" @click="setel(a.id, k)"
@@ -320,7 +326,7 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
         <div class="mt-3"><label class="label-isian" for="ab-cat">Catatan sesi (opsional)</label>
           <input id="ab-cat" v-model="catatan" :disabled="!bolehIsi || lewatBatas" class="isian" placeholder="Contoh: kegiatan dipindah ke masjid" /></div>
         <p class="mt-3 text-xs text-teks3">H Hadir · I Izin · S Sakit · B Bolos (ada di pondok tetapi tidak ikut) · A Absen (tanpa keterangan) · T Terlambat. Terlambat dan Bolos dihitung hadir.
-          Santri berlabel Klinik/Izin terisi otomatis. <template v-if="rujukKlinik">Santri yang ditandai Sakit otomatis dirujuk ke klinik saat disimpan.</template>
+          Santri berlabel Klinik/Izin terisi otomatis dan terkunci sampai sembuh/kembali; absensi yang sudah tersimpan ikut diperbarui saat klinik menyatakan sakit. <template v-if="rujukKlinik">Santri yang ditandai Sakit otomatis dirujuk ke klinik saat disimpan.</template>
           <template v-else>Sakit pada absensi ini hanya tercatat dan tidak dikirim ke klinik (sesuai Ketentuan Klinik).</template></p>
       </section>
 
@@ -328,7 +334,7 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
       <details v-if="d.log.length" class="kartu w-pengajuan mt-4 p-4">
         <summary class="flex cursor-pointer items-center gap-2 font-bold"><PhClockCounterClockwise :size="20" weight="duotone" style="color: var(--c)" /> Riwayat pengisian ({{ d.log.length }})</summary>
         <ul class="mt-2 space-y-2 text-sm">
-          <li v-for="(l, i) in d.log" :key="i"><b>{{ l.aksi === 'isi' ? 'Diisi' : 'Dikoreksi' }}</b> {{ formatWaktu(l.waktu) }} WITA oleh {{ l.oleh }}{{ l.atas_nama ? ` atas nama ${l.atas_nama}` : '' }}
+          <li v-for="(l, i) in d.log" :key="i"><b>{{ l.aksi === 'isi' ? 'Diisi' : l.aksi === 'otomatis' ? 'Diselaraskan otomatis (Klinik/Perizinan)' : 'Dikoreksi' }}</b> {{ formatWaktu(l.waktu) }} WITA{{ l.oleh ? ' oleh ' + l.oleh : '' }}{{ l.atas_nama ? ` atas nama ${l.atas_nama}` : '' }}
             <span v-if="l.perubahan?.length" class="block text-teks3">{{ l.perubahan.map((p) => `${p.nama}: ${KODE[p.lama]?.n} → ${KODE[p.baru]?.n}`).join('; ') }}</span></li>
         </ul>
       </details>

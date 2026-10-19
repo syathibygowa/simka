@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/jadwal.js | v1.6 | 14.9.2: jam pelajaran untuk guru pengganti (slot_pengganti) | 18/10/2026
+// SIMKA PRO | src/stores/jadwal.js | v1.7 | 14.16.0: peserta pelajaran menurut jam pelajaran (sakit/izin otomatis) | 19/10/2026
 // Mata pelajaran, jam pelajaran, penugasan mengajar, jadwal pelajaran per kelas/guru, jurnal mengajar, dan rekap.
 // Penulisan lewat fungsi SQL (hak atur_jadwal; guru menulis jurnal dan rencana materinya sendiri).
 import { defineStore } from 'pinia'
@@ -166,14 +166,15 @@ export const useJadwal = defineStore('jadwal', {
       return (await rpc('jadwal_mengajar_pekan', { p_tanggal: tanggal, p_emp: null })) || []
     },
     /** Santri kelas pada tanggal itu; kode_kelas = sudah tercatat tidak hadir di absensi kelas harian. */
-    async peserta(assignment, tanggal) {
+    /** 14.16.0: jam pelajaran (jamMulai, jamSelesai) menentukan status sakit/izin otomatis pada pelajaran itu. */
+    async peserta(assignment, tanggal, jamMulai = null, jamSelesai = null) {
       if (MODE_DEMO) {
         const d = dataJadwalDemo(); const t = d.penugasan.find((x) => x.id === assignment); const san = useSantri(); await san.muat(); const kel = dataKelompokDemo(san.daftar)
         return kel.anggota.filter((a) => a.group_id === t?.group_id && !a.selesai).map((a) => san.cari(a.student_id)).filter(Boolean)
           .map((s, i) => ({ id: s.id, nis: s.nis, nama: s.nama_lengkap, jk: s.jenis_kelamin, kode_kelas: i === 1 ? 'S' : null, sakit: i === 1, izin: false }))
           .sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
       }
-      return (await rpc('peserta_pelajaran', { p_assignment: assignment, p_tanggal: tanggal })) || []
+      return (await rpc('peserta_pelajaran', { p_assignment: assignment, p_tanggal: tanggal, p_jam_mulai: jamMulai ? String(jamMulai).slice(0, 5) : null, p_jam_selesai: jamSelesai ? String(jamSelesai).slice(0, 5) : null })) || []
     },
     async muatAturJurnal() {
       if (MODE_DEMO) { this.aturJurnal = this.aturJurnal || { ...ATUR_JURNAL_DEMO }; return this.aturJurnal }

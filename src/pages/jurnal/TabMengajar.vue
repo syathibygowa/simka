@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabMengajar.vue | v2.4 | 14.9.2: mengajar sebagai guru pengganti | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabMengajar.vue | v2.5 | 14.16.0: sakit/izin santri menurut jam pelajaran (sembuh sebelum pelajaran tidak lagi tertulis sakit) | 19/10/2026 -->
 <script setup>
 // Jurnal mengajar (sepaket dengan Jurnal Harian).
 // v2.4: "Mengajar sebagai pengganti" — guru memilih tanggal, lalu jam pelajaran guru lain yang ia gantikan, dan mengisi jurnalnya
@@ -79,8 +79,8 @@ async function buka(x) {
   if (atur.value.absen_santri && x.st !== 'nanti') {
     memuatPeserta.value = true
     try {
-      peserta.value = await jd.peserta(x.assignment_id, x.tanggal)
-      if (!j) for (const p of peserta.value) { const k = p.kode_kelas || (p.sakit ? 'S' : p.izin ? 'I' : null); if (k) absen.value[p.id] = k }
+      peserta.value = await jd.peserta(x.assignment_id, x.tanggal, x.jam_mulai, x.jam_selesai)
+      if (!j) for (const p of peserta.value) { const k = p.sakit ? 'S' : p.izin ? 'I' : p.kode_kelas || null; if (k) absen.value[p.id] = k }
     } catch (e) { ui.toast(e.message, 'galat') } finally { memuatPeserta.value = false }
   }
 }
@@ -275,7 +275,7 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
               <ul v-if="bukaAbsen" class="max-h-[46vh] divide-y divide-garis overflow-y-auto border-t border-garis">
                 <li v-for="(p, i) in peserta" :key="p.id" class="flex flex-wrap items-center gap-2 px-3 py-2">
                   <span class="min-w-0 flex-1 text-sm"><span class="tabular-nums text-teks3">{{ i + 1 }}.</span> {{ p.nama }} <span class="text-xs text-teks3">{{ p.jk }}</span>
-                    <span v-if="p.kode_kelas || p.sakit || p.izin" class="block text-xs text-teks3">{{ p.kode_kelas ? 'Tercatat di absensi kelas harian' : p.sakit ? 'Sedang sakit (klinik)' : 'Izin keluar pondok' }}</span></span>
+                    <span v-if="p.kode_kelas || p.sakit || p.izin" class="block text-xs text-teks3">{{ p.sakit || p.izin ? p.keterangan_otomatis || (p.sakit ? 'Sakit (klinik)' : 'Izin keluar pondok') : 'Tercatat di absensi kelas harian' }}</span></span>
                   <span class="flex gap-0.5" role="radiogroup" :aria-label="`Kehadiran ${p.nama}`">
                     <button v-for="[k, n] in KODE" :key="k" type="button" role="radio" :aria-checked="(absen[p.id] || 'H') === k" :title="n" :aria-label="n" @click="setKode(p.id, k)"
                       :class="['h-8 w-8 rounded-lg text-xs font-bold', (absen[p.id] || 'H') === k ? 'w-' + WARNA_KODE[k] + ' chip-ikon' : 'text-teks3 hover:bg-permukaan2']">{{ k }}</button>
