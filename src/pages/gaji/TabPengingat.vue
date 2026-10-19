@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/TabPengingat.vue | v1.0 | Fase 11 – Tahap 5 Pengingat kenaikan tunjangan | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/TabPengingat.vue | v1.1 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Pengingat kenaikan (Blueprint Bagian 36):
 //   • Pegawai yang naik tingkat masa kerja pada bulan terpilih (bawaan bulan ini; ada pilihan bulan depan) beserta selisih tunjangan.
@@ -46,7 +46,7 @@ function ekspor() {
       <div class="w-56"><label class="label-isian" for="pk-bln"><PhCalendarBlank :size="14" class="inline" /> Bulan</label>
         <select id="pk-bln" v-model="bulan" class="isian"><option v-for="b in PILIHAN" :key="b" :value="b">{{ nama(b) }}{{ b === awal ? ' (bulan ini)' : '' }}</option></select></div>
       <p class="min-w-[220px] flex-1 text-sm text-teks3">Kenaikan masa kerja otomatis terhitung pada periode gaji bulan tersebut. Notifikasi dikirim setiap tanggal 1 untuk bulan berikutnya.</p>
-      <button class="tombol-garis" :disabled="!d" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
+      <button class="tombol-garis" :disabled="!d" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor</button>
     </div>
     <p v-if="memuat" class="kartu p-8 text-center text-sm text-teks3">Memuat…</p>
     <template v-else-if="d">

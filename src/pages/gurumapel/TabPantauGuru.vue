@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.4 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.5 | 14.13.0: saringan corong di HP, tombol Ekspor | 19/10/2026 -->
 <script setup>
 // Pantauan guru mapel (admin, superadmin, pimpinan sesuai cakupannya):
 //   Harian  : tanggal dengan tombol sebelum/sesudah; statistik jam pelajaran (terjadwal, terlaksana, belum diisi, tidak
@@ -19,6 +19,7 @@ import { hariIniISO, formatHari } from '@/lib/tanggal'
 import { tautanWA } from '@/lib/wa'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -74,9 +75,11 @@ function ekspor() {
         <button v-for="t in [{ k: 'harian', n: 'Harian', ikon: PhCalendarCheck }, { k: 'periode', n: 'Rekap periode', ikon: PhChartBar }]" :key="t.k" type="button" role="tab" :aria-selected="mode === t.k" @click="mode = t.k"
           :class="['tab-garis', mode === t.k && 'aktif']"><component :is="t.ikon" :size="18" weight="duotone" /><span>{{ t.n }}</span></button>
       </div>
-      <select v-model="jenjang" class="isian h-11 w-auto py-0 text-sm" aria-label="Saring jenjang"><option value="">Semua jenjang</option><option value="wustha">Wustha</option><option value="sma">SMA</option></select>
-      <div class="relative min-w-[180px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
-        <input v-model="cari" type="search" class="isian h-11 pl-10" placeholder="Cari nama guru" aria-label="Cari guru" /></div>
+      <SaringCorong class="min-w-[220px] flex-1" :jumlah="jenjang ? 1 : 0" :ringkasan="jenjang === 'wustha' ? 'Wustha' : jenjang === 'sma' ? 'SMA' : ''" judul="Saring pantauan guru">
+        <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
+          <input v-model="cari" type="search" class="isian h-11 pl-10" placeholder="Cari nama guru" aria-label="Cari guru" /></div></template>
+        <select v-model="jenjang" class="isian h-11 w-auto py-0 text-sm" aria-label="Saring jenjang"><option value="">Semua jenjang</option><option value="wustha">Wustha</option><option value="sma">SMA</option></select>
+      </SaringCorong>
     </div>
 
     <!-- ===== Harian ===== -->
@@ -116,7 +119,7 @@ function ekspor() {
       <div class="mb-3 flex flex-wrap items-center gap-2">
         <div class="bilah-tab kecil" role="tablist" aria-label="Periode"><button v-for="x in PERIODE" :key="x.k" :class="['tab-garis', periode === x.k && 'aktif']" type="button" role="tab" :aria-selected="periode === x.k" @click="periode = x.k">{{ x.n }}</button></div>
         <span class="text-xs text-teks3">{{ teksRentang(p.m, p.s) }}</span><span class="flex-1" />
-        <button class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!guruP.length" @click="ekspor"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+        <button class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!guruP.length" @click="ekspor"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
         <button class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!guruP.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
       </div>
       <p class="mb-2 text-sm text-teks2">{{ guruP.length }} guru · terlaksana <b>{{ totP.terlaksana }}</b> dari {{ totP.terjadwal }} JP ({{ teksPersen(persenJP(totP.terlaksana, totP.terjadwal)) }}) · belum diisi {{ totP.kosong }} · tidak terlaksana {{ totP.tidak }}</p>

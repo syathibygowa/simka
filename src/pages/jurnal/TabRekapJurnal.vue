@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabRekapJurnal.vue | v1.3 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabRekapJurnal.vue | v1.4 | 14.13.0: saringan corong di HP, tombol Pratinjau/Ekspor | 19/10/2026 -->
 <script setup>
 import { namaBerkas, periodeRentang } from '@/lib/namaBerkas'
 // Rekap jurnal per periode: persentase pengisian (hari terisi ÷ hari wajib), butir ceklist, dan kegiatan per status.
@@ -14,6 +14,7 @@ import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 import { hariIniISO, formatPanjang, formatPendek, formatHari } from '@/lib/tanggal'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
@@ -75,25 +76,22 @@ const namaUnit = computed(() => (unit.value ? org.cariUnit(unit.value)?.nama : '
 </script>
 <template>
   <div class="w-rekap">
-    <div class="kartu mb-3 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
-      <InputTanggal v-model="mulai" label="Dari tanggal" />
-      <InputTanggal v-model="akhir" label="Sampai tanggal" />
-      <template v-if="banyak">
-        <div><label class="label-isian" for="rj-unit">Bidang/Unit</label>
-          <select id="rj-unit" v-model="unit" class="isian"><option value="">Semua bidang</option>
-            <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
-        <div><label class="label-isian" for="rj-cari">Cari pegawai</label>
-          <div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
-            <input id="rj-cari" v-model="cari" class="isian pl-10" placeholder="Nama atau NIY" /></div></div>
-      </template>
-      <div class="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-4">
-        <button class="tombol-garis min-h-[40px] text-sm" @click="bulan(0)">Bulan ini</button>
-        <button class="tombol-garis min-h-[40px] text-sm" @click="bulan(-1)">Bulan lalu</button>
+    <SaringCorong class="mb-3" :jumlah="unit ? 1 : 0" :ringkasan="[`${formatPendek(mulai)} – ${formatPendek(akhir)}`, org.units.find((u) => u.id === unit)?.nama].filter(Boolean).join(' · ')" judul="Saring rekap jurnal">
+      <template v-if="banyak" #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
+        <input id="rj-cari" v-model="cari" type="search" class="isian pl-10" placeholder="Cari nama atau NIY" aria-label="Cari pegawai" /></div></template>
+      <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
+      <div class="sm:w-44"><InputTanggal v-model="akhir" label="Sampai tanggal" /></div>
+      <div v-if="banyak"><label class="label-isian" for="rj-unit">Bidang/Unit</label>
+        <select id="rj-unit" v-model="unit" class="isian w-auto max-w-full"><option value="">Semua bidang</option>
+          <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
+      <div class="flex flex-wrap items-end gap-2">
+        <button class="tombol-garis min-h-[44px] text-sm" @click="bulan(0)">Bulan ini</button>
+        <button class="tombol-garis min-h-[44px] text-sm" @click="bulan(-1)">Bulan lalu</button>
       </div>
-    </div>
+    </SaringCorong>
     <div class="mb-3 flex flex-wrap items-center gap-2">
-      <button v-if="banyak" class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak rekap</button>
-      <button v-if="banyak" class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
+      <button v-if="banyak" class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau</button>
+      <button v-if="banyak" class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor</button>
       <span v-if="banyak" class="ml-auto text-sm font-semibold text-teks2">Rata-rata pengisian: <span :class="['lencana', 'w-' + warna(total)]">{{ persen(total) }}</span></span>
     </div>
     <p class="mb-3 flex gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" />Hari wajib = hari dengan sesi presensi wajib, di luar izin/sakit/cuti yang disetujui. Hari dianggap terisi bila ada butir ceklist atau kegiatan yang tidak dikembalikan.</p>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/KelompokSantri.vue | v1.3 | Perbaikan: absensi hanya di rincian kelompok, penanda tangan rekap sesuai bidang | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/KelompokSantri.vue | v1.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Pengaturan kelompok santri: kelas, kamar, halaqah, ekskul, lainnya per tahun ajaran (tab berwarna).
 // Admin ber-izin kelompok_santri mengatur; pengasuh melihat kelompok asuhannya; pimpinan melihat semua.
@@ -124,9 +124,9 @@ function eksporPembagian() {
 
     <!-- Aksi -->
     <div v-if="lihatSemua" class="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
-      <router-link v-if="bolehAtur && !terkunci" to="/kelompok-santri/impor" class="w-gaji tombol-garis shrink-0 px-4 text-sm"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Impor pembagian</router-link>
-      <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="eksporPembagian"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor pembagian</button>
-      <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="bukaRekap"><PhPrinter :size="20" weight="duotone" style="color: var(--c)" /> Cetak rekap {{ JENIS_KELOMPOK[jenis].jamak.toLowerCase() }}</button>
+      <router-link v-if="bolehAtur && !terkunci" to="/kelompok-santri/impor" class="w-gaji tombol-garis shrink-0 px-4 text-sm"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Impor</router-link>
+      <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="eksporPembagian"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
+      <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="bukaRekap"><PhPrinter :size="20" weight="duotone" style="color: var(--c)" /> Cetak Rekap</button>
       <button v-if="bolehPengaturan" class="w-penilaian tombol-garis shrink-0 px-4 text-sm" @click="bukaPisah"><PhGenderIntersex :size="20" weight="duotone" style="color: var(--c)" /> Pemisahan putra/putri</button>
       <label class="tombol-garis shrink-0 cursor-pointer px-4 text-sm"><input v-model="tampilNonaktif" type="checkbox" class="h-4 w-4 accent-[#0B7F81]" /> Tampilkan nonaktif</label>
     </div>

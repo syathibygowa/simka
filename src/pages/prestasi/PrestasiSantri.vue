@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/prestasi/PrestasiSantri.vue | v1.0 | Tahap C: prestasi dan capaian santri | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/prestasi/PrestasiSantri.vue | v1.1 | 14.13.0: saringan corong di HP, tombol Cetak Rekap/Ekspor | 19/10/2026 -->
 <script setup>
 // Prestasi dan capaian santri (santri yang terlihat oleh pengguna): kartu statistik langsung, saringan rentang tanggal,
 // bidang, tingkat, jenjang, dan pencarian; catat/ubah/hapus (wali kelas, musyrif, muhaffizh, pembina ekskul santri tersebut,
@@ -15,6 +15,7 @@ import { formatPendek, formatPanjang, hariIniISO } from '@/lib/tanggal'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -25,6 +26,11 @@ const pr = usePrestasi(); const sesi = useSesi(); const ui = useUI(); const rout
 const hari = hariIniISO(); const th = Number(hari.slice(0, 4)) - (Number(hari.slice(5, 7)) < 7 ? 1 : 0)
 const mulai = ref(`${th}-07-01`); const selesai = ref(hari)
 const bidang = ref(''); const tingkat = ref(''); const jenjang = ref(''); const cari = ref('')
+const mulaiAwal = mulai.value
+const jumlahSaring = computed(() => [bidang.value, tingkat.value, jenjang.value, mulai.value !== mulaiAwal || selesai.value !== hari].filter(Boolean).length)
+const ringkasSaring = computed(() => [`${formatPendek(mulai.value)} – ${formatPendek(selesai.value)}`, bidang.value ? BIDANG_PRESTASI[bidang.value]?.n : '',
+  tingkat.value ? TINGKAT_PRESTASI[tingkat.value] : '', jenjang.value === 'wustha' ? 'Wustha' : jenjang.value === 'sma' ? 'SMA' : ''].filter(Boolean).join(' · '))
+function aturUlangSaring() { bidang.value = ''; tingkat.value = ''; jenjang.value = ''; mulai.value = mulaiAwal; selesai.value = hari }
 const data = ref([]); const memuat = ref(true); const lembar = ref(false); const ubah = ref(null); const pratinjau = ref(false)
 const direktur = ref({ jabatan: 'Direktur', nama: '', niy: '' })
 
@@ -84,21 +90,22 @@ function eksporExcel() {
         <KartuStatistik v-for="k in statistik" :key="k.judul" class="w-[46%] shrink-0 snap-start sm:w-auto" :judul="k.judul" :nilai="k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket" />
       </div>
 
-      <div class="kartu mt-4 grid grid-cols-2 gap-3 p-4 lg:grid-cols-4">
-        <InputTanggal v-model="mulai" label="Dari tanggal" />
-        <InputTanggal v-model="selesai" label="Sampai tanggal" />
+      <SaringCorong class="mt-4" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring prestasi" bisa-atur-ulang @atur-ulang="aturUlangSaring">
+        <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
+          <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama santri, NIS, kegiatan" aria-label="Cari prestasi" /></div></template>
+        <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
+        <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai tanggal" /></div>
         <div><label class="label-isian" for="ps-bidang">Bidang</label>
-          <select id="ps-bidang" v-model="bidang" class="isian"><option value="">Semua bidang</option><option v-for="(b, k) in BIDANG_PRESTASI" :key="k" :value="k">{{ b.n }}</option></select></div>
+          <select id="ps-bidang" v-model="bidang" class="isian w-auto max-w-full"><option value="">Semua bidang</option><option v-for="(b, k) in BIDANG_PRESTASI" :key="k" :value="k">{{ b.n }}</option></select></div>
         <div><label class="label-isian" for="ps-tingkat">Tingkat</label>
-          <select id="ps-tingkat" v-model="tingkat" class="isian"><option value="">Semua tingkat</option><option v-for="(n, k) in TINGKAT_PRESTASI" :key="k" :value="k">{{ n }}</option></select></div>
-        <div class="relative col-span-2 lg:col-span-3"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-          <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama santri, NIS, kegiatan, atau capaian" aria-label="Cari prestasi" /></div>
-        <select v-model="jenjang" class="isian col-span-2 lg:col-span-1" aria-label="Saring jenjang"><option value="">Semua jenjang</option><option value="wustha">Kesetaraan Wustha</option><option value="sma">SMA</option></select>
-      </div>
+          <select id="ps-tingkat" v-model="tingkat" class="isian w-auto max-w-full"><option value="">Semua tingkat</option><option v-for="(n, k) in TINGKAT_PRESTASI" :key="k" :value="k">{{ n }}</option></select></div>
+        <div><label class="label-isian" for="ps-jenjang">Jenjang</label>
+          <select id="ps-jenjang" v-model="jenjang" class="isian w-auto max-w-full"><option value="">Semua jenjang</option><option value="wustha">Kesetaraan Wustha</option><option value="sma">SMA</option></select></div>
+      </SaringCorong>
 
       <div class="-mx-4 my-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
-        <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" :disabled="!tampil.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" style="color: var(--c)" /> Cetak rekap</button>
-        <button class="w-gaji tombol-garis shrink-0 px-4 text-sm" :disabled="!tampil.length" @click="eksporExcel"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Ekspor Excel</button>
+        <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" :disabled="!tampil.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" style="color: var(--c)" /> Cetak Rekap</button>
+        <button class="w-gaji tombol-garis shrink-0 px-4 text-sm" :disabled="!tampil.length" @click="eksporExcel"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
       </div>
 
       <p v-if="memuat" class="py-10 text-center text-teks3">Memuat prestasi…</p>

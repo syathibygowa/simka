@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabLaporanKeu.vue | v1.0 | 14.7.0: laporan keuangan satu halaman (pemasukan, pengeluaran, saldo, tagihan dan persentase lunas) | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabLaporanKeu.vue | v1.1 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Laporan keuangan satu halaman untuk pimpinan pada rentang tanggal (bawaan bulan berjalan):
 //   A. Arus kas per rekening (saldo awal, masuk, keluar, saldo akhir)
@@ -85,7 +85,7 @@ function excel() {
       <div class="kartu mb-3 grid grid-cols-2 gap-3 p-4 md:grid-cols-[1fr_1fr_auto]">
         <InputTanggal v-model="mulai" label="Dari tanggal" @update:model-value="preset = 'atur'" /><InputTanggal v-model="selesai" label="Sampai tanggal" @update:model-value="preset = 'atur'" />
         <div class="col-span-2 flex items-end gap-2 md:col-span-1">
-          <button class="tombol-garis min-h-[48px] flex-1 px-3 text-sm" :disabled="!L" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+          <button class="tombol-garis min-h-[48px] flex-1 px-3 text-sm" :disabled="!L" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
           <button class="tombol-utama min-h-[48px] flex-1 px-3 text-sm" :disabled="!L" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak 1 halaman</button></div>
       </div>
       <div class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 xl:grid-cols-4">

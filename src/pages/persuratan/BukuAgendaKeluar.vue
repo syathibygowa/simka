@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/BukuAgendaKeluar.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/BukuAgendaKeluar.vue | v1.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Buku agenda surat keluar = inventaris SEMUA surat yang terbit di SIMKA PRO per rentang tanggal surat:
 //   Persuratan (surat Tata Usaha, termasuk yang dicabut/direvisi), surat pengajuan pegawai, surat keterangan sakit (Klinik),
@@ -69,7 +69,7 @@ function ekspor() {
           <input id="bak-cari" v-model="cari" class="isian pl-10" placeholder="Nomor, perihal, nama, kode" /></div></div>
       <div class="col-span-2 flex items-end gap-2 sm:col-span-1">
         <button class="tombol-garis w-pengajuan min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="pratinjau = true"><PhEye :size="18" style="color: var(--c)" /> Cetak</button>
-        <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Excel</button>
+        <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Ekspor</button>
       </div>
     </div>
 

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabKasKeu.vue | v1.0 | 14.7.0: kas dan bank (saldo, buku kas/rekening koran, pengeluaran, pemasukan lain, pindah dana) | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabKasKeu.vue | v1.1 | 14.13.0: saringan corong di HP, tombol disederhanakan | 19/10/2026 -->
 <script setup>
 // Tab Kas dan bank:
 //   • Kartu saldo setiap rekening/kas (langsung) dan total saldo.
@@ -18,6 +18,7 @@ import { namaBerkas, periodeRentang } from '@/lib/namaBerkas'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import BilahTab from '@/components/BilahTab.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import FotoBerkas from '@/components/FotoBerkas.vue'
@@ -105,13 +106,14 @@ function excel() {
         <button class="tombol-garis" @click="lembar = 'pindah'"><PhArrowsLeftRight :size="20" weight="duotone" /> Pindah dana</button>
       </div>
 
-      <div class="kartu mt-3 grid grid-cols-2 gap-3 p-4 md:grid-cols-[1fr_1fr_1.3fr_auto]">
-        <InputTanggal v-model="mulai" label="Dari tanggal" /><InputTanggal v-model="selesai" label="Sampai tanggal" />
-        <div class="col-span-2 md:col-span-1"><label class="label-isian" for="kas-akun">Rekening/kas</label>
-          <select id="kas-akun" v-model="akun" class="isian"><option value="">Gabungan semua</option><option v-for="a in keu.akun" :key="a.id" :value="a.id">{{ a.nama }}{{ a.aktif ? '' : ' (nonaktif)' }}</option></select></div>
-        <div class="col-span-2 flex items-end gap-2 md:col-span-1">
-          <button class="tombol-garis min-h-[48px] flex-1 px-3 text-sm" :disabled="!buku" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
-          <button class="tombol-garis min-h-[48px] flex-1 px-3 text-sm" :disabled="!buku" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button></div>
+      <SaringCorong class="mt-3" :jumlah="akun ? 1 : 0" :ringkasan="[`${formatPendek(mulai)} – ${formatPendek(selesai)}`, keu.akun.find((a) => a.id === akun)?.nama || 'Gabungan semua'].join(' · ')" judul="Saring kas dan bank">
+        <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div><div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai tanggal" /></div>
+        <div><label class="label-isian" for="kas-akun">Rekening/kas</label>
+          <select id="kas-akun" v-model="akun" class="isian w-auto max-w-full"><option value="">Gabungan semua</option><option v-for="a in keu.akun" :key="a.id" :value="a.id">{{ a.nama }}{{ a.aktif ? '' : ' (nonaktif)' }}</option></select></div>
+      </SaringCorong>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!buku" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
+        <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!buku" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
       </div>
 
       <BilahTab v-model="bagian" :tab="BAGIAN" kecil label="Bagian kas" class="mt-4" />

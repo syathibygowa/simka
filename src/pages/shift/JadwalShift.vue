@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/shift/JadwalShift.vue | v1.3 | Perbaikan 14.0.0: pemegang Penjadwalan (Lihat) melihat jadwal shift semua petugas | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/shift/JadwalShift.vue | v1.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Jadwal shift pekanan (medis, security). Admin ber-izin atur_presensi menyusun jadwal
 // (manual per sel atau pembuat jadwal bergilir); petugas melihat jadwal dan mengajukan tukar shift.
@@ -148,10 +148,10 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
         </div>
         <!-- Aksi -->
         <div class="flex flex-wrap gap-2">
-          <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak</button>
+          <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau</button>
           <template v-if="bolehUbah">
-            <button class="tombol-garis" @click="lembarBergilir = true"><PhMagicWand :size="20" weight="duotone" /> Jadwal bergilir</button>
-            <button class="tombol-garis" @click="salinPekanLalu"><PhArrowCounterClockwise :size="20" weight="duotone" /> Salin pekan lalu</button>
+            <button class="tombol-garis" @click="lembarBergilir = true"><PhMagicWand :size="20" weight="duotone" /> Bergilir</button>
+            <button class="tombol-garis" @click="salinPekanLalu"><PhArrowCounterClockwise :size="20" weight="duotone" /> Salin</button>
             <button v-if="berubah" class="tombol-garis" @click="muat">Batalkan perubahan</button>
             <button v-if="berubah" class="tombol-utama" :disabled="menyimpan" @click="simpan"><PhFloppyDisk :size="20" weight="duotone" /> {{ menyimpan ? 'Menyimpan…' : 'Simpan perubahan' }}</button>
           </template>

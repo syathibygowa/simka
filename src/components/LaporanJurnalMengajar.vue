@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/LaporanJurnalMengajar.vue | v1.0 | 14.4.0: laporan jurnal mengajar (layar, Excel, cetak F4) | 17/10/2026 -->
+<!-- SIMKA PRO | src/components/LaporanJurnalMengajar.vue | v1.1 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Laporan jurnal mengajar untuk satu cakupan: satu kelas × mapel, satu mapel di semua kelas yang diampu guru,
 // semua yang diampu guru, atau semua mapel satu kelas (wali kelas/kurikulum).
@@ -110,7 +110,7 @@ async function excel() {
           <template v-if="ringkas.hadir != null"> · kehadiran santri rata-rata <b>{{ String(ringkas.hadir).replace('.', ',') }}%</b></template></p>
         <label class="flex items-center gap-2 text-sm"><input v-model="lengkap" type="checkbox" class="h-4 w-4" /> Tampilkan rincian</label>
         <button class="tombol-wa-garis min-h-[40px] px-3 text-sm" @click="laporWA"><PhWhatsappLogo :size="18" weight="duotone" /> Lapor ke grup</button>
-        <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+        <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
         <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
       </div>
       <label v-if="pilihanKiri.length > 1" class="mb-3 flex flex-wrap items-center gap-2 text-sm"><span class="shrink-0 text-teks2">Tanda tangan "Mengetahui" pada cetakan:</span>

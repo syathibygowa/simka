@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jadwal/TabPenugasan.vue | v1.1 | Perbaikan 13.6.0: sub-tab jenjang Wustha (SMP)/SMA | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/jadwal/TabPenugasan.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Penugasan mengajar per kelas: mapel, guru, JP per pekan. Tambah/ubah/hapus, impor dan ekspor Excel.
 import { ref, computed, onMounted } from 'vue'
@@ -72,8 +72,8 @@ async function impor(e) {
   <div>
     <SubTabJenjang v-model="jenjang" :semua="false" class="mb-3" :jumlah="jumlahJenjang" label="Jenjang penugasan" />
     <div class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
-      <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> {{ bolehAtur ? 'Ekspor / templat Excel' : 'Ekspor Excel' }}</button>
-      <label v-if="bolehAtur" class="w-gaji tombol-garis shrink-0 cursor-pointer px-4 text-sm"><PhUploadSimple :size="20" weight="duotone" style="color: var(--c)" /> Impor Excel
+      <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
+      <label v-if="bolehAtur" class="w-gaji tombol-garis shrink-0 cursor-pointer px-4 text-sm"><PhUploadSimple :size="20" weight="duotone" style="color: var(--c)" /> Impor
         <input type="file" accept=".xlsx,.xls,.csv" class="sr-only" @change="impor" /></label>
     </div>
     <ul v-if="hasil?.some((h) => !h.ok)" class="kartu w-klinik mb-4 space-y-1 p-4 text-sm">

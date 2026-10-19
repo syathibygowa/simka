@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.6 | 14.1.0: penanda SP aktif pada baris gaji (tanpa potongan otomatis) | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.7 | 14.13.0: satu tombol Impor (pilih jenis), Templat, Ekspor, Pratinjau | 19/10/2026 -->
 <script setup>
 // Rincian satu periode gaji: ringkasan, daftar pegawai (skema, penyesuaian, pendapatan, potongan, diterima),
 // hitung ulang, impor jumlah diterima dari Excel, ekspor Excel, cetak Daftar Gaji F4 mendatar.
@@ -131,7 +131,7 @@ function templat() {
   ws['!cols'] = [12, 34, 16, 18, 40].map((wch) => ({ wch }))
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Jumlah diterima'); XLSX.writeFile(wb, nmBerkas('Templat-Gaji-Diterima'))
 }
-const masukan = ref(null); const impor = ref(null); const imporKomponen = ref(false)
+const masukan = ref(null); const impor = ref(null); const imporKomponen = ref(false); const pilihImpor = ref(false)
 async function bacaBerkas(e) {
   const berkas = e.target.files?.[0]; e.target.value = ''
   if (!berkas) return
@@ -224,12 +224,11 @@ const jumlahKolom = computed(() => Object.fromEntries(KOLOM_DAFTAR.map(([c]) => 
         <div class="relative min-w-[200px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIY, atau jabatan" aria-label="Cari pegawai" /></div>
         <button v-if="boleh" class="tombol-garis" :disabled="proses" @click="hitungUlang"><PhArrowsClockwise :size="20" /> Hitung ulang</button>
-        <button v-if="boleh" class="tombol-garis" @click="templat"><PhDownloadSimple :size="20" /> Templat jumlah diterima</button>
-        <button v-if="boleh" class="tombol-garis" @click="masukan.click()"><PhUploadSimple :size="20" weight="duotone" /> Impor jumlah diterima</button>
+        <button v-if="boleh" class="tombol-garis" @click="templat"><PhDownloadSimple :size="20" /> Templat</button>
+        <button v-if="boleh" class="tombol-garis" @click="pilihImpor = true"><PhUploadSimple :size="20" weight="duotone" /> Impor</button>
         <input ref="masukan" type="file" accept=".xlsx,.xls" class="hidden" @change="bacaBerkas" />
-        <button v-if="boleh" class="tombol-garis" @click="imporKomponen = true"><PhUploadSimple :size="20" weight="duotone" /> Impor jam/potongan</button>
-        <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
-        <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak</button>
+        <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor</button>
+        <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau</button>
         <button v-if="boleh" class="tombol-garis" @click="hapus"><PhTrash :size="20" /> Hapus</button>
       </div>
       <div class="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="group" aria-label="Saring pegawai">
@@ -306,6 +305,12 @@ const jumlahKolom = computed(() => Object.fromEntries(KOLOM_DAFTAR.map(([c]) => 
       <CetakSlip v-model:pratinjau="pratinjauSlip" :slip="slipCetak" :pengaturan="gaji.pengaturan" :pencetak="sesi.pengguna?.nama_lengkap" />
 
       <!-- Ubah tanggal bayar -->
+      <LembarBawah v-model="pilihImpor" judul="Impor dari Excel">
+        <div class="space-y-2 pb-2">
+          <button class="tombol-garis w-full justify-start" @click="pilihImpor = false; masukan.click()"><PhUploadSimple :size="20" weight="duotone" /> Jumlah gaji diterima (berkas Templat)</button>
+          <button class="tombol-garis w-full justify-start" @click="pilihImpor = false; imporKomponen = true"><PhUploadSimple :size="20" weight="duotone" /> Jam honor, potongan, dan tambahan</button>
+        </div>
+      </LembarBawah>
       <LembarBawah :model-value="!!fBayar" @update:model-value="(x) => !x && (fBayar = null)" judul="Ubah periode">
         <div v-if="fBayar" class="space-y-4 pb-2">
           <InputTanggal v-model="fBayar.tanggal_bayar" label="Tanggal pembayaran" />

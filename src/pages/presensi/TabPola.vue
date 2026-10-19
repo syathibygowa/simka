@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/presensi/TabPola.vue | v1.0 | Fase 2 – Tahap 3 Pengaturan presensi | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/TabPola.vue | v1.1 | 14.13.0: teks keterangan dihapus, tombol Pratinjau | 19/10/2026 -->
 <script setup>
 // Pola sesi per tugas (Bagian 9): setiap jabatan fungsional membawa pola bawaan;
 // setiap sesi memiliki jam, hari, jendela buka, toleransi, dan batas yang dapat diubah.
@@ -42,9 +42,8 @@ const barisCetak = computed(() => atur.polaUmum.flatMap((p) => atur.sesiPola(p.i
 <template>
   <div class="space-y-4">
     <div class="layar-saja flex flex-wrap items-center gap-2">
-      <p class="flex flex-1 gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" />
-        Jadwal harian pegawai = gabungan sesi semua pola tugasnya. Semua jam dan toleransi dapat diubah kapan saja; perubahan berlaku untuk presensi berikutnya.</p>
-      <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak</button>
+      <span class="flex-1" />
+      <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau</button>
       <button v-if="bolehUbah" class="tombol-utama hidden lg:inline-flex" @click="ubahPola(null)"><PhPlus :size="20" weight="bold" /> Tambah pola</button>
     </div>
     <p v-if="!bolehUbah" class="flex gap-2 rounded-xl bg-permukaan2 p-3 text-sm text-teks2"><PhInfo :size="18" class="mt-0.5 shrink-0" /> Anda dapat melihat pola, tetapi mengubahnya memerlukan izin "Mengatur pola sesi, jadwal pegawai, dan shift presensi" dari superadmin.</p>

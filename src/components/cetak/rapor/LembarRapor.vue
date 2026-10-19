@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/rapor/LembarRapor.vue | v1.1 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/rapor/LembarRapor.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Pratinjau dan cetak dokumen BERHALAMAN BANYAK (rapor per santri, sampul, leger). Isi berupa beberapa <HalRapor>;
 // setiap HalRapor dimulai pada halaman baru dan kepalanya (kop + identitas) berulang di setiap halaman lanjutan.
@@ -25,10 +25,10 @@ const cetak = () => window.print()
 </script>
 <template>
   <Teleport to="body">
-    <div v-if="pratinjau" class="cetak-saja tampil munculan" role="dialog" aria-modal="true" :aria-label="'Pratinjau cetak ' + judul">
+    <div v-if="pratinjau" class="cetak-saja tampil munculan" role="dialog" aria-modal="true" :aria-label="'Pratinjau ' + judul">
       <div class="bilah-munculan layar-saja">
         <div class="min-w-0 flex-1">
-          <p class="truncate font-bold">Pratinjau cetak: {{ judul }}</p>
+          <p class="truncate font-bold">Pratinjau: {{ judul }}</p>
           <p class="text-xs opacity-80">{{ keterangan || '' }}{{ keterangan ? ' · ' : '' }}Kertas F4 {{ mendatar ? '330 × 215 mm (mendatar)' : '215 × 330 mm' }}, margin 2 cm</p>
         </div>
         <button type="button" class="tombol-cetak" @click="cetak"><PhPrinter :size="20" weight="duotone" /> Cetak</button>

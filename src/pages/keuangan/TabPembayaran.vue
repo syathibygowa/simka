@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabPembayaran.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabPembayaran.vue | v1.3 | 14.13.0: saringan corong di HP | 19/10/2026 -->
 <script setup>
 // Pembayaran santri per rentang tanggal (bawaan: awal bulan ini s.d. hari ini): jumlah, tunai/transfer, per jenis biaya.
 // Setiap baris: cetak kuitansi, kirim konfirmasi WA ke wali, buka rincian santri, batalkan beralasan (kuitansi dicabut).
@@ -17,6 +17,7 @@ import { tautanWA } from '@/lib/wa'
 import { alamatBerkas } from '@/lib/penyimpanan'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -70,15 +71,15 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
 </script>
 <template>
   <div>
-    <div class="mb-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto] lg:grid-cols-[200px_200px_180px_1fr]">
-      <InputTanggal v-model="mulai" label="Dari tanggal" />
-      <InputTanggal v-model="akhir" label="Sampai tanggal" />
-      <div><label class="label-isian" for="pb-cara">Cara bayar</label><select id="pb-cara" v-model="cara" class="isian"><option value="">Semua</option><option v-for="(n, k) in CARA_BAYAR" :key="k" :value="k">{{ n }}</option></select></div>
-      <div class="flex flex-wrap items-end justify-end gap-2">
-        <label class="flex min-h-[44px] items-center gap-2 text-sm"><input v-model="tampilBatal" type="checkbox" class="h-5 w-5" /> Tampilkan yang dibatalkan</label>
-        <button class="tombol-garis" :disabled="!tampil.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Excel</button>
+    <SaringCorong class="mb-2" :jumlah="[cara, tampilBatal].filter(Boolean).length" :ringkasan="[`${formatPendek(mulai)} – ${formatPendek(akhir)}`, cara ? CARA_BAYAR[cara] : ''].filter(Boolean).join(' · ')" judul="Saring pembayaran">
+      <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
+      <div class="sm:w-44"><InputTanggal v-model="akhir" label="Sampai tanggal" /></div>
+      <div><label class="label-isian" for="pb-cara">Cara bayar</label><select id="pb-cara" v-model="cara" class="isian w-auto"><option value="">Semua</option><option v-for="(n, k) in CARA_BAYAR" :key="k" :value="k">{{ n }}</option></select></div>
+      <label class="flex min-h-[44px] items-center gap-2 text-sm"><input v-model="tampilBatal" type="checkbox" class="h-5 w-5" /> Tampilkan yang dibatalkan</label>
+    </SaringCorong>
+    <div class="mb-3 flex flex-wrap items-end justify-end gap-2">
+        <button class="tombol-garis" :disabled="!tampil.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor</button>
         <button class="tombol-garis" :disabled="!sah.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Rekap</button>
-      </div>
     </div>
     <div class="-mx-4 mb-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0">
       <KartuStatistik class="w-[72%] shrink-0 snap-start sm:w-auto" judul="Pemasukan" :nilai="rupiah(jml(sah))" :ikon="PhHandCoins" warna="presensi" :keterangan="`${sah.length} transaksi`" />

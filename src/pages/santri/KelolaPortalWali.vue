@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/KelolaPortalWali.vue | v1.3 | Perbaikan 14.0.0: dapat dikelola pemegang fitur Kelola Portal Wali | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/KelolaPortalWali.vue | v1.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Menu Portal Wali (superadmin; admin ber-izin Kelola santri). v1.1: menu tersendiri, tab di alamat #/portal-wali/:tab.
 // Tab: Ringkasan (kesiapan, tautan portal), Data belum lengkap, Sesi aktif (cabut), Percobaan gagal (buka kunci),
@@ -163,7 +163,7 @@ const berubah = computed(() => f.value && kp.pengaturan && JSON.stringify({ ...f
           <PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cariK" class="isian pl-11" placeholder="Cari NIS, nama, atau kelas" aria-label="Cari santri" />
         </div>
-        <button class="w-gaji tombol-garis shrink-0 px-4 text-sm" :disabled="!kurangTampil.length" @click="eksporKurang"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Ekspor Excel</button>
+        <button class="w-gaji tombol-garis shrink-0 px-4 text-sm" :disabled="!kurangTampil.length" @click="eksporKurang"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
       </div>
       <p class="text-sm text-teks3">Wali santri berikut belum dapat masuk portal. Lengkapi lewat tombol Lengkapi, atau impor Excel di Data Santri.</p>
       <div v-if="!kurangTampil.length" class="kartu p-8 text-center text-teks3">Semua santri aktif sudah lengkap datanya untuk Portal Wali.</div>

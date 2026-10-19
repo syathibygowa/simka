@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/disiplin/TabSPSantri.vue | v1.0 | 14.6.0: daftar, rincian, dan rekap Surat Peringatan santri SP1–SP3 | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/disiplin/TabSPSantri.vue | v1.1 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Tab Surat peringatan (santri):
 //   Daftar  : SP yang boleh dilihat; saring keadaan, tingkat, jenjang, rentang tanggal usul. ?sp=<id> membuka rinciannya (notifikasi).
@@ -120,8 +120,8 @@ const kesantrian = computed(() => lembaga.signatories?.find((s) => /kesantrian/i
       <button v-if="hak.usul" class="tombol-utama hidden lg:inline-flex" @click="lembarUsul = true"><PhPlus :size="20" weight="bold" /> Usulkan SP</button>
     </SaringCorong>
     <div class="mt-3 flex flex-wrap items-end gap-2 md:justify-end">
-      <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
-      <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak rekap</button>
+      <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
+      <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak Rekap</button>
     </div>
 
     <p v-if="memuat && !daftar.length" class="py-10 text-center text-teks3">Memuat surat peringatan…</p>

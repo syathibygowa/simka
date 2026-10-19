@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/organisasi/Organisasi.vue | v1.3 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/organisasi/Organisasi.vue | v1.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 import { computed, onMounted, ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
@@ -39,7 +39,7 @@ const induk = (u) => org.cariUnit(u.parent_id)?.nama || '–'
             <component :is="t.ikon" :size="20" weight="duotone" /><span>{{ t.n }}</span>
           </button>
         </nav>
-        <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak</button>
+        <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau</button>
       </div>
       <p v-if="!org.dimuat" class="py-10 text-center text-teks3">Memuat struktur organisasi…</p>
       <div v-else :class="'w-' + aktif.w">

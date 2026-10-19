@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabDokumenResmi.vue | v1.1 | Fase 8 – Tahap 5 buka versi resmi laporan, status ditolak | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabDokumenResmi.vue | v1.2 | 14.13.0: saringan corong di HP, tombol Ekspor | 19/10/2026 -->
 <script setup>
 // Registri dokumen resmi bertanda tangan elektronik: kode validasi, jenis, nomor, perihal, atas nama, penanda tangan,
 // status, dan berapa kali diperiksa. Admin/superadmin melihat semua; pegawai melihat dokumen yang diterbitkan atau
@@ -14,6 +14,7 @@ import { formatPendek, formatWaktu, formatPanjang, hariIniISO } from '@/lib/tang
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -21,6 +22,9 @@ import TandaTangan from '@/components/cetak/TandaTangan.vue'
 const dok = useDokumen(); const sesi = useSesi(); const ui = useUI(); const router = useRouter()
 const awalBulan = () => hariIniISO().slice(0, 8) + '01'
 const mulai = ref(awalBulan()); const selesai = ref(hariIniISO()); const jenis = ref(''); const status = ref(''); const cari = ref('')
+const bukaSaring = ref(false)
+const jumlahSaring = computed(() => [jenis.value, status.value].filter(Boolean).length)
+const ringkasSaring = computed(() => [`${formatPendek(mulai.value)} – ${formatPendek(selesai.value)}`, jenis.value ? JENIS_DOKUMEN[jenis.value] : '', status.value ? STATUS_DOKUMEN[status.value]?.n : ''].filter(Boolean).join(' · '))
 const muat = () => dok.muat({ mulai: mulai.value, selesai: selesai.value, jenis: jenis.value, status: status.value }).catch((e) => ui.toast(e.message, 'galat'))
 onMounted(muat)
 
@@ -72,21 +76,21 @@ async function cetak() { penanda.value = await ambilPenandaTangan('Direktur').ca
     </div>
 
     <section class="kartu space-y-3 p-4">
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] lg:items-end">
-        <InputTanggal v-model="mulai" label="Dari tanggal" />
-        <InputTanggal v-model="selesai" label="Sampai tanggal" />
+      <SaringCorong v-model:buka="bukaSaring" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring dokumen resmi" tanpa-tombol>
+        <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
+        <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai tanggal" /></div>
         <label class="block"><span class="label-isian">Jenis dokumen</span>
           <select v-model="jenis" class="isian"><option value="">Semua jenis</option><option v-for="(n, k) in JENIS_DOKUMEN" :key="k" :value="k">{{ n }}</option></select></label>
         <label class="block"><span class="label-isian">Status</span>
           <select v-model="status" class="isian"><option value="">Semua status</option><option v-for="(s, k) in STATUS_DOKUMEN" :key="k" :value="k">{{ s.n }}</option></select></label>
-        <button type="button" class="tombol-utama" @click="muat"><PhMagnifyingGlass :size="20" weight="bold" /> Tampilkan</button>
-      </div>
+        <button type="button" class="tombol-utama" @click="bukaSaring = false; muat()"><PhMagnifyingGlass :size="20" weight="bold" /> Tampilkan</button>
+      </SaringCorong>
       <div class="flex flex-wrap items-center gap-2">
         <label class="relative min-w-[14rem] flex-1"><span class="sr-only">Cari dokumen</span>
           <PhMagnifyingGlass :size="18" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" class="isian pl-10" placeholder="Cari kode, nomor, perihal, atau nama" /></label>
         <router-link to="/cek" target="_blank" class="tombol-garis"><PhArrowSquareOut :size="18" /> Halaman Cek Keabsahan</router-link>
-        <button type="button" class="tombol-garis" :disabled="!tampil.length" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+        <button type="button" class="tombol-garis" :disabled="!tampil.length" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
         <button type="button" class="tombol-garis" :disabled="!tampil.length" @click="cetak"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
       </div>
     </section>

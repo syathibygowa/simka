@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabSantriKelas.vue | v1.1 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabSantriKelas.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Daftar santri satu kelas: NIS, nama, JK, kehadiran bulan berjalan (izin, sakit, absen), orang tua/wali utama dan
 // tombol WA, serta tautan biodata. Cetak F4 "Daftar Santri Kelas" (wali kelas di kanan, Direktur mengetahui di kiri) dan Excel.
@@ -49,7 +49,7 @@ function ekspor() {
     <div class="mb-3 flex flex-wrap items-center gap-2">
       <div class="relative min-w-[200px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-10" placeholder="Cari nama atau NIS" aria-label="Cari santri" /></div>
-      <button class="tombol-garis" :disabled="!baris.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Excel</button>
+      <button class="tombol-garis" :disabled="!baris.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor</button>
       <button class="tombol-utama" :disabled="!baris.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Cetak daftar</button>
     </div>
     <p class="mb-2 text-sm text-teks2">{{ baris.length }} santri ({{ jk.L }} putra, {{ jk.P }} putri) · kehadiran {{ namaBulan(awal) }}</p>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/CetakRaporKelas.vue | v1.2 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/CetakRaporKelas.vue | v1.3 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Panel cetak rapor satu kelas (Wali Kelas → Rapor → Cetak): pemeriksaan kelengkapan, pilihan santri, dan dokumen:
@@ -126,7 +126,7 @@ function excel() {
         </div>
         <div class="mt-auto flex gap-2">
           <button class="tombol-utama min-h-[40px] flex-1 px-3 text-sm" :disabled="!!proses || !D.santri.length" @click="cetak(d)">{{ proses === d.k ? 'Memuat…' : 'Pratinjau dan cetak' }}</button>
-          <button v-if="d.excel" class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!D.santri.length" aria-label="Unduh Excel leger" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+          <button v-if="d.excel" class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!D.santri.length" aria-label="Unduh Excel leger" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
         </div>
       </li>
     </ul>

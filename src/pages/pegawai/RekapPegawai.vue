@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/RekapPegawai.vue | v1.1 | Fase 1 – Perbaikan | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/RekapPegawai.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Rekap kepegawaian: per status, pendidikan, masa kerja, dan bidang, dirinci menurut jenis kelamin.
 import { ref, computed, onMounted } from 'vue'
@@ -66,8 +66,8 @@ function ekspor() {
           <h2 class="text-lg font-bold">{{ jumlah.total }} pegawai aktif</h2>
           <p class="text-sm text-teks3">{{ jumlah.L }} laki-laki dan {{ jumlah.P }} perempuan. Pegawai cuti panjang, nonaktif, dan keluar tidak dihitung.</p>
         </div>
-        <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak</button>
-        <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
+        <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau</button>
+        <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor</button>
         <TombolCetak class="hidden lg:inline-flex" />
       </div>
       <div class="grid gap-4 lg:grid-cols-2">

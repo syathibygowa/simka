@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.7 | 14.3.0: baris di bawah ambang berwarna (layar, cetak, Excel) | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.8 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Laporan kehadiran pegawai (menu Rekap → Kehadiran pegawai).
 // Jenis: rekap ringkas, rekap matriks (nama × tanggal, F4 mendatar), laporan individu, daftar perhatian.
@@ -219,7 +219,7 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
           <PhMagnifyingGlass :size="18" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" class="isian pl-10" placeholder="Cari nama, NIY, bidang, atau jabatan" /></label>
         <span v-else class="flex-1" />
-        <button type="button" class="tombol-garis" :disabled="!tampilBaris.length" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+        <button type="button" class="tombol-garis" :disabled="!tampilBaris.length" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
         <button type="button" class="tombol-garis" :disabled="!tampilBaris.length" @click="cetak"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
       </div>
       <p v-if="lk.data.penutupan_mulai === null" class="flex items-start gap-1.5 rounded-xl bg-permukaan2 px-3 py-2 text-xs text-teks2"><PhInfo :size="16" class="mt-px shrink-0" />

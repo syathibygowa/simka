@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabTunggakan.vue | v1.4 | 14.7.0: pengirim WA berurutan dengan template dan pratinjau | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabTunggakan.vue | v1.5 | 14.13.0: saringan corong di HP | 19/10/2026 -->
 <script setup>
 // Posisi tunggakan per tanggal (bawaan hari ini): tagihan yang jatuh tempo paling lambat tanggal itu dan masih bersisa
 // pada tanggal itu. Dikelompokkan per santri, kelas, kamar, halaqah, jenis biaya, atau jenjang. Cetak F4 dan Excel.
@@ -18,6 +18,7 @@ import { periodeCepat } from '@/lib/laporanKehadiran'
 import { tautanWA } from '@/lib/wa'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import PengirimWABeruntun from '@/components/PengirimWABeruntun.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
@@ -69,13 +70,15 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
 <template>
   <div>
     <div class="mb-3 flex flex-wrap items-end gap-2">
+      <SaringCorong class="min-w-0 flex-1" :jumlah="[periode, jenjang, tanggal !== hariIniISO()].filter(Boolean).length"
+        :ringkasan="[PERIODE.find((x) => x.k === periode)?.n, formatPendek(tanggal), jenjang ? JENJANG[jenjang] : ''].filter(Boolean).join(' · ')" judul="Saring tunggakan">
       <div class="w-52"><label class="label-isian" for="tg-per">Periode</label>
         <select id="tg-per" v-model="periode" class="isian"><option v-for="x in PERIODE" :key="x.k" :value="x.k">{{ x.n }}</option></select></div>
       <div v-if="periode === 'rentang'" class="w-44"><InputTanggal v-model="dari" label="Jatuh tempo dari" /></div>
       <div class="w-44"><InputTanggal v-model="tanggal" :label="periode ? 'Sampai tanggal' : 'Posisi per tanggal'" /></div>
       <select v-model="jenjang" class="isian w-48" aria-label="Jenjang"><option value="">Semua jenjang</option><option v-for="(n, k) in JENJANG" :key="k" :value="k">{{ n }}</option></select>
-      <div class="flex-1" />
-      <button class="tombol-garis" :disabled="!data.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Excel</button>
+      </SaringCorong>
+      <button class="tombol-garis" :disabled="!data.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor</button>
       <button class="tombol-garis" :disabled="!data.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Cetak</button>
     </div>
     <div class="-mx-4 mb-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0">

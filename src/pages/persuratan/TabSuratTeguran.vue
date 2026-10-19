@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/TabSuratTeguran.vue | v1.1 | 14.2.0: saringan corong di HP | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/TabSuratTeguran.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Tab Persuratan → Surat Teguran.
 //   Daftar    : SP yang boleh dilihat (penerima tidak melihat usulan sebelum terbit; atasan langsung melihat anggota unitnya;
@@ -130,8 +130,8 @@ const direktur = computed(() => lembaga.signatories?.find((s) => /^direktur$/i.t
         <button v-if="hak.usul" class="tombol-utama hidden lg:inline-flex" @click="lembarUsul = true"><PhPlus :size="20" weight="bold" /> Usulkan SP</button>
       </SaringCorong>
       <div class="mt-3 flex flex-wrap items-end gap-2 md:justify-end">
-        <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
-        <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak rekap</button>
+        <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
+        <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak Rekap</button>
       </div>
 
       <p v-if="memuat && !daftar.length" class="py-10 text-center text-teks3">Memuat surat teguran…</p>

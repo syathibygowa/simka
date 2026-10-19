@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.3 | Perbaikan 13.7.0: slide Presensi Sesi, Santri Sesi, Ringkasan Tahfizh, Administrasi pindahan dari beranda | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Layar Pantauan (Blueprint Bagian 28) berbentuk SLIDE layar penuh untuk presentasi dan SmartTV.
 //   Dibuka dari tombol "Layar Pantauan" di Beranda (bukan menu). Slide: Santri, Pegawai, SMP, SMA, Tahfizh, Hafalan, Asrama,
@@ -214,7 +214,7 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
         <div class="mb-3 flex flex-wrap items-center gap-2">
           <p class="flex-1 text-sm text-teks2">{{ daftar.baris.length }} data · {{ formatPanjang(pt.data.tanggal) }}{{ saringanTeks ? ' · ' + saringanTeks : '' }}</p>
           <button class="tombol-garis w-pengajuan min-h-[40px] px-3 text-sm" @click="cetak"><PhEye :size="18" style="color: var(--c)" /> Cetak</button>
-          <button class="tombol-garis w-santri min-h-[40px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Excel</button>
+          <button class="tombol-garis w-santri min-h-[40px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Ekspor</button>
         </div>
         <div class="max-h-[60vh] overflow-auto rounded-xl border border-garis">
           <table class="w-full min-w-[560px] text-left text-sm">

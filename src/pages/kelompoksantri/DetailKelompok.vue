@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/DetailKelompok.vue | v1.5 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/DetailKelompok.vue | v1.6 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Satu kelompok santri: identitas, pengasuh (utama, pendamping, pengganti bertanggal), grup WA, anggota beserta
 // riwayat pindah, tambah/pindah/keluarkan anggota, naqib halaqah, ekspor Excel, dan cetak daftar F4.
@@ -203,7 +203,7 @@ const keKelompok = (x) => x && router.replace({ path: `/kelompok-santri/k/${x.id
           <a v-if="g.wa_wali" :href="g.wa_wali" target="_blank" rel="noopener" class="tombol-wa-garis w-presensi min-h-[40px] px-3 text-sm"><PhWhatsappLogo :size="18" weight="duotone" /> Grup WA wali</a>
           <a v-if="g.wa_internal" :href="g.wa_internal" target="_blank" rel="noopener" class="tombol-garis w-presensi min-h-[40px] px-3 text-sm"><PhLink :size="18" weight="duotone" style="color: var(--c)" /> Grup internal</a>
           <button v-if="bolehAtur" class="tombol-garis min-h-[40px] px-3 text-sm" @click="lembarUbah = true"><PhPencilSimple :size="18" weight="duotone" /> Ubah</button>
-          <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" weight="duotone" /> Excel</button>
+          <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" weight="duotone" /> Ekspor</button>
           <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="pratinjau = true"><PhEye :size="18" weight="duotone" /> Cetak daftar</button>
           <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="cetakAbs.buka(g, 'harian')"><PhPrinter :size="18" weight="duotone" /> Absensi harian</button>
           <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="cetakAbs.buka(g, 'pekanan')"><PhPrinter :size="18" weight="duotone" /> Absensi pekanan</button>

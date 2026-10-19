@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/security/TabRiwayatGerbang.vue | v1.0 | Fase 7 – Tahap 1 Security: gerbang | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/security/TabRiwayatGerbang.vue | v1.1 | 14.13.0: saringan corong di HP | 19/10/2026 -->
 <script setup>
 // Riwayat gerbang santri pada rentang tanggal (keluar, kembali, ditolak), saring jenis dan nama,
 // unduh Excel, cetak F4 mendatar berkop (Mengetahui Kepala Bidang Kesantrian kiri, pembuat rekap kanan).
@@ -13,6 +13,7 @@ import { JENIS_IZIN } from '@/lib/izin'
 import { penandaKelompok } from '@/lib/santri'
 import { formatWaktu, formatPendek, formatJam, formatPanjang, hariIniISO } from '@/lib/tanggal'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import FotoBerkas from '@/components/FotoBerkas.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -44,19 +45,17 @@ function ekspor() {
 </script>
 <template>
   <div>
-    <div class="kartu grid grid-cols-2 gap-3 p-4 sm:grid-cols-[1fr_1fr_1fr_auto]">
-      <InputTanggal v-model="mulai" label="Dari" wajib /><InputTanggal v-model="selesai" label="Sampai" wajib />
+    <SaringCorong :jumlah="jenis ? 1 : 0" :ringkasan="[`${formatPendek(mulai)} – ${formatPendek(selesai)}`, jenis].filter(Boolean).join(' · ')" judul="Saring riwayat gerbang">
+      <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
+        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIS, kelas, atau kamar" aria-label="Saring riwayat" /></div></template>
+      <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari" wajib /></div><div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
       <div><label class="label-isian" for="rg-j">Kejadian</label>
-        <select id="rg-j" v-model="jenis" class="isian"><option value="">Semua</option><option value="keluar">Keluar</option><option value="kembali">Kembali</option><option value="ditolak">Ditolak</option></select></div>
-      <div class="flex items-end gap-2">
-        <button class="tombol-garis w-pengajuan min-h-[44px] px-3 text-sm" @click="pratinjau = true"><PhEye :size="18" style="color: var(--c)" /> Cetak</button>
-        <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Excel</button>
-      </div>
-    </div>
+        <select id="rg-j" v-model="jenis" class="isian w-auto"><option value="">Semua</option><option value="keluar">Keluar</option><option value="kembali">Kembali</option><option value="ditolak">Ditolak</option></select></div>
+    </SaringCorong>
     <div class="mt-3 flex flex-wrap items-center gap-2">
-      <div class="relative min-w-[200px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-        <input v-model="cari" type="search" class="isian pl-11" placeholder="Saring nama, NIS, kelas, atau kamar" aria-label="Saring riwayat" /></div>
-      <p class="text-sm text-teks2">{{ jumlah('keluar') }} keluar · {{ jumlah('kembali') }} kembali · {{ jumlah('ditolak') }} ditolak</p>
+      <p class="flex-1 text-sm text-teks2">{{ jumlah('keluar') }} keluar · {{ jumlah('kembali') }} kembali · {{ jumlah('ditolak') }} ditolak</p>
+      <button class="tombol-garis w-pengajuan min-h-[44px] px-3 text-sm" @click="pratinjau = true"><PhEye :size="18" style="color: var(--c)" /> Cetak</button>
+      <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Ekspor</button>
     </div>
     <div class="kartu mt-3 overflow-x-auto">
       <table class="w-full min-w-[760px] text-left text-sm">

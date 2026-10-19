@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.4 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.5 | 14.13.0: saringan tanggal di tombol corong pada HP | 19/10/2026 -->
 <script setup>
 // Daftar izin santri. Dipakai di menu Perizinan (cakupan tetap) dan menu Musyrif (disaring per kamar,
 // dengan pilihan Menunggu/Aktif/Semua). Aksi sesuai hak dari server: setujui/tolak, ubah, batalkan,
@@ -13,11 +13,12 @@ import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 import { STATUS_IZIN, PERAN_PENGUSUL, JENIS_IZIN, labelIzin, rentangIzin } from '@/lib/izin'
 import { kontakUtama, labelRombel } from '@/lib/santri'
-import { formatWaktu, hariIniISO } from '@/lib/tanggal'
+import { formatWaktu, hariIniISO, formatPendek } from '@/lib/tanggal'
 import { pesanWA, tautanWA } from '@/lib/wa'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import LembarAjukanIzin from './LembarAjukanIzin.vue'
 
@@ -98,11 +99,13 @@ const kosong = computed(() => ({ persetujuan: 'Tidak ada izin yang menunggu kepu
         <button v-for="p in [{ k: 'menunggu', n: 'Menunggu' }, { k: 'aktif', n: 'Aktif' }, { k: 'semua', n: 'Semua' }]" :key="p.k" type="button" role="tab" :aria-selected="pilihan === p.k" @click="pilihan = p.k"
           :class="['tab-garis', pilihan === p.k && 'aktif']">{{ p.n }}</button>
       </div>
-      <div class="relative min-w-[180px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri atau alasan" aria-label="Cari izin" /></div>
+      <SaringCorong class="min-w-[220px] flex-1" :lipat="cak === 'semua'" :ringkasan="cak === 'semua' ? `${formatPendek(mulai)} – ${formatPendek(selesai)}` : ''" judul="Saring tanggal">
+        <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
+          <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri atau alasan" aria-label="Cari izin" /></div></template>
+        <template v-if="cak === 'semua'"><div class="sm:w-40"><InputTanggal v-model="mulai" label="Keluar dari" /></div><div class="sm:w-40"><InputTanggal v-model="selesai" label="Sampai" /></div></template>
+      </SaringCorong>
       <button v-if="iz.hak.ajukan" class="tombol-utama hidden lg:inline-flex" @click="ajukan"><PhPaperPlaneTilt :size="20" weight="duotone" /> Ajukan izin</button>
     </div>
-    <div v-if="cak === 'semua'" class="mt-3 grid grid-cols-2 gap-3 sm:max-w-md"><InputTanggal v-model="mulai" label="Keluar dari" /><InputTanggal v-model="selesai" label="Sampai" /></div>
 
     <div class="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
       <KartuStatistik v-for="k in statistik" :key="k.judul" class="w-[44%] shrink-0 snap-start sm:w-auto" :judul="k.judul" :nilai="memuat && !daftar.length ? '…' : k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket" />

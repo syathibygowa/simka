@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/TabBukuAgenda.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/TabBukuAgenda.vue | v1.3 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Buku agenda surat masuk per rentang tanggal terima (paling lama satu tahun): tabel, Excel, cetak F4 mendatar.
 // Surat rahasia yang tidak boleh dibaca ditampilkan perihalnya sebagai "(Rahasia)". Pilihan Surat keluar membuka BukuAgendaKeluar.
@@ -49,7 +49,7 @@ function ekspor() {
       <InputTanggal v-model="mulai" label="Diterima dari" wajib /><InputTanggal v-model="selesai" label="Sampai" wajib />
       <div class="col-span-2 flex items-end gap-2 sm:col-span-1">
         <button class="tombol-garis w-pengajuan min-h-[44px] px-3 text-sm" :disabled="!baris.length" @click="pratinjau = true"><PhEye :size="18" style="color: var(--c)" /> Cetak</button>
-        <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" :disabled="!baris.length" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Excel</button>
+        <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" :disabled="!baris.length" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Ekspor</button>
       </div>
     </div>
     <div class="kartu overflow-x-auto">

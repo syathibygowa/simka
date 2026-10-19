@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jadwal/TabRekapMengajar.vue | v1.3 | 14.4.0: cetak/unduh kolektif, per bidang, per guru; satu halaman per guru | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/jadwal/TabRekapMengajar.vue | v1.4 | 14.13.0: saringan corong di HP, tombol Ekspor/Cetak Rekap | 19/10/2026 -->
 <script setup>
 // Rekap mengajar per guru dan penugasan: JP terjadwal (hari sekolah, di luar libur), terlaksana, tidak terlaksana,
 // belum diisi. Jurnal mengajar menjadi bukti kehadiran mengajar dan dasar tunjangan guru (Fase 11).
@@ -14,6 +14,7 @@ import { persen, teksPersen } from '@/lib/absensi'
 import { hariIniISO, formatPanjang, formatPendek } from '@/lib/tanggal'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import SubTabJenjang from '@/components/SubTabJenjang.vue'
@@ -36,6 +37,8 @@ const barisJ = computed(() => baris.value.filter((r) => (!jenjang.value || jenja
 const jumlahJ = computed(() => ({ '': baris.value.length, wustha: baris.value.filter((r) => jenjangBaris(r) === 'wustha').length, sma: baris.value.filter((r) => jenjangBaris(r) === 'sma').length }))
 const mulai = ref(hariIniISO().slice(0, 8) + '01'); const selesai = ref(hariIniISO()); const baris = ref([]); const pratinjau = ref(false); const cari = ref('')
 const pimpinan = ref({ jabatan: 'Direktur', nama: '', niy: '' })
+const jumlahSaring = computed(() => [cakupan.value !== 'semua', perHalaman.value].filter(Boolean).length)
+const ringkasSaring = computed(() => [`${formatPendek(mulai.value)} – ${formatPendek(selesai.value)}`, cakupan.value === 'bidang' ? 'Per bidang' : cakupan.value === 'guru' ? 'Per guru' : 'Kolektif'].join(' · '))
 async function muat() { try { baris.value = await jd.rekap(mulai.value, selesai.value) } catch (e) { ui.toast(e.message, 'galat') } }
 onMounted(async () => { await muat(); pimpinan.value = await ambilPenandaTangan('Direktur'); peg.muat().catch(() => null); org.muat().catch(() => null) })
 watch([mulai, selesai], muat)
@@ -63,21 +66,21 @@ function ekspor() {
 <template>
   <div>
     <SubTabJenjang v-model="jenjang" class="mb-3" :jumlah="jumlahJ" label="Saring jenjang rekap" />
-    <div class="kartu mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto]">
-      <div><label class="label-isian" for="rm-c">Cari guru</label><input id="rm-c" v-model="cari" type="search" class="isian" placeholder="Nama guru" /></div>
+    <SaringCorong class="mb-4" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring rekap mengajar">
+      <template #cari><input id="rm-c" v-model="cari" type="search" class="isian" placeholder="Cari nama guru" aria-label="Cari guru" /></template>
       <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari" wajib /></div>
       <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
       <div><label class="label-isian" for="rm-ck">Cakupan cetak/unduh</label>
-        <select id="rm-ck" v-model="cakupan" class="isian"><option value="semua">Semua guru (kolektif)</option><option value="bidang">Per bidang</option><option value="guru">Per guru</option></select></div>
+        <select id="rm-ck" v-model="cakupan" class="isian w-auto max-w-full"><option value="semua">Semua guru (kolektif)</option><option value="bidang">Per bidang</option><option value="guru">Per guru</option></select></div>
       <div v-if="cakupan === 'bidang'"><label class="label-isian" for="rm-bd">Bidang</label>
         <select id="rm-bd" v-model="bidang" class="isian"><option value="" disabled>Pilih bidang</option><option v-for="b in daftarBidang" :key="b.id" :value="b.id">{{ b.nama }}</option></select></div>
       <div v-if="cakupan === 'guru'"><label class="label-isian" for="rm-gr">Guru</label>
         <select id="rm-gr" v-model="guruPilih" class="isian"><option v-for="g in perGuruSemua" :key="g.employee_id" :value="g.employee_id">{{ g.guru }}</option></select></div>
       <label v-if="cakupan !== 'guru'" class="flex min-h-[46px] items-center gap-2 self-end text-sm"><input v-model="perHalaman" type="checkbox" class="h-5 w-5" /> Cetak satu halaman per guru</label>
-    </div>
+    </SaringCorong>
     <div class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
-      <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Excel</button>
-      <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Cetak rekap</button>
+      <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
+      <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Cetak Rekap</button>
     </div>
     <ul class="space-y-3">
       <li v-for="g in perGuru" :key="g.employee_id" class="kartu w-jadwal p-4">

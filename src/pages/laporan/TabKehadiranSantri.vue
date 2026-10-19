@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.7 | 14.3.0: baris di bawah ambang berwarna (layar, cetak, Excel) | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.8 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Laporan kehadiran santri (menu Dokumen → Kehadiran santri), absensi HISBAT.
 // Jenis: rekap ringkas, rekap matriks (F4 mendatar), laporan individu, daftar perhatian, kepatuhan pengisian (pemantau).
@@ -235,7 +235,7 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
           <PhMagnifyingGlass :size="18" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" class="isian pl-10" placeholder="Cari nama, NIS, kelas, kamar, atau halaqah" /></label>
         <span v-else class="flex-1" />
-        <button type="button" class="tombol-garis" :disabled="!adaData" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+        <button type="button" class="tombol-garis" :disabled="!adaData" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
         <button type="button" class="tombol-garis" :disabled="!adaData" @click="cetak"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
       </div>
 

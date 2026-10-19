@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabRekapGuru.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabRekapGuru.vue | v1.2 | 14.13.0: saringan corong di HP | 19/10/2026 -->
 <script setup>
 // Rekap keterlaksanaan mengajar seorang guru untuk satu periode (paling lama 62 hari): per kelas-mapel dan daftar jurnal
 // per tanggal (materi atau keterangan). Guru melihat dirinya; pemantau dapat memilih guru.
@@ -15,6 +15,7 @@ import { awalPekan, awalBulanDari, akhirBulanDari, tambahHari, teksRentang } fro
 import { STATUS_JP, statusSlot, rekapPenugasan, persenJP, warnaPersen } from '@/lib/guruMapel'
 import { hariIniISO, formatHari, formatPendek } from '@/lib/tanggal'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
@@ -42,17 +43,17 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
 </script>
 <template>
   <div>
-    <div class="kartu mb-3 grid gap-3 p-3 sm:grid-cols-[minmax(12rem,1fr)_auto_auto_auto] sm:items-end">
-      <div v-if="pemantau"><label class="label-isian" for="rg-guru">Guru</label>
+    <SaringCorong class="mb-3" :ringkasan="[pemantau ? guruList.find((g) => g.id === emp)?.nama : '', `${formatPendek(mulai)} – ${formatPendek(selesai)}`].filter(Boolean).join(' · ')" judul="Saring rekap mengajar">
+      <div v-if="pemantau" class="min-w-[12rem] flex-1"><label class="label-isian" for="rg-guru">Guru</label>
         <select id="rg-guru" v-model="emp" class="isian"><option v-for="g in guruList" :key="g.id" :value="g.id">{{ g.nama }}</option></select></div>
       <p v-else class="self-center font-bold">{{ guru.nama }}</p>
       <div class="sm:w-40"><InputTanggal v-model="mulai" label="Dari" wajib /></div>
       <div class="sm:w-40"><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
-      <button class="tombol-utama h-12" :disabled="!rekap.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Cetak laporan</button>
-      <div class="bilah-tab kecil sm:col-span-4" role="tablist" aria-label="Periode cepat">
+      <div class="bilah-tab kecil w-full" role="tablist" aria-label="Periode cepat">
         <button v-for="x in PERIODE" :key="x.k" type="button" role="tab" :aria-selected="mulai === x.m && selesai === x.s" :class="['tab-garis', mulai === x.m && selesai === x.s && 'aktif']" @click="pilihCepat(x)">{{ x.n }}</button>
       </div>
-    </div>
+    </SaringCorong>
+    <div class="mb-3 flex justify-end"><button class="tombol-utama" :disabled="!rekap.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Cetak</button></div>
     <p class="mb-2 text-sm text-teks2">{{ teksRentang(mulai, selesai) }} · terlaksana <b>{{ total.terlaksana }}</b> dari {{ total.terjadwal }} JP ({{ teksPersen(persenJP(total.terlaksana, total.terjadwal)) }}) · tidak terlaksana {{ total.tidak }} · belum diisi {{ total.kosong }}</p>
     <p v-if="memuat && !slot.length" class="kartu p-8 text-center text-sm text-teks3">Memuat rekap…</p>
     <p v-else-if="!slot.length" class="kartu p-8 text-center text-sm text-teks3">Tidak ada jam pelajaran terjadwal pada periode ini.</p>

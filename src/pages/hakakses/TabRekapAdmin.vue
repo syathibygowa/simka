@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/hakakses/TabRekapAdmin.vue | v1.1 | Perbaikan 13.9.0: izin Kelola pengumuman masuk kelompok administrasi | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/hakakses/TabRekapAdmin.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Rekap akses admin (khusus superadmin): baris = uraian akses, kolom = setiap admin, sel = centang bila admin memiliki akses itu.
 // Desktop: matriks lengkap. HP: kartu per admin. Cetak F4 mendatar berkop dengan kolom tanda tangan.
@@ -91,7 +91,7 @@ const lebarAdmin = computed(() => (admin.value.length ? Math.max(5, Math.min(12,
           <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama atau NIY admin" aria-label="Cari admin" />
         </div>
         <button class="tombol-garis w-verifikasi min-h-[44px] px-4 text-sm" @click="ubahAkses"><PhPencilSimple :size="18" style="color: var(--c)" /> Ubah akses admin</button>
-        <button class="tombol-utama min-h-[44px] px-4 text-sm" :disabled="!admin.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak rekap</button>
+        <button class="tombol-utama min-h-[44px] px-4 text-sm" :disabled="!admin.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak Rekap</button>
       </div>
 
       <p v-if="!admin.length" class="kartu mt-4 p-8 text-center text-sm text-teks3">Belum ada akun berperan admin. Peran admin diberikan di menu Akun Pegawai.</p>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/StatistikSantri.vue | v1.0 | Fase 4 – Tahap 6 Tahun ajaran, statistik, laporan | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/StatistikSantri.vue | v1.1 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Statistik dan laporan data santri: jumlah per jenjang dan kelas (putra/putri), kohort angkatan (masuk, aktif,
 // lulus, keluar, retensi), kehadiran hari ini. Ekspor Excel dan cetak F4 "Rekapitulasi Jumlah Santri".
@@ -49,8 +49,8 @@ function ekspor() {
     </div>
 
     <div class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
-      <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Excel</button>
-      <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Cetak rekapitulasi</button>
+      <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
+      <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Cetak Rekap</button>
       <router-link v-if="bolehGantiTA" to="/tahun-ajaran-baru" class="w-agenda tombol-garis shrink-0 px-4 text-sm"><PhCalendarPlus :size="20" weight="duotone" style="color: var(--c)" /> Pergantian tahun ajaran</router-link>
     </div>
 

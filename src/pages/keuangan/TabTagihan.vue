@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabTagihan.vue | v1.5 | 14.7.0: daftar ringkas satu baris per santri dengan total; pengirim WA berurutan dengan template | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabTagihan.vue | v1.6 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Buat tagihan massal: pilih jenis biaya → periode (bulan-bulan untuk bulanan; tahun ajaran untuk tahunan; sekali)
 // → sasaran (jenjang, tingkat, santri baru saja, atau santri tertentu) → pratinjau (standar, subsidi, tagihan, sudah ada)
@@ -134,8 +134,8 @@ function ekspor() {
       <select v-model="saring.kunci_periode" class="isian w-44" aria-label="Periode"><option value="">Semua periode</option><option v-for="k in periodeAda" :key="k" :value="k">{{ labelPeriode(k) }}</option></select>
     </SaringCorong>
     <div class="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:justify-end md:px-0">
-      <button class="tombol-garis" :disabled="!tampil.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Excel</button>
-      <button v-if="keu.hak.kelola" class="tombol-garis" :disabled="!keu.jenis.length" @click="impor = true"><PhClockCounterClockwise :size="20" weight="duotone" /> Impor catatan lama</button>
+      <button class="tombol-garis" :disabled="!tampil.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor</button>
+      <button v-if="keu.hak.kelola" class="tombol-garis" :disabled="!keu.jenis.length" @click="impor = true"><PhClockCounterClockwise :size="20" weight="duotone" /> Impor</button>
       <button v-if="keu.hak.kelola" class="tombol-utama" :disabled="!keu.jenisAktif.length" @click="mulai"><PhPlus :size="20" weight="bold" /> Buat tagihan</button>
     </div>
     <div class="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="group" aria-label="Saring status">

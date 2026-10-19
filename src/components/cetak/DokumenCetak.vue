@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/DokumenCetak.vue | v1.7 | Perbaikan: nama berkas PDF sesuai dokumen (nama/bidang - dokumen - periode) | 16/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/DokumenCetak.vue | v1.8 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Kerangka dokumen cetak F4: kop surat, judul, isi (slot), tanda tangan, catatan cetak.
 // Pratinjau tampil sebagai jendela munculan (pop-up) dengan tombol Cetak dan Tutup.
@@ -48,10 +48,10 @@ const cetak = () => window.print()
 </script>
 <template>
   <Teleport to="body">
-    <div :class="['cetak-saja', pratinjau && 'tampil munculan']" :role="pratinjau ? 'dialog' : undefined" :aria-modal="pratinjau || undefined" :aria-label="pratinjau ? 'Pratinjau cetak ' + judul : undefined">
+    <div :class="['cetak-saja', pratinjau && 'tampil munculan']" :role="pratinjau ? 'dialog' : undefined" :aria-modal="pratinjau || undefined" :aria-label="pratinjau ? 'Pratinjau ' + judul : undefined">
       <div v-if="pratinjau" class="bilah-munculan layar-saja">
         <div class="min-w-0 flex-1">
-          <p class="truncate font-bold">Pratinjau cetak: {{ judul }}</p>
+          <p class="truncate font-bold">Pratinjau: {{ judul }}</p>
           <p class="text-xs opacity-80">Kertas F4 {{ mendatar ? '330 × 215 mm (mendatar)' : '215 × 330 mm' }}, margin 2 cm</p>
         </div>
         <button type="button" class="tombol-cetak" @click="cetak"><PhPrinter :size="20" weight="duotone" /> Cetak</button>

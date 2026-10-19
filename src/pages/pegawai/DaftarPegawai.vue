@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.7 | 14.2.0: saringan corong di HP | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.8 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
@@ -92,11 +92,11 @@ const saringanTeks = computed(() => [jk.value === 'L' ? 'Laki-laki' : jk.value =
       </div>
       <!-- Aksi: tampil di semua ukuran layar -->
       <div class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
-        <router-link to="/pegawai/impor" class="w-gaji tombol-garis shrink-0 px-4 text-sm"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Impor Excel</router-link>
-        <button class="w-pegawai tombol-garis shrink-0 px-4 text-sm" @click="eksporExcel"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor Excel</button>
+        <router-link to="/pegawai/impor" class="w-gaji tombol-garis shrink-0 px-4 text-sm"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Impor</router-link>
+        <button class="w-pegawai tombol-garis shrink-0 px-4 text-sm" @click="eksporExcel"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
         <router-link to="/pegawai/rekap" class="w-laporan tombol-garis shrink-0 px-4 text-sm"><PhChartBar :size="20" weight="duotone" style="color: var(--c)" /> Rekap kepegawaian</router-link>
-        <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau cetak</button>
-        <button class="w-tatausaha tombol-garis shrink-0 px-4 text-sm" @click="opsiCetak = true"><PhSlidersHorizontal :size="20" weight="duotone" style="color: var(--c)" /> Atur dan cetak</button>
+        <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau</button>
+        <button class="w-tatausaha tombol-garis shrink-0 px-4 text-sm" @click="opsiCetak = true"><PhSlidersHorizontal :size="20" weight="duotone" style="color: var(--c)" /> Atur</button>
       </div>
 
       <!-- Pencarian dan saringan (HP: tombol corong) -->

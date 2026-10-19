@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabTahsin.vue | v1.0 | 14.11.0: tab Tahsin (santri belum menghafal: tahapan, catatan pertemuan, lulus tahsin) | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabTahsin.vue | v1.1 | 14.13.0: saringan corong di HP | 19/10/2026 -->
 <script setup>
 // Tahsin — pembinaan bacaan Al-Qur'an bagi santri yang belum menghafal (umumnya santri baru atau pindahan).
 //   Muhaffizh/pengelola: "Tandai santri tahsin" (mulai, asal, tahap awal, pembina).
@@ -22,6 +22,7 @@ import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import TombolWA from '@/components/TombolWA.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import PratinjauWA from '@/components/PratinjauWA.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -160,14 +161,16 @@ const subjudulCetak = computed(() => [LABEL_SARING[saring.value] || 'Semua statu
 </script>
 <template>
   <div class="w-tahsin">
-    <div class="flex flex-wrap items-center gap-2">
+    <SaringCorong :jumlah="[saring !== 'berjalan', halaqah].filter(Boolean).length" :ringkasan="[LABEL_SARING[saring] || 'Semua', halaqah].filter(Boolean).join(' · ')" judul="Saring santri tahsin">
+      <template #cari><div class="relative">
+        <PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
+        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama atau NIS" aria-label="Cari santri tahsin" />
+      </div></template>
       <select v-model="saring" class="isian w-auto" aria-label="Saring status">
         <option value="berjalan">Sedang tahsin</option><option value="menunggu">Diajukan lulus</option><option value="lulus">Lulus tahsin</option><option value="dihentikan">Dihentikan</option><option value="">Semua</option></select>
       <select v-model="halaqah" class="isian w-auto" aria-label="Saring halaqah"><option value="">Semua halaqah</option><option v-for="h in daftarHalaqah" :key="h" :value="h">{{ h }}</option></select>
-      <div class="relative min-w-[12rem] flex-1">
-        <PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama atau NIS" aria-label="Cari santri tahsin" />
-      </div>
+    </SaringCorong>
+    <div class="mt-2 flex flex-wrap items-center justify-end gap-2">
       <button v-if="ts.bolehAtur" class="tombol-garis" @click="bukaTahap"><PhListNumbers :size="20" weight="duotone" style="color: var(--c)" /> Tahapan</button>
       <button class="tombol-garis w-laporan" :disabled="!tampil.length" @click="cetak"><PhPrinter :size="20" weight="duotone" style="color: var(--c)" /> Cetak</button>
       <button class="tombol-garis" :disabled="!bolehCatat.length" @click="bukaCatat()"><PhNotePencil :size="20" weight="duotone" style="color: var(--c)" /> Catat pertemuan</button>

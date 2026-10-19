@@ -1,8 +1,8 @@
-// SIMKA PRO | src/lib/versi.js | v14.12.0 | 14.12.0: hemat log server, kapasitas database, backup mingguan mudah dibaca | 18/10/2026
+// SIMKA PRO | src/lib/versi.js | v14.13.0 | 14.13.0: saringan corong di HP dan tombol disederhanakan | 19/10/2026
 // Nomor versi aplikasi yang tampil di halaman Profil. Naikkan setiap kali kode diunggah ke GitHub.
 // Keterangan versi tampil kepada pengguna, jadi ditulis tanpa kata "Fase".
-export const VERSI_APLIKASI = '14.12.0'
-export const KETERANGAN_VERSI = 'Hemat permintaan dan log server (pembaruan langsung diredam, jadwal otomatis digabung), Setelan → Kapasitas untuk memantau ukuran database dan masa simpan data, serta backup mingguan Google Sheets dengan 18 lembar ringkas yang mudah dibaca'
+export const VERSI_APLIKASI = '14.13.0'
+export const KETERANGAN_VERSI = 'Tampilan HP lebih lega: saringan (bidang, tanggal, pola, jenjang, kelas, putra/putri, tata letak cetak) diringkas ke tombol corong di samping kolom cari; label tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap, Atur, Salin, Bergilir); alamat aplikasi simka.digital'
 
 // Waktu kode dibangun oleh GitHub Actions; dipakai untuk memastikan versi yang tayang adalah yang terbaru.
 /* global __WAKTU_BUILD__ */

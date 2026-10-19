@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/ekskul/TabRekapEkskul.vue | v1.2 | 14.4.0: laporan periode ke grup WA; cetak jurnal rinci (jam, metode, alat, sumber, capaian) | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/ekskul/TabRekapEkskul.vue | v1.3 | 14.13.0: saringan corong di HP, tombol disederhanakan | 19/10/2026 -->
 <script setup>
 // Rekap ekskul per periode: kehadiran anggota (HISBAT) dan jurnal materi setiap pertemuan.
 // Dapat dicetak oleh pembina, pimpinan, admin, dan superadmin (F4 mendatar, berkop pondok).
@@ -14,6 +14,7 @@ import { susunRekap, persen, teksPersen } from '@/lib/absensi'
 import { labelRombel, penandaKelompok } from '@/lib/santri'
 import { hariIniISO, formatPanjang, formatPendek, formatHari } from '@/lib/tanggal'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import FotoBerkas from '@/components/FotoBerkas.vue'
@@ -76,20 +77,20 @@ function ekspor() {
 </script>
 <template>
   <div>
-    <div class="kartu mb-4 grid gap-3 p-4 sm:grid-cols-[1fr_auto_auto]">
-      <div><label class="label-isian" for="re-g">Ekskul</label>
+    <SaringCorong class="mb-4" :ringkasan="[g?.nama, `${formatPendek(mulai)} – ${formatPendek(selesai)}`].filter(Boolean).join(' · ')" judul="Saring rekap ekskul">
+      <div class="min-w-[220px] flex-1"><label class="label-isian" for="re-g">Ekskul</label>
         <select id="re-g" v-model="groupId" class="isian">
           <option v-for="x in pilihan" :key="x.id" :value="x.id">{{ x.nama }}{{ x.asuhan_saya ? ' (binaan saya)' : '' }}{{ x.aktif ? '' : ' (nonaktif)' }}</option>
           <option v-if="!pilihan.length" value="">Belum ada ekskul</option>
         </select></div>
       <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari" wajib /></div>
       <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
-    </div>
+    </SaringCorong>
 
     <template v-if="g">
       <div class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
-        <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Excel</button>
-        <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Cetak rekap</button>
+        <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
+        <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Cetak Rekap</button>
         <button class="tombol-wa-garis shrink-0 px-4 text-sm" :disabled="!jurnal.length" @click="laporWA"><PhWhatsappLogo :size="20" weight="duotone" /> Lapor ke grup</button>
       </div>
       <div class="grid gap-4 xl:grid-cols-2">

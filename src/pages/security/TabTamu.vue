@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/security/TabTamu.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/security/TabTamu.vue | v1.2 | 14.13.0: saringan tanggal di tombol corong pada HP | 19/10/2026 -->
 <script setup>
 // Buku tamu (Blueprint Bagian 24): nama, instansi, HP, keperluan, orang yang ditemui (pegawai menerima notifikasi),
 // jumlah orang, kendaraan, foto opsional, jam masuk dan keluar. Tab "Di dalam" (belum keluar) dan "Riwayat"; Excel dan cetak F4.
@@ -11,9 +11,10 @@ import { useUI } from '@/stores/ui'
 import { unggahFotoSecurity } from '@/lib/fotoSecurity'
 import { durasi } from '@/lib/security'
 import { penandaKelompok } from '@/lib/santri'
-import { formatWaktu, formatJam, formatPanjang, hariIniISO } from '@/lib/tanggal'
+import { formatWaktu, formatJam, formatPanjang, hariIniISO, formatPendek } from '@/lib/tanggal'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import FotoBerkas from '@/components/FotoBerkas.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
@@ -79,13 +80,15 @@ watch(pratinjau, async (v) => { if (v) penanda.value = await penandaKelompok({ j
         <button v-for="p in [{ k: 'di_dalam', n: 'Di dalam' }, { k: 'semua', n: 'Riwayat' }]" :key="p.k" type="button" role="tab" :aria-selected="cakupan === p.k" @click="cakupan = p.k"
           :class="['tab-garis', cakupan === p.k && 'aktif']">{{ p.n }}</button>
       </div>
-      <div class="relative min-w-[180px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, instansi, keperluan" aria-label="Cari tamu" /></div>
+      <SaringCorong class="min-w-[220px] flex-1" :lipat="cakupan === 'semua'" :ringkasan="cakupan === 'semua' ? `${formatPendek(mulai)} – ${formatPendek(selesai)}` : ''" judul="Saring tanggal">
+        <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
+          <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, instansi, keperluan" aria-label="Cari tamu" /></div></template>
+        <template v-if="cakupan === 'semua'"><div class="sm:w-40"><InputTanggal v-model="mulai" label="Dari" /></div><div class="sm:w-40"><InputTanggal v-model="selesai" label="Sampai" /></div></template>
+      </SaringCorong>
       <button class="tombol-garis w-pengajuan min-h-[44px] px-3 text-sm" @click="pratinjau = true"><PhEye :size="18" style="color: var(--c)" /> Cetak</button>
-      <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Excel</button>
+      <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Ekspor</button>
       <button v-if="sc.hak.gerbang" class="tombol-utama hidden lg:inline-flex" @click="bukaBaru"><PhUsers :size="20" weight="duotone" /> Catat tamu</button>
     </div>
-    <div v-if="cakupan === 'semua'" class="mt-3 grid grid-cols-2 gap-3 sm:max-w-md"><InputTanggal v-model="mulai" label="Dari" /><InputTanggal v-model="selesai" label="Sampai" /></div>
 
     <ul class="mt-3 grid gap-3 md:grid-cols-2">
       <li v-for="t in tampil" :key="t.id" class="kartu p-4" :class="t.keluar_pada ? 'w-rekap' : 'w-pegawai'">

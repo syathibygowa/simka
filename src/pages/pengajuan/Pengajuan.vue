@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengajuan/Pengajuan.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengajuan/Pengajuan.vue | v1.4 | 14.13.0: saringan corong di HP, tombol Pratinjau/Ekspor | 19/10/2026 -->
 <script setup>
 // Pengajuan izin, sakit, dinas luar, dan cuti. Tab: Pengajuan saya (semua pegawai), Persetujuan (pejabat
 // penyetuju dan Plt), Semua (admin ber-izin lihat_pengajuan/superadmin: rekap, Excel, cetak F4), Ketentuan (dibaca semua).
@@ -16,6 +16,7 @@ import { STATUS_PENGAJUAN, KELOMPOK, rentangTanggal } from '@/lib/pengajuan'
 import LembarBawah from '@/components/LembarBawah.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import FormPengajuan from './FormPengajuan.vue'
@@ -37,6 +38,9 @@ const formBuka = ref(false); const pratinjau = ref(false)
 const saring = ref('semua'); const cari = ref(''); const unit = ref('')
 const awalBulan = hariIniISO().slice(0, 8) + '01'
 const mulai = ref(awalBulan); const akhir = ref(hariIniISO())
+const jumlahSaring = computed(() => [unit.value, mulai.value !== awalBulan || akhir.value !== hariIniISO()].filter(Boolean).length)
+const ringkasSaring = computed(() => [`${formatPendek(mulai.value)} – ${formatPendek(akhir.value)}`, org.units.find((u) => u.id === unit.value)?.nama].filter(Boolean).join(' · '))
+function aturUlangSaring() { unit.value = ''; mulai.value = awalBulan; akhir.value = hariIniISO() }
 
 onMounted(async () => {
   await Promise.all([pg.muatKetentuan(), lembaga.muat(), org.muat()])
@@ -103,23 +107,28 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
         </div>
 
         <!-- Saringan -->
-        <div v-if="tab === 'semua'" class="kartu mb-3 grid gap-3 p-4 sm:grid-cols-3">
-          <InputTanggal v-model="mulai" label="Dari tanggal" />
-          <InputTanggal v-model="akhir" label="Sampai tanggal" />
+        <SaringCorong v-if="tab === 'semua'" class="mb-3" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring pengajuan" bisa-atur-ulang @atur-ulang="aturUlangSaring">
+          <template #cari>
+            <div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
+              <input v-model="cari" type="search" class="isian pl-10" placeholder="Cari nama, NIY, jenis, nomor" aria-label="Cari pengajuan" /></div>
+          </template>
+          <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
+          <div class="sm:w-44"><InputTanggal v-model="akhir" label="Sampai tanggal" /></div>
           <div><label class="label-isian" for="pj-unit">Bidang/Unit</label>
-            <select id="pj-unit" v-model="unit" class="isian"><option value="">Semua bidang</option>
+            <select id="pj-unit" v-model="unit" class="isian w-auto max-w-full"><option value="">Semua bidang</option>
               <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
-        </div>
+        </SaringCorong>
         <div class="mb-3 flex flex-wrap items-center gap-2">
           <div class="bilah-tab kecil" role="tablist" aria-label="Saring status">
             <button v-for="s in SARING" :key="s.k" @click="saring = s.k" :class="['tab-garis', (saring === s.k) && 'aktif']" role="tab" :aria-selected="saring === s.k">{{ s.n }}</button>
           </div>
-          <div v-if="tab !== 'saya'" class="relative min-w-[12rem] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
-            <input v-model="cari" class="isian pl-10" placeholder="Cari nama, jenis, nomor" aria-label="Cari pengajuan" /></div>
-        </div>
-        <div v-if="tab === 'semua'" class="mb-3 flex flex-wrap gap-2">
-          <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak</button>
-          <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
+          <div v-if="tab === 'persetujuan'" class="relative min-w-[12rem] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
+            <input v-model="cari" type="search" class="isian pl-10" placeholder="Cari nama, NIY, jenis, nomor" aria-label="Cari pengajuan" /></div>
+          <template v-if="tab === 'semua'">
+            <span class="flex-1" />
+            <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau</button>
+            <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor</button>
+          </template>
         </div>
 
         <p v-if="pg.memuat && !sumber.length" class="py-8 text-center text-teks3">Memuat pengajuan…</p>

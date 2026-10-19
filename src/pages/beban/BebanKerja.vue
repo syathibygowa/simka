@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beban/BebanKerja.vue | v1.4 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/beban/BebanKerja.vue | v1.5 | 14.13.0: saringan corong di HP, tombol disederhanakan | 19/10/2026 -->
 <script setup>
 // Ekuivalensi jam beban kerja per pekan.
 //   Beban saya   : rincian jam pegawai yang masuk, total, jam wajib, kelebihan/kekurangan.
@@ -19,6 +19,7 @@ import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 import { hariIniISO, formatPanjang } from '@/lib/tanggal'
 import LembarBawah from '@/components/LembarBawah.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
@@ -155,20 +156,20 @@ const KELOMPOK = { struktural: 'Jabatan struktural', fungsional: 'Jabatan fungsi
 
       <!-- ===== Rekap ===== -->
       <template v-else-if="aktif.k === 'rekap'">
-        <div class="kartu mb-3 grid gap-3 p-4 sm:grid-cols-3">
-          <div><label class="label-isian" for="bk-unit">Bidang/Unit</label><select id="bk-unit" v-model="unit" class="isian"><option value="">Semua bidang</option>
+        <SaringCorong class="mb-3" :jumlah="[unit, status].filter(Boolean).length" :ringkasan="[org.units.find((u) => u.id === unit)?.nama, status ? STATUS[status] : ''].filter(Boolean).join(' · ')" judul="Saring rekap beban kerja">
+          <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
+            <input id="bk-cari" v-model="cari" type="search" class="isian pl-10" placeholder="Cari nama atau NIY" aria-label="Cari pegawai" /></div></template>
+          <div><label class="label-isian" for="bk-unit">Bidang/Unit</label><select id="bk-unit" v-model="unit" class="isian w-auto max-w-full"><option value="">Semua bidang</option>
             <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
-          <div><label class="label-isian" for="bk-status">Status</label><select id="bk-status" v-model="status" class="isian"><option value="">Semua status</option>
+          <div><label class="label-isian" for="bk-status">Status</label><select id="bk-status" v-model="status" class="isian w-auto"><option value="">Semua status</option>
             <option v-for="(n, k) in STATUS" :key="k" :value="k">{{ n }}</option></select></div>
-          <div><label class="label-isian" for="bk-cari">Cari</label><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
-            <input id="bk-cari" v-model="cari" class="isian pl-10" placeholder="Nama atau NIY" /></div></div>
-        </div>
+        </SaringCorong>
         <div class="mb-3 flex flex-wrap items-center gap-2">
           <span class="lencana w-beranda">{{ ringkas.kurang }} kurang</span><span class="lencana w-presensi">{{ ringkas.pas }} pas</span>
           <span class="lencana w-pegawai">{{ ringkas.lebih }} lebih</span><span class="lencana w-hakakses">{{ ringkas.honorer }} tidak terikat</span>
           <span class="flex-1" />
-          <button class="tombol-garis min-h-[40px] text-sm" @click="pratinjau = true"><PhEye :size="18" weight="duotone" /> Pratinjau cetak</button>
-          <button class="tombol-garis min-h-[40px] text-sm" @click="ekspor"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+          <button class="tombol-garis min-h-[40px] text-sm" @click="pratinjau = true"><PhEye :size="18" weight="duotone" /> Pratinjau</button>
+          <button class="tombol-garis min-h-[40px] text-sm" @click="ekspor"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
           <button v-if="bk.bolehAtur" class="tombol-utama min-h-[40px] text-sm" @click="kunci"><PhLockKey :size="18" weight="duotone" /> Kunci rekap bulan ini</button>
         </div>
         <div v-if="bolehTampil" class="kartu w-gaji mb-3 flex flex-wrap items-center gap-2 p-3">

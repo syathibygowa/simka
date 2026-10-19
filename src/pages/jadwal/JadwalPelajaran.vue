@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jadwal/JadwalPelajaran.vue | v1.5 | Perbaikan 13.6.0: saring jenjang kelas, cetak sel kosong | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/jadwal/JadwalPelajaran.vue | v1.6 | 14.13.0: saringan corong di HP, tombol disederhanakan | 19/10/2026 -->
 <script setup>
 // Jadwal pelajaran. Tab: Jadwal kelas, Jadwal guru, Penugasan mengajar, Pengaturan (mapel dan jam pelajaran),
 // Rekap mengajar. Pengatur: admin ber-izin atur_jadwal (atau hak fitur jadwal_mengajar tingkat 3).
@@ -21,6 +21,7 @@ import TabPenugasan from './TabPenugasan.vue'
 import TabPengaturanJadwal from './TabPengaturanJadwal.vue'
 import TabRekapMengajar from './TabRekapMengajar.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
@@ -91,15 +92,17 @@ const namaGuru = computed(() => guruList.value.find((x) => x.id === employeeId.v
     <template v-if="aktif === 'kelas' || aktif === 'guru'">
       <SubTabJenjang v-if="aktif === 'kelas'" v-model="jenjangKelas" class="mb-3" :jumlah="jumlahJenjang" label="Saring jenjang kelas" />
       <div class="kartu mb-4 flex flex-wrap items-end gap-3 p-4">
-        <div v-if="aktif === 'kelas'" class="min-w-[200px] flex-1"><label class="label-isian" for="jp-kelas">Kelas</label>
+       <SaringCorong class="min-w-0 flex-1" :ringkasan="selKosong === 'garis' ? 'Sel kosong diberi garis' : ''" judul="Pengaturan cetak jadwal">
+        <template #cari><div v-if="aktif === 'kelas'"><label class="label-isian" for="jp-kelas">Kelas</label>
           <select id="jp-kelas" v-model="groupId" class="isian"><option v-for="x in kelasList" :key="x.id" :value="x.id">{{ judulKelompok(x) }}{{ x.asuhan_saya ? ' (kelas saya)' : '' }}</option>
             <option v-if="!kelasList.length" value="">{{ semuaKelas.length ? 'Tidak ada kelas pada jenjang ini' : 'Belum ada kelas di Kelompok Santri' }}</option></select></div>
-        <div v-else class="min-w-[200px] flex-1"><label class="label-isian" for="jp-guru">Guru</label>
+        <div v-else><label class="label-isian" for="jp-guru">Guru</label>
           <select id="jp-guru" v-model="employeeId" class="isian"><option v-for="x in guruList" :key="x.id" :value="x.id">{{ x.nama }}{{ x.id === jd.idSaya() ? ' (saya)' : '' }}</option>
-            <option v-if="!guruList.length" value="">Belum ada penugasan mengajar</option></select></div>
+            <option v-if="!guruList.length" value="">Belum ada penugasan mengajar</option></select></div></template>
         <div class="w-full sm:w-auto"><label class="label-isian" for="jp-kosong">Sel tanpa pelajaran saat dicetak</label>
           <select id="jp-kosong" v-model="selKosong" class="isian"><option value="kosong">Dikosongkan</option><option value="garis">Diberi garis (—)</option></select></div>
-        <button class="tombol-garis" @click="cetak"><PhEye :size="20" weight="duotone" /> Cetak jadwal</button>
+       </SaringCorong>
+        <button class="tombol-garis" @click="cetak"><PhEye :size="20" weight="duotone" /> Cetak</button>
       </div>
       <section class="kartu w-jadwal p-4">
         <GridJadwal v-if="aktif === 'kelas' && g" mode="kelas" :group-id="groupId" :jenjang="g.jenjang" :boleh-ubah="bolehAtur" @sel="bukaSel" />

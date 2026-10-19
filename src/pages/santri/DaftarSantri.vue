@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.8 | 14.2.0: saringan corong di HP | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.9 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Daftar santri sesuai cakupan pengguna (RLS): kartu statistik langsung, cari dan saring,
 // ekspor Excel, cetak daftar F4 berkop jenjang. v1.4: cetak kartu pelajar massal (santri aktif yang tampil, per rombel).
@@ -78,7 +78,7 @@ function eksporExcel() {
   const petunjuk = XLSX.utils.aoa_to_sheet([['Ekspor Data Santri SIMKA PRO (susunan templat impor v1.1)'], [''],
     ['1. Lengkapi sel yang kosong, terutama kolom bertanda * (NIS, NISN, nama, tempat dan tanggal lahir).'],
     ['2. Jangan mengubah NIS: NIS dipakai untuk mencocokkan santri saat diimpor kembali.'],
-    ['3. Simpan, lalu impor di Data Santri → Impor Excel. Sel kosong tidak menghapus data lama.'],
+    ['3. Simpan, lalu impor di Data Santri → Impor. Sel kosong tidak menghapus data lama.'],
     ['4. Kolom berawalan "Info:" hanya keterangan dan tidak diimpor. Status dan kelompok diubah di aplikasi.']])
   petunjuk['!cols'] = [{ wch: 110 }]; XLSX.utils.book_append_sheet(wb, petunjuk, 'Petunjuk')
   XLSX.writeFile(wb, `Data-Santri-${formatPendek(new Date()).replace(/\//g, '-')}.xlsx`)
@@ -137,11 +137,11 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
 
       <!-- Aksi -->
       <div class="-mx-4 mb-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
-        <router-link v-if="bolehImpor" to="/santri/impor" class="w-gaji tombol-garis shrink-0 px-4 text-sm"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Impor Excel</router-link>
+        <router-link v-if="bolehImpor" to="/santri/impor" class="w-gaji tombol-garis shrink-0 px-4 text-sm"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Impor</router-link>
         <router-link to="/santri/kelengkapan" class="w-klinik tombol-garis shrink-0 px-4 text-sm"><PhListMagnifyingGlass :size="20" weight="duotone" style="color: var(--c)" /> Kelengkapan data</router-link>
-        <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="eksporExcel"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor Excel</button>
-        <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="bukaPratinjau"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau cetak</button>
-        <button class="w-tatausaha tombol-garis shrink-0 px-4 text-sm" @click="opsiCetak = true"><PhSlidersHorizontal :size="20" weight="duotone" style="color: var(--c)" /> Atur dan cetak</button>
+        <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="eksporExcel"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
+        <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="bukaPratinjau"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau</button>
+        <button class="w-tatausaha tombol-garis shrink-0 px-4 text-sm" @click="opsiCetak = true"><PhSlidersHorizontal :size="20" weight="duotone" style="color: var(--c)" /> Atur</button>
         <button v-if="bolehUbah" class="w-presensi tombol-garis shrink-0 px-4 text-sm" @click="lembarKartu = true"><PhCards :size="20" weight="duotone" style="color: var(--c)" /> Cetak kartu pelajar</button>
       </div>
 
@@ -259,7 +259,7 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
               class="flex min-h-[44px] items-center gap-2 rounded-xl border border-garis px-3 text-sm font-semibold"><input v-model="modeKartu" type="radio" :value="m.k" class="h-5 w-5 accent-[#0B6B57]" />{{ m.n }}</label>
           </div></fieldset>
         <p class="rounded-xl bg-permukaan2 p-3 text-sm"><b>{{ calonKartu.length }}</b> kartu akan disiapkan.</p>
-        <button class="tombol-utama w-full" :disabled="prosesKartu || !calonKartu.length" @click="siapkanKartu"><PhCards :size="20" weight="duotone" /> {{ prosesKartu ? 'Menyiapkan…' : 'Pratinjau cetak kartu' }}</button>
+        <button class="tombol-utama w-full" :disabled="prosesKartu || !calonKartu.length" @click="siapkanKartu"><PhCards :size="20" weight="duotone" /> {{ prosesKartu ? 'Menyiapkan…' : 'Pratinjau' }}</button>
       </div>
     </LembarBawah>
     <LembarKartu v-model:pratinjau="pratinjauKartu" jenis="santri" :kartu="kartuData" :foto="fotoKartu" :identitas="lembaga.identitas" :direktur="direkturKartu" :mode="modeKartu" />

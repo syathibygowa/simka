@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/RekapKehadiranMapel.vue | v1.1 | 14.4.0: awal semester 2 = 1 Januari (sama dengan rapor) | 17/10/2026 -->
+<!-- SIMKA PRO | src/components/RekapKehadiranMapel.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Rekap kehadiran santri per mata pelajaran dari absensi guru mapel di jurnal mengajar.
 //   * Pertemuan = tanggal jurnal terlaksana yang absensinya diisi (beberapa JP di hari sama = 1 pertemuan).
@@ -97,7 +97,7 @@ async function excel() {
       <div class="mb-3 flex flex-wrap items-center gap-2">
         <p class="min-w-[200px] flex-1 text-sm text-teks2">Rata-rata kelas <b>{{ teksPersen(rataKelas) }}</b> · {{ mapel.length }} mapel ·
           <span :class="bawahAmbang ? 'font-bold text-merah' : ''">{{ bawahAmbang }} santri di bawah {{ amb.batas('santri') }}%</span></p>
-        <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+        <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
         <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
       </div>
 

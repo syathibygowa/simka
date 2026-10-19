@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/KelengkapanSantri.vue | v1.1 | Perbaikan 13.9.0: kembali ke posisi semula dan pindah ke santri berikutnya | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/KelengkapanSantri.vue | v1.2 | 14.13.0: saringan corong di HP, tombol Atur/Ekspor | 19/10/2026 -->
 <script setup>
 // Kelengkapan data santri di seluruh basis data: identitas, alamat, orang tua/wali, masuk dan sekolah asal, kelompok pondok.
 // Kartu statistik langsung, kolom yang paling sering kosong (ketuk untuk menyaring), daftar santri beserta data yang belum diisi,
@@ -19,6 +19,7 @@ import { TINGKAT, labelRombel, inisial } from '@/lib/santri'
 import { KATEGORI_KELENGKAPAN, SEMUA_KOLOM, KOLOM_BAWAAN, periksaSantri } from '@/lib/kelengkapanSantri'
 import { formatPendek, hariIniISO } from '@/lib/tanggal'
 import KartuStatistik from '@/components/KartuStatistik.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -51,6 +52,10 @@ const sr = keadaan.saring || {}
 const cari = ref(sr.cari || ''); const jenjang = ref(sr.jenjang || 'semua'); const tingkat = ref(sr.tingkat || ''); const jk = ref(sr.jk || ''); const kategori = ref(sr.kategori || 'semua')
 const kolom = ref(sr.kolom || ''); const urut = ref(sr.urut || 'kurang')
 const hanyaKurang = ref(sr.hanyaKurang ?? true)
+const jumlahSaring = computed(() => [jenjang.value !== 'semua', tingkat.value, jk.value, urut.value !== 'kurang'].filter(Boolean).length)
+const ringkasSaring = computed(() => [jenjang.value === 'wustha' ? 'Wustha' : jenjang.value === 'sma' ? 'SMA' : '', tingkat.value ? 'Kelas ' + tingkat.value : '',
+  jk.value === 'L' ? 'Putra' : jk.value === 'P' ? 'Putri' : ''].filter(Boolean).join(' · '))
+function aturUlangSaring() { jenjang.value = 'semua'; tingkat.value = ''; jk.value = ''; urut.value = 'kurang' }
 const tingkatPilihan = computed(() => (jenjang.value === 'semua' ? [...TINGKAT.wustha, ...TINGKAT.sma] : TINGKAT[jenjang.value]))
 
 // Hasil pemeriksaan santri aktif dalam cakupan pengguna
@@ -155,20 +160,20 @@ const direktur = computed(() => lembaga.signatories?.find((s) => /^direktur$/i.t
       <div class="mt-4">
         <div class="min-w-0">
           <!-- Aksi dan saringan -->
-          <div class="flex flex-wrap gap-2">
-            <div class="relative min-w-[200px] flex-1">
+          <SaringCorong :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring santri" bisa-atur-ulang @atur-ulang="aturUlangSaring">
+            <template #cari><div class="relative">
               <PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
               <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIS, atau NISN" aria-label="Cari santri" />
-            </div>
+            </div></template>
             <select v-model="jenjang" class="isian w-auto" aria-label="Saring jenjang" @change="tingkat = ''"><option value="semua">Semua jenjang</option><option value="wustha">Kesetaraan Wustha</option><option value="sma">SMA</option></select>
             <select v-model="tingkat" class="isian w-auto" aria-label="Saring kelas"><option value="">Semua kelas</option><option v-for="t in tingkatPilihan" :key="t" :value="t">Kelas {{ t }}</option></select>
             <select v-model="jk" class="isian w-auto" aria-label="Saring jenis kelamin"><option value="">Putra dan putri</option><option value="L">Putra</option><option value="P">Putri</option></select>
             <select v-model="urut" class="isian w-auto" aria-label="Urutkan"><option value="kurang">Paling banyak kurang</option><option value="kelas">Menurut kelas</option><option value="nama">Menurut nama</option></select>
-          </div>
+          </SaringCorong>
           <div class="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
             <label class="tombol-garis shrink-0 cursor-pointer px-3 text-sm"><input v-model="hanyaKurang" type="checkbox" class="h-4 w-4 accent-[#C7332F]" /> Hanya yang belum lengkap</label>
-            <button class="tombol-garis w-pengaturan shrink-0 px-3 text-sm" @click="lembarKolom = true"><PhSlidersHorizontal :size="18" style="color: var(--c)" /> Atur kolom ({{ kolomAktif.length }})</button>
-            <button class="tombol-garis w-gaji shrink-0 px-3 text-sm" :disabled="!tampil.length" @click="eksporExcel"><PhFileXls :size="18" weight="duotone" style="color: var(--c)" /> Ekspor Excel</button>
+            <button class="tombol-garis w-pengaturan shrink-0 px-3 text-sm" @click="lembarKolom = true"><PhSlidersHorizontal :size="18" style="color: var(--c)" /> Atur ({{ kolomAktif.length }})</button>
+            <button class="tombol-garis w-gaji shrink-0 px-3 text-sm" :disabled="!tampil.length" @click="eksporExcel"><PhFileXls :size="18" weight="duotone" style="color: var(--c)" /> Ekspor</button>
             <button class="tombol-utama shrink-0 px-4 text-sm" :disabled="!tampil.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
           </div>
           <p v-if="kolom" class="mt-3 flex items-center gap-2 rounded-xl bg-permukaan2 p-2.5 text-sm">Disaring: santri yang <b>{{ namaKolom }}</b> belum diisi

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/RekamPegawai.vue | v1.1 | 14.8.1: navigasi kembali/sebelumnya/berikutnya, catatan disiplin, riwayat kelompok binaan, riwayat beban kerja, gaji | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/RekamPegawai.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Rekam Kepegawaian: laporan menyeluruh satu pegawai pada satu periode, seperti rekam medis.
 //   Kepala     : foto, nama, NIY, jabatan struktural/fungsional/Plt, unit, status, masa kerja
@@ -158,7 +158,7 @@ function excel() {
             <p class="text-sm opacity-90">{{ P.unit || '–' }} · {{ STATUS_PEGAWAI[P.status_kepegawaian] || P.status_kepegawaian || '–' }} · masa kerja {{ masa }}</p>
           </div>
           <div class="flex w-full gap-2 sm:w-auto [&>button]:flex-1 sm:[&>button]:flex-none">
-            <button class="tombol-garis kepala-tombol min-h-[44px] px-3 text-sm" :disabled="!r" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+            <button class="tombol-garis kepala-tombol min-h-[44px] px-3 text-sm" :disabled="!r" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
             <button class="tombol-garis kepala-tombol min-h-[44px] px-3 text-sm" :disabled="!r" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
           </div>
         </div>

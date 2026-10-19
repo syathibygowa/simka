@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabDokumenTahfizh.vue | v1.2 | Perbaikan 13.6.0: logo dipilih dari daftar logo terpusat | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabDokumenTahfizh.vue | v1.3 | 14.13.0: saringan corong di HP | 19/10/2026 -->
 <script setup>
 // Tab Dokumen pada menu Tahfizh:
 //   Dokumen terbit : suket ujian kenaikan juz, sertifikat hafalan, Sertifikat Tahfizhul Quran (kartu statistik, saringan, cetak, cabut)
@@ -16,6 +16,7 @@ import { formatPanjang, formatPendek, hariIniISO } from '@/lib/tanggal'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import CetakDokumenTahfizh from './CetakDokumenTahfizh.vue'
 import { useSesi } from '@/stores/sesi'
 import PilihLogo from '@/components/PilihLogo.vue'
@@ -29,6 +30,8 @@ const tz = useTahfizh(); const ui = useUI(); const route = useRoute(); const rou
 const bagian = ref('terbit')
 const hari = hariIniISO(); const th = Number(hari.slice(0, 4)) - (Number(hari.slice(5, 7)) < 7 ? 1 : 0)
 const mulai = ref(`${th}-07-01`); const selesai = ref(hari); const jenis = ref(''); const cari = ref('')
+const jumlahSaring = computed(() => [jenis.value, mulai.value !== `${th}-07-01` || selesai.value !== hari].filter(Boolean).length)
+const ringkasSaring = computed(() => [`${formatPendek(mulai.value)} – ${formatPendek(selesai.value)}`, jenis.value ? JENIS_DOK_TAHFIZH[jenis.value]?.n : ''].filter(Boolean).join(' · '))
 const daftar = ref([]); const memuat = ref(true)
 async function muat() {
   memuat.value = true
@@ -125,14 +128,14 @@ const BAGIAN = computed(() => [{ k: 'terbit', n: 'Dokumen terbit', i: PhCertific
 
     <!-- ===== Dokumen terbit ===== -->
     <template v-if="bagian === 'terbit'">
-      <div class="kartu mb-4 grid grid-cols-2 gap-3 p-4 lg:grid-cols-4">
-        <InputTanggal v-model="mulai" label="Dari tanggal" />
-        <InputTanggal v-model="selesai" label="Sampai tanggal" />
+      <SaringCorong class="mb-4" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring dokumen tahfizh">
+        <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
+          <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIS, nomor" aria-label="Cari dokumen" /></div></template>
+        <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
+        <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai tanggal" /></div>
         <div><label class="label-isian" for="dt-jenis">Jenis dokumen</label>
-          <select id="dt-jenis" v-model="jenis" class="isian"><option value="">Semua jenis</option><option v-for="(j, k) in JENIS_DOK_TAHFIZH" :key="k" :value="k">{{ j.n }}</option></select></div>
-        <div class="relative self-end"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-          <input v-model="cari" type="search" class="isian pl-11" placeholder="Nama, NIS, nomor" aria-label="Cari dokumen" /></div>
-      </div>
+          <select id="dt-jenis" v-model="jenis" class="isian w-auto max-w-full"><option value="">Semua jenis</option><option v-for="(j, k) in JENIS_DOK_TAHFIZH" :key="k" :value="k">{{ j.n }}</option></select></div>
+      </SaringCorong>
       <p v-if="memuat" class="py-10 text-center text-teks3">Memuat dokumen…</p>
       <ul v-else-if="tampil.length" class="grid gap-3 lg:grid-cols-2">
         <li v-for="d in tampil" :key="d.id" :class="['kartu min-w-0 p-4', 'w-' + JENIS_DOK_TAHFIZH[d.jenis].w, d.status === 'dicabut' && 'opacity-70']">

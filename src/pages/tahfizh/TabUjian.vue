@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.5 | 14.9.1: konfirmasi WA ke penguji, antrian penguji, WA jadwal dan hasil ke muhaffizh, keterangan dan catatan perbaikan | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.6 | 14.13.0: saringan corong di HP, tombol disederhanakan | 19/10/2026 -->
 <script setup>
 // Ujian tahfizh: kenaikan juz, sertifikasi berjenjang (5, 10, 15 … juz), dan UTAS (Fase 12, TabUtas.vue).
 // Muhaffizh merekomendasikan → penguji aktif menerima notifikasi (dan dapat dikabari WA) → penguji mengambil/menjadwalkan
@@ -21,6 +21,7 @@ import { formatWaktu, formatHari, formatJam, hariIniISO } from '@/lib/tanggal'
 import { tautanWA, halamanAplikasi, pesanWA } from '@/lib/wa'
 import BilahTab from '@/components/BilahTab.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import GridJuz from '@/components/GridJuz.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
@@ -194,9 +195,11 @@ const bolehKirim = (u) => ({
     <template v-else>
 
     <div class="flex flex-wrap items-center gap-2">
-      <select v-model="status" class="isian w-auto" aria-label="Saring status"><option value="aktif">Daftar tunggu dan terjadwal</option><option value="selesai">Selesai (1 tahun)</option><option value="dibatalkan">Dibatalkan</option><option value="">Semua</option></select>
-      <div class="relative min-w-[200px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri atau halaqah" aria-label="Cari santri" /></div>
+      <SaringCorong class="min-w-[220px] flex-1" :jumlah="status !== 'aktif' ? 1 : 0" :ringkasan="status === 'selesai' ? 'Selesai' : status === 'dibatalkan' ? 'Dibatalkan' : 'Daftar tunggu dan terjadwal'" judul="Saring ujian">
+        <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
+          <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri atau halaqah" aria-label="Cari santri" /></div></template>
+        <select v-model="status" class="isian w-auto" aria-label="Saring status"><option value="aktif">Daftar tunggu dan terjadwal</option><option value="selesai">Selesai (1 tahun)</option><option value="dibatalkan">Dibatalkan</option><option value="">Semua</option></select>
+      </SaringCorong>
       <button v-if="tz.hak.muhaffizh || pengelola" class="tombol-utama" @click="bukaRek"><PhPaperPlaneTilt :size="20" weight="duotone" /> Rekomendasikan</button>
       <button v-if="pengujiAktif.length" class="tombol-wa-garis w-presensi" @click="bukaWA"><PhWhatsappLogo :size="20" weight="duotone" /> Kabari penguji</button>
       <button v-if="sayaPenguji" :class="['tombol-garis w-agenda', antrianSaya && 'font-bold ring-2 ring-[var(--c)]']" :aria-pressed="antrianSaya" @click="antrianSaya = !antrianSaya">

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.3 | 14.3.0: baris kehadiran di bawah ambang berwarna; tombol WA hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.4 | 14.13.0: saringan corong di HP, tombol disederhanakan | 19/10/2026 -->
 <script setup>
 // Rekap kehadiran asrama satu kamar. Empat tampilan:
 //   kamar   : per santri pada rentang (sesi, hadir, I, S, B, A, T, %)
@@ -25,6 +25,7 @@ import {
 } from '@/lib/musyrif'
 import BilahTab from '@/components/BilahTab.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
@@ -150,14 +151,14 @@ const subjudulCetak = computed(() => `${kamar.value?.nama || ''} · ${teksPeriod
 </script>
 <template>
   <div>
-    <div class="kartu mb-4 space-y-3 p-4">
-      <div class="flex flex-wrap gap-2">
+    <SaringCorong class="mb-4" :ringkasan="`${formatPendek(mulai)} – ${formatPendek(selesai)}`" judul="Periode rekap asrama">
+      <div class="flex w-full flex-wrap gap-2">
         <div class="bilah-tab kecil" role="tablist" aria-label="Periode cepat">
           <button v-for="p in PRESET" :key="p.k" :class="['tab-garis', (presetAktif === p.k) && 'aktif']" role="tab" :aria-selected="presetAktif === p.k" @click="pakai(p)">{{ p.n }}</button>
         </div>
       </div>
-      <div class="grid grid-cols-2 gap-3 sm:max-w-md"><InputTanggal v-model="mulai" label="Dari" wajib /><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
-    </div>
+      <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari" wajib /></div><div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
+    </SaringCorong>
 
     <BilahTab v-model="mode" class="mb-3" :tab="MODE" label="Tampilan rekap" />
 
@@ -165,7 +166,7 @@ const subjudulCetak = computed(() => `${kamar.value?.nama || ''} · ${teksPeriod
       <button class="w-presensi tombol-wa-garis shrink-0 px-4 text-sm" @click="mode === 'individu' ? waIndividu() : (lembarWA = true)"><PhWhatsappLogo :size="20" weight="duotone" /> {{ mode === 'individu' ? 'WA ke wali santri ini' : 'WA rekap ke wali' }}</button>
       <button class="w-agenda tombol-garis shrink-0 px-4 text-sm" @click="lembarGrup = true"><PhCopy :size="20" weight="duotone" style="color: var(--c)" /> Salin untuk grup WA</button>
       <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Cetak</button>
-      <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Excel</button>
+      <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
     </div>
 
     <p v-if="memuat && !d" class="kartu p-8 text-center text-sm text-teks3">Memuat rekap…</p>

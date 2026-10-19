@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/TabRekening.vue | v1.2 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/TabRekening.vue | v1.3 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Rekening penerimaan gaji setiap pegawai aktif: cara bayar (transfer/tunai), bank, nomor rekening, atas nama.
 // Tampil di slip gaji. Diubah pengelola gaji (satu per satu atau impor Excel); pembaca gaji hanya melihat.
@@ -79,7 +79,7 @@ async function bacaBerkas(e) {
     const wb = XLSX.read(await berkas.arrayBuffer())
     const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: '' })
     const iJudul = aoa.findIndex((r) => r.some((c) => /^niy$/i.test(bersih(c))))
-    if (iJudul < 0) throw new Error('Kolom NIY tidak ditemukan. Pakai berkas hasil tombol Ekspor Excel.')
+    if (iJudul < 0) throw new Error('Kolom NIY tidak ditemukan. Pakai berkas hasil tombol Ekspor.')
     const j = aoa[iJudul].map((c) => bersih(c).toLowerCase())
     const kol = (awal) => j.findIndex((c) => c.startsWith(awal))
     const k = { niy: kol('niy'), nama: kol('nama'), cara: kol('cara'), bank: kol('bank'), no: kol('nomor'), an: kol('atas'), cat: kol('catatan') }
@@ -118,10 +118,10 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
           :class="['tab-garis', (saring === s.k) && 'aktif']" role="tab" :aria-selected="saring === s.k">{{ s.n }}</button>
         </div>
       </div>
-      <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
-      <button v-if="boleh" class="tombol-garis" @click="masukan.click()"><PhUploadSimple :size="20" weight="duotone" /> Impor Excel</button>
+      <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor</button>
+      <button v-if="boleh" class="tombol-garis" @click="masukan.click()"><PhUploadSimple :size="20" weight="duotone" /> Impor</button>
       <input ref="masukan" type="file" accept=".xlsx,.xls" class="hidden" @change="bacaBerkas" />
-      <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak</button>
+      <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau</button>
     </div>
 
     <p v-if="!tampil.length" class="kartu p-8 text-center text-sm text-teks3">Tidak ada pegawai yang sesuai.</p>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengaturan/TabIntegrasi.vue | v1.0 | Fase 1 – Pengaturan | 03/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/TabIntegrasi.vue | v1.1 | 14.13.0: contoh alamat aplikasi simka.digital | 19/10/2026 -->
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { PhFloppyDisk, PhHeartbeat, PhCloudArrowUp, PhWarningCircle, PhShieldCheck } from '@phosphor-icons/vue'
@@ -12,7 +12,7 @@ const status = ref(null)
 onMounted(async () => { status.value = await lembaga.statusLayanan() })
 const sehat = computed(() => status.value?.heartbeat_terakhir && (Date.now() - new Date(status.value.heartbeat_terakhir)) < 30 * 3600e3)
 const ISIAN = [
-  { k: 'domain_aplikasi', l: 'Alamat aplikasi', ph: 'https://syathibygowa.github.io/simka' },
+  { k: 'domain_aplikasi', l: 'Alamat aplikasi', ph: 'https://simka.digital' },
   { k: 'gas_url', l: 'URL Web App Google Apps Script', ph: 'https://script.google.com/macros/s/…/exec' },
   { k: 'drive_folder_nama', l: 'Nama folder Google Drive' }, { k: 'drive_folder_id', l: 'ID folder Google Drive' },
   { k: 'email_pengirim', l: 'Email pengirim' }, { k: 'nama_pengirim', l: 'Nama pengirim email' },

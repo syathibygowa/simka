@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/TabRekapAbsensi.vue | v1.3 | 14.3.0: baris kehadiran di bawah ambang berwarna (layar, cetak, Excel) | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/TabRekapAbsensi.vue | v1.4 | 14.13.0: saringan corong di HP, tombol Ekspor/Cetak Rekap | 19/10/2026 -->
 <script setup>
 // Rekap kehadiran santri per kelompok dan periode: kelas, halaqah, asrama, dan gabungan program pokok
 // (Terlambat dan Bolos dihitung hadir). Ekspor Excel, cetak F4 mendatar, WA rekap ke wali, salin rekap umum untuk grup.
@@ -16,6 +16,7 @@ import { judulKelompok, kontakUtama, labelRombel, penandaKelompok, JENIS_KELOMPO
 import { hariIniISO, formatPanjang, formatPendek } from '@/lib/tanggal'
 import { pesanWA } from '@/lib/wa'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
@@ -26,6 +27,7 @@ const abs = useAbsensiSantri(); const kel = useKelompokSantri(); const san = use
 const amb = useAmbang(); amb.muat()
 const awalBulan = () => hariIniISO().slice(0, 8) + '01'
 const mulai = ref(awalBulan()); const selesai = ref(hariIniISO()); const groupId = ref(''); const baris = ref([]); const memuat = ref(false)
+const ringkasSaring = computed(() => [!props.group && g.value ? judulKelompok(g.value) : '', `${formatPendek(mulai.value)} – ${formatPendek(selesai.value)}`].filter(Boolean).join(' · '))
 const pratinjau = ref(false); const lembarWA = ref(false); const penanda = ref({ jabatan: '', nama: '', niy: '' })
 
 const pilihan = computed(() => kel.dariTA.filter((g) => ['kelas', 'halaqah', 'kamar'].includes(g.jenis) && g.aktif))
@@ -87,22 +89,22 @@ const pesanKe = (p) => pesanWA('rekap_santri', { nama_wali: p.k?.nama, nama_sant
 </script>
 <template>
   <div>
-    <div :class="['kartu mb-4 grid gap-3 p-4', group ? 'sm:grid-cols-[auto_auto_1fr]' : 'sm:grid-cols-[1fr_auto_auto]']">
-      <div v-if="!group"><label class="label-isian" for="rk-g">Kelompok</label>
+    <SaringCorong class="mb-4" :ringkasan="ringkasSaring" judul="Saring rekap absensi">
+      <div v-if="!group" class="min-w-[220px] flex-1"><label class="label-isian" for="rk-g">Kelompok</label>
         <select id="rk-g" v-model="groupId" class="isian">
           <option v-for="x in pilihan" :key="x.id" :value="x.id">{{ x.jenis === 'kelas' ? judulKelompok(x) : `${JENIS_KELOMPOK[x.jenis].n} · ${judulKelompok(x)}` }}{{ x.asuhan_saya ? ' (asuhan saya)' : '' }}</option>
           <option v-if="!pilihan.length" value="">Belum ada kelompok</option>
         </select></div>
       <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari" wajib /></div>
       <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
-      <div class="flex flex-wrap gap-2 sm:col-span-3">
-        <button v-for="p in [{ k: 'pekan', n: 'Pekan ini' }, { k: 'bulan', n: 'Bulan ini' }, { k: '30', n: '30 hari terakhir' }]" :key="p.k" class="tombol-garis min-h-[36px] px-3 text-sm" @click="periode(p.k)">{{ p.n }}</button>
+      <div class="flex flex-wrap gap-2">
+        <button v-for="p in [{ k: 'pekan', n: 'Pekan ini' }, { k: 'bulan', n: 'Bulan ini' }, { k: '30', n: '30 hari terakhir' }]" :key="p.k" class="tombol-garis min-h-[44px] px-3 text-sm" @click="periode(p.k)">{{ p.n }}</button>
       </div>
-    </div>
+    </SaringCorong>
 
     <div v-if="g" class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
-      <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Excel</button>
-      <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Cetak rekap</button>
+      <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
+      <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Cetak Rekap</button>
       <button class="w-presensi tombol-wa-garis shrink-0 px-4 text-sm" @click="lembarWA = true"><PhWhatsappLogo :size="20" weight="duotone" /> WA rekap ke wali</button>
       <button class="w-agenda tombol-garis shrink-0 px-4 text-sm" @click="salinGrup"><PhCopy :size="20" weight="duotone" style="color: var(--c)" /> Rekap untuk grup WA</button>
     </div>

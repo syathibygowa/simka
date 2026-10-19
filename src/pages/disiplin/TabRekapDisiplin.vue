@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/disiplin/TabRekapDisiplin.vue | v1.0 | 14.6.0: rekap kedisiplinan per santri, kelas, kamar, kategori; cetak F4 dan Excel | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/disiplin/TabRekapDisiplin.vue | v1.1 | 14.13.0: saringan corong di HP, tombol Ekspor/Cetak Rekap | 19/10/2026 -->
 <script setup>
 // Rekap kedisiplinan santri pada rentang tanggal: dikelompokkan per santri, kelas, kamar, atau kategori pelanggaran.
 // Kolom ringan/sedang/berat/jumlah (tanpa poin) dan surat peringatan yang terbit pada rentang. Baris santri yang mencapai ambang
@@ -10,11 +10,12 @@ import { useDisiplin } from '@/stores/disiplin'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 import { TINGKAT_SP_SANTRI } from '@/lib/disiplin'
-import { formatPanjang, hariIniISO } from '@/lib/tanggal'
+import { formatPanjang, formatPendek, hariIniISO } from '@/lib/tanggal'
 import { eksporExcel } from '@/lib/excel'
 import { namaBerkas, periodeRentang } from '@/lib/namaBerkas'
 import { ambilPenandaTangan } from '@/lib/penandatangan'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import BilahTab from '@/components/BilahTab.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -23,6 +24,9 @@ const ds = useDisiplin(); const sesi = useSesi(); const ui = useUI(); const rout
 const hari = hariIniISO(); const th = Number(hari.slice(0, 4)) - (Number(hari.slice(5, 7)) < 7 ? 1 : 0)
 const mulai = ref(`${th}-07-01`); const selesai = ref(hari); const jenjang = ref('')
 const per = ref('santri')
+const mulaiAwal = mulai.value
+const jumlahSaring = computed(() => [jenjang.value, mulai.value !== mulaiAwal || selesai.value !== hari].filter(Boolean).length)
+const ringkasSaring = computed(() => [`${formatPendek(mulai.value)} – ${formatPendek(selesai.value)}`, jenjang.value === 'wustha' ? 'Wustha' : jenjang.value === 'sma' ? 'SMA' : ''].filter(Boolean).join(' · '))
 const PER = [{ k: 'santri', n: 'Per santri', ikon: PhUsers, w: 'santri' }, { k: 'kelas', n: 'Per kelas', ikon: PhChalkboard, w: 'walikelas' },
   { k: 'kamar', n: 'Per kamar', ikon: PhBuildings, w: 'musyrif' }, { k: 'kategori', n: 'Per kategori', ikon: PhTag, w: 'disiplin' }]
 const pel = ref([]); const sp = ref([]); const memuat = ref(true)
@@ -80,13 +84,15 @@ function excel() {
   <div>
     <div class="layar-saja">
       <BilahTab v-model="per" :tab="PER" kecil label="Kelompokkan rekap" class="mb-3" />
-      <div class="kartu grid grid-cols-2 gap-3 p-4 md:grid-cols-4">
-        <InputTanggal v-model="mulai" label="Dari tanggal" /><InputTanggal v-model="selesai" label="Sampai tanggal" />
-        <div class="col-span-2 md:col-span-1"><label class="label-isian" for="rd-jenjang">Jenjang</label>
-          <select id="rd-jenjang" v-model="jenjang" class="isian"><option value="">Semua jenjang</option><option value="wustha">Kesetaraan Wustha</option><option value="sma">SMA</option></select></div>
-        <div class="col-span-2 flex items-end gap-2 md:col-span-1">
-          <button class="tombol-garis min-h-[48px] flex-1 px-3 text-sm" :disabled="!baris.length" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
-          <button class="tombol-garis min-h-[48px] flex-1 px-3 text-sm" :disabled="!baris.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button></div>
+      <SaringCorong :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring rekap kedisiplinan">
+        <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
+        <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai tanggal" /></div>
+        <div><label class="label-isian" for="rd-jenjang">Jenjang</label>
+          <select id="rd-jenjang" v-model="jenjang" class="isian w-auto max-w-full"><option value="">Semua jenjang</option><option value="wustha">Kesetaraan Wustha</option><option value="sma">SMA</option></select></div>
+      </SaringCorong>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!baris.length" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
+        <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!baris.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak Rekap</button>
       </div>
       <p class="mt-3 text-sm text-teks2">Jumlah {{ total.jumlah }} pelanggaran: <b>{{ total.ringan }}</b> ringan, <b>{{ total.sedang }}</b> sedang, <b class="text-merah">{{ total.berat }}</b> berat ·
         {{ spTerbit.length }} surat peringatan terbit.</p>

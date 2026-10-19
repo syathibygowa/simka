@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/izin/TabLibur.vue | v1.3 | 14.5.0: libur bertingkat (kartu per tingkat, ubah tingkat, WA dan cetak sesuai tingkat) | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabLibur.vue | v1.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Penentuan libur santri (Blueprint Bagian 23).
 //   Daftar periode → pilih periode → nilai otomatis (boleh / tidak / perlu pertimbangan, lengkap dengan angka)
@@ -214,7 +214,7 @@ async function simpanSyarat() {
             <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIS, kelas, kamar" aria-label="Cari santri" /></div>
           <button class="tombol-garis min-h-[44px] px-3 text-sm" :class="saring === 'diubah' && 'border-[#3B4CB0]'" @click="saring = saring === 'diubah' ? 'semua' : 'diubah'"><PhPencilSimple :size="18" /> Diubah</button>
           <button class="tombol-garis w-pengajuan min-h-[44px] px-3 text-sm" @click="lembarCetak = true"><PhEye :size="18" style="color: var(--c)" /> Cetak</button>
-          <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Excel</button>
+          <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Ekspor</button>
         </div>
         <ul class="mt-3 grid gap-2 lg:grid-cols-2">
           <li v-for="s in tampil" :key="s.id" class="kartu p-3" :class="'w-' + (s.keputusan ? HASIL_LIBUR[s.keputusan].w : 'pengajuan')">
@@ -282,7 +282,7 @@ async function simpanSyarat() {
           type="button" role="radio" :aria-checked="daftarCetak === o.k" @click="daftarCetak = o.k"
           :class="['flex min-h-[48px] w-full items-center rounded-xl border px-4 text-left text-sm font-semibold', daftarCetak === o.k ? 'border-[#3B4CB0] bg-[#3B4CB0]/10 text-teks' : 'border-garis text-teks2']">{{ o.n }}</button>
         <p class="text-xs text-teks3">Ringkasan jumlah yang libur dan yang tinggal tetap tercantum di dokumen.</p>
-        <button class="tombol-utama w-full" @click="cetak"><PhEye :size="20" /> Pratinjau cetak</button>
+        <button class="tombol-utama w-full" @click="cetak"><PhEye :size="20" /> Pratinjau</button>
       </div>
     </LembarBawah>
 

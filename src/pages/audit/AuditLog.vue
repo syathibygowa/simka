@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/audit/AuditLog.vue | v2.1 | Perbaikan 14.0.0: dapat dibuka pemegang fitur Audit log di Hak Akses | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/audit/AuditLog.vue | v2.2 | 14.13.0: saringan corong di HP, teks keterangan dihapus, tombol Pratinjau/Ekspor | 19/10/2026 -->
 <script setup>
 // Audit log 30 hari terakhir, KHUSUS SUPERADMIN (server juga menolak akun lain).
 // Kartu statistik per kategori aktivitas sekaligus menjadi saringan; saring tanggal, pelaku, dan jenis data;
@@ -14,6 +14,7 @@ import { useUI } from '@/stores/ui'
 import { hariIniISO, formatPanjang, formatPendek, formatWaktu, formatJam } from '@/lib/tanggal'
 import { tambahHari } from '@/lib/shift'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -22,6 +23,10 @@ const audit = useAudit(); const peg = usePegawai(); const sesi = useSesi(); cons
 const semua = computed(() => sesi.isSuperadmin || sesi.tingkat('audit_log') >= 1)
 const mulai = ref(tambahHari(hariIniISO(), -6)); const akhir = ref(hariIniISO())
 const pelaku = ref(''); const tabel = ref(''); const kategori = ref(''); const cari = ref(''); const pilih = ref(null); const pratinjau = ref(false)
+const mulaiAwal = mulai.value
+const jumlahSaring = computed(() => [pelaku.value, tabel.value, mulai.value !== mulaiAwal || akhir.value !== hariIniISO()].filter(Boolean).length)
+const ringkasSaring = computed(() => [`${formatPendek(mulai.value)} – ${formatPendek(akhir.value)}`, peg.daftar.find((p) => p.id === pelaku.value)?.nama_lengkap].filter(Boolean).join(' · '))
+function aturUlangSaring() { pelaku.value = ''; tabel.value = ''; mulai.value = mulaiAwal; akhir.value = hariIniISO() }
 
 const TABEL = {
   employees: 'Data pegawai', employee_functions: 'Jabatan fungsional pegawai', employee_structurals: 'Jabatan struktural pegawai',
@@ -131,9 +136,19 @@ const namaPelaku = computed(() => (pelaku.value ? peg.cari(pelaku.value)?.nama_l
   </div>
   <div v-else class="w-audit">
     <div class="layar-saja">
-      <p class="mb-3 flex gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" />
-        Aktivitas seluruh akun selama 30 hari terakhir. Audit log hanya dapat dibuka superadmin; log yang berumur lebih dari 3 bulan dihapus otomatis.</p>
 
+      <SaringCorong class="mb-4" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring audit log" bisa-atur-ulang @atur-ulang="aturUlangSaring">
+        <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
+          <input id="au-cari" v-model="cari" type="search" class="isian pl-10" placeholder="Cari nama, aktivitas, atau isi perubahan" aria-label="Cari aktivitas" /></div></template>
+        <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
+        <div class="sm:w-44"><InputTanggal v-model="akhir" label="Sampai tanggal" /></div>
+        <div v-if="semua"><label class="label-isian" for="au-pelaku">Pelaku</label>
+          <select id="au-pelaku" v-model="pelaku" class="isian w-auto max-w-full"><option value="">Semua pegawai</option>
+            <option v-for="p in peg.daftar.filter((x) => x.status_akun === 'aktif')" :key="p.id" :value="p.id">{{ p.nama_lengkap }}</option></select></div>
+        <div><label class="label-isian" for="au-tabel">Jenis data</label>
+          <select id="au-tabel" v-model="tabel" class="isian w-auto max-w-full"><option value="">{{ kategoriAktif ? 'Semua jenis ' + kategoriAktif.n.toLowerCase() : 'Semua jenis' }}</option>
+            <option v-for="[k, n] in pilihanTabel" :key="k" :value="k">{{ n }}</option></select></div>
+      </SaringCorong>
       <!-- Kartu statistik kategori (ketuk untuk menyaring) -->
       <section class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5" aria-label="Kategori aktivitas">
         <button type="button" :class="['kartu-kat w-audit', !kategori && 'aktif']" :aria-pressed="!kategori" @click="pilihKategori('')">
@@ -150,23 +165,10 @@ const namaPelaku = computed(() => (pelaku.value ? peg.cari(pelaku.value)?.nama_l
           <span class="ket">{{ statistik.total ? Math.round((k.jumlah * 100) / statistik.total) : 0 }}% dari semua aktivitas</span>
         </button>
       </section>
-      <div class="kartu mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <InputTanggal v-model="mulai" label="Dari tanggal" />
-        <InputTanggal v-model="akhir" label="Sampai tanggal" />
-        <div v-if="semua"><label class="label-isian" for="au-pelaku">Pelaku</label>
-          <select id="au-pelaku" v-model="pelaku" class="isian"><option value="">Semua pegawai</option>
-            <option v-for="p in peg.daftar.filter((x) => x.status_akun === 'aktif')" :key="p.id" :value="p.id">{{ p.nama_lengkap }}</option></select></div>
-        <div><label class="label-isian" for="au-tabel">Jenis data</label>
-          <select id="au-tabel" v-model="tabel" class="isian"><option value="">{{ kategoriAktif ? 'Semua jenis ' + kategoriAktif.n.toLowerCase() : 'Semua jenis' }}</option>
-            <option v-for="[k, n] in pilihanTabel" :key="k" :value="k">{{ n }}</option></select></div>
-        <div :class="semua ? 'sm:col-span-2 lg:col-span-4' : 'sm:col-span-2'"><label class="label-isian" for="au-cari">Cari</label>
-          <div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
-            <input id="au-cari" v-model="cari" class="isian pl-10" placeholder="Nama, aktivitas, atau isi perubahan" /></div></div>
-      </div>
       <p v-if="mulai < batasAwal" class="mb-3 text-sm font-semibold text-teks2">Catatan: hanya 30 hari terakhir yang ditampilkan (sejak {{ formatPanjang(batasAwal) }}).</p>
       <div class="mb-3 flex flex-wrap items-center gap-2">
-        <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak</button>
-        <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
+        <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau</button>
+        <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor</button>
         <button class="tombol-garis" :disabled="audit.memuat" @click="muat"><PhArrowClockwise :size="20" /> Muat ulang</button>
         <span class="ml-auto text-sm font-semibold text-teks3">{{ tampil.length }} aktivitas<template v-if="kategoriAktif"> · {{ kategoriAktif.n }}</template></span>
       </div>

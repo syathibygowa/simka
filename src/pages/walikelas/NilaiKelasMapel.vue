@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/NilaiKelasMapel.vue | v1.0 | 14.4.0: pantauan nilai santri per mapel bagi wali kelas | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/NilaiKelasMapel.vue | v1.1 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Wali Kelas → Pelajaran → Nilai per mapel: nilai rapor setiap santri pada setiap mata pelajaran rapor (dari guru mapel),
 // kemajuan pengisian per mapel, nilai di bawah KKM bertanda merah, rata-rata santri. Excel dan cetak F4 mendatar.
@@ -46,7 +46,7 @@ async function excel() {
         :class="['tab-garis', smt === x && 'aktif']" @click="smt = x">Semester {{ x }}</button></div>
       <span class="flex-1" />
       <template v-if="d && baris.length">
-        <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+        <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
         <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
       </template>
     </div>

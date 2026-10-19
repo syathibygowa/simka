@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/TabBerulang.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/TabBerulang.vue | v1.2 | 14.13.0: saringan corong di HP, tombol Ekspor | 19/10/2026 -->
 <script setup>
 // Santri dengan ketidakhadiran berulang pada satu periode, untuk tindakan dan penanganan lanjutan:
 //   Sakit     = absen kode S (kelas, halaqah, asrama, ekskul, pelajaran) + kasus klinik
@@ -18,6 +18,7 @@ import { useUI } from '@/stores/ui'
 import { kelompokDari } from '@/lib/santri'
 import { hariIniISO, formatPendek, formatPanjang } from '@/lib/tanggal'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -26,6 +27,9 @@ const abs = useAbsensiSantri(); const san = useSantri(); const sesi = useSesi();
 const geser = (iso, n) => { const d = new Date(`${iso}T12:00:00+08:00`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) }
 const selesai = ref(hariIniISO()); const mulai = ref(geser(hariIniISO(), -29)); const data = ref([]); const memuat = ref(false)
 const kategori = ref('sakit'); const kegiatan = ref(''); const jk = ref(''); const ambang = ref(3)
+const jumlahSaring = computed(() => [kegiatan.value, jk.value, ambang.value !== 3].filter(Boolean).length)
+const ringkasSaring = computed(() => [`${formatPendek(mulai.value)} – ${formatPendek(selesai.value)}`, kegiatan.value ? KEGIATAN[kegiatan.value] : '',
+  jk.value === 'L' ? 'Putra' : jk.value === 'P' ? 'Putri' : '', `≥ ${ambang.value} kali`].filter(Boolean).join(' · '))
 async function muat() {
   if (selesai.value < mulai.value) return ui.toast('Tanggal akhir tidak boleh sebelum tanggal mulai.', 'galat')
   memuat.value = true
@@ -73,21 +77,21 @@ function ekspor() {
 </script>
 <template>
   <div class="space-y-4">
-    <div class="kartu grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
-      <InputTanggal v-model="mulai" label="Dari tanggal" />
-      <InputTanggal v-model="selesai" label="Sampai tanggal" />
+    <SaringCorong :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring santri perlu perhatian">
+      <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
+      <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai tanggal" /></div>
       <div><label class="label-isian" for="br-keg">Kegiatan</label>
-        <select id="br-keg" v-model="kegiatan" class="isian"><option value="">Semua kegiatan</option><option v-for="(n, k) in KEGIATAN" :key="k" :value="k">{{ n }}</option></select></div>
+        <select id="br-keg" v-model="kegiatan" class="isian w-auto max-w-full"><option value="">Semua kegiatan</option><option v-for="(n, k) in KEGIATAN" :key="k" :value="k">{{ n }}</option></select></div>
       <div class="grid grid-cols-2 gap-2">
         <div><label class="label-isian" for="br-jk">Santri</label>
           <select id="br-jk" v-model="jk" class="isian"><option value="">Semua</option><option value="L">Putra</option><option value="P">Putri</option></select></div>
         <div><label class="label-isian" for="br-min">Minimal</label>
           <select id="br-min" v-model.number="ambang" class="isian"><option v-for="n in [2, 3, 4, 5, 7, 10]" :key="n" :value="n">{{ n }} kali</option></select></div>
       </div>
-      <div class="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-4">
-        <button v-for="n in [7, 30, 90]" :key="n" class="tombol-garis min-h-[40px] text-sm" @click="periode(n)">{{ n }} hari terakhir</button>
+      <div class="flex flex-wrap gap-2">
+        <button v-for="n in [7, 30, 90]" :key="n" class="tombol-garis min-h-[44px] text-sm" @click="periode(n)">{{ n }} hari terakhir</button>
       </div>
-    </div>
+    </SaringCorong>
 
     <div class="bilah-tab kecil" role="tablist" aria-label="Kategori">
       <button v-for="(k, kode) in KAT" :key="kode" type="button" role="tab" :aria-selected="kategori === kode" @click="kategori = kode"
@@ -99,7 +103,7 @@ function ekspor() {
       <p class="flex min-w-[200px] flex-1 items-start gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" />
         {{ tampil.length }} santri {{ KAT[kategori].n.toLowerCase() }} (≥ {{ ambang }} kali){{ KAT[kategori].label && !kegiatan ? `, termasuk ${KAT[kategori].label}` : '' }}.</p>
       <button class="tombol-garis min-h-[40px] text-sm" :disabled="!tampil.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
-      <button class="tombol-garis min-h-[40px] text-sm" :disabled="!tampil.length" @click="ekspor"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+      <button class="tombol-garis min-h-[40px] text-sm" :disabled="!tampil.length" @click="ekspor"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
     </div>
 
     <p v-if="memuat" class="kartu py-10 text-center text-sm text-teks3">Menghitung…</p>

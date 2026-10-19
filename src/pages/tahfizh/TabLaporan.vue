@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabLaporan.vue | v1.0 | Fase 5 – Tahap 5 Laporan dan grafik tahfizh | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabLaporan.vue | v1.1 | 14.13.0: pilihan laporan dilipat ke tombol corong di HP setelah hasil tampil | 19/10/2026 -->
 <script setup>
 // Laporan tahfizh: 15 format (Blueprint Bagian 20) dengan periode bulan/semester/tahun, pengelompokan per halaqah, kelas,
 // tingkatan, kamar, atau seluruh santri. Pratinjau di layar, ekspor Excel, dan cetak F4 berkop (tiap kelompok satu halaman
@@ -14,12 +14,13 @@ import { KATALOG, KELOMPOK, kunciKelompok, susunLaporan } from '@/lib/laporanTah
 import { labelBulan, penandaTahfizh } from '@/lib/tahfizh'
 import { hariIniISO, formatPendek } from '@/lib/tanggal'
 import GrafikLingkaran from '@/components/grafik/GrafikLingkaran.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import GrafikBatang from '@/components/grafik/GrafikBatang.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
 const tz = useTahfizh(); const kel = useKelompokSantri(); const sesi = useSesi(); const ui = useUI()
-const jenis = ref('bulanan'); const kat = computed(() => KATALOG.find((k) => k.k === jenis.value))
+const jenis = ref('bulanan'); const kat = computed(() => KATALOG.find((k) => k.k === jenis.value)); const bukaSaring = ref(false)
 const bulanIni = hariIniISO().slice(0, 8) + '01'
 const bulan = ref(bulanIni); const semester = ref(Number(hariIniISO().slice(5, 7)) >= 7 ? 1 : 2)
 const kelompok = ref('halaqah'); const nilaiKelompok = ref(''); const rentang = ref({ min: 30, maks: 30 })
@@ -94,17 +95,18 @@ const lebarKolom = (b) => { const t = b.kolom.reduce((s, k) => s + Number(k.leba
     <div class="layar-saja">
       <!-- Pilih laporan -->
       <section class="kartu p-4">
-        <div class="grid gap-3 lg:grid-cols-[1fr_auto]">
+       <SaringCorong v-model:buka="bukaSaring" :lipat="!!lap" tanpa-tombol :ringkasan="lap ? lap.judul : ''" judul="Pilih laporan">
+        <div class="grid w-full gap-3 lg:grid-cols-[1fr_auto]">
           <div><label class="label-isian" for="lp-jenis">Laporan</label>
             <select id="lp-jenis" v-model="jenis" class="isian">
               <optgroup label="Laporan tabel"><option v-for="k in KATALOG.filter((x) => !x.grafik)" :key="k.k" :value="k.k">{{ k.n }}</option></optgroup>
               <optgroup label="Grafik"><option v-for="k in KATALOG.filter((x) => x.grafik)" :key="k.k" :value="k.k">{{ k.n }}</option></optgroup>
             </select></div>
           <div class="flex items-end gap-2">
-            <button class="tombol-utama" :disabled="memuat" @click="tampilkan"><PhPlay :size="20" weight="duotone" /> {{ memuat ? 'Mengolah…' : 'Tampilkan' }}</button>
+            <button class="tombol-utama" :disabled="memuat" @click="bukaSaring = false; tampilkan()"><PhPlay :size="20" weight="duotone" /> {{ memuat ? 'Mengolah…' : 'Tampilkan' }}</button>
           </div>
         </div>
-        <div class="mt-3 flex flex-wrap items-end gap-2">
+        <div class="mt-3 flex w-full flex-wrap items-end gap-2">
           <div v-if="kat.periode === 'bulan'"><label class="label-isian" for="lp-bulan">Bulan</label>
             <select id="lp-bulan" v-model="bulan" class="isian w-auto"><option v-for="b in daftarBulan" :key="b" :value="b">{{ labelBulan(b) }}</option></select></div>
           <div v-if="kat.periode === 'semester' || kat.periode === 'santri'"><label class="label-isian" for="lp-smt">Semester</label>
@@ -128,14 +130,15 @@ const lebarKolom = (b) => { const t = b.kolom.reduce((s, k) => s + Number(k.leba
                 <b>{{ s.nama }}</b> <span class="text-teks3">· {{ s.nis }} · {{ s.halaqah || '–' }}</span></button></li>
             </ul></div>
         </div>
+       </SaringCorong>
       </section>
 
       <!-- Hasil -->
       <section v-if="lap" class="kartu mt-4 p-4">
         <div class="mb-3 flex flex-wrap items-center gap-2">
           <div class="min-w-[220px] flex-1"><h2 class="judul-bagian">{{ lap.judul }}</h2><p class="text-sm text-teks3">{{ lap.subjudul }}</p></div>
-          <button class="tombol-garis w-santri" @click="eksporExcel"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Excel</button>
-          <button class="tombol-garis w-laporan" @click="cetak"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau cetak</button>
+          <button class="tombol-garis w-santri" @click="eksporExcel"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
+          <button class="tombol-garis w-laporan" @click="cetak"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau</button>
         </div>
         <dl v-if="lap.identitas" class="mb-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2"><template v-for="[a, b] in lap.identitas" :key="a"><div class="flex gap-2"><dt class="w-40 text-teks3">{{ a }}</dt><dd class="font-semibold">{{ b }}</dd></div></template></dl>
         <div v-if="lap.grafik" class="mb-4 rounded-2xl bg-permukaan2 p-4">

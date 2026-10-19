@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/disiplin/TabPelanggaran.vue | v1.0 | 14.6.0: daftar catatan pelanggaran santri, saringan, cetak F4, Excel | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/disiplin/TabPelanggaran.vue | v1.1 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Tab Pelanggaran: kartu statistik langsung, saringan (rentang tanggal, tingkat, kategori, jenjang, pencarian; corong di HP),
 // daftar catatan dengan lencana SP, ubah/hapus (pencatat atau Kesantrian), cetak rekap F4 mendatar berkop dan Excel.
@@ -120,7 +120,7 @@ function excel() {
         <button v-if="ds.hak.catat" class="tombol-utama hidden lg:inline-flex" @click="tambah"><PhPlus :size="20" weight="bold" /> Catat pelanggaran</button>
       </SaringCorong>
       <div class="mt-3 flex flex-wrap items-end gap-2 md:justify-end">
-        <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+        <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
         <button class="tombol-garis min-h-[44px] px-3 text-sm" :disabled="!tampil.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
       </div>
 

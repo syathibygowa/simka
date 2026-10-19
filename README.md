@@ -1,11 +1,11 @@
-<!-- SIMKA PRO | README.md | v2.1 | 14.11.0: Khataman dan Tahsin pada cakupan Tahfizh | 18/10/2026 -->
+<!-- SIMKA PRO | README.md | v2.2 | 14.13.0: domain simka.digital, kapasitas dan backup ringkas, saringan corong | 19/10/2026 -->
 # SIMKA PRO
 
 **Sistem Manajemen Kepegawaian Terintegrasi** — Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa.
 
 Aplikasi web multidevice (desktop, tablet, HP; dapat dipasang sebagai aplikasi/PWA) untuk kepegawaian, kesantrian, tahfizh, akademik, persuratan, dan keuangan pondok. Acuan: *Blueprint SIMKA PRO Versi 2.0 (final)* dan *Dokumen Serah Terima* terbaru.
 
-- **Alamat aplikasi:** https://syathibygowa.github.io/simka/
+- **Alamat aplikasi:** https://simka.digital (alamat lama `syathibygowa.github.io/simka` dialihkan otomatis)
 - **Cek keabsahan dokumen:** `#/cek/KODE` (QR pada setiap dokumen resmi)
 - **Layar Pantauan:** `#/pantauan`
 - **Versi:** lihat `src/lib/versi.js` (juga tampil di halaman Profil)
@@ -22,17 +22,17 @@ Aplikasi web multidevice (desktop, tablet, HP; dapat dipasang sebagai aplikasi/P
 | **Akademik** | Jadwal pelajaran dan jam mengajar; penilaian Kurikulum Merdeka (SMA) dan K13 disesuaikan (Wustha); rapor sekolah dan rapor tahfizh; leger; naik kelas dan SK; kartu pelajar |
 | **Administrasi** | Persuratan (surat masuk, disposisi, surat keluar dari template, tanda tangan elektronik); gaji dan tunjangan (fitur sensitif); keuangan santri dan kas pondok (tagihan, subsidi, pembayaran, rekening, BKK/BKM, bebas tunggakan) |
 | **Portal Wali** | Masuk dengan NIS/NISN + tanggal lahir + nomor HP; kehadiran, hafalan, nilai, perizinan, keuangan (dapat diatur superadmin); unduh dokumen; notifikasi HP |
-| **Sistem** | Hak akses per menu (Tidak ada/Lihat/Input-ubah/Kelola) berlapis semua pegawai → jabatan → bidang → individu; notifikasi dibaca/belum dibaca dan web push; template WhatsApp; audit log; setelan kop, logo, nomor surat, penanda tangan |
+| **Sistem** | Hak akses per menu (Tidak ada/Lihat/Input-ubah/Kelola) berlapis semua pegawai → jabatan → bidang → individu; notifikasi dibaca/belum dibaca dan web push; template WhatsApp; audit log; setelan kop, logo, nomor surat, penanda tangan; **Kapasitas** (ukuran database, perkiraan, masa simpan data, perawatan harian) |
 
 ## Arsitektur
 
 | Bagian | Teknologi |
 |---|---|
 | Tampilan | Vite 5 + Vue 3 (`<script setup>`) + Pinia + Tailwind CSS 3, PWA, hash router |
-| Hosting | GitHub Pages, deploy otomatis lewat GitHub Actions (`.github/workflows/deploy.yml`) |
+| Hosting | GitHub Pages dengan domain sendiri `simka.digital` (DNS di Hostinger), deploy otomatis lewat GitHub Actions (`.github/workflows/deploy.yml`) |
 | Database | Supabase (PostgreSQL + Row Level Security, Auth untuk pegawai, Edge Functions, Realtime, pg_cron) |
 | Berkas | Google Drive melalui jembatan Google Apps Script (`gas/Kode.gs`); antrian sementara di Supabase Storage |
-| Backup | GAS: mingguan ke Google Sheets (data inti) dan bulanan ke ZIP berisi CSV (data kegiatan + data induk) |
+| Backup | GAS: mingguan ke Google Sheets (18 lembar ringkas mudah dibaca + data mentah per tabel) dan bulanan ke ZIP berisi CSV (data kegiatan + data induk) |
 
 ## Struktur folder
 
@@ -69,7 +69,9 @@ Salin `.env.example` menjadi `.env.local`, lalu isi alamat dan anon key Supabase
 
 - Bahasa Indonesia baku; tanggal `dd/mm/yyyy` atau `dd mmmm yyyy`; jam WITA; tanggal Hijriah Ummul Qura.
 - Ikon Phosphor duotone; setiap menu dan tab berwarna sendiri (kelas `.w-*`); tema Terang/Gelap/Ikuti sistem dengan kontras WCAG AA.
-- Desktop: sidebar dan bilah atas. HP: navigasi bawah, kartu, tombol aksi mengambang, lembar bawah.
+- Desktop: sidebar dan bilah atas. HP: navigasi bawah, kartu, tombol aksi mengambang, lembar bawah; saringan halaman diringkas menjadi kolom cari + tombol corong.
+- Label tombol singkat dan seragam: Pratinjau, Ekspor, Impor, Cetak Rekap, Atur, Salin, Bergilir.
+- Hemat server: pembaruan langsung diredam (maks. sekali per 10 detik), muat ulang berkala hanya saat layar terlihat, jadwal otomatis digabung.
 - Cetak F4 215 × 330 mm, margin 2 cm, kop surat, garis tabel ½ pt, tanda tangan pimpinan (kiri) dan pegawai terkait (kanan).
 - Urutan kolom: pegawai NIY › Nama › JK; santri NIS/NISN › Nama › JK.
 

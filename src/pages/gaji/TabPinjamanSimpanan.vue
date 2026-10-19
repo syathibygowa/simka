@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/TabPinjamanSimpanan.vue | v1.0 | Fase 11 – Tahap 3 Pinjaman pegawai dan simpanan program | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/TabPinjamanSimpanan.vue | v1.1 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Pinjaman pegawai (cicilan otomatis dipotong setiap periode sampai lunas) dan simpanan program (umrah, kurban, dll.:
 // dipotong tiap bulan, disimpan yayasan atas nama pegawai, dicairkan pada waktunya). Pengelola gaji mengubah;
@@ -113,7 +113,7 @@ function ekspor() {
       <BilahTab v-model="bagian" :tab="SUB" :tepi="false" label="Pinjaman atau simpanan" />
       <div class="relative min-w-[200px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama atau NIY" aria-label="Cari" /></div>
-      <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
+      <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor</button>
     </div>
     <p v-if="memuat" class="kartu p-8 text-center text-sm text-teks3">Memuat…</p>
 

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/lapor/Lapor.vue | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/lapor/Lapor.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Laporan Terkait (Blueprint Bagian 30).
 //   Laporan saya : laporan yang saya kirim beserta statusnya
@@ -66,7 +66,7 @@ async function simpanKategori(k) {
         <InputTanggal v-model="mulai" label="Dari" wajib /><InputTanggal v-model="selesai" label="Sampai" wajib />
         <div class="col-span-2 flex items-end gap-2 sm:col-span-1">
           <button class="tombol-garis w-pengajuan min-h-[44px] px-3 text-sm" @click="pratinjau = true"><PhEye :size="18" style="color: var(--c)" /> Cetak</button>
-          <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Excel</button>
+          <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Ekspor</button>
         </div>
       </div>
       <div class="kartu overflow-x-auto">

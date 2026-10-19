@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabUtas.vue | v1.3 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabUtas.vue | v1.4 | 14.13.0: saringan corong di HP, tombol disederhanakan | 19/10/2026 -->
 <script setup>
 // Ujian Tahfizh Akhir Semester (UTAS), di Tahfizh → Ujian → UTAS (SOP UTAS pondok).
 //   Panitia (admin/superadmin/pengatur rapor tahfizh): menetapkan penguji per kelas, membagi peserta otomatis (bergilir,
@@ -27,6 +27,7 @@ import { formatPanjang, hariIniISO } from '@/lib/tanggal'
 import LembarBawah from '@/components/LembarBawah.vue'
 import GridJuz from '@/components/GridJuz.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
@@ -215,9 +216,11 @@ const namaCetak = (k) => (k.jenis === 'halaqah' ? k.nama : `Kelas ${k.nama}`)
           <button v-for="t in [{ k: 'saya', n: 'Peserta saya' }, { k: 'semua', n: 'Semua' }]" :key="t.k" type="button" role="tab" :aria-selected="lihat === t.k" @click="lihat = t.k"
             :class="['tab-garis', lihat === t.k && 'aktif']">{{ t.n }}</button>
         </div>
-        <select v-model="kelasPilih" class="isian w-auto" aria-label="Saring kelompok"><option value="">Semua {{ LBL.toLowerCase() }}</option><option v-for="k in D.kelas" :key="k.group_id" :value="k.group_id">{{ namaK(k) }}</option></select>
-        <div class="relative min-w-[180px] flex-1"><PhMagnifyingGlass :size="18" class="absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
-          <input v-model="cari" type="search" class="isian pl-10" placeholder="Cari santri, kelas, halaqah, penguji" aria-label="Cari" /></div>
+        <SaringCorong class="min-w-[220px] flex-1" :jumlah="kelasPilih ? 1 : 0" :ringkasan="kelasPilih ? namaK(D.kelas.find((k) => k.group_id === kelasPilih) || {}) : ''" judul="Saring peserta UTAS">
+          <template #cari><div class="relative"><PhMagnifyingGlass :size="18" class="absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
+            <input v-model="cari" type="search" class="isian pl-10" placeholder="Cari santri, kelas, halaqah, penguji" aria-label="Cari" /></div></template>
+          <select v-model="kelasPilih" class="isian w-auto" aria-label="Saring kelompok"><option value="">Semua {{ LBL.toLowerCase() }}</option><option v-for="k in D.kelas" :key="k.group_id" :value="k.group_id">{{ namaK(k) }}</option></select>
+        </SaringCorong>
       </div>
       <div v-if="panitia && pilih.size" class="kartu flex flex-wrap items-center gap-2 p-3 text-sm">
         <b class="flex-1">{{ pilih.size }} dipilih</b>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/CetakKeuangan.vue | v1.3 | 14.7.0: Surat Keterangan Bebas Tunggakan | 18/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/CetakKeuangan.vue | v1.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Dokumen keuangan santri, kertas F4 tegak, satu dokumen per halaman (dapat banyak sekaligus):
 //   • KUITANSI      : kop, nomor; telah terima dari, untuk santri, tanggal, cara bayar; rincian per tagihan (tagihan,
@@ -55,9 +55,9 @@ const batal = (d) => d.status === 'batal' || d.status === 'dicabut'
 </script>
 <template>
   <Teleport to="body">
-    <div :class="['cetak-saja', pratinjau && 'tampil munculan']" :role="pratinjau ? 'dialog' : undefined" :aria-modal="pratinjau || undefined" :aria-label="pratinjau ? 'Pratinjau cetak ' + judul : undefined">
+    <div :class="['cetak-saja', pratinjau && 'tampil munculan']" :role="pratinjau ? 'dialog' : undefined" :aria-modal="pratinjau || undefined" :aria-label="pratinjau ? 'Pratinjau ' + judul : undefined">
       <div v-if="pratinjau" class="bilah-munculan layar-saja">
-        <div class="min-w-0 flex-1"><p class="truncate font-bold">Pratinjau cetak: {{ judul }}</p><p class="text-xs opacity-80">Kertas F4 215 × 330 mm, margin 2 cm, satu dokumen per halaman</p></div>
+        <div class="min-w-0 flex-1"><p class="truncate font-bold">Pratinjau: {{ judul }}</p><p class="text-xs opacity-80">Kertas F4 215 × 330 mm, margin 2 cm, satu dokumen per halaman</p></div>
         <button type="button" class="tombol-cetak" @click="cetak"><PhPrinter :size="20" weight="duotone" /> Cetak</button>
         <button type="button" class="tombol-tutup" @click="pratinjau = false" aria-label="Tutup pratinjau"><PhX :size="22" /></button>
       </div>

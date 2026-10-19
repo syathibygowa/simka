@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabCapaian.vue | v1.2 | 14.11.0: status bulanan Tahsin (santri belum menghafal) | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabCapaian.vue | v1.3 | 14.13.0: saringan corong di HP, tombol Pratinjau | 19/10/2026 -->
 <script setup>
 // Capaian tahfizh:
 //  * Status bulanan — dihitung otomatis dari setoran (penambahan sabaq sebulan vs target pekan × pekan efektif).
@@ -18,6 +18,7 @@ import { STATUS_BULANAN, STATUS_USULAN, SUMBER_USULAN, PROGRAM, formatPosisi, la
 import { formatWaktu, formatPanjang, hariIniISO } from '@/lib/tanggal'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import BilahTab from '@/components/BilahTab.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import GridJuz from '@/components/GridJuz.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
@@ -30,6 +31,7 @@ const validator = computed(() => tz.hak.validasi)
 
 // ===================== STATUS BULANAN =====================
 const bulanIni = hariIniISO().slice(0, 8) + '01'
+const jumlahSaringCp = computed(() => [bulan.value !== bulanIni, halaqah.value, statusSaring.value].filter(Boolean).length)
 const bulan = ref(bulanIni); const halaqah = ref(''); const statusSaring = ref(''); const baris = ref([]); const memuat = ref(false); const proses = ref(false)
 const daftarBulan = computed(() => tz.bulan.filter((b) => b.bulan <= bulanIni).map((b) => b.bulan).reverse())
 const halaqahList = computed(() => [...new Map(baris.value.filter((s) => s.halaqah_id).map((s) => [s.halaqah_id, s.halaqah])).entries()]
@@ -130,12 +132,14 @@ async function cetak() { kepala.value = await penandaTahfizh(); pratinjau.value 
 
       <!-- ============ STATUS BULANAN ============ -->
       <template v-if="bagian === 'bulanan'">
-        <div class="flex flex-wrap items-end gap-2">
-          <div><label class="label-isian" for="cp-bulan">Bulan</label>
-            <select id="cp-bulan" v-model="bulan" class="isian w-auto"><option v-for="b in daftarBulan" :key="b" :value="b">{{ labelBulan(b) }}</option></select></div>
-          <select v-model="halaqah" class="isian w-auto" aria-label="Saring halaqah"><option value="">Semua halaqah</option><option v-for="h in halaqahList" :key="h.id" :value="h.id">{{ h.nama }}</option></select>
-          <select v-model="statusSaring" class="isian w-auto" aria-label="Saring status"><option value="">Semua status</option><option v-for="(v, k) in STATUS_BULANAN" :key="k" :value="k">{{ v.n }}</option></select>
-          <button class="tombol-garis w-laporan" @click="cetak"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau cetak</button>
+        <div class="flex items-start gap-2">
+          <SaringCorong class="min-w-0 flex-1" :jumlah="jumlahSaringCp" :ringkasan="[labelBulan(bulan), halaqahList.find((h) => h.id === halaqah)?.nama, statusSaring ? STATUS_BULANAN[statusSaring].n : ''].filter(Boolean).join(' · ')" judul="Saring capaian bulanan">
+            <div><label class="label-isian" for="cp-bulan">Bulan</label>
+              <select id="cp-bulan" v-model="bulan" class="isian w-auto"><option v-for="b in daftarBulan" :key="b" :value="b">{{ labelBulan(b) }}</option></select></div>
+            <select v-model="halaqah" class="isian w-auto" aria-label="Saring halaqah"><option value="">Semua halaqah</option><option v-for="h in halaqahList" :key="h.id" :value="h.id">{{ h.nama }}</option></select>
+            <select v-model="statusSaring" class="isian w-auto" aria-label="Saring status"><option value="">Semua status</option><option v-for="(v, k) in STATUS_BULANAN" :key="k" :value="k">{{ v.n }}</option></select>
+          </SaringCorong>
+          <button class="tombol-garis w-laporan shrink-0 self-end" @click="cetak"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau</button>
         </div>
 
         <div :class="['-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:overflow-visible sm:px-0', statistik.length > 5 ? 'sm:grid-cols-3 lg:grid-cols-6' : 'sm:grid-cols-5']">

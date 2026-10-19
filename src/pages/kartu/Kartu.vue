@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kartu/Kartu.vue | v1.4 | Perbaikan: foto kartu massal dengan cadangan fungsi berkas | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/kartu/Kartu.vue | v1.5 | 14.13.0: saringan corong di HP (bidang, tata letak cetak), tombol Pratinjau | 19/10/2026 -->
 <script setup>
 // Kartu pegawai. Kartu saya: lihat depan/belakang, ganti pas foto, cetak, dan ganti kode bila kartu hilang.
 // Cetak massal (admin ber-izin cetak_kartu): pilih pegawai, cetak 9 kartu tegak per F4 (bolak-balik) atau berdampingan.
@@ -20,6 +20,7 @@ import { toPng, toJpeg } from 'html-to-image'
 import logoLokal from '@/assets/logo-pondok.png'
 import { namaRapi } from '@/lib/penyimpanan'
 import KartuPegawai from '@/components/KartuPegawai.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarKartu from '@/components/cetak/LembarKartu.vue'
 
 const props = defineProps({ bagian: { type: String, default: 'saya' } })
@@ -79,6 +80,8 @@ async function salinTautan() { try { await navigator.clipboard.writeText(alamatV
 
 // ---------- Cetak massal ----------
 const pilih = ref(new Set()); const unit = ref(''); const cari = ref('')
+const jumlahSaring = computed(() => [unit.value, mode.value !== 'berdampingan'].filter(Boolean).length)
+const ringkasSaring = computed(() => [org.units.find((u) => u.id === unit.value)?.nama || 'Semua bidang', mode.value === 'bolak_balik' ? 'Bolak-balik' : 'Berdampingan'].join(' · '))
 const calon = computed(() => peg.daftar.filter((p) => p.status_keaktifan === 'aktif'
   && (!unit.value || org.turunan(unit.value).has(p.org_unit_id))
   && (!cari.value.trim() || [p.nama_lengkap, p.niy].join(' ').toLowerCase().includes(cari.value.toLowerCase().trim()))))
@@ -130,23 +133,24 @@ async function siapkanMassal() {
     </template>
 
     <template v-else>
-      <div class="kartu mb-3 grid gap-3 p-4 sm:grid-cols-2">
-        <div><label class="label-isian" for="km-unit">Bidang/Unit</label>
-          <select id="km-unit" v-model="unit" class="isian"><option value="">Semua bidang</option>
-            <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
-        <div><label class="label-isian" for="km-cari">Cari pegawai</label>
+      <SaringCorong class="mb-3" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring dan tata letak kartu">
+        <template #cari>
           <div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
-            <input id="km-cari" v-model="cari" class="isian pl-10" placeholder="Nama atau NIY" /></div></div>
-        <fieldset class="sm:col-span-2"><legend class="label-isian">Tata letak cetak</legend>
+            <input id="km-cari" v-model="cari" type="search" class="isian pl-10" placeholder="Cari nama atau NIY" aria-label="Cari pegawai" /></div>
+        </template>
+        <div><label class="label-isian" for="km-unit">Bidang/Unit</label>
+          <select id="km-unit" v-model="unit" class="isian w-auto max-w-full"><option value="">Semua bidang</option>
+            <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
+        <fieldset><legend class="label-isian">Tata letak cetak</legend>
           <div class="flex flex-wrap gap-2">
-            <label v-for="m in [{ k: 'berdampingan', n: 'Depan–belakang berdampingan (3 pegawai/lembar)' }, { k: 'bolak_balik', n: 'Bolak-balik (9 kartu/lembar, printer dua sisi)' }]" :key="m.k"
+            <label v-for="m in [{ k: 'berdampingan', n: 'Berdampingan (3 pegawai/lembar)' }, { k: 'bolak_balik', n: 'Bolak-balik (9 kartu/lembar)' }]" :key="m.k"
               class="flex min-h-[44px] items-center gap-2 rounded-xl border border-garis px-3 text-sm font-semibold"><input v-model="mode" type="radio" :value="m.k" class="h-5 w-5 accent-[#2C6680]" />{{ m.n }}</label>
           </div></fieldset>
-      </div>
+      </SaringCorong>
       <div class="kartu mb-3 flex flex-wrap items-center gap-2 p-2">
         <button class="tombol-teks" @click="pilihSemua"><component :is="semua ? PhCheckSquare : PhSquare" :size="20" /> {{ semua ? 'Batalkan pilihan' : 'Pilih semua yang tampil' }}</button>
         <span class="text-sm text-teks3">{{ pilih.size }} dipilih</span>
-        <button class="tombol-utama ml-auto min-h-[40px] px-4 text-sm" :disabled="!pilih.size || proses" @click="siapkanMassal"><PhPrinter :size="18" weight="duotone" /> {{ proses ? 'Menyiapkan…' : 'Pratinjau cetak' }}</button>
+        <button class="tombol-utama ml-auto min-h-[40px] px-4 text-sm" :disabled="!pilih.size || proses" @click="siapkanMassal"><PhPrinter :size="18" weight="duotone" /> {{ proses ? 'Menyiapkan…' : 'Pratinjau' }}</button>
       </div>
       <ul class="kartu divide-y divide-garis">
         <li v-for="p in calon" :key="p.id">

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/LembarKartu.vue | v2.2 | Perbaikan: nama berkas PDF (nama - Kartu Pegawai/Pelajar) | 16/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/LembarKartu.vue | v2.3 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Lembar cetak kartu pegawai TEGAK (54 × 85,6 mm) di kertas F4 (215 × 330 mm, margin 2 cm).
 // Mode bolak-balik: 9 kartu per halaman (3 kolom × 3 baris); halaman belakang dicerminkan per baris (balik tepi panjang).
@@ -49,9 +49,9 @@ onBeforeUnmount(() => { document.body.style.overflow = ''; removeEventListener('
 </script>
 <template>
   <Teleport to="body">
-    <div :class="['cetak-saja', pratinjau && 'tampil munculan']" :role="pratinjau ? 'dialog' : undefined" :aria-modal="pratinjau || undefined" :aria-label="pratinjau ? 'Pratinjau cetak ' + nama : undefined">
+    <div :class="['cetak-saja', pratinjau && 'tampil munculan']" :role="pratinjau ? 'dialog' : undefined" :aria-modal="pratinjau || undefined" :aria-label="pratinjau ? 'Pratinjau ' + nama : undefined">
       <div v-if="pratinjau" class="bilah-munculan layar-saja">
-        <div class="min-w-0 flex-1"><p class="truncate font-bold">Pratinjau cetak {{ nama }} ({{ kartu.length }})</p>
+        <div class="min-w-0 flex-1"><p class="truncate font-bold">Pratinjau {{ nama }} ({{ kartu.length }})</p>
           <p class="text-xs opacity-80">F4 215 × 330 mm, margin 2 cm · {{ mode === 'bolak_balik' ? '9 kartu per lembar, cetak bolak-balik' : `3 ${santri ? 'santri' : 'pegawai'} per lembar, depan dan belakang berdampingan` }}</p></div>
         <button type="button" class="tombol-cetak" @click="cetak"><PhPrinter :size="20" weight="duotone" /> Cetak</button>
         <button type="button" class="tombol-tutup" aria-label="Tutup pratinjau" @click="pratinjau = false"><PhX :size="22" /></button>

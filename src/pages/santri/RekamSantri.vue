@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/RekamSantri.vue | v1.1 | 14.11.0: riwayat tahsin pada bagian hafalan | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/RekamSantri.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Rekam Kesantrian: laporan menyeluruh satu santri pada satu periode, seperti Rekam Kepegawaian.
 //   Kepala     : foto, nama, NIS/NISN, JK, jenjang, kelas/kamar/halaqah, status
@@ -211,7 +211,7 @@ function excel() {
             <p class="text-sm opacity-90">{{ JENJANG[P.jenjang] || '–' }} · {{ rombel }}{{ kelompokJenis('kamar')[0] ? ' · ' + kelompokJenis('kamar')[0].nama : '' }} · {{ STATUS_SANTRI[P.status]?.n || P.status || '–' }}</p>
           </div>
           <div class="flex w-full gap-2 sm:w-auto [&>button]:flex-1 sm:[&>button]:flex-none">
-            <button class="tombol-garis kepala-tombol min-h-[44px] px-3 text-sm" :disabled="!r" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+            <button class="tombol-garis kepala-tombol min-h-[44px] px-3 text-sm" :disabled="!r" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
             <button class="tombol-garis kepala-tombol min-h-[44px] px-3 text-sm" :disabled="!r" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
           </div>
         </div>

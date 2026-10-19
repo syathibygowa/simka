@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tunjangan/TabPeta.vue | v1.2 | Fase 11 – Tahap 1 Dipakai menu Gaji: ubah jabatan hanya pengelola data pegawai | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/tunjangan/TabPeta.vue | v1.3 | 14.13.0: saringan corong di HP, tombol Ekspor/Pratinjau | 19/10/2026 -->
 <script setup>
 // Peta jabatan per pegawai dalam bentuk tabel: jabatan yang diemban, komponen tunjangan,
 // jumlah perkiraan, dan keterangan kekurangan data. Jabatan dapat diubah langsung dari baris tabel oleh pemegang izin
@@ -15,6 +15,7 @@ import { formatPanjang, formatPendek, hariIniISO } from '@/lib/tanggal'
 import { KATEGORI, formatRupiah } from '@/lib/tunjangan'
 import { PENDIDIKAN, STATUS_PEGAWAI, LEVEL_MUHAFFIZH, KATEGORI_HONORER, masaKerja } from '@/lib/kepegawaian'
 import InputTanggal from '@/components/InputTanggal.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -94,14 +95,16 @@ function ekspor() {
     </div>
 
     <!-- Saringan dan aksi -->
-    <div class="mb-4 flex flex-wrap items-end gap-2">
-      <div class="relative min-w-[220px] flex-1"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
-        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama atau jabatan" aria-label="Cari pegawai" /></div>
+    <SaringCorong class="mb-2" :jumlah="bidang ? 1 : 0" :ringkasan="[org.cariUnit(bidang)?.nama, 'Tarif per ' + formatPendek(tanggal)].filter(Boolean).join(' · ')" judul="Saring peta jabatan">
+      <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
+        <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama atau jabatan" aria-label="Cari pegawai" /></div></template>
       <select v-model="bidang" class="isian w-auto" aria-label="Saring bidang"><option value="">Semua bidang</option>
         <option v-for="u in org.datar.filter((x) => x.jenis !== 'unit' && x.aktif)" :key="u.id" :value="u.id">{{ u.nama }}</option></select>
       <div class="w-56"><InputTanggal v-model="tanggal" label="Tarif berlaku pada" /></div>
-      <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
-      <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau cetak</button>
+    </SaringCorong>
+    <div class="mb-4 flex flex-wrap items-end gap-2">
+      <button class="tombol-garis" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor</button>
+      <button class="tombol-garis" @click="pratinjau = true"><PhEye :size="20" weight="duotone" /> Pratinjau</button>
     </div>
 
     <!-- Tabel desktop -->

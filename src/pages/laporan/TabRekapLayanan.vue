@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabRekapLayanan.vue | v1.5 | 14.2.0: saringan dilipat (corong) di HP setelah hasil tampil | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabRekapLayanan.vue | v1.6 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Laporan periode modul layanan (menu Dokumen → Rekap layanan): Security, libur santri, pengajuan pegawai, klinik.
 // Pilihan laporan tampil sesuai hak (diperiksa server). Daftar santri berurutan NIS, Nama, JK. Data klinik tanpa diagnosis.
@@ -176,7 +176,7 @@ const ada = computed(() => !!d.value)
           <PhMagnifyingGlass :size="18" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" class="isian pl-10" placeholder="Cari NIY, nama, atau bidang" /></label>
         <span v-else class="flex-1" />
-        <button type="button" class="tombol-garis" :disabled="!ada" @click="excel"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+        <button type="button" class="tombol-garis" :disabled="!ada" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
         <button type="button" class="tombol-garis" :disabled="!ada" @click="cetak"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
       </div>
 

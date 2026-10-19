@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/TabLaporanGaji.vue | v1.2 | Perbaikan 13.5.0: tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/TabLaporanGaji.vue | v1.3 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Laporan atas satu periode gaji (jumlah yang benar-benar diterima, termasuk penyesuaian ketetapan yayasan):
 //   1. Rekap per bidang      : jumlah pegawai, menurut skema, penyesuaian, pendapatan, potongan, diterima per bidang induk
@@ -138,7 +138,7 @@ const ttdKanan = computed(() => ({ jabatan: gaji.jabatanSaya, nama: sesi.penggun
         <select id="lg-per" v-model="pilih" class="isian" :disabled="!periode.length">
           <option v-for="p in periode" :key="p.id" :value="p.id">{{ namaPeriode(p) }} · {{ STATUS_PERIODE[p.status]?.n || p.status }}</option></select></div>
       <div class="flex-1" />
-      <button class="tombol-garis" :disabled="!baris.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor Excel</button>
+      <button class="tombol-garis" :disabled="!baris.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" /> Ekspor</button>
       <button class="tombol-utama" :disabled="!baris.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" /> Cetak</button>
     </div>
     <div class="bilah-tab kecil mb-4" role="tablist" aria-label="Jenis laporan">

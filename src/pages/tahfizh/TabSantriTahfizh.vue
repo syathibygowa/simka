@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabSantriTahfizh.vue | v1.2 | 14.11.0: penanda santri tahsin | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabSantriTahfizh.vue | v1.3 | 14.13.0: saringan corong di HP, tombol Impor/Ekspor/Pratinjau | 19/10/2026 -->
 <script setup>
 // Data hafalan santri sesuai cakupan (muhaffizh: halaqahnya; pimpinan/admin: semua): program, posisi sabaq/sabqi/manzil,
 // juz sedang dihafal, ceklist juz resmi. Pemegang validasi tahfizh mengisi data hafalan awal (satu per satu atau impor Excel)
@@ -19,6 +19,7 @@ import { inisial, JENJANG_PENDEK } from '@/lib/santri'
 import { formatPanjang, formatPendek, formatWaktu, hariIniISO, formatHari } from '@/lib/tanggal'
 import { KODE } from '@/lib/absensi'
 import KartuStatistik from '@/components/KartuStatistik.vue'
+import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import GridJuz from '@/components/GridJuz.vue'
 import InputPosisi from '@/components/InputPosisi.vue'
@@ -33,6 +34,9 @@ const bolehProgram = computed(() => tz.hak.validasi || tz.hak.atur)
 
 // ---------- Saringan ----------
 const cari = ref(''); const halaqah = ref(''); const program = ref(''); const kategori = ref('')
+const jumlahSaring = computed(() => [halaqah.value, program.value, kategori.value].filter(Boolean).length)
+const ringkasSaring = computed(() => [halaqah.value === '-' ? 'Belum masuk halaqah' : halaqahList.value.find((h) => h.id === halaqah.value)?.nama, program.value ? PROGRAM[program.value] : '', kategori.value].filter(Boolean).join(' · '))
+function aturUlangSaring() { halaqah.value = ''; program.value = ''; kategori.value = '' }
 const halaqahList = computed(() => [...new Map(tz.santri.filter((s) => s.halaqah_id).map((s) => [s.halaqah_id, s.halaqah])).entries()]
   .map(([id, nama]) => ({ id, nama })).sort((a, b) => a.nama.localeCompare(b.nama, 'id', { numeric: true })))
 const terdata = (s) => s.total_resmi > 0 || s.sabaq_hal > 0 || !!s.posisi_pada
@@ -117,7 +121,7 @@ function eksporExcel() {
     ['2. Juz resmi: tulis nomor juz yang sudah hafal, dipisah koma; rentang boleh memakai tanda minus (1-5, 30). Urutan bebas.'],
     ['3. Posisi ditulis Juz + Halaman (20 halaman = 1 juz). Sabaq = jumlah hafalan berjalan; sabqi dan manzil = posisi muraja\'ah.'],
     ['4. Juz hasil ujian/sertifikasi tidak dapat dihapus lewat impor. Sel posisi yang kosong tidak mengubah data lama.'],
-    ['5. Impor di Tahfizh → Data hafalan → Impor Excel.']])
+    ['5. Impor di Tahfizh → Data hafalan → Impor.']])
   p['!cols'] = [{ wch: 120 }]; XLSX.utils.book_append_sheet(wb, p, 'Petunjuk')
   XLSX.writeFile(wb, `Data-Hafalan-Santri-${formatPendek(new Date()).replace(/\//g, '-')}.xlsx`)
 }
@@ -143,24 +147,24 @@ const judulCetak = computed(() => `Daftar Hafalan Santri${halaqah.value && halaq
 
       <!-- Aksi -->
       <div class="-mx-4 mb-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
-        <router-link v-if="bolehUbah" to="/tahfizh/impor" class="w-gaji tombol-garis shrink-0 px-4 text-sm"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Impor hafalan awal</router-link>
+        <router-link v-if="bolehUbah" to="/tahfizh/impor" class="w-gaji tombol-garis shrink-0 px-4 text-sm"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Impor</router-link>
         <button v-if="bolehProgram" class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="bukaProgram"><PhUserSwitch :size="20" weight="duotone" style="color: var(--c)" /> Atur program</button>
-        <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="eksporExcel"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor Excel</button>
-        <button class="w-laporan tombol-garis shrink-0 px-4 text-sm" @click="cetak"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau cetak</button>
+        <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="eksporExcel"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
+        <button class="w-laporan tombol-garis shrink-0 px-4 text-sm" @click="cetak"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Pratinjau</button>
       </div>
 
       <!-- Saringan -->
-      <div class="flex flex-wrap gap-2">
-        <div class="relative min-w-[220px] flex-1">
+      <SaringCorong :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring data hafalan" bisa-atur-ulang @atur-ulang="aturUlangSaring">
+        <template #cari><div class="relative">
           <PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIS, kelas, atau halaqah" aria-label="Cari santri" />
-        </div>
+        </div></template>
         <select v-model="halaqah" class="isian w-auto" aria-label="Saring halaqah">
           <option value="">Semua halaqah</option><option v-for="h in halaqahList" :key="h.id" :value="h.id">{{ h.nama }}</option><option value="-">Belum masuk halaqah</option>
         </select>
         <select v-model="program" class="isian w-auto" aria-label="Saring program"><option value="">Semua program</option><option v-for="(n, k) in PROGRAM" :key="k" :value="k">{{ n }}</option></select>
         <select v-model="kategori" class="isian w-auto" aria-label="Saring kategori hafalan"><option value="">Semua kategori</option><option v-for="k in KATEGORI" :key="k" :value="k">{{ k }}</option></select>
-      </div>
+      </SaringCorong>
 
       <p v-if="tz.galat" class="mt-4 rounded-xl bg-[#C7332F]/10 p-3 text-sm font-semibold text-merah">{{ tz.galat }}</p>
 

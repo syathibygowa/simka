@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/CetakSlip.vue | v1.2 | Perbaikan: nama berkas PDF (nama pegawai - Slip Gaji - periode) | 16/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/CetakSlip.vue | v1.3 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Slip gaji F4 tegak: kop, judul SLIP GAJI, periode dan nomor; identitas (NIY, nama, jabatan, unit, status, masa kerja,
 // pendidikan, rekening); pendapatan dan potongan dengan subtotal; jumlah diterima beserta terbilang; tanda tangan
@@ -50,9 +50,9 @@ const keterangan = (i) => (i.kategori === 'honor' && i.jumlah != null ? `${Numbe
 </script>
 <template>
   <Teleport to="body">
-    <div :class="['cetak-saja', pratinjau && 'tampil munculan']" :role="pratinjau ? 'dialog' : undefined" :aria-modal="pratinjau || undefined" :aria-label="pratinjau ? 'Pratinjau cetak ' + judul : undefined">
+    <div :class="['cetak-saja', pratinjau && 'tampil munculan']" :role="pratinjau ? 'dialog' : undefined" :aria-modal="pratinjau || undefined" :aria-label="pratinjau ? 'Pratinjau ' + judul : undefined">
       <div v-if="pratinjau" class="bilah-munculan layar-saja">
-        <div class="min-w-0 flex-1"><p class="truncate font-bold">Pratinjau cetak: {{ judul }}</p><p class="text-xs opacity-80">Kertas F4 215 × 330 mm, margin 2 cm, satu slip per halaman</p></div>
+        <div class="min-w-0 flex-1"><p class="truncate font-bold">Pratinjau: {{ judul }}</p><p class="text-xs opacity-80">Kertas F4 215 × 330 mm, margin 2 cm, satu slip per halaman</p></div>
         <button type="button" class="tombol-cetak" @click="cetak"><PhPrinter :size="20" weight="duotone" /> Cetak</button>
         <button type="button" class="tombol-tutup" @click="pratinjau = false" aria-label="Tutup pratinjau"><PhX :size="22" /></button>
       </div>

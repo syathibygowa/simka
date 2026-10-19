@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabRingkasanKelas.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabRingkasanKelas.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
 <script setup>
 // Dasbor pemantauan seluruh kelas (admin, superadmin, pimpinan): kehadiran kelas, absensi kelas hari ini sudah/belum diisi,
 // santri sakit/izin, dan keterlaksanaan pelajaran (jurnal mengajar) per kelas. Saring jenjang; cetak F4 mendatar dan Excel.
@@ -61,7 +61,7 @@ function ekspor() {
       <select v-model="jenjang" class="isian h-9 w-auto py-0 text-sm" aria-label="Saring jenjang"><option value="">Semua jenjang</option><option value="wustha">Wustha</option><option value="sma">SMA</option></select>
       <span class="text-xs text-teks3">{{ teksRentang(p.m, p.s) }}</span>
       <span class="flex-1" />
-      <button class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!tampil.length" @click="ekspor"><PhFileXls :size="18" weight="duotone" /> Excel</button>
+      <button class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!tampil.length" @click="ekspor"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
       <button class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!tampil.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
     </div>
     <div class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 xl:grid-cols-4">
