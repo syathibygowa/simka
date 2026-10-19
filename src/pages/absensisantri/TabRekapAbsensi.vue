@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/TabRekapAbsensi.vue | v1.4 | 14.13.0: saringan corong di HP, tombol Ekspor/Cetak Rekap | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/TabRekapAbsensi.vue | v1.5 | 14.14.0: rekap hanya santri kelompok terpilih (tidak terpotong 1.000 baris) | 19/10/2026 -->
 <script setup>
 // Rekap kehadiran santri per kelompok dan periode: kelas, halaqah, asrama, dan gabungan program pokok
 // (Terlambat dan Bolos dihitung hadir). Ekspor Excel, cetak F4 mendatar, WA rekap ke wali, salin rekap umum untuk grup.
@@ -41,7 +41,7 @@ async function muat() {
   if (selesai.value < mulai.value) return ui.toast('Tanggal akhir sebelum tanggal awal.', 'galat')
   memuat.value = true
   try {
-    const [r] = await Promise.all([abs.rekap(mulai.value, selesai.value), kel.muatAnggota(groupId.value)])
+    const [r] = await Promise.all([abs.rekapKelompok(mulai.value, selesai.value, groupId.value), kel.muatAnggota(groupId.value)])
     baris.value = r; penanda.value = g.value ? await penandaKelompok(g.value) : penanda.value
   } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false }
 }

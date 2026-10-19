@@ -1,8 +1,9 @@
-// SIMKA PRO | src/lib/supabase.js | v1.2 | 14.12.0: pembaruan langsung diredam (hemat permintaan dan log server) | 18/10/2026
+// SIMKA PRO | src/lib/supabase.js | v1.3 | 14.14.0: jawaban lebih dari 1.000 baris tidak lagi terpotong | 19/10/2026
 // Klien Supabase. Tanpa VITE_SUPABASE_URL aplikasi berjalan dalam MODE DEMO
 // (data contoh di memori) agar tampilan dapat dicoba sebelum server siap.
 import { createClient } from '@supabase/supabase-js'
 import { redam } from './hemat'
+import { pasangHalamanOtomatis } from './halaman'
 
 const url = import.meta.env.VITE_SUPABASE_URL
 const anon = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -23,6 +24,9 @@ if (supabase) {
     return ch
   }
 }
+
+// 14.14.0: jawaban lebih dari 1.000 baris dilanjutkan otomatis per halaman (lihat halaman.js)
+if (supabase) pasangHalamanOtomatis(supabase)
 
 /** Memanggil Edge Function dan mengembalikan JSON; galat dari server dilempar sebagai Error berbahasa Indonesia. */
 export async function panggilFungsi(nama, isi = {}) {

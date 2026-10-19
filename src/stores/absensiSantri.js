@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/absensiSantri.js | v1.5 | Perbaikan 13.7.0: saringan kategori ekskul indoor/outdoor | 16/10/2026
+// SIMKA PRO | src/stores/absensiSantri.js | v1.6 | 14.14.0: rekapKelompok (rekap per kelompok tanpa batas 1.000 baris) | 19/10/2026
 // Absensi santri HISBAT: sesi hari ini (pengasuh) atau semua kelompok (pantauan), detail sesi, simpan
 // (hanya pengecualian), rekap per santri, dan riwayat ketidakhadiran. Penulisan lewat fungsi SQL.
 // v1.2: detail() menyertakan "otomatis" — santri yang sedang sakit (Klinik → S) atau izin (Perizinan → I).
@@ -146,6 +146,18 @@ export const useAbsensiSantri = defineStore('absensiSantri', {
         return Object.values(peta)
       }
       const { data, error } = await supabase.rpc('rekap_absensi_santri', { p_mulai: mulai, p_selesai: selesai, p_group: group, p_jenis: jenis, p_santri: santri })
+      if (error) throw new Error(pesanGalat(error))
+      return data || []
+    },
+
+    /** 14.14.0: rekap semua program untuk santri anggota satu kelompok pada periode (tidak terpotong batas 1.000 baris). */
+    async rekapKelompok(mulai, selesai, group) {
+      if (MODE_DEMO) {
+        const d = dataAbsensiDemo()
+        const ids = new Set(d.kelompok.anggota.filter((a) => a.group_id === group).map((a) => a.student_id))
+        return (await this.rekap(mulai, selesai)).filter((r) => ids.has(r.student_id))
+      }
+      const { data, error } = await supabase.rpc('rekap_absensi_kelompok', { p_mulai: mulai, p_selesai: selesai, p_group: group })
       if (error) throw new Error(pesanGalat(error))
       return data || []
     },

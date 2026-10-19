@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.9 | 14.4.0: jurnal ekskul + jam latihan, alat, sumber belajar, catatan | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.10 | 14.14.0: penjaga isian bersamaan (tidak menimpa absensi yang baru disimpan pengasuh lain) | 19/10/2026 -->
 <script setup>
 // Pengisian absensi satu sesi: semua santri bawaan Hadir, ketuk kode HISBAT bagi yang tidak.
 // Pengampu halaqah/ekskul diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi (asrama tidak).
@@ -122,14 +122,18 @@ async function simpan() {
       .map(([student_id, kode]) => ({ student_id, kode, keterangan: ket.value[student_id] || null, periksa: kode === 'S' ? periksa.value[student_id] || 'hari_ini' : undefined }))
     const dirujuk = (d.value?.anggota || []).filter((a) => perluKeluhan(a.id)).length
     await abs.simpan({ group_id: route.params.group, tanggal: route.params.tanggal, sesi: route.params.sesi, pengecualian, catatan: catatan.value.trim() || null,
-      atas_nama_id: modeAtasNama.value ? atasNama.value || null : null,
+      atas_nama_id: modeAtasNama.value ? atasNama.value || null : null, versi: d.value.sesi_tercatat?.diisi_pada || null,
       jurnal: ekskul.value ? { topik: `${rinci.value.materi.trim()} – ${rinci.value.submateri.trim()}`, uraian: rinci.value.kegiatan.trim(), foto_id: fotoId || null } : undefined })
       .then(async (id) => { if (ekskul.value) await abs.simpanRincianEkskul(id, { ...rinci.value }); return id })
     ui.toast(`Absensi ${d.value.nama_sesi.toLowerCase()} ${judulKelompok(d.value.kelompok)} tersimpan: ${hadirDihitung.value}/${d.value.anggota.length} hadir.${dirujuk ? ` ${dirujuk} santri sakit dirujuk ke klinik.` : ''}`)
     await muat()
     if (penerimaWA.value.length) lembarWA.value = true
     else if (halaqah.value) gantiTab('setoran')   // halaqah: langsung lanjut ke setoran
-  } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
+  } catch (e) {
+    ui.toast(e.message, 'galat')
+    // 14.14.0: sesi sudah disimpan pengasuh lain setelah formulir ini dibuka → muat ulang agar isiannya tidak tertimpa
+    if (/baru saja disimpan oleh/.test(e.message)) await muat()
+  } finally { proses.value = false }
 }
 
 // WA ke wali santri yang tidak hadir (Izin, Sakit, Bolos, Absen, Terlambat)
