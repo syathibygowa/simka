@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/TabRekapAbsensi.vue | v1.5 | 14.14.0: rekap hanya santri kelompok terpilih (tidak terpotong 1.000 baris) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/TabRekapAbsensi.vue | v1.6 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Rekap kehadiran santri per kelompok dan periode: kelas, halaqah, asrama, dan gabungan program pokok
 // (Terlambat dan Bolos dihitung hadir). Ekspor Excel, cetak F4 mendatar, WA rekap ke wali, salin rekap umum untuk grup.
@@ -137,7 +137,7 @@ const pesanKe = (p) => pesanWA('rekap_santri', { nama_wali: p.k?.nama, nama_sant
       <p class="p-4 text-xs text-teks3">Angka kolom kegiatan = hadir/sesi terlaksana. Terlambat dan Bolos dihitung hadir; Izin, Sakit, dan Absen mengurangi persentase. Sesi yang tidak diisi pengampu tidak dihitung.</p>
     </div>
 
-    <DokumenCetak v-if="g" :kop="g.jenis === 'kelas' ? g.jenjang : 'pondok'" judul="Rekap Kehadiran Santri" :subjudul="`${judulKelompok(g)} · ${teksPeriode}`" mendatar
+    <DokumenCetak jenis="rekap_absensi" :konteks="{ kelompok: g }" v-if="g" :kop="g.jenis === 'kelas' ? g.jenjang : 'pondok'" judul="Rekap Kehadiran Santri" :subjudul="`${judulKelompok(g)} · ${teksPeriode}`" mendatar
       v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">
         <thead><tr><th style="width:4%">No.</th><th style="width:9%">NIS</th><th>Nama</th>

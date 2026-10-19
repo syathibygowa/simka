@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/CetakDisposisi.vue | v1.1 | Perbaikan 13.8.0: ringkasan dan catatan disposisi tercetak dengan gaya teks | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/CetakDisposisi.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Lembar Disposisi F4: data surat, daftar pilihan instruksi (dicentang sesuai disposisi pimpinan), alur disposisi berjenjang
 // beserta tindak lanjutnya. Bila belum ada disposisi, tersedia baris kosong untuk ditulis tangan.
@@ -21,7 +21,7 @@ const pilihan = computed(() => { const p = [...(ps.pengaturan.instruksi || [])];
 const kosong = computed(() => Math.max(0, 4 - alur.value.length))
 </script>
 <template>
-  <DokumenCetak kop="pondok" judul="Lembar Disposisi" :subjudul="`Nomor agenda ${surat.nomor_agenda}`" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+  <DokumenCetak jenis="surat_disposisi" kop="pondok" judul="Lembar Disposisi" :subjudul="`Nomor agenda ${surat.nomor_agenda}`" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
     <table class="tabel" style="margin-bottom: 8pt">
       <colgroup><col style="width: 19%" /><col style="width: 35%" /><col style="width: 17%" /><col style="width: 29%" /></colgroup>
       <tbody>

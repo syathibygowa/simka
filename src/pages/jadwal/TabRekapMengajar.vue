@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jadwal/TabRekapMengajar.vue | v1.4 | 14.13.0: saringan corong di HP, tombol Ekspor/Cetak Rekap | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/jadwal/TabRekapMengajar.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Rekap mengajar per guru dan penugasan: JP terjadwal (hari sekolah, di luar libur), terlaksana, tidak terlaksana,
 // belum diisi. Jurnal mengajar menjadi bukti kehadiran mengajar dan dasar tunjangan guru (Fase 11).
@@ -96,7 +96,7 @@ function ekspor() {
     </ul>
     <p v-if="!perGuru.length" class="kartu py-10 text-center text-sm text-teks3">Belum ada penugasan mengajar pada tahun ajaran aktif.</p>
 
-    <DokumenCetak kop="pondok" :judul="cakupan === 'guru' ? 'Laporan Keterlaksanaan Mengajar' : 'Rekap Keterlaksanaan Mengajar'" :subjudul="teksPeriode" mendatar v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="jadwal_rekap_mengajar" :konteks="{ jenjang: jenjang || null }" kop="pondok" :judul="cakupan === 'guru' ? 'Laporan Keterlaksanaan Mengajar' : 'Rekap Keterlaksanaan Mengajar'" :subjudul="teksPeriode" mendatar v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <template v-if="perHalaman && cakupan !== 'guru'">
         <section v-for="(g, gi) in perGuru" :key="g.employee_id" :style="gi < perGuru.length - 1 ? 'break-after: page' : ''">
           <p style="margin: 4pt 0"><b>{{ g.guru }}</b>{{ g.niy ? ' · NIY ' + g.niy : '' }} — {{ g.jp_terlaksana }}/{{ g.jp_terjadwal }} JP terlaksana ({{ teksPersen(persen(g.jp_terlaksana, g.jp_terjadwal)) }})</p>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/KelompokSantri.vue | v1.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/KelompokSantri.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Pengaturan kelompok santri: kelas, kamar, halaqah, ekskul, lainnya per tahun ajaran (tab berwarna).
 // Admin ber-izin kelompok_santri mengatur; pengasuh melihat kelompok asuhannya; pimpinan melihat semua.
@@ -201,7 +201,7 @@ function eksporPembagian() {
       </div>
     </LembarBawah>
 
-    <DokumenCetak kop="pondok" :judul="`Rekap ${JENIS_KELOMPOK[jenis].jamak}`" :subjudul="`Tahun ajaran ${kel.taSekarang?.nama || '–'} · keadaan ${formatPanjang(new Date())}`"
+    <DokumenCetak jenis="kelompok_rekap" :konteks="{ kelompok: { jenis }, groupIds: dariJenis.filter((x) => x.aktif).map((x) => x.id) }" kop="pondok" :judul="`Rekap ${JENIS_KELOMPOK[jenis].jamak}`" :subjudul="`Tahun ajaran ${kel.taSekarang?.nama || '–'} · keadaan ${formatPanjang(new Date())}`"
       v-model:pratinjau="pratinjauRekap" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil"><colgroup><col style="width:5%"><col style="width:20%"><col style="width:12%"><col style="width:33%"><col style="width:10%"><col style="width:10%"><col style="width:10%"></colgroup>
         <thead><tr><th>No.</th><th>{{ JENIS_KELOMPOK[jenis].n }}</th><th>{{ jenis === 'kelas' ? 'Jenjang' : 'Putra/Putri' }}</th><th>{{ JENIS_KELOMPOK[jenis].pengasuh }}</th><th>L</th><th>P</th><th>Jumlah</th></tr></thead>

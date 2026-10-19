@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/disiplin/TabRekapDisiplin.vue | v1.1 | 14.13.0: saringan corong di HP, tombol Ekspor/Cetak Rekap | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/disiplin/TabRekapDisiplin.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Rekap kedisiplinan santri pada rentang tanggal: dikelompokkan per santri, kelas, kamar, atau kategori pelanggaran.
 // Kolom ringan/sedang/berat/jumlah (tanpa poin) dan surat peringatan yang terbit pada rentang. Baris santri yang mencapai ambang
@@ -121,7 +121,7 @@ function excel() {
       </div>
     </div>
 
-    <DokumenCetak judul="Rekap Kedisiplinan Santri" :subjudul="subjudul" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap"
+    <DokumenCetak jenis="disiplin_rekap" judul="Rekap Kedisiplinan Santri" :subjudul="subjudul" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap"
       :nama-berkas="namaBerkas('Rekap Kedisiplinan Santri', PER.find((p) => p.k === per).n, periodeRentang(mulai, selesai))">
       <table class="tabel">
         <colgroup><col style="width:5%"><col v-if="per === 'santri'" style="width:11%"><col :style="`width:${per === 'santri' ? 30 : 41}%`"><col style="width:12%">

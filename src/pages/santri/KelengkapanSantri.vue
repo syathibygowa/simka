@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/KelengkapanSantri.vue | v1.2 | 14.13.0: saringan corong di HP, tombol Atur/Ekspor | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/KelengkapanSantri.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Kelengkapan data santri di seluruh basis data: identitas, alamat, orang tua/wali, masuk dan sekolah asal, kelompok pondok.
 // Kartu statistik langsung, kolom yang paling sering kosong (ketuk untuk menyaring), daftar santri beserta data yang belum diisi,
@@ -242,7 +242,7 @@ const direktur = computed(() => lembaga.signatories?.find((s) => /^direktur$/i.t
       </div>
     </LembarBawah>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Daftar Kelengkapan Data Santri" :subjudul="`Santri aktif${judulSaringan ? ' · ' + judulSaringan : ''} · keadaan ${formatPendek(hariIniISO())}`"
+    <DokumenCetak jenis="santri_kelengkapan" v-model:pratinjau="pratinjau" mendatar judul="Daftar Kelengkapan Data Santri" :subjudul="`Santri aktif${judulSaringan ? ' · ' + judulSaringan : ''} · keadaan ${formatPendek(hariIniISO())}`"
       :nama-berkas="`Kelengkapan-Data-Santri-${formatPendek(hariIniISO()).replace(/\//g, '-')}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:4%"><col style="width:8%"><col style="width:20%"><col style="width:4%"><col style="width:9%"><col style="width:8%"><col style="width:47%"></colgroup>

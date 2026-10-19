@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.8 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/DaftarPegawai.vue | v1.9 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
@@ -165,7 +165,7 @@ const saringanTeks = computed(() => [jk.value === 'L' ? 'Laki-laki' : jk.value =
 
     <!-- Dokumen cetak -->
     <div>
-      <DokumenCetak :kop="kop" :judul="judulCetak" :subjudul="`${saringanTeks ? saringanTeks + ' · ' : ''}Keadaan per ${formatPanjang(tglDok)}`"  v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+      <DokumenCetak jenis="pgw_daftar" :kop="kop" :judul="judulCetak" :subjudul="`${saringanTeks ? saringanTeks + ' · ' : ''}Keadaan per ${formatPanjang(tglDok)}`"  v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
         <table class="tabel">
           <colgroup><col style="width:6%"><col style="width:14%"><col style="width:24%"><col style="width:6%"><col style="width:22%"><col style="width:16%"><col style="width:12%"></colgroup>
           <thead><tr><th>No.</th><th>NIY</th><th>Nama</th><th>L/P</th><th>Jabatan</th><th>Bidang/Unit</th><th>Status</th></tr></thead>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/disiplin/TabSPSantri.vue | v1.1 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/disiplin/TabSPSantri.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Tab Surat peringatan (santri):
 //   Daftar  : SP yang boleh dilihat; saring keadaan, tingkat, jenjang, rentang tanggal usul. ?sp=<id> membuka rinciannya (notifikasi).
@@ -207,7 +207,7 @@ const kesantrian = computed(() => lembaga.signatories?.find((s) => /kesantrian/i
     <CetakSuratTeguran v-model="cetakSurat" :sp="pilihan" />
 
     <!-- Cetak rekap F4 mendatar -->
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar :judul="`Rekap Surat Peringatan Santri ${periodeRentang(mulai, selesai)}`" :subjudul="jenjang ? (jenjang === 'sma' ? 'SMA' : 'Kesetaraan Wustha') : 'Seluruh jenjang'"
+    <DokumenCetak jenis="disiplin_sp" v-model:pratinjau="pratinjau" mendatar :judul="`Rekap Surat Peringatan Santri ${periodeRentang(mulai, selesai)}`" :subjudul="jenjang ? (jenjang === 'sma' ? 'SMA' : 'Kesetaraan Wustha') : 'Seluruh jenjang'"
       :pencetak="sesi.pengguna?.nama_lengkap" :nama-berkas="namaBerkas('Rekap Surat Peringatan Santri', periodeRentang(mulai, selesai))">
       <table class="tabel" style="font-size: 9pt">
         <colgroup><col style="width:3%"><col style="width:7%"><col style="width:14%"><col style="width:6%"><col style="width:5%"><col style="width:20%"><col style="width:13%"><col style="width:8%"><col style="width:8%"><col style="width:8%"><col style="width:8%"></colgroup>

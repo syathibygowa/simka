@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabJurnalMusyrif.vue | v1.0 | Fase 6 – Tahap 3 Jurnal musyrif dan klinik lanjutan | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabJurnalMusyrif.vue | v1.1 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Jurnal musyrif satu kamar: catatan kegiatan kepengasuhan per hari (waktu, kategori, uraian, santri terkait,
 // foto opsional ke Drive, tanda "penting" → Kepala Bidang Kesantrian). Pimpinan Kesantrian memberi tanggapan.
@@ -176,7 +176,7 @@ const musyrifSaya = computed(() => mu.kamarPilih?.musyrif.find((m) => m.employee
       </div>
     </LembarBawah>
 
-    <DokumenCetak kop="pondok" judul="Jurnal Musyrif" :subjudul="`${mu.kamarPilih?.nama || ''} · ${teksRentang(mulai, selesai)}`" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="msy_jurnal" kop="pondok" judul="Jurnal Musyrif" :subjudul="`${mu.kamarPilih?.nama || ''} · ${teksRentang(mulai, selesai)}`" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <thead><tr><th style="width:5%">No.</th><th style="width:17%">Hari, tanggal</th><th style="width:9%">Waktu</th><th style="width:12%">Kategori</th><th>Uraian kegiatan</th><th style="width:18%">Santri terkait</th></tr></thead>
         <tbody>

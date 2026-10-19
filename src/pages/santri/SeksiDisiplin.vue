@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/SeksiDisiplin.vue | v1.0 | 14.6.0: kedisiplinan santri di biodata (pelanggaran, SP, cetak riwayat) | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/SeksiDisiplin.vue | v1.1 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Bagian "Kedisiplinan" di biodata santri (hanya bagi yang berhak: pengasuh, Security, Kesantrian, pimpinan, TU, pemegang fitur):
 // ringkasan pelanggaran per tingkat, surat peringatan, lima catatan terakhir, catat pelanggaran, riwayat lengkap, usul SP, cetak riwayat F4.
@@ -67,7 +67,7 @@ const kunci = computed(() => ({ id: props.santri.id, nama: props.santri.nama_len
     <LembarPelanggaran v-model="lembar" :santri="kunci" @selesai="muat" />
     <LembarUsulSPSantri v-if="ds.hak.usul" v-model="lembarSP" :santri-awal="kunci" @tersimpan="muat" />
 
-    <DokumenCetak judul="Riwayat Kedisiplinan Santri" :subjudul="`${santri.nama_lengkap} · NIS ${santri.nis}${kunci.kelas ? ' · ' + kunci.kelas : ''}`" v-model:pratinjau="pratinjau"
+    <DokumenCetak jenis="disiplin_santri" judul="Riwayat Kedisiplinan Santri" :subjudul="`${santri.nama_lengkap} · NIS ${santri.nis}${kunci.kelas ? ' · ' + kunci.kelas : ''}`" v-model:pratinjau="pratinjau"
       :pencetak="sesi.pengguna?.nama_lengkap" :nama-berkas="namaBerkas(santri.nama_lengkap, 'Riwayat Kedisiplinan Santri')">
       <p style="font-weight: 700; margin: 0 0 4pt">A. Surat peringatan</p>
       <table class="tabel">

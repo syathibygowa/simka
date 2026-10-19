@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.7 | 14.13.0: satu tombol Impor (pilih jenis), Templat, Ekspor, Pratinjau | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/PeriodeRinci.vue | v1.8 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Rincian satu periode gaji: ringkasan, daftar pegawai (skema, penyesuaian, pendapatan, potongan, diterima),
 // hitung ulang, impor jumlah diterima dari Excel, ekspor Excel, cetak Daftar Gaji F4 mendatar.
@@ -350,7 +350,7 @@ const jumlahKolom = computed(() => Object.fromEntries(KOLOM_DAFTAR.map(([c]) => 
       </LembarBawah>
 
       <!-- Daftar Gaji F4 mendatar -->
-      <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Daftar Gaji Pegawai"
+      <DokumenCetak jenis="gaji_daftar" v-model:pratinjau="pratinjau" mendatar judul="Daftar Gaji Pegawai"
         :subjudul="`Periode ${namaPeriode(pr)} · dibayar ${formatPendek(pr.tanggal_bayar)}${pr.status === 'draf' ? ' · DRAF' : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
         <table class="tabel kecil">
           <colgroup><col style="width:3%"><col style="width:7%"><col style="width:15%"><col v-for="k in KOLOM_DAFTAR" :key="k[0]" style="width:6.6%"><col style="width:6%"><col style="width:8%"><col style="width:8.2%"></colgroup>

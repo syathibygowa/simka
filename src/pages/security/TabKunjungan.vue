@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/security/TabKunjungan.vue | v1.2 | 14.13.0: saringan tanggal di tombol corong pada HP | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/security/TabKunjungan.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Kunjungan orang tua (Blueprint Bagian 24): santri, pengunjung, hubungan, jumlah orang, jam datang dan pulang, foto opsional.
 // Saat dicatat, musyrif santri menerima notifikasi untuk memanggil santri. Bila jadwal kunjungan diaktifkan di Ketentuan,
@@ -134,7 +134,7 @@ watch(pratinjau, async (v) => { if (v) penanda.value = await penandaKelompok({ j
       </div>
     </LembarBawah>
 
-    <DokumenCetak kop="pondok" judul="Daftar Kunjungan Orang Tua" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
+    <DokumenCetak jenis="sec_kunjungan" kop="pondok" judul="Daftar Kunjungan Orang Tua" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
       <table class="tabel kecil">
         <thead><tr><th style="width:4%">No.</th><th style="width:11%">Datang</th><th style="width:7%">Pulang</th><th style="width:18%">Nama santri</th><th style="width:6%">Kelas</th>
           <th style="width:11%">Kamar</th><th>Pengunjung</th><th style="width:5%">Orang</th><th style="width:7%">Luar jadwal</th><th style="width:12%">Petugas</th></tr></thead>

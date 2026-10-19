@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabSantriTahfizh.vue | v1.3 | 14.13.0: saringan corong di HP, tombol Impor/Ekspor/Pratinjau | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabSantriTahfizh.vue | v1.4 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Data hafalan santri sesuai cakupan (muhaffizh: halaqahnya; pimpinan/admin: semua): program, posisi sabaq/sabqi/manzil,
 // juz sedang dihafal, ceklist juz resmi. Pemegang validasi tahfizh mengisi data hafalan awal (satu per satu atau impor Excel)
@@ -299,7 +299,7 @@ const judulCetak = computed(() => `Daftar Hafalan Santri${halaqah.value && halaq
     </LembarBawah>
 
     <!-- Cetak -->
-    <DokumenCetak kop="pondok" :judul="judulCetak" :subjudul="`Tahun Ajaran ${kel.taSekarang?.nama || ''} · keadaan ${formatPanjang(hariIniISO())}`"
+    <DokumenCetak jenis="thz_santri" kop="pondok" :judul="judulCetak" :subjudul="`Tahun Ajaran ${kel.taSekarang?.nama || ''} · keadaan ${formatPanjang(hariIniISO())}`"
       v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
       <table class="tabel kecil">
         <colgroup><col style="width:4%"><col style="width:8%"><col style="width:20%"><col style="width:7%"><col style="width:15%"><col style="width:8%">

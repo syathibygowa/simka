@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengajuan/Pengajuan.vue | v1.4 | 14.13.0: saringan corong di HP, tombol Pratinjau/Ekspor | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengajuan/Pengajuan.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Pengajuan izin, sakit, dinas luar, dan cuti. Tab: Pengajuan saya (semua pegawai), Persetujuan (pejabat
 // penyetuju dan Plt), Semua (admin ber-izin lihat_pengajuan/superadmin: rekap, Excel, cetak F4), Ketentuan (dibaca semua).
@@ -165,7 +165,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
       <DetailPengajuan v-if="id" :id="id" @berubah="berubah" />
     </LembarBawah>
 
-    <DokumenCetak v-if="tab === 'semua'" v-model:pratinjau="pratinjau" mendatar judul="Rekap Pengajuan Izin, Sakit, Dinas Luar, dan Cuti Pegawai"
+    <DokumenCetak jenis="pengajuan_rekap" v-if="tab === 'semua'" v-model:pratinjau="pratinjau" mendatar judul="Rekap Pengajuan Izin, Sakit, Dinas Luar, dan Cuti Pegawai"
       :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)}${unit ? ' · ' + org.cariUnit(unit)?.nama : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:4%"><col style="width:17%"><col style="width:12%"><col style="width:11%"><col style="width:15%"><col style="width:5%"><col style="width:20%"><col style="width:9%"><col style="width:7%"></colgroup>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/audit/AuditLog.vue | v2.2 | 14.13.0: saringan corong di HP, teks keterangan dihapus, tombol Pratinjau/Ekspor | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/audit/AuditLog.vue | v2.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Audit log 30 hari terakhir, KHUSUS SUPERADMIN (server juga menolak akun lain).
 // Kartu statistik per kategori aktivitas sekaligus menjadi saringan; saring tanggal, pelaku, dan jenis data;
@@ -206,7 +206,7 @@ const namaPelaku = computed(() => (pelaku.value ? peg.cari(pelaku.value)?.nama_l
       </div>
     </LembarBawah>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Audit Log Aktivitas Pengguna" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)} · ${namaPelaku}${kategoriAktif ? ' · ' + kategoriAktif.n : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="audit_log" v-model:pratinjau="pratinjau" mendatar judul="Audit Log Aktivitas Pengguna" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)} · ${namaPelaku}${kategoriAktif ? ' · ' + kategoriAktif.n : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:4%"><col style="width:13%"><col style="width:18%"><col style="width:27%"><col style="width:38%"></colgroup>
         <thead><tr><th>No.</th><th>Waktu</th><th>Pelaku</th><th>Aktivitas</th><th>Rincian perubahan</th></tr></thead>

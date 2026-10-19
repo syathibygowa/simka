@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beban/BebanKerja.vue | v1.5 | 14.13.0: saringan corong di HP, tombol disederhanakan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/beban/BebanKerja.vue | v1.6 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Ekuivalensi jam beban kerja per pekan.
 //   Beban saya   : rincian jam pegawai yang masuk, total, jam wajib, kelebihan/kekurangan.
@@ -285,7 +285,7 @@ const KELOMPOK = { struktural: 'Jabatan struktural', fungsional: 'Jabatan fungsi
       </form>
     </LembarBawah>
 
-    <DokumenCetak v-if="aktif.k === 'rekap'" v-model:pratinjau="pratinjau" mendatar judul="Ekuivalensi Jam Beban Kerja Pegawai"
+    <DokumenCetak jenis="pgw_beban" v-if="aktif.k === 'rekap'" v-model:pratinjau="pratinjau" mendatar judul="Ekuivalensi Jam Beban Kerja Pegawai"
       :subjudul="`Per pekan · keadaan ${formatPanjang(hariIniISO())}${unit ? ' · ' + org.cariUnit(unit)?.nama : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel" style="font-size: 8pt">
         <colgroup><col style="width:3.5%"><col style="width:6%"><col style="width:14%"><col style="width:17.5%"><col style="width:5%"><col v-for="k in KOLOM_BEBAN" :key="k" style="width:5.4%"><col style="width:5%"><col style="width:5.8%"></colgroup>

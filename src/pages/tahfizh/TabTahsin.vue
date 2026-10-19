@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabTahsin.vue | v1.1 | 14.13.0: saringan corong di HP | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabTahsin.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Tahsin — pembinaan bacaan Al-Qur'an bagi santri yang belum menghafal (umumnya santri baru atau pindahan).
 //   Muhaffizh/pengelola: "Tandai santri tahsin" (mulai, asal, tahap awal, pembina).
@@ -394,7 +394,7 @@ const subjudulCetak = computed(() => [LABEL_SARING[saring.value] || 'Semua statu
     </LembarBawah>
 
     <!-- Cetak -->
-    <DokumenCetak kop="pondok" judul="Daftar Santri Tahsin" :subjudul="subjudulCetak" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="thz_tahsin" kop="pondok" judul="Daftar Santri Tahsin" :subjudul="subjudulCetak" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">
         <colgroup><col style="width:5%"><col style="width:10%"><col style="width:21%"><col style="width:5%"><col style="width:6%"><col style="width:12%"><col style="width:10%"><col style="width:18%"><col style="width:5%"><col style="width:8%"></colgroup>
         <thead><tr><th>No.</th><th>NIS</th><th>Nama</th><th>JK</th><th>Kelas</th><th>Halaqah</th><th>Mulai</th><th>Tahap</th><th>Temu</th><th>Status</th></tr></thead>

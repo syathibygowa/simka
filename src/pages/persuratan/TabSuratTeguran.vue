@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/TabSuratTeguran.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/TabSuratTeguran.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Tab Persuratan → Surat Teguran.
 //   Daftar    : SP yang boleh dilihat (penerima tidak melihat usulan sebelum terbit; atasan langsung melihat anggota unitnya;
@@ -205,7 +205,7 @@ const direktur = computed(() => lembaga.signatories?.find((s) => /^direktur$/i.t
     <CetakSuratTeguran v-model="cetakSurat" :sp="pilihan" />
 
     <!-- Cetak rekap F4 mendatar -->
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar :judul="judulRekap" :subjudul="bidang || 'Seluruh bidang'" :pencetak="sesi.pengguna?.nama_lengkap"
+    <DokumenCetak jenis="teguran_rekap" v-model:pratinjau="pratinjau" mendatar :judul="judulRekap" :subjudul="bidang || 'Seluruh bidang'" :pencetak="sesi.pengguna?.nama_lengkap"
       :nama-berkas="namaBerkas(bidang || 'Seluruh bidang', 'Rekap Surat Teguran', periodeRentang(mulai, selesai))">
       <table class="tabel" style="font-size: 9pt">
         <colgroup><col style="width:3%"><col style="width:9%"><col style="width:13%"><col style="width:3%"><col style="width:10%"><col style="width:5%"><col style="width:17%">

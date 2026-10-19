@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabSantriKelas.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabSantriKelas.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Daftar santri satu kelas: NIS, nama, JK, kehadiran bulan berjalan (izin, sakit, absen), orang tua/wali utama dan
 // tombol WA, serta tautan biodata. Cetak F4 "Daftar Santri Kelas" (wali kelas di kanan, Direktur mengetahui di kiri) dan Excel.
@@ -86,7 +86,7 @@ function ekspor() {
       </ul>
     </template>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" :judul="`Daftar Santri Kelas ${wk.kelasPilih?.nama || ''}`" :subjudul="`Tahun Ajaran ${lembaga.tahunAktif?.nama || ''} · kehadiran ${namaBulan(awal)}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="wk_daftar_santri" :konteks="{ groupIds: [wk.pilih] }" v-model:pratinjau="pratinjau" :judul="`Daftar Santri Kelas ${wk.kelasPilih?.nama || ''}`" :subjudul="`Tahun Ajaran ${lembaga.tahunAktif?.nama || ''} · kehadiran ${namaBulan(awal)}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">
         <colgroup><col style="width:4%"><col style="width:10%"><col style="width:26%"><col style="width:4%"><col style="width:9%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:18%"><col style="width:14%"></colgroup>
         <thead><tr><th>No.</th><th>NIS</th><th>Nama</th><th>JK</th><th>Kehadiran</th><th>Izin</th><th>Sakit</th><th>Absen</th><th>Orang tua/wali</th><th>No. HP</th></tr></thead>

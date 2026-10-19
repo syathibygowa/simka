@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabRekapJurnal.vue | v1.4 | 14.13.0: saringan corong di HP, tombol Pratinjau/Ekspor | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabRekapJurnal.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 import { namaBerkas, periodeRentang } from '@/lib/namaBerkas'
 // Rekap jurnal per periode: persentase pengisian (hari terisi ÷ hari wajib), butir ceklist, dan kegiatan per status.
@@ -126,7 +126,7 @@ const namaUnit = computed(() => (unit.value ? org.cariUnit(unit.value)?.nama : '
       <p v-if="!tampil.length" class="py-8 text-center text-teks3">Tidak ada data yang sesuai.</p>
     </template>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Rekap Pengisian Jurnal Harian Pegawai" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)} · ${namaUnit}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="jurnal_rekap" v-model:pratinjau="pratinjau" mendatar judul="Rekap Pengisian Jurnal Harian Pegawai" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)} · ${namaUnit}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:4%"><col style="width:24%"><col style="width:16%"><col v-for="n in 7" :key="n" style="width:8%"></colgroup>
         <thead><tr><th>No.</th><th>Nama</th><th>Bidang/Unit</th><th>Hari wajib</th><th>Hari terisi</th><th>Tidak diisi</th><th>Butir ceklist</th><th>Kegiatan disetujui</th><th>Menunggu verval</th><th>Pengisian (%)</th></tr></thead>
@@ -140,7 +140,7 @@ const namaUnit = computed(() => (unit.value ? org.cariUnit(unit.value)?.nama : '
       </template>
     </DokumenCetak>
 
-    <DokumenCetak v-if="individu" v-model:pratinjau="pratinjauInd" judul="Laporan Jurnal Harian Pegawai" :nama-berkas="namaBerkas(individu.r.nama, 'Laporan Jurnal Harian', periodeRentang(mulai, akhir))" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="jurnal_individu" v-if="individu" v-model:pratinjau="pratinjauInd" judul="Laporan Jurnal Harian Pegawai" :nama-berkas="namaBerkas(individu.r.nama, 'Laporan Jurnal Harian', periodeRentang(mulai, akhir))" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="data" style="margin-bottom: 8pt">
         <tbody>
           <tr><td style="width: 32mm">Nama</td><td style="width: 4mm">:</td><td>{{ individu.r.nama }}</td></tr>
@@ -167,7 +167,7 @@ const namaUnit = computed(() => (unit.value ? org.cariUnit(unit.value)?.nama : '
     </DokumenCetak>
 
     <!-- Tabel ceklist bulanan (F4 mendatar) -->
-    <DokumenCetak v-if="matriks" v-model:pratinjau="pratinjauM" mendatar judul="Tabel Ceklist Jurnal Harian Pegawai" :nama-berkas="namaBerkas(matriks.r.nama, 'Tabel Ceklist Jurnal Harian', periodeRentang(mulai, akhir))" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="jurnal_individu" v-if="matriks" v-model:pratinjau="pratinjauM" mendatar judul="Tabel Ceklist Jurnal Harian Pegawai" :nama-berkas="namaBerkas(matriks.r.nama, 'Tabel Ceklist Jurnal Harian', periodeRentang(mulai, akhir))" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="data" style="margin-bottom: 6pt">
         <tbody>
           <tr><td style="width: 30mm">Nama</td><td style="width: 4mm">:</td><td>{{ matriks.r.nama }}</td><td style="width: 30mm">Bidang/Unit</td><td style="width: 4mm">:</td><td>{{ matriks.r.unit || '–' }}</td></tr>

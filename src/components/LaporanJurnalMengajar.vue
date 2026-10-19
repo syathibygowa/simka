@@ -1,10 +1,10 @@
-<!-- SIMKA PRO | src/components/LaporanJurnalMengajar.vue | v1.1 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/components/LaporanJurnalMengajar.vue | v1.2 | 14.15.0: penanda tangan dari Setelan → Penanda tangan (pilihan di halaman dihapus) | 19/10/2026 -->
 <script setup>
 // Laporan jurnal mengajar untuk satu cakupan: satu kelas × mapel, satu mapel di semua kelas yang diampu guru,
 // semua yang diampu guru, atau semua mapel satu kelas (wali kelas/kurikulum).
 // Setiap pertemuan: hari/tanggal, jam (JP), materi pokok – sub-bab, tujuan, kegiatan, metode/strategi, media, alat, sumber
 // belajar, kehadiran santri (beserta yang tidak hadir), dan catatan. Cetak F4 mendatar berkop; tanda tangan pimpinan
-// (dapat dipilih) di kiri dan guru/wali kelas di kanan. Excel memuat kolom yang sama.
+// (14.15.0: diatur di Setelan → Penanda tangan, bawaan kepala sekolah jenjang kelas) di kiri dan guru/wali kelas di kanan.
 import { ref, computed, watch, onMounted } from 'vue'
 import { PhPrinter, PhFileXls, PhArrowClockwise, PhCheckCircle, PhXCircle, PhUsersThree, PhWhatsappLogo } from '@phosphor-icons/vue'
 import LembarLaporanGrup from './LembarLaporanGrup.vue'
@@ -32,7 +32,6 @@ const senin = (() => { const t = new Date(hari + 'T12:00:00Z'); t.setUTCDate(t.g
 const PERIODE = computed(() => [{ k: 'hari', n: 'Hari ini', m: hari, s: hari }, { k: 'pekan', n: 'Pekan ini', m: senin, s: hari }, { k: 'bulan', n: 'Bulan ini', m: hari.slice(0, 7) + '-01', s: hari }, { k: 'semester', n: 'Semester ini', m: awalSmt.value, s: hari }, { k: 'atur', n: 'Atur tanggal' }])
 const periode = ref(['hari', 'pekan', 'bulan', 'semester'].includes(props.periodeAwal) ? props.periodeAwal : 'bulan'); const mulai = ref(hari.slice(0, 7) + '-01'); const selesai = ref(hari)
 const d = ref(null); const memuat = ref(false); const pratinjau = ref(false); const lengkap = ref(true)
-const kiriId = ref('')
 function terapkan() { const p = PERIODE.value.find((x) => x.k === periode.value); if (p?.m) { mulai.value = p.m; selesai.value = p.s } }
 async function muat() {
   if (!Object.values(props.cakupan).some(Boolean)) return
@@ -62,9 +61,7 @@ const info = computed(() => ({
   kelas: kelasSet.value.join(', ') || tugas.value.map((t) => t.kelas).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '–',
 }))
 const satuKelas = computed(() => kelasSet.value.length <= 1); const satuMapel = computed(() => mapelSet.value.length <= 1)
-const pilihanKiri = computed(() => lembaga.signatories.filter((s) => s.aktif !== false))
-const kiri = computed(() => pilihanKiri.value.find((s) => s.id === kiriId.value) || pilihanKiri.value.find((s) => /kepala sekolah/i.test(s.jabatan_tertulis))
-  || pilihanKiri.value.find((s) => s.sumber_jabatan === 'DIREKTUR' || /^direktur/i.test(s.jabatan_tertulis)) || {})
+const kiri = computed(() => lembaga.signatories.find((s) => s.aktif !== false && (s.sumber_jabatan === 'DIREKTUR' || /^direktur/i.test(s.jabatan_tertulis))) || {})
 const kananTtd = computed(() => {
   if (props.kanan === 'wali') { const w = tugas.value[0]?.wali || {}; return { jabatan: `Wali Kelas ${info.value.kelas}`, nama: w.nama || '', niy: w.niy } }
   const t = tugas.value[0] || {}; return { jabatan: 'Guru Mata Pelajaran', nama: guruSet.value.length === 1 ? t.guru : '', niy: guruSet.value.length === 1 ? t.niy : '' }
@@ -113,9 +110,6 @@ async function excel() {
         <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
         <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
       </div>
-      <label v-if="pilihanKiri.length > 1" class="mb-3 flex flex-wrap items-center gap-2 text-sm"><span class="shrink-0 text-teks2">Tanda tangan "Mengetahui" pada cetakan:</span>
-        <select v-model="kiriId" class="isian min-h-[38px] w-auto py-0 text-sm"><option value="">Otomatis ({{ kiri.jabatan_tertulis || 'Direktur' }})</option>
-          <option v-for="s in pilihanKiri" :key="s.id" :value="s.id">{{ s.jabatan_tertulis }} – {{ s.nama }}</option></select></label>
       <ul class="space-y-2">
         <li v-for="(x, i) in pertemuan" :key="x.assignment_id + x.tanggal" class="kartu p-3 text-sm">
           <div class="flex flex-wrap items-start gap-2">
@@ -141,7 +135,7 @@ async function excel() {
       </ul>
 
       <LembarLaporanGrup v-model="lembarWA" judul="Laporan jurnal mengajar ke grup WhatsApp" :teks="teksWA" />
-      <DokumenCetak v-model:pratinjau="pratinjau" mendatar :judul="judul" :subjudul="subjudul" :pencetak="sesi.pengguna?.nama_lengkap">
+      <DokumenCetak jenis="gm_jurnal" :konteks="{ groupIds: tugas.map((t) => t.group_id) }" v-model:pratinjau="pratinjau" mendatar :judul="judul" :subjudul="subjudul" :pencetak="sesi.pengguna?.nama_lengkap">
         <table class="meta-dok" style="margin-bottom: 6pt">
           <tr><td style="width: 32mm">Guru</td><td style="width: 4mm">:</td><td>{{ info.guru }}</td><td style="width: 32mm">Periode</td><td style="width: 4mm">:</td><td>{{ formatPanjang(mulai) }} s.d. {{ formatPanjang(selesai) }}</td></tr>
           <tr><td>Mata pelajaran</td><td>:</td><td>{{ info.mapel }}</td><td>Pertemuan</td><td>:</td><td>{{ ringkas.ok }} terlaksana dari {{ ringkas.n }} ({{ ringkas.jp }} JP)</td></tr>

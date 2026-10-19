@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/TabBerulang.vue | v1.2 | 14.13.0: saringan corong di HP, tombol Ekspor | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/TabBerulang.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Santri dengan ketidakhadiran berulang pada satu periode, untuk tindakan dan penanganan lanjutan:
 //   Sakit     = absen kode S (kelas, halaqah, asrama, ekskul, pelajaran) + kasus klinik
@@ -143,7 +143,7 @@ function ekspor() {
       </div>
     </LembarBawah>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar kop="pondok" :judul="judulCetak" :subjudul="subjudul" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="abs_perhatian" v-model:pratinjau="pratinjau" mendatar kop="pondok" :judul="judulCetak" :subjudul="subjudul" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">
         <colgroup><col style="width:3%"><col style="width:7%"><col style="width:17%"><col style="width:3%"><col style="width:6%"><col style="width:10%"><col v-for="n in 6" :key="n" style="width:5%"><col style="width:24%"></colgroup>
         <thead><tr><th>No.</th><th>NIS</th><th>Nama</th><th>L/P</th><th>Kelas</th><th>Kamar</th><th>Sakit</th><th>Izin</th><th>Alfa</th><th>Bolos</th><th>Terlambat</th><th>Klinik</th><th>Rincian</th></tr></thead>

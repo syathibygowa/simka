@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabKetentuanTahfizh.vue | v1.1 | Fase 5 – Tahap 4 Ujian kenaikan juz dan sertifikasi | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabKetentuanTahfizh.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Ketentuan tahfizh per tahun ajaran: umum (KKM, bobot Tajwid/Itqan, batas isian janggal, ambang rekap), target per program
 // dan tingkat, rentang predikat, bulan dan pekan efektif, serta penguji. Semua pegawai berhak-lihat dapat membaca;
@@ -245,7 +245,7 @@ const juzHal = (h) => `${h} hal${h >= HAL_PER_JUZ ? ` (${formatPosisi(h)})` : ''
     </LembarBawah>
 
     <!-- Cetak ketentuan -->
-    <DokumenCetak kop="pondok" judul="Ketentuan Penilaian dan Target Tahfizh" :subjudul="`Tahun Ajaran ${taObj?.nama || ''} · keadaan ${formatPanjang(hariIniISO())}`"
+    <DokumenCetak jenis="thz_ketentuan" kop="pondok" judul="Ketentuan Penilaian dan Target Tahfizh" :subjudul="`Tahun Ajaran ${taObj?.nama || ''} · keadaan ${formatPanjang(hariIniISO())}`"
       v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <template v-if="tz.pengaturan">
         <p style="margin: 0 0 4pt; font-weight: 700">A. Ketentuan umum</p>

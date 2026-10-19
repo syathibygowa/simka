@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.8 | Perbaikan 13.9.0: label "Tandai Penting"; izin admin Kelola pengumuman | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengumuman/Pengumuman.vue | v1.9 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Pengumuman: semua pegawai membaca pengumuman yang ditujukan kepadanya (tanda dibaca/belum).
 // Admin, superadmin, dan pegawai yang diberi hak fitur "pengumuman" (tingkat 2+) dapat membuat,
@@ -231,7 +231,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
     </LembarBawah>
 
     <!-- Cetak -->
-    <DokumenCetak v-if="terpilih" v-model:pratinjau="pratinjau" judul="Pengumuman" :subjudul="terpilih.judul" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="pengumuman" v-if="terpilih" v-model:pratinjau="pratinjau" judul="Pengumuman" :subjudul="terpilih.judul" :pencetak="sesi.pengguna?.nama_lengkap">
       <!-- eslint-disable-next-line vue/no-v-html -- teks sudah di-escape oleh teksKaya() -->
       <p style="white-space: pre-line; text-align: justify; line-height: 1.6" v-html="teksKaya(terpilih.isi)" />
       <p style="margin-top: 8pt">Ditujukan kepada: {{ terpilih.ringkasan_sasaran || 'Seluruh pegawai' }}.</p>

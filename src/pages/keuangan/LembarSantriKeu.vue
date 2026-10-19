@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/LembarSantriKeu.vue | v1.5 | 14.7.0: tombol Surat Keterangan Bebas Tunggakan | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/LembarSantriKeu.vue | v1.6 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Rincian keuangan satu santri (dibuka dengan ?santri=<id> dari tab mana pun):
 // ringkasan, kontak wali (WA), tagihan (ubah/batalkan beralasan), pembayaran (kuitansi, WA konfirmasi, batalkan),
@@ -184,7 +184,7 @@ async function hapusSubsidi(x) {
   <LembarSuratTagihan :santri="surat" :ids="suratIds" @tutup="(surat = null), (suratIds = null)" @terbit="segar" />
   <LembarSubsidi :isi="subsidi" @tutup="subsidi = null" @tersimpan="segar" />
   <LembarBebasTunggakan :santri="bebas" @tutup="bebas = null" @terbit="segar" />
-  <DokumenCetak v-if="r" v-model:pratinjau="laporan" judul="Laporan Keuangan Santri" :subjudul="`Posisi per ${formatPanjang(hariIniISO())}`" :pencetak="sesi.pengguna?.nama_lengkap">
+  <DokumenCetak jenis="keu_santri" v-if="r" v-model:pratinjau="laporan" judul="Laporan Keuangan Santri" :subjudul="`Posisi per ${formatPanjang(hariIniISO())}`" :pencetak="sesi.pengguna?.nama_lengkap">
     <table class="meta-dok" style="margin-bottom: 6pt"><tbody>
       <tr><td style="width: 1%; white-space: nowrap; padding-right: 6pt">Nama santri</td><td>: {{ s.nama }}</td><td style="width: 1%; white-space: nowrap; padding-right: 6pt">Kelas/jenjang</td><td>: {{ s.kelas || '–' }} · {{ JENJANG[s.jenjang] }}</td></tr>
       <tr><td style="white-space: nowrap; padding-right: 6pt">NIS</td><td>: {{ s.nis }}</td><td style="white-space: nowrap; padding-right: 6pt">Orang tua/wali</td><td>: {{ s.wali?.nama || '–' }}{{ s.wali?.no_hp ? ' (' + s.wali.no_hp + ')' : '' }}</td></tr>

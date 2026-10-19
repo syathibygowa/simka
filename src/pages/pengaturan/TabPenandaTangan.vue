@@ -1,7 +1,8 @@
-<!-- SIMKA PRO | src/pages/pengaturan/TabPenandaTangan.vue | v1.2 | Fase 8 – Akun pegawai penanda tangan (tanda tangan elektronik) | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/TabPenandaTangan.vue | v1.3 | 14.15.0: penanda tangan dan kop semua dokumen cetak diatur terpusat di sini | 19/10/2026 -->
 <script setup>
-import { ref, onMounted } from 'vue'
-import { PhPlus, PhPencilSimple, PhFloppyDisk, PhTrash, PhLink } from '@phosphor-icons/vue'
+import { ref, computed, onMounted } from 'vue'
+import { PhPlus, PhPencilSimple, PhFloppyDisk, PhTrash, PhLink, PhMagnifyingGlass, PhArrowCounterClockwise, PhCaretDown, PhInfo } from '@phosphor-icons/vue'
+import { KATALOG, KELOMPOK, PERAN, DIATUR_LAIN, peranUntuk } from '@/lib/aturanCetak'
 import { useLembaga } from '@/stores/lembaga'
 import { useOrganisasi } from '@/stores/organisasi'
 import { usePegawai } from '@/stores/pegawai'
@@ -34,16 +35,25 @@ async function hapus(s) {
   try { await lembaga.hapusBaris('signatories', s.id); ui.toast('Penanda tangan dihapus.') } catch (e) { galat(e) }
 }
 
-// ---------- Aturan per jenis dokumen ----------
-const PERAN = {
-  '': 'Tidak ada', atasan_terakhir: 'Atasan terakhir yang menyetujui', pemohon: 'Pemohon', pencetak: 'Pencetak dokumen',
-  kepala_bidang: 'Kepala bidang', pengusul: 'Pengusul', kepala_jenjang: 'Kepala sesuai jenjang', pengasuh: 'Pengasuh kelompok',
-  bendahara: 'Bendahara', pegawai: 'Pegawai bersangkutan', sesuai_template: 'Sesuai template surat',
+// ---------- Aturan per jenis dokumen (14.15.0: katalog lib/aturanCetak.js) ----------
+const cari = ref(''); const terbuka = ref({ [KELOMPOK[0]]: true })
+const aturanDok = (kode) => lembaga.signer_rules.find((r) => r.jenis_dokumen === kode)
+const nilai = (dok, kolom) => { const r = aturanDok(dok.kode); const b = { kiri: dok.bawaan.kiri, kanan: dok.bawaan.kanan, kop_kode: null }[kolom]
+  return (r ? r[kolom] ?? b : b) || '' }
+const ubahan = (dok) => ['kiri', 'kanan', 'kop_kode'].some((k) => nilai(dok, k) !== ({ kiri: dok.bawaan.kiri, kanan: dok.bawaan.kanan, kop_kode: null }[k] || ''))
+const tampil = computed(() => { const q = cari.value.toLowerCase().trim()
+  return KELOMPOK.map((k) => ({ k, dok: KATALOG.filter((d) => d.kelompok === k && (!q || `${d.nama} ${d.menu}`.toLowerCase().includes(q))) })).filter((x) => x.dok.length) })
+const pejabatAktif = computed(() => lembaga.signatories.filter((x) => x.aktif))
+async function simpanAturan(dok, ubah) {
+  const ada = aturanDok(dok.kode)
+  try {
+    await lembaga.simpanBaris('signer_rules', { jenis_dokumen: dok.kode, nama_dokumen: dok.nama, urutan: dok.urutan,
+      ...(ada ? {} : { kiri: dok.bawaan.kiri, kanan: dok.bawaan.kanan, kop_kode: null }), ...ubah }, { pk: 'jenis_dokumen', baru: !ada })
+    ui.toast(`Aturan cetak ${dok.nama} diperbarui.`)
+  } catch (e) { galat(e) }
 }
-async function ubahAturan(r, kolom, nilai) {
-  try { await lembaga.simpanBaris('signer_rules', { jenis_dokumen: r.jenis_dokumen, [kolom]: nilai || null }, { pk: 'jenis_dokumen' }); ui.toast(`Aturan ${r.nama_dokumen} diperbarui.`) }
-  catch (e) { galat(e) }
-}
+const ubahAturan = (dok, kolom, v) => simpanAturan(dok, { [kolom]: v || null })
+const kembalikan = (dok) => simpanAturan(dok, { kiri: dok.bawaan.kiri, kanan: dok.bawaan.kanan, kop_kode: null })
 </script>
 <template>
   <div class="space-y-5">
@@ -68,33 +78,52 @@ async function ubahAturan(r, kolom, nilai) {
     </section>
 
     <section class="kartu p-5">
-      <h3 class="judul-bagian">Penanda tangan per jenis dokumen</h3>
-      <p class="mb-3 text-sm text-teks3">Kolom kiri untuk pimpinan atau atasan, kolom kanan untuk pegawai terkait. Perubahan langsung tersimpan.</p>
-      <div class="space-y-3">
-        <div v-for="r in lembaga.signer_rules" :key="r.jenis_dokumen" class="rounded-xl border border-garis p-3">
-          <p class="mb-2 font-semibold">{{ r.nama_dokumen }}</p>
-          <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            <label class="text-xs font-semibold text-teks3">Kolom kiri
-              <select class="isian mt-1 text-sm font-normal text-teks" :value="r.kiri || ''" @change="ubahAturan(r, 'kiri', $event.target.value)">
-                <optgroup label="Pejabat"><option v-for="s in lembaga.signatories.filter((x) => x.aktif)" :key="s.id" :value="s.id">{{ s.jabatan_tertulis }}</option></optgroup>
-                <optgroup label="Sesuai dokumen"><option v-for="(n, k) in PERAN" :key="k" :value="k">{{ n }}</option></optgroup>
-              </select></label>
-            <label class="text-xs font-semibold text-teks3">Kolom kanan
-              <select class="isian mt-1 text-sm font-normal text-teks" :value="r.kanan || ''" @change="ubahAturan(r, 'kanan', $event.target.value)">
-                <optgroup label="Pejabat"><option v-for="s in lembaga.signatories.filter((x) => x.aktif)" :key="s.id" :value="s.id">{{ s.jabatan_tertulis }}</option></optgroup>
-                <optgroup label="Sesuai dokumen"><option v-for="(n, k) in PERAN" :key="k" :value="k">{{ n }}</option></optgroup>
-              </select></label>
-            <label class="text-xs font-semibold text-teks3">Mode tanda tangan
-              <select class="isian mt-1 text-sm font-normal text-teks" :value="r.mode" @change="ubahAturan(r, 'mode', $event.target.value)">
-                <option value="elektronik">Elektronik (kode validasi)</option><option value="basah">Basah</option>
-              </select></label>
-            <label class="text-xs font-semibold text-teks3">Kop surat
-              <select class="isian mt-1 text-sm font-normal text-teks" :value="r.kop_kode" @change="ubahAturan(r, 'kop_kode', $event.target.value)">
-                <option v-for="k in lembaga.letterheads" :key="k.kode" :value="k.kode">{{ k.nama }}</option>
-              </select></label>
+      <h3 class="judul-bagian">Penanda tangan dan kop per dokumen cetak</h3>
+      <p class="mb-3 text-sm text-teks3">Kolom kiri untuk pimpinan atau atasan ("Mengetahui"), kolom kanan untuk pegawai terkait. Perubahan langsung berlaku pada cetakan berikutnya.</p>
+      <ul class="mb-3 list-disc space-y-0.5 pl-5 text-xs text-teks3">
+        <li><b>Kepala sekolah sesuai jenjang</b>: Kepala Wustha atau Kepala SMA menurut kelas/santri pada dokumen; bila dokumen mencakup dua jenjang, Direktur.</li>
+        <li><b>Pimpinan sesuai kelompok</b>: kelas → kepala sekolah jenjangnya; halaqah → Kepala Bidang Tahfizh; asrama dan ekskul → Kepala Bidang Kesantrian.</li>
+        <li><b>Penanggung jawab kelompok/mapel</b>: wali kelas, guru mapel, muhaffizh, musyrif, atau pembina pada dokumen tersebut.</li>
+        <li><b>Kop sesuai unit</b>: kop Wustha atau SMA bila dokumen milik satu jenjang; selain itu kop pondok.</li>
+      </ul>
+      <div class="relative mb-3"><PhMagnifyingGlass :size="18" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
+        <input v-model="cari" class="isian pl-10" placeholder="Cari dokumen atau menu" aria-label="Cari dokumen cetak" /></div>
+      <div class="space-y-2">
+        <div v-for="g in tampil" :key="g.k" class="rounded-xl border border-garis">
+          <button type="button" class="flex min-h-[48px] w-full items-center gap-2 px-4 text-left font-semibold" :aria-expanded="!!(terbuka[g.k] || cari)" @click="terbuka[g.k] = !terbuka[g.k]">
+            <span class="flex-1">{{ g.k }}</span><span class="lencana">{{ g.dok.length }}</span>
+            <PhCaretDown :size="18" :class="['transition-transform', (terbuka[g.k] || cari) && 'rotate-180']" /></button>
+          <div v-if="terbuka[g.k] || cari" class="divide-y divide-garis border-t border-garis">
+            <div v-for="dok in g.dok" :key="dok.kode" class="p-3">
+              <div class="mb-2 flex items-start gap-2">
+                <div class="min-w-0 flex-1"><p class="font-semibold">{{ dok.nama }}</p><p class="text-xs text-teks3">{{ dok.menu }}</p></div>
+                <button v-if="ubahan(dok)" type="button" class="tombol-garis min-h-[36px] shrink-0 px-3 text-xs" @click="kembalikan(dok)"><PhArrowCounterClockwise :size="16" /> Bawaan</button>
+              </div>
+              <div class="grid gap-2 sm:grid-cols-3">
+                <label v-for="k in ['kiri', 'kanan']" :key="k" class="text-xs font-semibold text-teks3">{{ k === 'kiri' ? 'Kolom kiri' : 'Kolom kanan' }}
+                  <select class="isian mt-1 text-sm font-normal text-teks" :value="nilai(dok, k)" @change="ubahAturan(dok, k, $event.target.value)">
+                    <optgroup label="Sesuai peran"><option v-for="p in peranUntuk(dok)" :key="p" :value="p">{{ PERAN[p].n }}{{ p === dok.bawaan[k] ? ' (bawaan)' : '' }}</option></optgroup>
+                    <optgroup v-if="pejabatAktif.length" label="Pejabat tetap"><option v-for="x in pejabatAktif" :key="x.id" :value="x.id">{{ x.jabatan_tertulis }} – {{ x.nama }}</option></optgroup>
+                  </select></label>
+                <label class="text-xs font-semibold text-teks3">Kop surat
+                  <select class="isian mt-1 text-sm font-normal text-teks" :value="nilai(dok, 'kop_kode')" @change="ubahAturan(dok, 'kop_kode', $event.target.value)">
+                    <option value="">Sesuai unit dokumen (bawaan)</option>
+                    <option v-for="x in lembaga.letterheads" :key="x.kode" :value="x.kode">{{ x.nama }}</option>
+                  </select></label>
+              </div>
+            </div>
           </div>
         </div>
+        <p v-if="!tampil.length" class="py-6 text-center text-sm text-teks3">Tidak ada dokumen yang cocok.</p>
       </div>
+    </section>
+
+    <section class="kartu p-5">
+      <h3 class="judul-bagian flex items-center gap-2"><PhInfo :size="20" weight="duotone" /> Dokumen dengan penanda tangan dari alur lain</h3>
+      <p class="mb-3 text-sm text-teks3">Dokumen berikut ditandatangani oleh pejabat yang memproses atau menyetujuinya (tanda tangan elektronik), sehingga diatur di tempatnya masing-masing.</p>
+      <ul class="divide-y divide-garis text-sm">
+        <li v-for="x in DIATUR_LAIN" :key="x.nama" class="py-2"><p class="font-semibold">{{ x.nama }}</p><p class="text-teks3">{{ x.tempat }}</p></li>
+      </ul>
     </section>
 
     <LembarBawah v-model="lembar" :judul="f._baru ? 'Tambah pejabat' : 'Ubah pejabat'">

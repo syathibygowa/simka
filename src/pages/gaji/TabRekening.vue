@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/TabRekening.vue | v1.3 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/TabRekening.vue | v1.4 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Rekening penerimaan gaji setiap pegawai aktif: cara bayar (transfer/tunai), bank, nomor rekening, atas nama.
 // Tampil di slip gaji. Diubah pengelola gaji (satu per satu atau impor Excel); pembaca gaji hanya melihat.
@@ -208,7 +208,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
     </LembarBawah>
 
     <!-- Cetak F4 -->
-    <DokumenCetak v-model:pratinjau="pratinjau" judul="Daftar Rekening Penerimaan Gaji Pegawai" :subjudul="`Keadaan per ${formatPendek(hariIniISO())}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="gaji_rekening" v-model:pratinjau="pratinjau" judul="Daftar Rekening Penerimaan Gaji Pegawai" :subjudul="`Keadaan per ${formatPendek(hariIniISO())}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:6%"><col style="width:14%"><col style="width:25%"><col style="width:9%"><col style="width:13%"><col style="width:15%"><col style="width:18%"></colgroup>
         <thead><tr><th>No.</th><th>NIY</th><th>Nama</th><th>Cara bayar</th><th>Bank</th><th>Nomor rekening</th><th>Atas nama</th></tr></thead>

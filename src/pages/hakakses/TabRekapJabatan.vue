@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/hakakses/TabRekapJabatan.vue | v2.0 | Perbaikan 14.0.0: kolom Semua pegawai, sel bawaan dan Tidak ada, semua fitur yang dapat diatur | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/hakakses/TabRekapJabatan.vue | v2.1 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Rekap hak akses fitur dalam satu tabel centang (khusus superadmin):
 //   baris = fitur (dengan menu yang dikendalikan), kolom = jabatan fungsional / jabatan struktural / bidang,
@@ -143,7 +143,7 @@ const lebarKol = computed(() => (sasaran.value.length ? Math.max(3.5, Math.min(1
       </template>
     </template>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar :judul="`Ceklist Hak Akses Fitur per ${namaMode}`" :subjudul="`Keadaan per ${new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`"
+    <DokumenCetak jenis="hak_akses_fitur" v-model:pratinjau="pratinjau" mendatar :judul="`Ceklist Hak Akses Fitur per ${namaMode}`" :subjudul="`Keadaan per ${new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`"
       :nama-berkas="`Ceklist-Hak-Akses-${namaMode.replace(/[^A-Za-z]+/g, '-')}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel" :style="sasaran.length > 10 ? 'font-size: 8.5pt' : ''">
         <colgroup><col style="width:3.5%"><col :style="`width:${96.5 - lebarKol * sasaran.length}%`"><col v-for="x in sasaran" :key="x.id" :style="`width:${lebarKol}%`"></colgroup>

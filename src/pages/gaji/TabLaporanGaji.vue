@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/TabLaporanGaji.vue | v1.3 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/TabLaporanGaji.vue | v1.4 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Laporan atas satu periode gaji (jumlah yang benar-benar diterima, termasuk penyesuaian ketetapan yayasan):
 //   1. Rekap per bidang      : jumlah pegawai, menurut skema, penyesuaian, pendapatan, potongan, diterima per bidang induk
@@ -204,7 +204,7 @@ const ttdKanan = computed(() => ({ jabatan: gaji.jabatanSaya, nama: sesi.penggun
       </section>
     </template>
 
-    <DokumenCetak v-if="r" v-model:pratinjau="pratinjau" :judul="judulLaporan" :subjudul="`Periode ${namaPeriode(pr)} · dibayar ${formatPendek(pr.tanggal_bayar)}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="gaji_laporan" v-if="r" v-model:pratinjau="pratinjau" :judul="judulLaporan" :subjudul="`Periode ${namaPeriode(pr)} · dibayar ${formatPendek(pr.tanggal_bayar)}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table v-if="jenis === 'bidang'" class="tabel">
         <colgroup><col style="width:6%"><col style="width:24%"><col style="width:9%"><col v-for="n in 5" :key="n" style="width:12.2%"></colgroup>
         <thead><tr><th>No.</th><th>Bidang</th><th>Pegawai</th><th>Menurut skema</th><th>Penyesuaian</th><th>Pendapatan</th><th>Potongan</th><th>Diterima</th></tr></thead>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/DetailKelompok.vue | v1.6 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/DetailKelompok.vue | v1.7 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Satu kelompok santri: identitas, pengasuh (utama, pendamping, pengganti bertanggal), grup WA, anggota beserta
 // riwayat pindah, tambah/pindah/keluarkan anggota, naqib halaqah, ekspor Excel, dan cetak daftar F4.
@@ -283,7 +283,7 @@ const keKelompok = (x) => x && router.replace({ path: `/kelompok-santri/k/${x.id
     </div>
 
     <!-- Daftar anggota F4 -->
-    <DokumenCetak :kop="kopCetak" :judul="`Daftar Santri ${judulKelompok(g)}`" :subjudul="`Tahun Ajaran ${g.tahun_ajaran} · ${subjudulKelompok(g)}`"
+    <DokumenCetak jenis="kelompok_daftar" :konteks="{ kelompok: g }" :kop="kopCetak" :judul="`Daftar Santri ${judulKelompok(g)}`" :subjudul="`Tahun Ajaran ${g.tahun_ajaran} · ${subjudulKelompok(g)}`"
       v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="data" style="margin-bottom: 6pt">
         <tbody>

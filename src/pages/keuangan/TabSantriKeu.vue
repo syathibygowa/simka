@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabSantriKeu.vue | v1.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabSantriKeu.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Per santri: tagihan, dibayar, sisa, tunggakan lewat tempo, subsidi, wali (WA). Ketuk santri → rincian (?santri=).
 // Pilih beberapa santri → terbitkan surat tagihan sekaligus. Ekspor Excel dan cetak F4.
@@ -119,7 +119,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
     </template>
 
     <LembarSuratTagihan :santri="surat" @tutup="surat = null" @terbit="(pilih = new Set()), muat()" />
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Daftar Tagihan Santri" :subjudul="`Posisi per ${formatPanjang(hariIniISO())}${namaGrup ? ' · ' + namaGrup : ''}${jenjang ? ' · ' + JENJANG[jenjang] : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="keu_tagihan" v-model:pratinjau="pratinjau" mendatar judul="Daftar Tagihan Santri" :subjudul="`Posisi per ${formatPanjang(hariIniISO())}${namaGrup ? ' · ' + namaGrup : ''}${jenjang ? ' · ' + JENJANG[jenjang] : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:4%"><col style="width:9%"><col style="width:22%"><col style="width:4%"><col style="width:8%"><col v-for="n in 4" :key="n" style="width:10%"><col style="width:13%"></colgroup>
         <thead><tr><th>No.</th><th>NIS</th><th>Nama</th><th>JK</th><th>Kelas</th><th>Tagihan (Rp)</th><th>Dibayar (Rp)</th><th>Sisa (Rp)</th><th>Lewat tempo (Rp)</th><th>Wali</th></tr></thead>

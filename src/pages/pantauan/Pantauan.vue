@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Layar Pantauan (Blueprint Bagian 28) berbentuk SLIDE layar penuh untuk presentasi dan SmartTV.
 //   Dibuka dari tombol "Layar Pantauan" di Beranda (bukan menu). Slide: Santri, Pegawai, SMP, SMA, Tahfizh, Hafalan, Asrama,
@@ -229,7 +229,7 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
       </div>
     </LembarBawah>
 
-    <DokumenCetak v-if="daftar" kop="pondok" :judul="daftar.judul" :subjudul="`${formatPanjang(pt.data.tanggal)}, pukul ${formatJam(pt.data.waktu)} WITA${saringanTeks ? ' · ' + saringanTeks : ''}`"
+    <DokumenCetak jenis="pantauan" :konteks="{ kelompok: daftar?.ttd || null }" v-if="daftar" kop="pondok" :judul="daftar.judul" :subjudul="`${formatPanjang(pt.data.tanggal)}, pukul ${formatJam(pt.data.waktu)} WITA${saringanTeks ? ' · ' + saringanTeks : ''}`"
       v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" :mendatar="daftar.kolom.length > 5 && !daftar.tegak">
       <p style="margin: 0 0 6pt">Jumlah: {{ daftar.baris.length }}</p>
       <table class="tabel kecil">

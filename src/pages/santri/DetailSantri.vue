@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.14 | 14.9.3: keterangan dampak status nonaktif terhadap kelompok | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.15 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Biodata santri: identitas, kontak orang tua/wali (tombol WA), riwayat status dan mutasi;
@@ -315,7 +315,7 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
     </div>
 
     <!-- Biodata F4 -->
-    <DokumenCetak :kop="kopJenjang" judul="Biodata Santri" :nama-berkas="namaBerkas(s.nama_lengkap, 'Biodata Santri')" v-model:pratinjau="pratinjauBio" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="santri_biodata" :konteks="{ jenjang: s?.jenjang }" :kop="kopJenjang" judul="Biodata Santri" :nama-berkas="namaBerkas(s.nama_lengkap, 'Biodata Santri')" v-model:pratinjau="pratinjauBio" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:7%"><col style="width:33%"><col style="width:60%"></colgroup>
         <thead><tr><th>No.</th><th>Data</th><th>Keterangan</th></tr></thead>
@@ -328,7 +328,7 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
     </DokumenCetak>
 
     <!-- Surat keterangan pindah F4 -->
-    <DokumenCetak v-if="mutasiCetak" :kop="mutasiCetak.kop || kopJenjang" judul="Surat Keterangan Pindah" :nomor="mutasiCetak.nomor_surat" :nama-berkas="namaBerkas(s.nama_lengkap, 'Surat Keterangan Pindah', mutasiCetak.nomor_surat)"
+    <DokumenCetak jenis="santri_pindah" :konteks="{ jenjang: s?.jenjang }" v-if="mutasiCetak" :kop="mutasiCetak.kop || kopJenjang" judul="Surat Keterangan Pindah" :nomor="mutasiCetak.nomor_surat" :nama-berkas="namaBerkas(s.nama_lengkap, 'Surat Keterangan Pindah', mutasiCetak.nomor_surat)"
       v-model:pratinjau="pratinjauPindah" :pencetak="sesi.pengguna?.nama_lengkap">
       <p>Yang bertanda tangan di bawah ini, {{ jabatanLembaga(pimpinan.jabatan || 'Kepala ' + JENJANG[s.jenjang], satuanPindah) }}, menerangkan bahwa:</p>
       <table class="data" style="margin: 6pt 0 8pt 12pt">

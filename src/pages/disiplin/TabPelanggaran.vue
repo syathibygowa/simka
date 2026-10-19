@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/disiplin/TabPelanggaran.vue | v1.1 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/disiplin/TabPelanggaran.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Tab Pelanggaran: kartu statistik langsung, saringan (rentang tanggal, tingkat, kategori, jenjang, pencarian; corong di HP),
 // daftar catatan dengan lencana SP, ubah/hapus (pencatat atau Kesantrian), cetak rekap F4 mendatar berkop dan Excel.
@@ -161,7 +161,7 @@ function excel() {
     <LembarPelanggaran v-model="lembar" :data="ubah" :santri="ubah ? null : santriKunci" @selesai="muat" />
     <LembarUsulSPSantri v-if="ds.hak.usul" v-model="lembarSP" :santri-awal="santriKunci" @tersimpan="muat" />
 
-    <DokumenCetak :judul="santriRiwayat ? 'Riwayat Pelanggaran Santri' : 'Rekap Pelanggaran Santri'" :subjudul="subjudul" mendatar v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap"
+    <DokumenCetak jenis="disiplin_pelanggaran" :judul="santriRiwayat ? 'Riwayat Pelanggaran Santri' : 'Rekap Pelanggaran Santri'" :subjudul="subjudul" mendatar v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap"
       :nama-berkas="namaBerkas(santriRiwayat?.nama || 'Seluruh santri', 'Catatan Pelanggaran Santri', santriRiwayat ? '' : periodeRentang(mulai, selesai))">
       <table class="tabel" style="font-size: 9pt">
         <colgroup><col style="width:3%"><col style="width:8%"><col style="width:7%"><col style="width:13%"><col style="width:6%"><col style="width:6%"><col style="width:14%"><col style="width:21%"><col style="width:13%"><col style="width:9%"></colgroup>

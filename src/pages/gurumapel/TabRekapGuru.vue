@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabRekapGuru.vue | v1.2 | 14.13.0: saringan corong di HP | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabRekapGuru.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Rekap keterlaksanaan mengajar seorang guru untuk satu periode (paling lama 62 hari): per kelas-mapel dan daftar jurnal
 // per tanggal (materi atau keterangan). Guru melihat dirinya; pemantau dapat memilih guru.
@@ -79,7 +79,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
       </section>
     </div>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" judul="Laporan Keterlaksanaan Mengajar" :subjudul="teksRentang(mulai, selesai)" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="gm_rekap_guru" :konteks="{ groupIds: rekap.map((r) => jd.cariPenugasan(r.assignment_id)?.group_id).filter(Boolean) }" v-model:pratinjau="pratinjau" judul="Laporan Keterlaksanaan Mengajar" :subjudul="teksRentang(mulai, selesai)" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil" style="width: 70%; margin-bottom: 6pt">
         <colgroup><col style="width:30%"><col style="width:70%"></colgroup>
         <tbody><tr><td>Nama guru</td><td>{{ guru.nama }}</td></tr><tr><td>NIY</td><td>{{ guru.niy || '–' }}</td></tr>

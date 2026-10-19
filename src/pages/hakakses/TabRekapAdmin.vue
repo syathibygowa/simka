@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/hakakses/TabRekapAdmin.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/hakakses/TabRekapAdmin.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Rekap akses admin (khusus superadmin): baris = uraian akses, kolom = setiap admin, sel = centang bila admin memiliki akses itu.
 // Desktop: matriks lengkap. HP: kartu per admin. Cetak F4 mendatar berkop dengan kolom tanda tangan.
@@ -161,7 +161,7 @@ const lebarAdmin = computed(() => (admin.value.length ? Math.max(5, Math.min(12,
       </template>
     </template>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Rekap Akses Admin SIMKA PRO" :subjudul="`Keadaan per ${new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`"
+    <DokumenCetak jenis="hak_akses_admin" v-model:pratinjau="pratinjau" mendatar judul="Rekap Akses Admin SIMKA PRO" :subjudul="`Keadaan per ${new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`"
       nama-berkas="Rekap-Akses-Admin-SIMKA-PRO" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:4%"><col :style="`width:${96 - lebarAdmin * admin.length - 7}%`"><col v-for="p in admin" :key="p.id" :style="`width:${lebarAdmin}%`"><col style="width:7%"></colgroup>

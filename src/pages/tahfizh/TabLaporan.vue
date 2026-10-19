@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabLaporan.vue | v1.1 | 14.13.0: pilihan laporan dilipat ke tombol corong di HP setelah hasil tampil | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabLaporan.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Laporan tahfizh: 15 format (Blueprint Bagian 20) dengan periode bulan/semester/tahun, pengelompokan per halaqah, kelas,
 // tingkatan, kamar, atau seluruh santri. Pratinjau di layar, ekspor Excel, dan cetak F4 berkop (tiap kelompok satu halaman
@@ -166,7 +166,7 @@ const lebarKolom = (b) => { const t = b.kolom.reduce((s, k) => s + Number(k.leba
     </div>
 
     <!-- Cetak F4 -->
-    <DokumenCetak v-if="lap" kop="pondok" :judul="lap.judul" :subjudul="lap.subjudul" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" :mendatar="!!kat.mendatar || !!lap.mendatar">
+    <DokumenCetak jenis="thz_laporan" v-if="lap" kop="pondok" :judul="lap.judul" :subjudul="lap.subjudul" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" :mendatar="!!kat.mendatar || !!lap.mendatar">
       <table v-if="lap.identitas" style="width: 100%; margin-bottom: 8pt; font-size: 10.5pt"><tbody><tr v-for="[a, b] in lap.identitas" :key="a"><td style="width: 30%">{{ a }}</td><td>: {{ b }}</td></tr></tbody></table>
       <div v-if="lap.grafik" style="margin: 4pt 0 10pt">
         <GrafikLingkaran v-if="lap.grafik.jenis === 'lingkaran'" :data="lap.grafik.data" />

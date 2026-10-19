@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabTunggakan.vue | v1.5 | 14.13.0: saringan corong di HP | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabTunggakan.vue | v1.6 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Posisi tunggakan per tanggal (bawaan hari ini): tagihan yang jatuh tempo paling lambat tanggal itu dan masih bersisa
 // pada tanggal itu. Dikelompokkan per santri, kelas, kamar, halaqah, jenis biaya, atau jenjang. Cetak F4 dan Excel.
@@ -122,7 +122,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
       <PengirimWABeruntun :penerima="penerima" :templat="TEMPLAT_WA" :kunci="'tunggakan-' + tanggal" />
     </LembarBawah>
     <LembarSuratTagihan :santri="surat" @tutup="surat = null" @terbit="muat" />
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Laporan Tunggakan Keuangan Santri" :subjudul="`${teksPeriode.charAt(0).toUpperCase() + teksPeriode.slice(1)} · ${CAKUPAN.find((c) => c.k === cakupan).n}${jenjang ? ' · ' + JENJANG[jenjang] : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="keu_tunggakan" v-model:pratinjau="pratinjau" mendatar judul="Laporan Tunggakan Keuangan Santri" :subjudul="`${teksPeriode.charAt(0).toUpperCase() + teksPeriode.slice(1)} · ${CAKUPAN.find((c) => c.k === cakupan).n}${jenjang ? ' · ' + JENJANG[jenjang] : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table v-if="cakupan === 'santri'" class="tabel">
         <colgroup><col style="width:4%"><col style="width:9%"><col style="width:20%"><col style="width:4%"><col style="width:8%"><col style="width:31%"><col style="width:10%"><col style="width:14%"></colgroup>
         <thead><tr><th>No.</th><th>NIS</th><th>Nama</th><th>JK</th><th>Kelas</th><th>Tagihan tertunggak</th><th>Tertua</th><th>Sisa (Rp)</th></tr></thead>

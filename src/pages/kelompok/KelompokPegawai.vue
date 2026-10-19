@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kelompok/KelompokPegawai.vue | v1.1 | Fase 8 – Urutan kolom seragam (NIY/NIS > Nama > JK) | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompok/KelompokPegawai.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Kelompok pegawai di luar jabatan fungsional/struktural: Pengurus Harian (PH), Pengurus Inti (PI), panitia, tim, dll.
 // Superadmin dan admin ber-izin kelola_kelompok membuat kelompok, memilih anggota (dengan peran opsional),
@@ -122,7 +122,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
       </div>
     </LembarBawah>
 
-    <DokumenCetak v-if="k" v-model:pratinjau="pratinjau" judul="Daftar Anggota Kelompok" :subjudul="k.nama + (k.singkatan ? ` (${k.singkatan})` : '')" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="pgw_kelompok" v-if="k" v-model:pratinjau="pratinjau" judul="Daftar Anggota Kelompok" :subjudul="k.nama + (k.singkatan ? ` (${k.singkatan})` : '')" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:7%"><col style="width:20%"><col style="width:40%"><col style="width:33%"></colgroup>
         <thead><tr><th>No.</th><th>NIY</th><th>Nama</th><th>Peran / Bidang</th></tr></thead>

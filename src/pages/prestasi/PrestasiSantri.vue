@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/prestasi/PrestasiSantri.vue | v1.1 | 14.13.0: saringan corong di HP, tombol Cetak Rekap/Ekspor | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/prestasi/PrestasiSantri.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Prestasi dan capaian santri (santri yang terlihat oleh pengguna): kartu statistik langsung, saringan rentang tanggal,
 // bidang, tingkat, jenjang, dan pencarian; catat/ubah/hapus (wali kelas, musyrif, muhaffizh, pembina ekskul santri tersebut,
@@ -138,7 +138,7 @@ function eksporExcel() {
     <TombolAksi v-if="pr.boleh" class="lg:hidden" label="Catat" :ikon="PhPlus" warna="prestasi" @klik="tambah" />
     <LembarPrestasi v-model="lembar" :data="ubah" @selesai="muat" />
 
-    <DokumenCetak judul="Rekap Prestasi Santri" :subjudul="subjudul" mendatar v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="prestasi" judul="Rekap Prestasi Santri" :subjudul="subjudul" mendatar v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:4%"><col style="width:8%"><col style="width:16%"><col style="width:4%"><col style="width:7%"><col style="width:9%"><col style="width:9%"><col style="width:10%"><col style="width:16%"><col style="width:9%"><col style="width:8%"></colgroup>
         <thead><tr><th>No.</th><th>NIS</th><th>Nama</th><th>JK</th><th>Kelas</th><th>Tanggal</th><th>Bidang</th><th>Tingkat</th><th>Kegiatan/lomba</th><th>Capaian</th><th>Penyelenggara</th></tr></thead>

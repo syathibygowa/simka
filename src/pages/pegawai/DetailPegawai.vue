@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/DetailPegawai.vue | v1.7 | 14.8.0: tombol Rekam kepegawaian | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/DetailPegawai.vue | v1.8 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Biodata pegawai: kepala profil (foto, nama, NIY, status akun), ringkasan jabatan, profil lengkap per bagian
@@ -157,7 +157,7 @@ const baris = computed(() => BAGIAN.value.flatMap((b) => b.isi).filter(([k]) => 
     </div>
 
     <!-- Cetak biodata (tabel) -->
-    <DokumenCetak judul="Biodata Pegawai" :nama-berkas="namaBerkas(p.nama_lengkap, 'Biodata Pegawai')" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="pgw_biodata" judul="Biodata Pegawai" :nama-berkas="namaBerkas(p.nama_lengkap, 'Biodata Pegawai')" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:7%"><col style="width:33%"><col style="width:60%"></colgroup>
         <thead><tr><th>No.</th><th>Data</th><th>Keterangan</th></tr></thead>
@@ -170,7 +170,7 @@ const baris = computed(() => BAGIAN.value.flatMap((b) => b.isi).filter(([k]) => 
     </DokumenCetak>
 
     <!-- Cetak CV / Daftar Riwayat Hidup -->
-    <DokumenCetak judul="Daftar Riwayat Hidup" :nama-berkas="namaBerkas(p.nama_lengkap, 'Daftar Riwayat Hidup')" v-model:pratinjau="pratinjauCv" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="pgw_drh" judul="Daftar Riwayat Hidup" :nama-berkas="namaBerkas(p.nama_lengkap, 'Daftar Riwayat Hidup')" v-model:pratinjau="pratinjauCv" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="data" style="width: 100%; margin-bottom: 8pt">
         <tbody><tr>
           <td style="vertical-align: top; padding-right: 6mm">

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/ekskul/TabRekapEkskul.vue | v1.3 | 14.13.0: saringan corong di HP, tombol disederhanakan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/ekskul/TabRekapEkskul.vue | v1.4 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Rekap ekskul per periode: kehadiran anggota (HISBAT) dan jurnal materi setiap pertemuan.
 // Dapat dicetak oleh pembina, pimpinan, admin, dan superadmin (F4 mendatar, berkop pondok).
@@ -121,7 +121,7 @@ function ekspor() {
         </section>
       </div>
 
-      <DokumenCetak kop="pondok" :judul="`Rekap Ekskul ${g.nama}`" :subjudul="`Tahun Ajaran ${g.tahun_ajaran} · ${teksPeriode}`" mendatar v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+      <DokumenCetak jenis="ekskul_rekap" :konteks="{ kelompok: g }" kop="pondok" :judul="`Rekap Ekskul ${g.nama}`" :subjudul="`Tahun Ajaran ${g.tahun_ajaran} · ${teksPeriode}`" mendatar v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
         <p style="margin-bottom: 4pt">A. Kehadiran anggota ({{ jurnal.length }} pertemuan)</p>
         <table class="tabel kecil">
           <thead><tr><th style="width:4%">No.</th><th style="width:9%">NIS</th><th>Nama</th><th style="width:10%">Kelas</th><th style="width:8%">Hadir/Pertemuan</th>

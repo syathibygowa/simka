@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/security/TabRiwayatGerbang.vue | v1.1 | 14.13.0: saringan corong di HP | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/security/TabRiwayatGerbang.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Riwayat gerbang santri pada rentang tanggal (keluar, kembali, ditolak), saring jenis dan nama,
 // unduh Excel, cetak F4 mendatar berkop (Mengetahui Kepala Bidang Kesantrian kiri, pembuat rekap kanan).
@@ -76,7 +76,7 @@ function ekspor() {
       <p v-if="!tampil.length && !memuat" class="py-8 text-center text-sm text-teks3">Belum ada catatan gerbang pada rentang ini.</p>
     </div>
 
-    <DokumenCetak kop="pondok" judul="Riwayat Gerbang Santri" :subjudul="'Periode ' + periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
+    <DokumenCetak jenis="sec_gerbang" kop="pondok" judul="Riwayat Gerbang Santri" :subjudul="'Periode ' + periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
       <p style="margin: 0 0 6pt">Jumlah: {{ jumlah('keluar') }} keluar, {{ jumlah('kembali') }} kembali, {{ jumlah('ditolak') }} ditolak di gerbang.</p>
       <table class="tabel kecil">
         <thead><tr><th style="width:4%">No.</th><th style="width:11%">Waktu</th><th style="width:7%">Kejadian</th><th style="width:19%">Nama santri</th><th style="width:6%">Kelas</th>

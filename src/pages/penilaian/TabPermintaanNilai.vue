@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabPermintaanNilai.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabPermintaanNilai.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Penilaian → Permintaan: permintaan ubah nilai setelah periode ditutup (nilai mapel dari guru pengampu, nilai UTAS dari
 // penguji). Pengelola nilai menyetujui (nilai langsung diperbarui; mode akumulasi memakai nilai koreksi) atau menolak
@@ -86,7 +86,7 @@ const pratinjau = ref(false)
       </div>
     </LembarBawah>
 
-    <DokumenCetak kop="pondok" judul="Riwayat Permintaan Ubah Nilai" :subjudul="`${SARING.find((s) => s.k === saring)?.n} · keadaan ${formatPanjang(hariIniISO())}`" v-model:pratinjau="pratinjau"
+    <DokumenCetak jenis="nilai_permintaan" kop="pondok" judul="Riwayat Permintaan Ubah Nilai" :subjudul="`${SARING.find((s) => s.k === saring)?.n} · keadaan ${formatPanjang(hariIniISO())}`" v-model:pratinjau="pratinjau"
       :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
       <table class="tabel kecil"><colgroup><col style="width:4%"><col style="width:9%"><col style="width:8%"><col style="width:15%"><col style="width:6%"><col style="width:12%"><col style="width:15%"><col style="width:15%"><col style="width:16%"></colgroup>
         <thead><tr><th>No.</th><th>Diajukan</th><th>NIS</th><th>Nama</th><th>Kelas</th><th>Mapel</th><th>Perubahan</th><th>Alasan</th><th>Status</th></tr></thead>

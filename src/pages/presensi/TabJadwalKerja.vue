@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/presensi/TabJadwalKerja.vue | v1.1 | 14.13.0: teks keterangan dihapus, saringan corong di HP | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/TabJadwalKerja.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Penjadwalan → Jadwal kerja: jam presensi setiap pegawai per hari dalam satu pekan, persis seperti yang dibaca sistem
 // (pola dan sesi aktif, sesi yang dipegang, jadwal shift, dan hari libur). Saring putra/putri, bidang/unit, pola, dan nama;
@@ -161,7 +161,7 @@ function ekspor() {
       </ul>
     </template>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Jadwal Kerja Pegawai" :nama-berkas="`Jadwal-Kerja-Pegawai-${formatPendek(senin).replace(/\//g, '-')}`"
+    <DokumenCetak jenis="jadwal_kerja" v-model:pratinjau="pratinjau" mendatar judul="Jadwal Kerja Pegawai" :nama-berkas="`Jadwal-Kerja-Pegawai-${formatPendek(senin).replace(/\//g, '-')}`"
       :subjudul="`Pekan ${formatPanjang(senin)} s.d. ${formatPanjang(tambahHari(senin, 6))}${judulFilter ? ' · ' + judulFilter : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:3%"><col style="width:9%"><col style="width:17%"><col style="width:3%"><col v-for="t in tanggal" :key="t" style="width:9.71%"></colgroup>

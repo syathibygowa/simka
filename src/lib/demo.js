@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demo.js | v1.15 | Perbaikan 13.9.0: katalog Hak Akses Fitur terkini dan izin Kelola pengumuman | 16/10/2026
+// SIMKA PRO | src/lib/demo.js | v1.16 | 14.15.0: aturan cetak bawaan katalog, pejabat Kepala Bidang Kesantrian | 19/10/2026
 // Data contoh untuk MODE DEMO. Nama pegawai di bawah fiktif.
 import { KATALOG_FITUR } from './hakAkses'
 const menitLalu = (m) => new Date(Date.now() - m * 60000).toISOString()
@@ -108,14 +108,9 @@ export const LEMBAGA_DEMO = () => ({
     { id: 's1', jabatan_tertulis: 'Direktur', nama: 'Siswandi Safari, S.Pd.I., Lc., S.H., M.Ag.', niy: '1983020910201401', aktif: true, urutan: 1, sumber_jabatan: 'DIREKTUR', employee_id: 'demo-direktur' },
     { id: 's2', jabatan_tertulis: 'Kepala Kesetaraan Wustha (SMP)', nama: 'Chamdar Nur, S.Pd.I., SH., Lc., M.Pd.', niy: '1983042805201401', aktif: true, urutan: 2, employee_id: 'demo-wustha' },
     { id: 's3', jabatan_tertulis: 'Kepala SMA', nama: 'H. Afrianto, Lc, M.H.', niy: '1994042801202001', aktif: true, urutan: 3 },
+    { id: 's4', jabatan_tertulis: 'Kepala Bidang Kesantrian', nama: 'Ust. Muhammad Ikhsan, S.Pd.I.', niy: '2018010303', aktif: true, urutan: 4 },
   ],
-  signer_rules: [
-    { jenis_dokumen: 'pengajuan_pegawai', nama_dokumen: 'Surat izin/sakit/cuti pegawai', kiri: 'atasan_terakhir', kanan: 'pemohon', mode: 'elektronik', kop_kode: 'pondok', urutan: 1 },
-    { jenis_dokumen: 'rekap_pegawai', nama_dokumen: 'Rekap kehadiran pegawai', kiri: 's1', kanan: 'pencetak', mode: 'elektronik', kop_kode: 'pondok', urutan: 3 },
-    { jenis_dokumen: 'slip_gaji', nama_dokumen: 'Slip gaji', kiri: 'bendahara', kanan: 'pegawai', mode: 'elektronik', kop_kode: 'pondok', urutan: 5 },
-    { jenis_dokumen: 'kartu_pegawai', nama_dokumen: 'Kartu pegawai', kiri: 's1', kanan: null, mode: 'elektronik', kop_kode: 'pondok', urutan: 7 },
-    { jenis_dokumen: 'daftar_pegawai', nama_dokumen: 'Daftar dan rekap kepegawaian', kiri: 's1', kanan: 'pencetak', mode: 'elektronik', kop_kode: 'pondok', urutan: 10 },
-  ],
+  signer_rules: [],   // 14.15.0: kosong = bawaan katalog lib/aturanCetak.js
   academic_years: [{ id: 't1', nama: '2026/2027', mulai: '2026-07-13', selesai: '2027-06-30', semester: 1, aktif: true, terkunci: false }],
   holiday_calendars: [
     { jenis_tugas: 'sekolah', nama: 'Sekolah (Wustha dan SMA)', hari_libur: [0], catatan: 'Ahad libur' },

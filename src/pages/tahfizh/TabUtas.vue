@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabUtas.vue | v1.4 | 14.13.0: saringan corong di HP, tombol disederhanakan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabUtas.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Ujian Tahfizh Akhir Semester (UTAS), di Tahfizh → Ujian → UTAS (SOP UTAS pondok).
 //   Panitia (admin/superadmin/pengatur rapor tahfizh): menetapkan penguji per kelas, membagi peserta otomatis (bergilir,
@@ -321,7 +321,7 @@ const namaCetak = (k) => (k.jenis === 'halaqah' ? k.nama : `Kelas ${k.nama}`)
     </LembarBawah>
 
     <!-- Cetak -->
-    <DokumenCetak kop="pondok" :judul="cetakJenis === 'hasil' ? 'Hasil Ujian Tahfizh Akhir Semester (UTAS)' : 'Pembagian Penguji Ujian Tahfizh Akhir Semester (UTAS)'"
+    <DokumenCetak jenis="thz_utas" kop="pondok" :judul="cetakJenis === 'hasil' ? 'Hasil Ujian Tahfizh Akhir Semester (UTAS)' : 'Pembagian Penguji Ujian Tahfizh Akhir Semester (UTAS)'"
       :subjudul="`${LABEL_SEMESTER[semester] || ''} · keadaan ${formatPanjang(hariIniISO())}`" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" :mendatar="cetakJenis === 'hasil'">
       <template v-if="cetakJenis === 'pembagian'">
         <table class="tabel"><colgroup><col style="width:7%"><col style="width:17%"><col style="width:25%"><col style="width:51%"></colgroup>

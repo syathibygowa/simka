@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/RekapKehadiranMapel.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/components/RekapKehadiranMapel.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Rekap kehadiran santri per mata pelajaran dari absensi guru mapel di jurnal mengajar.
 //   * Pertemuan = tanggal jurnal terlaksana yang absensinya diisi (beberapa JP di hari sama = 1 pertemuan).
@@ -131,7 +131,7 @@ async function excel() {
       </div>
       <p class="mt-2 text-xs text-teks3">Persentase = hadir ÷ pertemuan. Sakit, izin, alfa, dan bolos mengurangi kehadiran; terlambat tetap dihitung hadir. Arahkan kursor/ketuk angka untuk rincian.</p>
 
-      <DokumenCetak v-model:pratinjau="pratinjau" mendatar :judul="judulCetak" :subjudul="`Kelas ${namaKelas} · ${judulRentang}`" :pencetak="sesi.pengguna?.nama_lengkap">
+      <DokumenCetak jenis="gm_kehadiran_mapel" :konteks="{ groupIds: [groupId || jd.cariPenugasan(assignmentId)?.group_id].filter(Boolean) }" v-model:pratinjau="pratinjau" mendatar :judul="judulCetak" :subjudul="`Kelas ${namaKelas} · ${judulRentang}`" :pencetak="sesi.pengguna?.nama_lengkap">
         <table class="tabel kecil">
           <thead><tr><th style="width: 4%">No.</th><th style="width: 9%">NIS</th><th>Nama</th><th v-for="m in mapel" :key="m.assignment_id">{{ m.kode || m.mapel }}</th><th style="width: 7%">Rata-rata</th></tr></thead>
           <tbody>

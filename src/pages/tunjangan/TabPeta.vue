@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tunjangan/TabPeta.vue | v1.3 | 14.13.0: saringan corong di HP, tombol Ekspor/Pratinjau | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/tunjangan/TabPeta.vue | v1.4 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Peta jabatan per pegawai dalam bentuk tabel: jabatan yang diemban, komponen tunjangan,
 // jumlah perkiraan, dan keterangan kekurangan data. Jabatan dapat diubah langsung dari baris tabel oleh pemegang izin
@@ -202,7 +202,7 @@ function ekspor() {
     </LembarBawah>
 
     <!-- Dokumen cetak F4 mendatar -->
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Peta Jabatan dan Perkiraan Tunjangan" :subjudul="`Tarif berlaku per ${formatPanjang(tanggal)}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="pgw_peta" v-model:pratinjau="pratinjau" mendatar judul="Peta Jabatan dan Perkiraan Tunjangan" :subjudul="`Tarif berlaku per ${formatPanjang(tanggal)}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">
         <colgroup><col style="width:3%"><col style="width:11%"><col style="width:11%"><col style="width:4.5%"><col style="width:5%">
           <col v-for="k in KOLOM" :key="k" style="width:6.5%"><col style="width:6.5%"><col style="width:13.5%"></colgroup>

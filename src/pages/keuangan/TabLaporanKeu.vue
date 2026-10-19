@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabLaporanKeu.vue | v1.1 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabLaporanKeu.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Laporan keuangan satu halaman untuk pimpinan pada rentang tanggal (bawaan bulan berjalan):
 //   A. Arus kas per rekening (saldo awal, masuk, keluar, saldo akhir)
@@ -132,7 +132,7 @@ function excel() {
     </div>
 
     <!-- Cetak satu halaman F4 -->
-    <DokumenCetak v-if="L" v-model:pratinjau="pratinjau" judul="Laporan Keuangan" :subjudul="subjudul" :pencetak="sesi.pengguna?.nama_lengkap"
+    <DokumenCetak jenis="keu_laporan" v-if="L" v-model:pratinjau="pratinjau" judul="Laporan Keuangan" :subjudul="subjudul" :pencetak="sesi.pengguna?.nama_lengkap"
       :nama-berkas="namaBerkas('Laporan Keuangan', periodeRentang(mulai, selesai))">
       <div class="lap-ringkas">
         <p class="sub">A. Arus kas per rekening</p>

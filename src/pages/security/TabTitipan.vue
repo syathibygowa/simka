@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/security/TabTitipan.vue | v1.3 | 14.13.0: saringan tanggal di tombol corong pada HP | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/security/TabTitipan.vue | v1.4 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Titipan barang/uang untuk santri (Blueprint Bagian 24). Mencegah paket hilang di pos:
 //   Terima : santri penerima, jenis, uraian, pengirim, ekspedisi, FOTO BARANG WAJIB → musyrif dinotifikasi.
@@ -222,7 +222,7 @@ watch(pratinjau, async (v) => { if (v) penanda.value = await penandaKelompok({ j
       </div>
     </LembarBawah>
 
-    <DokumenCetak kop="pondok" judul="Daftar Titipan Santri" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
+    <DokumenCetak jenis="sec_titipan" kop="pondok" judul="Daftar Titipan Santri" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
       <table class="tabel kecil">
         <thead><tr><th style="width:4%">No.</th><th style="width:11%">Diterima</th><th style="width:16%">Nama santri</th><th style="width:5%">Kelas</th><th style="width:10%">Kamar</th>
           <th style="width:17%">Barang</th><th style="width:11%">Pengirim</th><th style="width:8%">Status</th><th>Pengambilan</th><th style="width:10%">Petugas</th></tr></thead>

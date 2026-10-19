@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/lapor/Lapor.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/lapor/Lapor.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Laporan Terkait (Blueprint Bagian 30).
 //   Laporan saya : laporan yang saya kirim beserta statusnya
@@ -83,7 +83,7 @@ async function simpanKategori(k) {
         </table>
         <p v-if="!rekap.length" class="py-8 text-center text-sm text-teks3">Belum ada laporan pada rentang ini.</p>
       </div>
-      <DokumenCetak kop="pondok" judul="Rekap Laporan Terkait" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+      <DokumenCetak jenis="lapor_rekap" kop="pondok" judul="Rekap Laporan Terkait" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
         <table class="tabel">
           <thead><tr><th style="width:5%">No.</th><th style="width:22%">Kategori</th><th>Bidang/unit</th><th style="width:9%">Jumlah</th><th style="width:9%">Terkirim</th>
             <th style="width:9%">Diterima</th><th style="width:11%">Ditindaklanjuti</th><th style="width:8%">Selesai</th><th style="width:9%">Mendesak</th></tr></thead>

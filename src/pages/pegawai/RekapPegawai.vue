@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/RekapPegawai.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/RekapPegawai.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Rekap kepegawaian: per status, pendidikan, masa kerja, dan bidang, dirinci menurut jenis kelamin.
 import { ref, computed, onMounted } from 'vue'
@@ -85,7 +85,7 @@ function ekspor() {
     </div>
 
     <div>
-      <DokumenCetak judul="Rekap Kepegawaian" :subjudul="`Pegawai aktif keadaan per ${formatPanjang(new Date())}`"  v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+      <DokumenCetak jenis="pgw_rekap" judul="Rekap Kepegawaian" :subjudul="`Pegawai aktif keadaan per ${formatPanjang(new Date())}`"  v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
         <template v-for="(t, ti) in TABEL" :key="t.judul">
           <p :style="{ margin: ti ? '10pt 0 4pt' : '4pt 0 4pt' }">{{ String.fromCharCode(65 + ti) }}. {{ t.judul.replace('Menurut', 'Rekap menurut') }}</p>
           <table class="tabel">

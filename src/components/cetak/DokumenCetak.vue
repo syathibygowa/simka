@@ -1,12 +1,15 @@
-<!-- SIMKA PRO | src/components/cetak/DokumenCetak.vue | v1.8 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/DokumenCetak.vue | v1.9 | 14.15.0: kop dan penanda tangan mengikuti Setelan → Penanda tangan (prop jenis, konteks) | 19/10/2026 -->
 <script setup>
 // Kerangka dokumen cetak F4: kop surat, judul, isi (slot), tanda tangan, catatan cetak.
 // Pratinjau tampil sebagai jendela munculan (pop-up) dengan tombol Cetak dan Tutup.
 // Dokumen selalu dipindah ke <body>, sehingga saat dicetak hanya dokumen yang tampil.
-import { computed, ref, watch, onBeforeUnmount } from 'vue'
+import { computed, ref, watch, onBeforeUnmount, provide } from 'vue'
 import { PhPrinter, PhX } from '@phosphor-icons/vue'
 import { formatPanjang, formatJam, sekarang } from '@/lib/tanggal'
 import { useLembaga } from '@/stores/lembaga'
+import { useSesi } from '@/stores/sesi'
+import { useKelompokSantri } from '@/stores/kelompokSantri'
+import { susunAturan } from '@/lib/aturanCetak'
 import KopSurat from './KopSurat.vue'
 import { namaDariJudul, pasangJudul, lepasJudul } from '@/lib/namaBerkas'
 
@@ -20,7 +23,25 @@ const props = defineProps({
   sembunyikanJudul: Boolean,                // surat resmi: judul disusun sendiri (judul tetap tampil di bilah pratinjau)
   tanpaCatatan: Boolean,                    // surat resmi: tanpa baris "Dicetak melalui SIMKA PRO…"
   namaBerkas: String,                       // nama berkas PDF: "Nama pegawai/santri/bidang - Dokumen - Periode"; bawaan dari judul, subjudul, nomor
+  jenis: String,                            // 14.15.0: kode dokumen di katalog lib/aturanCetak.js → kop dan penanda tangan dari Setelan
+  konteks: { type: Object, default: null }, // { jenjang, groupIds, kelompok: { jenis, jenjang }, pengasuh, pihak, pembuat }
 })
+// 14.15.0: aturan kop dan penanda tangan terpusat; TandaTangan di dalam dokumen membacanya lewat provide/inject
+const sesiPengguna = useSesi(); const kelS = useKelompokSantri()
+// groupIds: jenjang dokumen = jenjang kelas-kelas tersebut bila semuanya satu jenjang
+watch(() => (props.jenis && props.konteks?.groupIds?.length) || 0, (n) => { if (n && !kelS.daftar.length && !kelS.memuat) kelS.muat().catch(() => {}) }, { immediate: true })
+const konteksAkhir = computed(() => {
+  const k = { ...(props.konteks || {}) }
+  if (!k.jenjang && k.groupIds?.length) {
+    const js = [...new Set(k.groupIds.map((id) => kelS.cari(id)).filter((g) => g?.jenis === 'kelas' && g.jenjang).map((g) => g.jenjang))]
+    if (js.length === 1) k.jenjang = js[0]
+  }
+  return k
+})
+const aturan = computed(() => (props.jenis ? susunAturan(props.jenis, { rules: lembaga.signer_rules, signatories: lembaga.signatories,
+  letterheads: lembaga.letterheads, konteks: konteksAkhir.value, pengguna: sesiPengguna.pengguna }) : null))
+provide('aturanCetak', aturan)
+const kopAkhir = computed(() => aturan.value ? aturan.value.kop(props.kop) : props.kop)
 // Nama berkas bawaan: <bidang/kelompok dari subjudul> - Judul - Nomor - <periode bulan dari tanggal di subjudul, atau bulan cetak>
 const nama = computed(() => props.namaBerkas || namaDariJudul(props.judul, props.subjudul, props.nomor))
 // Cetak langsung tanpa pratinjau: pasang nama bila tidak ada dokumen lain yang sedang dipratinjau
@@ -61,7 +82,7 @@ const cetak = () => window.print()
         <article :class="['dok lembar-f4', mendatar && 'mendatar']" :style="pratinjau ? { zoom: skala } : null">
           <!-- Tabel tata halaman: tfoot berulang di setiap halaman menyediakan ruang untuk catatan validasi di kaki halaman -->
           <table class="tata-halaman"><tbody><tr><td>
-            <KopSurat :kop="kopData || lembaga.kop(kop)" :kode="kop" :mendatar="mendatar" />
+            <KopSurat :kop="kopData || lembaga.kop(kopAkhir)" :kode="kopAkhir" :mendatar="mendatar" />
             <h1 v-if="!sembunyikanJudul" class="judul-dok">{{ judul }}</h1>
             <p v-if="nomor && !sembunyikanJudul" class="subjudul-dok">Nomor: {{ nomor }}</p>
             <p v-if="subjudul" class="subjudul-dok">{{ subjudul }}</p>

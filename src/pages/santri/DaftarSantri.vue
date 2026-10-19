@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.9 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.10 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Daftar santri sesuai cakupan pengguna (RLS): kartu statistik langsung, cari dan saring,
 // ekspor Excel, cetak daftar F4 berkop jenjang. v1.4: cetak kartu pelajar massal (santri aktif yang tampil, per rombel).
@@ -216,7 +216,7 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
     </div>
 
     <!-- Dokumen cetak -->
-    <DokumenCetak :kop="kop" :judul="judulCetak" :subjudul="`Keadaan per ${formatPanjang(tglDok)}${status !== 'semua' ? ' · Status ' + STATUS_SANTRI[status].n.toLowerCase() : ''}`"
+    <DokumenCetak jenis="santri_daftar" :konteks="{ jenjang: jenjang === 'semua' ? null : jenjang }" :kop="kop" :judul="judulCetak" :subjudul="`Keadaan per ${formatPanjang(tglDok)}${status !== 'semua' ? ' · Status ' + STATUS_SANTRI[status].n.toLowerCase() : ''}`"
       v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
       <table class="tabel">
         <colgroup><col style="width:4%"><col style="width:9%"><col style="width:26%"><col style="width:4%"><col style="width:20%">

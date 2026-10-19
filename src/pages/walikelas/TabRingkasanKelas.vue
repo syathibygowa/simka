@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabRingkasanKelas.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabRingkasanKelas.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Dasbor pemantauan seluruh kelas (admin, superadmin, pimpinan): kehadiran kelas, absensi kelas hari ini sudah/belum diisi,
 // santri sakit/izin, dan keterlaksanaan pelajaran (jurnal mengajar) per kelas. Saring jenjang; cetak F4 mendatar dan Excel.
@@ -105,7 +105,7 @@ function ekspor() {
     </div>
     <p class="mt-3 text-xs text-teks3">Kehadiran = (hadir + terlambat + bolos) ÷ seluruh kehadiran tercatat. Keterlaksanaan = JP terlaksana ÷ JP terjadwal yang sudah lewat jamnya.</p>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Rekap Pemantauan Kelas" :subjudul="judulCetak" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="wk_pemantauan" :konteks="{ jenjang: jenjang || null }" v-model:pratinjau="pratinjau" mendatar judul="Rekap Pemantauan Kelas" :subjudul="judulCetak" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">
         <colgroup><col style="width:3%"><col style="width:6%"><col style="width:17%"><col style="width:5%"><col style="width:7%"><col style="width:7%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:7%"></colgroup>
         <thead><tr><th>No.</th><th>Kelas</th><th>Wali kelas</th><th>Santri</th><th>Sesi terisi</th><th>Kehadiran</th><th>Izin</th><th>Sakit</th><th>Absen</th><th>Bolos</th>

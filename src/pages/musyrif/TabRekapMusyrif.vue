@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.4 | 14.13.0: saringan corong di HP, tombol disederhanakan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Rekap kehadiran asrama satu kamar. Empat tampilan:
 //   kamar   : per santri pada rentang (sesi, hadir, I, S, B, A, T, %)
@@ -289,7 +289,7 @@ const subjudulCetak = computed(() => `${kamar.value?.nama || ''} · ${teksPeriod
     </LembarBawah>
 
     <!-- Cetak -->
-    <DokumenCetak v-if="d" kop="pondok" :judul="judulCetak" :subjudul="subjudulCetak" :mendatar="mode === 'pekan' || mode === 'bulan'" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="msy_rekap" v-if="d" kop="pondok" :judul="judulCetak" :subjudul="subjudulCetak" :mendatar="mode === 'pekan' || mode === 'bulan'" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <template v-if="mode === 'individu' && sIndividu">
         <table class="tabel info"><tbody>
           <tr><td style="width:28%">Nama santri</td><td>{{ sIndividu.nama }}</td></tr><tr><td>NIS</td><td>{{ sIndividu.nis }}</td></tr>

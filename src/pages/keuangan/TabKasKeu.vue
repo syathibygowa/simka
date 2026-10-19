@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabKasKeu.vue | v1.1 | 14.13.0: saringan corong di HP, tombol disederhanakan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabKasKeu.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Tab Kas dan bank:
 //   • Kartu saldo setiap rekening/kas (langsung) dan total saldo.
@@ -192,7 +192,7 @@ function excel() {
     </LembarBawah>
 
     <!-- Cetak buku kas / rekening koran -->
-    <DokumenCetak v-if="buku" v-model:pratinjau="pratinjau" mendatar :judul="judulBuku" :subjudul="subjudul" :pencetak="sesi.pengguna?.nama_lengkap"
+    <DokumenCetak jenis="keu_kas" v-if="buku" v-model:pratinjau="pratinjau" mendatar :judul="judulBuku" :subjudul="subjudul" :pencetak="sesi.pengguna?.nama_lengkap"
       :nama-berkas="namaBerkas(akunPilih?.nama || 'Semua rekening', judulBuku, periodeRentang(mulai, selesai))">
       <table v-if="akunPilih" class="meta-dok" style="margin-bottom: 6pt; font-size: 10pt">
         <tbody><tr><td style="width: 22%">Rekening/kas</td><td>: {{ akunPilih.nama }}</td><td style="width: 22%">Saldo awal</td><td>: {{ rupiah(buku.saldo_awal) }}</td></tr>
@@ -224,7 +224,7 @@ function excel() {
     </DokumenCetak>
 
     <!-- Cetak bukti kas keluar/masuk -->
-    <DokumenCetak v-if="bukti" :pratinjau="!!bukti" @update:pratinjau="(v) => !v && (bukti = null)" :judul="bukti.jenis === 'keluar' ? 'Bukti Kas Keluar' : 'Bukti Kas Masuk'" :nomor="bukti.nomor"
+    <DokumenCetak jenis="keu_bukti" v-if="bukti" :pratinjau="!!bukti" @update:pratinjau="(v) => !v && (bukti = null)" :judul="bukti.jenis === 'keluar' ? 'Bukti Kas Keluar' : 'Bukti Kas Masuk'" :nomor="bukti.nomor"
       :pencetak="sesi.pengguna?.nama_lengkap" :nama-berkas="namaBerkas(bukti.pihak || bukti.kategori, bukti.jenis === 'keluar' ? 'Bukti Kas Keluar' : 'Bukti Kas Masuk', bukti.nomor)">
       <table class="meta-dok" style="font-size: 11pt">
         <tbody>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.5 | 14.13.0: saringan corong di HP, tombol Ekspor | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.6 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Pantauan guru mapel (admin, superadmin, pimpinan sesuai cakupannya):
 //   Harian  : tanggal dengan tombol sebelum/sesudah; statistik jam pelajaran (terjadwal, terlaksana, belum diisi, tidak
@@ -158,7 +158,7 @@ function ekspor() {
       </div>
     </LembarBawah>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Rekap Keterlaksanaan Mengajar Guru Mapel" :subjudul="`${teksRentang(p.m, p.s)}${jenjang ? ' · ' + (jenjang === 'sma' ? 'SMA' : 'Wustha') : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="gm_pantau" :konteks="{ jenjang: jenjang || null }" v-model:pratinjau="pratinjau" mendatar judul="Rekap Keterlaksanaan Mengajar Guru Mapel" :subjudul="`${teksRentang(p.m, p.s)}${jenjang ? ' · ' + (jenjang === 'sma' ? 'SMA' : 'Wustha') : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">
         <colgroup><col style="width:4%"><col style="width:10%"><col style="width:20%"><col style="width:14%"><col style="width:20%"><col style="width:6%"><col style="width:6%"><col style="width:7%"><col style="width:6%"><col style="width:7%"></colgroup>
         <thead><tr><th>No.</th><th>NIY</th><th>Nama guru</th><th>Kelas</th><th>Mata pelajaran</th><th>JP terjadwal</th><th>Terlaksana</th><th>Tidak terlaksana</th><th>Belum diisi</th><th>Keterlaksanaan</th></tr></thead>

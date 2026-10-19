@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/agenda/Agenda.vue | v1.7 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/agenda/Agenda.vue | v1.8 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Agenda dan kalender pondok. Semua pegawai melihat agenda yang ditujukan kepadanya beserta hari libur pondok
 // dalam kalender bulanan. Admin ber-izin kelola_agenda membuat agenda dengan sasaran dan pengingat H-n;
@@ -356,7 +356,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
       </div>
     </LembarBawah>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" :judul="judulCetak" :subjudul="`Bulan ${judulBulan}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="agenda" v-model:pratinjau="pratinjau" :judul="judulCetak" :subjudul="`Bulan ${judulBulan}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <div :class="kolomCetak.length > 1 ? 'agenda-dua' : ''">
         <table v-for="(kol, ki) in kolomCetak" :key="ki" :class="['tabel', kolomCetak.length > 1 && 'kecil']">
           <colgroup v-if="kolomCetak.length > 1"><col style="width:9%"><col style="width:27%"><col style="width:20%"><col style="width:44%"></colgroup>

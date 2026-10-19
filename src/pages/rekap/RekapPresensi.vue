@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/rekap/RekapPresensi.vue | v1.6 | 14.13.0: saringan corong di HP, tombol Pratinjau/Ekspor | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/rekap/RekapPresensi.vue | v1.7 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Rekap presensi pegawai (admin dan superadmin): harian (semua sesi semua pegawai) dan periode
 // (ringkasan per pegawai), saring per bidang, ekspor Excel, dan cetak F4 dengan kop + tanda tangan.
@@ -207,7 +207,7 @@ const namaUnit = computed(() => unit.value ? org.cariUnit(unit.value)?.nama : 'S
     </div>
 
     <!-- Dokumen cetak -->
-    <DokumenCetak v-if="aktif.k === 'harian'" v-model:pratinjau="pratinjau" mendatar judul="Rekap Presensi Harian Pegawai" :subjudul="`${formatHari(tgl)} · ${namaUnit}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="rekap_presensi" v-if="aktif.k === 'harian'" v-model:pratinjau="pratinjau" mendatar judul="Rekap Presensi Harian Pegawai" :subjudul="`${formatHari(tgl)} · ${namaUnit}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:4%"><col style="width:20%"><col style="width:14%"><col style="width:14%"><col style="width:10%"><col style="width:7%"><col style="width:7%"><col style="width:11%"><col style="width:13%"></colgroup>
         <thead><tr><th>No.</th><th>Nama</th><th>Bidang/Unit</th><th>Sesi</th><th>Jadwal</th><th>Datang</th><th>Pulang</th><th>Status</th><th>Keterangan</th></tr></thead>
@@ -222,7 +222,7 @@ const namaUnit = computed(() => unit.value ? org.cariUnit(unit.value)?.nama : 'S
         <TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: direktur.jabatan_tertulis || 'Direktur', nama: direktur.nama || '', niy: direktur.niy }" :kanan="{ jabatan: 'Pembuat Rekap', nama: sesi.pengguna?.nama_lengkap || '' }" />
       </template>
     </DokumenCetak>
-    <DokumenCetak v-else v-model:pratinjau="pratinjau" mendatar judul="Rekap Presensi Pegawai" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)} · ${namaUnit}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="rekap_presensi" v-else v-model:pratinjau="pratinjau" mendatar judul="Rekap Presensi Pegawai" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)} · ${namaUnit}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:4%"><col style="width:22%"><col style="width:14%"><col v-for="n in 10" :key="n" style="width:5.4%"><col style="width:6%"></colgroup>
         <thead><tr><th>No.</th><th>Nama</th><th>Bidang/Unit</th><th>Sesi</th><th>Hadir</th><th>Terlambat</th><th>Dinas luar</th><th>Izin</th><th>Sakit</th><th>Cuti</th><th>TK</th><th>Pulang cepat</th><th>Tdk pres. pulang</th><th>%</th></tr></thead>

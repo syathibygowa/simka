@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabPembayaran.vue | v1.3 | 14.13.0: saringan corong di HP | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabPembayaran.vue | v1.4 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Pembayaran santri per rentang tanggal (bawaan: awal bulan ini s.d. hari ini): jumlah, tunai/transfer, per jenis biaya.
 // Setiap baris: cetak kuitansi, kirim konfirmasi WA ke wali, buka rincian santri, batalkan beralasan (kuitansi dicabut).
@@ -119,7 +119,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
         <button class="tombol-utama w-full bg-[#C7332F]" @click="simpanBatal"><PhXCircle :size="20" weight="duotone" /> Batalkan pembayaran</button>
       </div>
     </LembarBawah>
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Rekap Pemasukan Keuangan Santri" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)}${cara ? ' · ' + CARA_BAYAR[cara] : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="keu_pembayaran" v-model:pratinjau="pratinjau" mendatar judul="Rekap Pemasukan Keuangan Santri" :subjudul="`${formatPanjang(mulai)} s.d. ${formatPanjang(akhir)}${cara ? ' · ' + CARA_BAYAR[cara] : ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:4%"><col style="width:9%"><col style="width:16%"><col style="width:9%"><col style="width:20%"><col style="width:7%"><col style="width:23%"><col style="width:12%"></colgroup>
         <thead><tr><th>No.</th><th>Tanggal</th><th>Nomor kuitansi</th><th>NIS</th><th>Nama</th><th>Cara</th><th>Pembayaran</th><th>Jumlah (Rp)</th></tr></thead>

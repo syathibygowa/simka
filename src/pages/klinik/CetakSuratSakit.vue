@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/klinik/CetakSuratSakit.vue | v1.2 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/klinik/CetakSuratSakit.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Surat Keterangan Sakit santri (F4, Kop Pondok). Nomor SKS otomatis; tanda tangan elektronik petugas klinik
@@ -20,7 +20,7 @@ const lama = computed(() => props.surat ? Math.round((new Date(props.surat.istir
 const kelas = computed(() => (props.surat?.kelas ? `Kelas ${props.surat.kelas.replace(/^kelas\s*/i, '')}` : props.surat?.tingkat ? `Kelas ${props.surat.tingkat}` : '–'))
 </script>
 <template>
-  <DokumenCetak v-if="surat" v-model:pratinjau="pratinjau" kop="pondok" judul="Surat Keterangan Sakit" :nomor="surat.nomor" :nama-berkas="namaBerkas(surat.nama, 'Surat Keterangan Sakit', surat.nomor)" :pencetak="sesi.pengguna?.nama_lengkap">
+  <DokumenCetak jenis="klinik_surat_sakit" v-if="surat" v-model:pratinjau="pratinjau" kop="pondok" judul="Surat Keterangan Sakit" :nomor="surat.nomor" :nama-berkas="namaBerkas(surat.nama, 'Surat Keterangan Sakit', surat.nomor)" :pencetak="sesi.pengguna?.nama_lengkap">
     <p>Yang bertanda tangan di bawah ini, petugas Klinik Pondok Pesantren, menerangkan bahwa santri:</p>
     <table class="data" style="margin: 6pt 0 8pt 12pt">
       <tbody>

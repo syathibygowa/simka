@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabDokumenResmi.vue | v1.2 | 14.13.0: saringan corong di HP, tombol Ekspor | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabDokumenResmi.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Registri dokumen resmi bertanda tangan elektronik: kode validasi, jenis, nomor, perihal, atas nama, penanda tangan,
 // status, dan berapa kali diperiksa. Admin/superadmin melihat semua; pegawai melihat dokumen yang diterbitkan atau
@@ -165,7 +165,7 @@ async function cetak() { penanda.value = await ambilPenandaTangan('Direktur').ca
       </div>
     </LembarBawah>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" kop="pondok" judul="Registri Dokumen Resmi" mendatar
+    <DokumenCetak jenis="dokumen_resmi" v-model:pratinjau="pratinjau" kop="pondok" judul="Registri Dokumen Resmi" mendatar
       :subjudul="`Periode ${formatPanjang(mulai)} s.d. ${formatPanjang(selesai)}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">
         <colgroup><col style="width:4%"><col style="width:9%"><col style="width:14%"><col style="width:15%"><col style="width:20%"><col style="width:14%"><col style="width:13%"><col style="width:6%"><col style="width:5%"></colgroup>

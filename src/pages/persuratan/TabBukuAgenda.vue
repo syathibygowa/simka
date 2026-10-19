@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/TabBukuAgenda.vue | v1.3 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/TabBukuAgenda.vue | v1.4 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Buku agenda surat masuk per rentang tanggal terima (paling lama satu tahun): tabel, Excel, cetak F4 mendatar.
 // Surat rahasia yang tidak boleh dibaca ditampilkan perihalnya sebagai "(Rahasia)". Pilihan Surat keluar membuka BukuAgendaKeluar.
@@ -72,7 +72,7 @@ function ekspor() {
       <p v-if="!baris.length" class="py-8 text-center text-sm text-teks3">{{ memuat ? 'Memuat…' : 'Belum ada surat masuk pada rentang ini.' }}</p>
     </div>
 
-    <DokumenCetak kop="pondok" judul="Buku Agenda Surat Masuk" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
+    <DokumenCetak jenis="surat_agenda_masuk" kop="pondok" judul="Buku Agenda Surat Masuk" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
       <table class="tabel kecil">
         <colgroup><col style="width: 4%" /><col style="width: 10%" /><col style="width: 8%" /><col style="width: 14%" /><col style="width: 15%" /><col style="width: 20%" />
           <col style="width: 6%" /><col style="width: 15%" /><col style="width: 8%" /></colgroup>

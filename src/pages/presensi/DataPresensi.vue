@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/presensi/DataPresensi.vue | v1.2 | 14.2.0: saringan corong di HP | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/DataPresensi.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Data Presensi (admin ber-izin verval_presensi dan superadmin), dipisah dari tab Verval Presensi:
 //   Harian  : semua pegawai satu bidang (beserta cabangnya) pada satu tanggal, tombol sebelum/sesudah, saring status,
@@ -368,7 +368,7 @@ const ringkasB = (p) => ['hadir', 'terlambat', 'dinas_luar', 'izin', 'sakit', 'c
     </LembarBawah>
 
     <!-- Cetak harian (F4 tegak) -->
-    <DokumenCetak v-if="aktif === 'harian'" v-model:pratinjau="pratinjau" judul="Daftar Presensi Harian Pegawai" :subjudul="`${formatHari(tgl)} · ${namaUnit}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="presensi_harian" v-if="aktif === 'harian'" v-model:pratinjau="pratinjau" judul="Daftar Presensi Harian Pegawai" :subjudul="`${formatHari(tgl)} · ${namaUnit}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">
         <colgroup><col style="width:4%"><col style="width:12%"><col style="width:23%"><col style="width:4%"><col style="width:16%"><col style="width:8%"><col style="width:8%"><col style="width:12%"><col style="width:13%"></colgroup>
         <thead><tr><th>No.</th><th>NIY</th><th>Nama</th><th>JK</th><th>Sesi</th><th>Datang</th><th>Pulang</th><th>Status</th><th>Keterangan</th></tr></thead>
@@ -388,7 +388,7 @@ const ringkasB = (p) => ['hadir', 'terlambat', 'dinas_luar', 'izin', 'sakit', 'c
       <template #ttd><TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: direktur.jabatan_tertulis || 'Direktur', nama: direktur.nama || '', niy: direktur.niy }" :kanan="{ jabatan: 'Pembuat', nama: sesi.pengguna?.nama_lengkap || '' }" /></template>
     </DokumenCetak>
     <!-- Cetak bulanan (F4 mendatar) -->
-    <DokumenCetak v-else v-model:pratinjau="pratinjau" mendatar judul="Rekap Kehadiran Bulanan Pegawai" :subjudul="`Bulan ${judulBulan} · ${namaUnit}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="presensi_bulanan" v-else v-model:pratinjau="pratinjau" mendatar judul="Rekap Kehadiran Bulanan Pegawai" :subjudul="`Bulan ${judulBulan} · ${namaUnit}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">
         <colgroup><col style="width:2.5%"><col style="width:7%"><col style="width:15%"><col v-for="t in tanggalBulan" :key="t" :style="`width:${(64.5 / tanggalBulan.length).toFixed(2)}%`"><col style="width:6%"><col style="width:5%"></colgroup>
         <thead><tr><th>No.</th><th>NIY</th><th>Nama</th><th v-for="t in tanggalBulan" :key="t">{{ Number(t.slice(8)) }}</th><th>Hadir</th><th>%</th></tr></thead>

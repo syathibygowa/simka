@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/izin/TabLibur.vue | v1.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabLibur.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Penentuan libur santri (Blueprint Bagian 23).
 //   Daftar periode → pilih periode → nilai otomatis (boleh / tidak / perlu pertimbangan, lengkap dengan angka)
@@ -286,7 +286,7 @@ async function simpanSyarat() {
       </div>
     </LembarBawah>
 
-    <DokumenCetak v-if="detail" kop="pondok" :judul="judulCetak" :subjudul="detail.nama" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="izin_libur" v-if="detail" kop="pondok" :judul="judulCetak" :subjudul="detail.nama" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <p v-if="bertingkat" style="margin: 0 0 6pt; line-height: 1.5"><template v-for="t in daftarTingkat" :key="t.kode">{{ t.kode }}. {{ t.nama }}: pulang {{ formatWaktu(t.pulang_pada) }}, kembali {{ formatWaktu(t.kembali_batas) }} WITA ({{ r.tingkat?.[t.kode] || 0 }} santri)<br /></template>
         Jumlah {{ r.jumlah }} santri · Status: {{ STATUS_PERIODE[detail.status].n }}{{ detail.pengesah ? ' oleh ' + detail.pengesah : '' }}</p>
       <p v-else style="margin: 0 0 6pt; line-height: 1.5">Waktu pulang: {{ formatWaktu(detail.pulang_pada) }} WITA · Batas kembali: {{ formatWaktu(detail.kembali_batas) }} WITA<br />

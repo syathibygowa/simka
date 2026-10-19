@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/StatistikSantri.vue | v1.1 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/StatistikSantri.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Statistik dan laporan data santri: jumlah per jenjang dan kelas (putra/putri), kohort angkatan (masuk, aktif,
 // lulus, keluar, retensi), kehadiran hari ini. Ekspor Excel dan cetak F4 "Rekapitulasi Jumlah Santri".
@@ -89,7 +89,7 @@ function ekspor() {
       </section>
     </div>
 
-    <DokumenCetak kop="pondok" judul="Rekapitulasi Jumlah Santri" :subjudul="`Tahun Ajaran ${kel.taAktif?.nama || ''} · keadaan ${formatPanjang(hariIniISO())}`" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="santri_statistik" kop="pondok" judul="Rekapitulasi Jumlah Santri" :subjudul="`Tahun Ajaran ${kel.taAktif?.nama || ''} · keadaan ${formatPanjang(hariIniISO())}`" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <thead><tr><th style="width:8%">No.</th><th>Jenjang</th><th style="width:14%">Kelas</th><th style="width:14%">Putra</th><th style="width:14%">Putri</th><th style="width:14%">Jumlah</th></tr></thead>
         <tbody>

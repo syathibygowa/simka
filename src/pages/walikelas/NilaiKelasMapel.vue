@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/NilaiKelasMapel.vue | v1.1 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/NilaiKelasMapel.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Wali Kelas → Pelajaran → Nilai per mapel: nilai rapor setiap santri pada setiap mata pelajaran rapor (dari guru mapel),
 // kemajuan pengisian per mapel, nilai di bawah KKM bertanda merah, rata-rata santri. Excel dan cetak F4 mendatar.
@@ -73,7 +73,7 @@ async function excel() {
         </table>
       </div>
       <p class="mt-2 text-xs text-teks3">Angka merah = di bawah KKM mapel. "–" = guru belum mengisi nilai. Lencana di atas menunjukkan jumlah santri yang sudah bernilai pada setiap mapel.</p>
-      <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Nilai Santri per Mata Pelajaran" :subjudul="`Kelas ${d.kelas?.nama} · Semester ${smt} · Tahun Ajaran ${d.ta?.nama || ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
+      <DokumenCetak jenis="wk_nilai_mapel" :konteks="{ groupIds: [groupId] }" v-model:pratinjau="pratinjau" mendatar judul="Nilai Santri per Mata Pelajaran" :subjudul="`Kelas ${d.kelas?.nama} · Semester ${smt} · Tahun Ajaran ${d.ta?.nama || ''}`" :pencetak="sesi.pengguna?.nama_lengkap">
         <table class="tabel kecil">
           <thead><tr><th style="width: 4%">No.</th><th style="width: 9%">NIS</th><th>Nama</th><th v-for="m in mapel" :key="m.id">{{ m.singkatan || m.nama }}</th><th style="width: 7%">Rata-rata</th></tr></thead>
           <tbody>

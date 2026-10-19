@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabRekapNilai.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabRekapNilai.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Penilaian → Rekap: kemajuan pengisian rapor semester berjalan untuk pimpinan, pengatur penilaian, dan pengelola nilai
 // (cakupan menurut jenjang yang menjadi hak). Per kelas: mapel lengkap, nilai terisi, sikap, catatan wali kelas,
@@ -108,7 +108,7 @@ const pratinjau = ref(false)
     </template>
     <p v-else class="kartu p-6 text-center text-sm text-teks3">Memuat rekap…</p>
 
-    <DokumenCetak kop="pondok" judul="Rekap Kemajuan Penilaian" :subjudul="`${LABEL_SEMESTER[semester] || ''} · keadaan ${formatPanjang(hariIniISO())}`" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
+    <DokumenCetak jenis="nilai_rekap" :konteks="{ jenjang: jenjang || null }" kop="pondok" judul="Rekap Kemajuan Penilaian" :subjudul="`${LABEL_SEMESTER[semester] || ''} · keadaan ${formatPanjang(hariIniISO())}`" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
       <table class="tabel kecil"><colgroup><col style="width:4%"><col style="width:7%"><col style="width:17%"><col style="width:6%"><col style="width:10%"><col style="width:9%"><col style="width:8%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:12%"></colgroup>
         <thead><tr><th>No.</th><th>Kelas</th><th>Wali Kelas</th><th>Santri</th><th>Nilai Mapel Terisi</th><th>Mapel Lengkap</th><th>Sikap</th><th>Catatan Wali</th><th>Kokurikuler</th><th>Pengembangan Diri</th><th>{{ semester === 2 ? 'Keputusan / UTAS' : 'UTAS Final' }}</th></tr></thead>
         <tbody><tr v-for="(k, i) in kelas" :key="k.group_id"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ k.nama }}</td><td>{{ k.wali || '–' }}</td><td class="tengah">{{ k.santri }}</td>

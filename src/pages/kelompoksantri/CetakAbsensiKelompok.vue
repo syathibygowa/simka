@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kelompoksantri/CetakAbsensiKelompok.vue | v2.0 | Perbaikan: tanggal manual, kolom "Jam Ke", asrama 7 hari, daftar hadir tanda tangan | 14/10/2026 -->
+<!-- SIMKA PRO | src/pages/kelompoksantri/CetakAbsensiKelompok.vue | v2.1 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Cetak lembar absensi manual satu kelompok santri (F4), untuk cadangan saat absensi tidak dapat diisi di aplikasi.
 // Hari/tanggal selalu dikosongkan untuk ditulis tangan.
@@ -104,7 +104,7 @@ const KET = { harian: (j) => (j === 'kelas' ? 'Kolom "Kehadiran Jam Ke" 1, 2, 3,
     </div>
   </LembarBawah>
 
-  <DokumenCetak v-if="g" :kop="kop" :judul="judulDok" :subjudul="subjudul" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" :mendatar="mendatar">
+  <DokumenCetak jenis="kelompok_absensi" :konteks="{ kelompok: g }" v-if="g" :kop="kop" :judul="judulDok" :subjudul="subjudul" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" :mendatar="mendatar">
     <!-- Daftar hadir tanda tangan (tunggal) -->
     <table v-if="mode === 'ttd'" class="tabel kecil">
       <colgroup><col style="width:5%"><col style="width:21%"><col style="width:30%"><col style="width:5%"><col style="width:28%"><col style="width:11%"></colgroup>

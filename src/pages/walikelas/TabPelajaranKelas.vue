@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabPelajaranKelas.vue | v1.5 | 14.4.0: tampilan Jurnal pelajaran (cetak/unduh) dan Nilai per mapel | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabPelajaranKelas.vue | v1.6 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Pelajaran di satu kelas berdasarkan jurnal mengajar guru: rekap keterlaksanaan per mapel/guru, materi per tanggal,
 // dan roster (jadwal pelajaran pekanan). Wali kelas dapat memantau mapel yang kosong; cetak F4 rekap keterlaksanaan.
@@ -97,7 +97,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
       </section>
     </div>
 
-    <DokumenCetak v-model:pratinjau="pratinjau" :judul="`Rekap Keterlaksanaan Pelajaran Kelas ${wk.kelasPilih?.nama || ''}`" :subjudul="teksRentang(p.m, p.s)" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="wk_pelajaran" :konteks="{ groupIds: [wk.pilih] }" v-model:pratinjau="pratinjau" :judul="`Rekap Keterlaksanaan Pelajaran Kelas ${wk.kelasPilih?.nama || ''}`" :subjudul="teksRentang(p.m, p.s)" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">
         <colgroup><col style="width:5%"><col style="width:24%"><col style="width:27%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:8%"><col style="width:9%"></colgroup>
         <thead><tr><th>No.</th><th>Mata pelajaran</th><th>Guru</th><th>JP terjadwal</th><th>Terlaksana</th><th>Tidak terlaksana</th><th>Belum diisi</th><th>Keterlaksanaan</th></tr></thead>

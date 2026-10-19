@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/BukuAgendaKeluar.vue | v1.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/BukuAgendaKeluar.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Buku agenda surat keluar = inventaris SEMUA surat yang terbit di SIMKA PRO per rentang tanggal surat:
 //   Persuratan (surat Tata Usaha, termasuk yang dicabut/direvisi), surat pengajuan pegawai, surat keterangan sakit (Klinik),
@@ -119,7 +119,7 @@ function ekspor() {
     <p class="mt-3 text-xs text-teks3">Surat dari Persuratan direvisi melalui rinciannya (tombol Revisi surat). Surat dari modul lain dibuka dan diperbarui di modul asalnya;
       dokumen penggantinya otomatis tercatat di sini.</p>
 
-    <DokumenCetak kop="pondok" judul="Buku Agenda Surat Keluar" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
+    <DokumenCetak jenis="surat_agenda_keluar" kop="pondok" judul="Buku Agenda Surat Keluar" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
       <table class="tabel kecil">
         <colgroup><col style="width: 4%" /><col style="width: 10%" /><col style="width: 15%" /><col style="width: 7%" /><col style="width: 22%" /><col style="width: 15%" />
           <col style="width: 14%" /><col style="width: 7%" /><col style="width: 6%" /></colgroup>

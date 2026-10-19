@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabCapaian.vue | v1.3 | 14.13.0: saringan corong di HP, tombol Pratinjau | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabCapaian.vue | v1.4 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Capaian tahfizh:
 //  * Status bulanan — dihitung otomatis dari setoran (penambahan sabaq sebulan vs target pekan × pekan efektif).
@@ -271,7 +271,7 @@ async function cetak() { kepala.value = await penandaTahfizh(); pratinjau.value 
     </LembarBawah>
 
     <!-- Cetak rekap status bulanan -->
-    <DokumenCetak kop="pondok" judul="Rekap Status Capaian Hafalan Bulanan"
+    <DokumenCetak jenis="thz_capaian" kop="pondok" judul="Rekap Status Capaian Hafalan Bulanan"
       :subjudul="`${labelBulan(bulan)}${halaqah ? ' · ' + (halaqahList.find((h) => h.id === halaqah)?.nama || '') : ''} · ${sudahSah ? 'disahkan' : 'belum disahkan, keadaan ' + formatPanjang(hariIniISO())}`"
       v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel kecil">

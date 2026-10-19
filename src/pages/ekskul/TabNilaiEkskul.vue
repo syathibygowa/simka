@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/ekskul/TabNilaiEkskul.vue | v1.3 | Perbaikan 13.7.0: saringan kategori ekskul indoor/outdoor | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/ekskul/TabNilaiEkskul.vue | v1.4 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Ekskul → Nilai rapor: pembina mengisi nilai Pengembangan Diri (predikat A–D) per santri anggota ekskul.
 // Acuan: persentase kehadiran ekskul semester ini (usulan otomatis: ≥ 90% A, ≥ 75% B, ≥ 60% C, selain itu D).
@@ -125,7 +125,7 @@ const pembina = computed(() => daftar.value.find((g) => g.group_id === pilih.val
       <p v-else class="kartu p-6 text-center text-sm text-teks3">Memuat nilai…</p>
     </template>
 
-    <DokumenCetak kop="pondok" judul="Daftar Nilai Pengembangan Diri" :subjudul="`${D?.ekskul?.nama || ''} · ${LABEL_SEMESTER[semester] || ''} · keadaan ${formatPanjang(hariIniISO())}`"
+    <DokumenCetak jenis="ekskul_nilai" kop="pondok" judul="Daftar Nilai Pengembangan Diri" :subjudul="`${D?.ekskul?.nama || ''} · ${LABEL_SEMESTER[semester] || ''} · keadaan ${formatPanjang(hariIniISO())}`"
       v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">
       <table v-if="D" class="tabel"><colgroup><col style="width:6%"><col style="width:12%"><col style="width:28%"><col style="width:5%"><col style="width:9%"><col style="width:11%"><col style="width:7%"><col style="width:22%"></colgroup>
         <thead><tr><th>No.</th><th>NIS</th><th>Nama</th><th>JK</th><th>Kelas</th><th>Kehadiran</th><th>Nilai</th><th>Deskripsi</th></tr></thead>

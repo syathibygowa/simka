@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/shift/JadwalShift.vue | v1.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/shift/JadwalShift.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Jadwal shift pekanan (medis, security). Admin ber-izin atur_presensi menyusun jadwal
 // (manual per sel atau pembuat jadwal bergilir); petugas melihat jadwal dan mengajukan tukar shift.
@@ -275,7 +275,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
       <LembarTukar v-model="lembarTukar" :pola="pola" :roster="rosterTukar" :pegawai="data.pegawai" :sesi="sesi" :saya="saya" @terkirim="muat" />
 
       <!-- Dokumen cetak -->
-      <DokumenCetak v-model:pratinjau="pratinjau" mendatar :judul="`Jadwal Shift ${pola?.nama || ''}`" :subjudul="`${formatPanjang(senin)} s.d. ${formatPanjang(minggu)}`" :pencetak="sesiPengguna.pengguna?.nama_lengkap">
+      <DokumenCetak jenis="jadwal_shift" v-model:pratinjau="pratinjau" mendatar :judul="`Jadwal Shift ${pola?.nama || ''}`" :subjudul="`${formatPanjang(senin)} s.d. ${formatPanjang(minggu)}`" :pencetak="sesiPengguna.pengguna?.nama_lengkap">
         <table class="tabel">
           <colgroup><col style="width:16%"><col v-for="t in hari" :key="t" style="width:12%"></colgroup>
           <thead><tr><th>Shift</th><th v-for="t in hari" :key="t">{{ HARI_PENUH[new Date(t + 'T00:00:00Z').getUTCDay()] }}<br>{{ formatPendek(t) }}</th></tr></thead>

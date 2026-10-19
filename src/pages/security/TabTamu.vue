@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/security/TabTamu.vue | v1.2 | 14.13.0: saringan tanggal di tombol corong pada HP | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/security/TabTamu.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Buku tamu (Blueprint Bagian 24): nama, instansi, HP, keperluan, orang yang ditemui (pegawai menerima notifikasi),
 // jumlah orang, kendaraan, foto opsional, jam masuk dan keluar. Tab "Di dalam" (belum keluar) dan "Riwayat"; Excel dan cetak F4.
@@ -148,7 +148,7 @@ watch(pratinjau, async (v) => { if (v) penanda.value = await penandaKelompok({ j
       </div>
     </LembarBawah>
 
-    <DokumenCetak kop="pondok" judul="Buku Tamu" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
+    <DokumenCetak jenis="sec_tamu" kop="pondok" judul="Buku Tamu" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
       <table class="tabel kecil">
         <thead><tr><th style="width:4%">No.</th><th style="width:11%">Masuk</th><th style="width:7%">Keluar</th><th style="width:15%">Nama tamu</th><th style="width:13%">Instansi</th>
           <th style="width:5%">Orang</th><th>Keperluan</th><th style="width:15%">Menemui</th><th style="width:11%">Petugas</th></tr></thead>

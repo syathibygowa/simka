@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/presensi/TabPola.vue | v1.1 | 14.13.0: teks keterangan dihapus, tombol Pratinjau | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/TabPola.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
 <script setup>
 // Pola sesi per tugas (Bagian 9): setiap jabatan fungsional membawa pola bawaan;
 // setiap sesi memiliki jam, hari, jendela buka, toleransi, dan batas yang dapat diubah.
@@ -105,7 +105,7 @@ const barisCetak = computed(() => atur.polaUmum.flatMap((p) => atur.sesiPola(p.i
     <FormSesi v-model="lembarSesi" :sesi="sesiDipilih" :pola-id="polaUntukSesi" />
 
     <!-- Dokumen cetak: pola sesi presensi -->
-    <DokumenCetak v-model:pratinjau="pratinjau" mendatar judul="Pola Sesi Presensi Pegawai" :subjudul="`Berlaku per ${formatPanjang(new Date())}`" :pencetak="sesi.pengguna?.nama_lengkap">
+    <DokumenCetak jenis="pola_presensi" v-model:pratinjau="pratinjau" mendatar judul="Pola Sesi Presensi Pegawai" :subjudul="`Berlaku per ${formatPanjang(new Date())}`" :pencetak="sesi.pengguna?.nama_lengkap">
       <table class="tabel">
         <colgroup><col style="width:4%"><col style="width:15%"><col style="width:13%"><col style="width:15%"><col style="width:10%"><col style="width:8%"><col style="width:9%"><col style="width:8%"><col style="width:10%"><col style="width:8%"></colgroup>
         <thead><tr><th>No.</th><th>Pola</th><th>Sesi</th><th>Hari</th><th>Jam</th><th>Dibuka</th><th>Tepat waktu s.d.</th><th>Ditutup</th><th>Presensi pulang</th><th>Cepat pulang sebelum</th></tr></thead>
