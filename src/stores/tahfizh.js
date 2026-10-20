@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/tahfizh.js | v1.10 | 14.11.0: capaian demo berstatus Tahsin bagi santri tahsin | 18/10/2026
+// SIMKA PRO | src/stores/tahfizh.js | v1.12 | 14.17.0: khataman susulan (tanggal lampau) oleh pengelola khataman | 20/10/2026
 // Tahfizh: hak pengguna, pengaturan per tahun ajaran (KKM, bobot, target, predikat, pekan efektif), penguji,
 // daftar santri beserta program, posisi hafalan, dan capaian juz resmi. Penulisan hanya lewat fungsi SQL.
 import { defineStore } from 'pinia'
@@ -408,6 +408,25 @@ export const useTahfizh = defineStore('tahfizh', {
     async selesaikanKhataman(id, catatan) {
       if (MODE_DEMO) { const k = khtDemo().find((x) => x.id === id); if (new Date(k.jadwal) > new Date(Date.now() + 864e5)) throw new Error('Tandai terlaksana pada atau setelah hari pelaksanaan.'); Object.assign(k, { status: 'selesai', selesai_pada: new Date().toISOString(), catatan_selesai: catatan || null }); return }
       return rpc('selesaikan_khataman', { p_id: id, p_catatan: catatan || null })
+    },
+    /** 14.17.0: boleh mencatat khataman susulan / memutus khataman (superadmin, pimpinan tahfizh, admin validasi tahfizh) */
+    async bolehKelolaKhataman() {
+      if (MODE_DEMO) return hakKhtDemo()
+      try { return (await rpc('boleh_putus_khataman')) === true } catch { return false }
+    },
+    /** 14.17.0: khataman yang sudah terlaksana sebelum SIMKA dipakai. p: { student_id, tanggal, jam, tempat, keterangan, konfirmasi_30 } */
+    async catatKhatamanSusulan(p) {
+      if (MODE_DEMO) {
+        const san = useSantri(); await san.muat(); const s = san.cari(p.student_id); if (!s) throw new Error('Pilih santri.')
+        if (!p.tanggal || p.tanggal > hariIniISO()) throw new Error('Khataman susulan untuk tanggal yang sudah lewat.')
+        if (String(p.keterangan || '').trim().length < 5) throw new Error('Tuliskan keterangan (minimal 5 huruf).')
+        const k = { id: 'kh' + Date.now(), student_id: s.id, nis: s.nis, nama: s.nama_lengkap, jenis_kelamin: s.jenis_kelamin, kelas: null, halaqah: null, status: 'selesai', susulan: true,
+          jadwal: new Date(`${p.tanggal}T${(p.jam || '08:00').slice(0, 5)}:00+08:00`).toISOString(), tempat: p.tempat || PENGATURAN_KHATAMAN.tempat_bawaan, catatan_usul: 'Susulan: ' + p.keterangan,
+          pengusul: useSesi().pengguna?.nama_lengkap, pemutus: useSesi().pengguna?.nama_lengkap, diusulkan_pada: new Date().toISOString(), diputus_pada: new Date().toISOString(),
+          selesai_pada: new Date().toISOString(), catatan_selesai: 'Dicatat susulan: ' + p.keterangan, riwayat_jadwal: [], wali: null, undangan: null, sertifikat: null }
+        this._dokKhtDemo(k); k.undangan = null; khtDemo().unshift(k); return k.id
+      }
+      return rpc('catat_khataman_susulan', { p })
     },
     async batalkanKhataman(id, alasan) {
       if (MODE_DEMO) { if (String(alasan || '').trim().length < 5) throw new Error('Tuliskan alasan pembatalan (minimal 5 huruf).'); Object.assign(khtDemo().find((x) => x.id === id), { status: 'dibatalkan', alasan_batal: alasan }); return }

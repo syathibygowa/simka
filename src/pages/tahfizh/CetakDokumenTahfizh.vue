@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/CetakDokumenTahfizh.vue | v1.4 | 14.10.0: Sertifikat Penghargaan Khataman (portrait) | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/CetakDokumenTahfizh.vue | v1.5 | 14.17.0: pilihan cetak sertifikat dengan atau tanpa bingkai | 20/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Cetak dokumen tahfizh F4 dari salinan beku (data) dokumen yang sudah terbit:
@@ -6,8 +6,10 @@ import { namaBerkas } from '@/lib/namaBerkas'
 //   sertifikat_hafalan Sertifikat Hafalan (sertifikasi 5, 10, 15 … juz) — bingkai sertifikat; Kepala Bidang Tahfizh dan Penguji
 //   sertifikat_tahfizh Sertifikat Tahfizhul Quran (ijazah hafalan akhir jenjang) — mengikuti format pondok; Direktur
 //   sertifikat_khataman Sertifikat Penghargaan Khataman Al-Qur'an 30 juz — bingkai portrait; Direktur (Mengetahui) dan Kepala Bidang Tahfizh
+// 14.17.0: sertifikat dapat dicetak dengan atau tanpa bingkai (untuk kertas sertifikat berbingkai dari Tata Usaha); pilihan diingat per perangkat.
 // Tanda tangan elektronik tampil sebagai QR Cek Keabsahan; tanda tangan basah dikosongkan. Draf/dicabut diberi catatan.
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
+import { PhFrameCorners } from '@phosphor-icons/vue'
 import { useTahfizh } from '@/stores/tahfizh'
 import { useLembaga } from '@/stores/lembaga'
 import { formatPanjang, formatPendek, formatJam } from '@/lib/tanggal'
@@ -54,6 +56,9 @@ const logoKiri = computed(() => (bukanLama(sumberLogo.value.logo_kiri) ? lembaga
 const logoKanan = computed(() => lembaga.urlLogo(bukanLama(sumberLogo.value.logo_kanan) || 'logo:pondok') || logoLokal)
 // Logo dari situs lain yang gagal dimuat diganti logo pondok bawaan aplikasi
 const ganti = (e) => { if (!e.target.src.endsWith(logoLokal)) e.target.src = logoLokal }
+// 14.17.0: cetak dengan/tanpa bingkai (bingkai, ornamen sudut, dan tanda air logo)
+const bingkai = ref((() => { try { return localStorage.getItem('simka.sertifikat.bingkai') !== 'tidak' } catch { return true } })())
+watch(bingkai, (v) => { try { localStorage.setItem('simka.sertifikat.bingkai', v ? 'ya' : 'tidak') } catch { /* abaikan */ } })
 const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kenaikan Juz', sertifikat_hafalan: 'Sertifikat Hafalan', sertifikat_tahfizh: 'Sertifikat Tahfizhul Quran', sertifikat_khataman: 'Sertifikat Penghargaan Khataman' }[props.dok.jenis]))
 </script>
 <template>
@@ -87,11 +92,17 @@ const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kena
 
   <!-- ============ SERTIFIKAT (bingkai) ============ -->
   <LembarRapor v-else v-model:pratinjau="pratinjau" :judul="judulPratinjau" :keterangan="dok.nomor" :nama-berkas="namaBerkas(d.nama, judulPratinjau, dok.nomor)">
+    <template #alat>
+      <button type="button" class="tombol-bingkai" :aria-pressed="bingkai" :title="bingkai ? 'Cetak tanpa bingkai (untuk kertas sertifikat berbingkai)' : 'Cetak dengan bingkai'" @click="bingkai = !bingkai">
+        <PhFrameCorners :size="20" weight="duotone" /> {{ bingkai ? 'Dengan bingkai' : 'Tanpa bingkai' }}</button>
+    </template>
     <HalRapor tanpa-kop>
       <div class="sertifikat">
-        <div class="bingkai">
-          <span v-for="p in ['ki-at', 'ka-at', 'ki-bw', 'ka-bw']" :key="p" :class="['sudut', p]" aria-hidden="true" />
-          <img class="tanda-air" :src="logoKanan" alt="" aria-hidden="true" @error="ganti" />
+        <div :class="['bingkai', !bingkai && 'polos']">
+          <template v-if="bingkai">
+            <span v-for="p in ['ki-at', 'ka-at', 'ki-bw', 'ka-bw']" :key="p" :class="['sudut', p]" aria-hidden="true" />
+            <img class="tanda-air" :src="logoKanan" alt="" aria-hidden="true" @error="ganti" />
+          </template>
           <div class="logo">
             <img v-if="logoKiri" :src="logoKiri" alt="" @error="(e) => (e.target.style.display = 'none')" />
             <img :src="logoKanan" alt="" @error="ganti" />
@@ -181,6 +192,9 @@ const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kena
 .sertifikat { min-height: 284mm; display: flex; color: #111; }
 .bingkai { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 9mm 12mm 7mm;
   border: 1.4mm double #0B6B57; outline: 0.35mm solid #C9A227; outline-offset: -3.2mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: hidden; }
+.bingkai.polos { border: 0; outline: 0; }
+.tombol-bingkai { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.45); color: #fff; font-weight: 700; font-size: 14px; }
+.tombol-bingkai[aria-pressed='false'] { background: rgba(255,255,255,.16); }
 .sudut { position: absolute; width: 14mm; height: 14mm; border: 0.6mm solid #C9A227; }
 .sudut.ki-at { top: 5mm; left: 5mm; border-right: 0; border-bottom: 0; }
 .sudut.ka-at { top: 5mm; right: 5mm; border-left: 0; border-bottom: 0; }

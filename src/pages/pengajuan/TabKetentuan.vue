@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengajuan/TabKetentuan.vue | v1.1 | Fase 8 – Tahap 0b Kepala Unit tidak lagi menyetujui pengajuan | 10/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengajuan/TabKetentuan.vue | v1.2 | 14.17.0: keterangan tembusan bidang lain | 20/10/2026 -->
 <script setup>
 // Ketentuan pengajuan: dibaca semua pegawai; diubah admin ber-izin "atur_pengajuan" dan superadmin.
 // Berisi jenis pengajuan beserta aturannya, jenjang persetujuan menurut lama hari, dan penunjukan Plt.
@@ -118,7 +118,7 @@ async function hapusPlt(p) {
         </div>
       </div>
       <p class="mt-3 flex gap-2 text-sm text-teks3"><PhInfo :size="18" class="mt-0.5 shrink-0" />
-        Kepala Bidang adalah kepala bidang tempat unit pemohon bernaung (Kepala Unit tidak menyetujui pengajuan). Direktur dan Wakil Direktur berwenang sama; salah satunya cukup. Wakil kepala bidang menyetujui hanya bila ditunjuk sebagai Plt. Jenjang tanpa pejabat dilewati, dan bila semua kosong pengajuan naik ke jenjang lebih tinggi.</p>
+        Kepala Bidang adalah kepala bidang tempat unit pemohon bernaung (Kepala Unit tidak menyetujui pengajuan). Direktur dan Wakil Direktur berwenang sama; salah satunya cukup. Wakil kepala bidang menyetujui hanya bila ditunjuk sebagai Plt. Jenjang tanpa pejabat dilewati, dan bila semua kosong pengajuan naik ke jenjang lebih tinggi. Bila pemohon juga bertugas di bidang lain (mis. guru sekaligus muhaffizh), Kepala Bidang tersebut menerima tembusan dan dapat memberi catatan (mis. pengganti tugas), tanpa ikut memutus.</p>
     </section>
 
     <section class="kartu w-shift p-5">

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/cetak/rapor/LembarRapor.vue | v1.2 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/components/cetak/rapor/LembarRapor.vue | v1.3 | 14.17.0: slot alat di bilah pratinjau | 20/10/2026 -->
 <script setup>
 // Pratinjau dan cetak dokumen BERHALAMAN BANYAK (rapor per santri, sampul, leger). Isi berupa beberapa <HalRapor>;
 // setiap HalRapor dimulai pada halaman baru dan kepalanya (kop + identitas) berulang di setiap halaman lanjutan.
@@ -31,6 +31,7 @@ const cetak = () => window.print()
           <p class="truncate font-bold">Pratinjau: {{ judul }}</p>
           <p class="text-xs opacity-80">{{ keterangan || '' }}{{ keterangan ? ' · ' : '' }}Kertas F4 {{ mendatar ? '330 × 215 mm (mendatar)' : '215 × 330 mm' }}, margin 2 cm</p>
         </div>
+        <slot name="alat" />
         <button type="button" class="tombol-cetak" @click="cetak"><PhPrinter :size="20" weight="duotone" /> Cetak</button>
         <button type="button" class="tombol-tutup" aria-label="Tutup pratinjau" @click="pratinjau = false"><PhX :size="22" /></button>
       </div>

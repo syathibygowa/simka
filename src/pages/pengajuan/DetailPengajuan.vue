@@ -1,10 +1,10 @@
-<!-- SIMKA PRO | src/pages/pengajuan/DetailPengajuan.vue | v1.3 | Perbaikan: nama berkas PDF sesuai dokumen | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengajuan/DetailPengajuan.vue | v1.4 | 14.17.0: tembusan dan catatan kepala bidang lain tempat pemohon bertugas | 20/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Rincian satu pengajuan: data pemohon, alur persetujuan (tanda setiap jenjang), lampiran, keputusan
 // (setujui/tolak, superadmin dapat memutus atas nama), pembatalan, dan surat F4 berkop untuk diunduh/dicetak.
 import { ref, computed, watch } from 'vue'
-import { PhCheckCircle, PhXCircle, PhPrinter, PhPaperclip, PhProhibit, PhWarning, PhSealCheck, PhHourglassMedium, PhCircleDashed, PhSkipForward } from '@phosphor-icons/vue'
+import { PhCheckCircle, PhXCircle, PhPrinter, PhPaperclip, PhProhibit, PhWarning, PhSealCheck, PhHourglassMedium, PhCircleDashed, PhSkipForward, PhInfo, PhPaperPlaneTilt } from '@phosphor-icons/vue'
 import { usePengajuan } from '@/stores/pengajuan'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
@@ -23,6 +23,15 @@ const emit = defineEmits(['berubah'])
 const pg = usePengajuan(); const sesi = useSesi(); const ui = useUI()
 const d = ref(null); const memuat = ref(false); const catatan = ref(''); const proses = ref(false); const pratinjau = ref(false)
 
+// 14.17.0: tembusan ke kepala bidang lain tempat pemohon bertugas (untuk diketahui, dapat memberi catatan)
+const tembusanSaya = computed(() => (d.value?.tembusan || []).find((t) => t.saya))
+const catTembusan = ref('')
+async function kirimTembusan() {
+  if (catTembusan.value.trim().length < 3) return ui.toast('Tuliskan catatan (minimal 3 huruf).', 'galat')
+  proses.value = true
+  try { await pg.catatanTembusan(props.id, catTembusan.value.trim()); ui.toast('Catatan terkirim kepada pemohon dan penyetuju.', 'info'); catTembusan.value = ''; await muat() }
+  catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
+}
 const kontak = ref([])
 async function muat() {
   if (!props.id) return
@@ -109,6 +118,22 @@ async function lihatLampiran() {
           <p v-if="j.catatan" class="mt-0.5 text-sm italic text-teks2">“{{ j.catatan }}”</p>
         </li>
       </ol>
+
+      <template v-if="d.tembusan?.length">
+        <h4 class="mb-2 mt-5 flex items-center gap-1.5 text-sm font-bold text-teks3"><PhInfo :size="16" weight="duotone" /> Tembusan bidang lain (untuk diketahui)</h4>
+        <ul class="space-y-2">
+          <li v-for="(t, i) in d.tembusan" :key="i" class="rounded-xl bg-permukaan2 p-3 text-sm">
+            <p><b>{{ t.nama }}</b> <span class="text-teks3">· {{ t.bidang }} · pemohon bertugas sebagai {{ (t.tugas || '').toLowerCase() }}</span></p>
+            <p v-if="t.catatan" class="mt-0.5 italic text-teks2">“{{ t.catatan }}” <span class="not-italic text-xs text-teks3">{{ formatWaktu(t.catatan_pada) }} WITA</span></p>
+            <p v-else class="mt-0.5 text-xs text-teks3">Belum ada catatan.</p>
+          </li>
+        </ul>
+        <div v-if="tembusanSaya" class="mt-2 space-y-2 rounded-2xl border border-garis p-3">
+          <p class="text-sm text-teks2">Anda menerima tembusan karena pemohon juga bertugas di bidang Anda. Anda tidak memutus pengajuan ini, tetapi dapat memberi catatan, misalnya pengganti tugasnya.</p>
+          <textarea v-model="catTembusan" class="isian min-h-[4rem] py-2" :placeholder="tembusanSaya.catatan ? 'Perbarui catatan' : 'Contoh: halaqah digantikan Ust. … selama izin'" aria-label="Catatan tembusan" />
+          <button class="tombol-garis w-full" :disabled="proses" @click="kirimTembusan"><PhPaperPlaneTilt :size="20" weight="duotone" /> Kirim catatan</button>
+        </div>
+      </template>
 
       <div v-if="d.boleh_putuskan || d.boleh_batal" class="mt-5 space-y-2 rounded-2xl border border-garis p-3">
         <p v-if="d.atas_nama" class="text-sm text-teks2">Anda memutus sebagai superadmin <strong>atas nama</strong> pejabat jenjang ini. Catatan wajib diisi.</p>
