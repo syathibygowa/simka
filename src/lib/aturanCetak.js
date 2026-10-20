@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/aturanCetak.js | v1.0 | 14.15.0: penanda tangan dan kop dokumen cetak terpusat (Setelan → Penanda tangan) | 19/10/2026
+// SIMKA PRO | src/lib/aturanCetak.js | v1.1 | 14.18.0: dokumen Laporan indikator kinerja bidang | 21/10/2026
 // Katalog dokumen cetak beserta penanda tangan kiri ("Mengetahui", pimpinan/atasan), kanan (pegawai terkait), dan kop.
 // Nilai yang dipilih superadmin disimpan di tabel signer_rules (kiri, kanan, kop_kode); setiap DokumenCetak yang diberi
 // prop `jenis` membaca aturan ini lalu TandaTangan memakainya.
@@ -132,6 +132,7 @@ const DAFTAR = {
     d('audit_log', 'Audit log aktivitas pengguna', 'Audit Log', '-', 'pembuat', 'direktur'),
     d('hak_akses_admin', 'Rekap akses admin', 'Hak Akses → Rekap admin', 'direktur', 'pembuat'),
     d('hak_akses_fitur', 'Ceklist hak akses fitur', 'Hak Akses → Rekap jabatan', 'direktur', 'pembuat'),
+    d('kinerja_bidang', 'Laporan indikator kinerja bidang', 'Rekap dan Laporan → Kinerja bidang', 'direktur', 'pembuat'),
   ],
 }
 

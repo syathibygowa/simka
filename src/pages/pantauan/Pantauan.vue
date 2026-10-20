@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.6 | 14.18.0: rincian kartu untuk kepala bidang ke atas; slide Kinerja Bidang | 21/10/2026 -->
 <script setup>
 // Layar Pantauan (Blueprint Bagian 28) berbentuk SLIDE layar penuh untuk presentasi dan SmartTV.
 //   Dibuka dari tombol "Layar Pantauan" di Beranda (bukan menu). Slide: Santri, Pegawai, SMP, SMA, Tahfizh, Hafalan, Asrama,
@@ -7,6 +7,8 @@
 //   Isi: kartu statistik berwarna + grafik. Diperbarui langsung (Realtime + tiap 60 detik); jam berjalan dan jam pembaruan.
 //   Pindah slide: geser samping atau atas-bawah, roda tetikus, tombol panah/penunjuk, papan ketik (← → ↑ ↓ Spasi), putar otomatis.
 //   Saringan: putra/putri, SMP/SMA, bidang (pegawai). Admin/superadmin: ketuk kartu → daftar nama → cetak F4/Excel.
+//   v2.6: rincian kartu (daftar, cetak, Excel) juga untuk pimpinan — Direktur, Wakil Direktur, Yayasan, Kepala Bidang — dan pemegang
+//   hak Layar Pantauan tingkat Input/ubah. Slide Kinerja Bidang (bulan berjalan s.d. kemarin) dengan grafik skor dan peta indikator.
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import * as XLSX from 'xlsx'
@@ -18,25 +20,34 @@ import { useRekapPresensi } from '@/stores/rekapPresensi'
 import { useTahunAjaran } from '@/stores/tahunAjaran'
 import { useTahfizh } from '@/stores/tahfizh'
 import { useBeranda } from '@/stores/beranda'
+import { useKinerja } from '@/stores/kinerja'
+import { periodeBerjalan } from '@/lib/kinerja'
 import { JENJANG_PENDEK, penandaKelompok } from '@/lib/santri'
 import { formatJam, formatPanjang, formatPendek, hariIniISO, HARI } from '@/lib/tanggal'
 import LogoSimka from '@/components/LogoSimka.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import GrafikBatang from '@/components/grafik/GrafikBatang.vue'
 import GrafikLingkaran from '@/components/grafik/GrafikLingkaran.vue'
+import GrafikSkor from '@/components/grafik/GrafikSkor.vue'
+import PetaKinerja from '@/components/kinerja/PetaKinerja.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
 const pt = usePantauan(); const sesi = useSesi(); const router = useRouter(); const route = useRoute()
 const admin = computed(() => ['admin', 'superadmin'].includes(sesi.peran))
+// Rincian kartu: admin/superadmin, pimpinan tinggi (Direktur, Wakil Direktur, Yayasan, Kepala Bidang), hak Layar Pantauan ≥ Input/ubah
+const bolehRinci = computed(() => admin.value || !!sesi.tugas?.pimpinan || sesi.tingkat('pantauan') >= 2)
 
 // ---------- Saringan (tersimpan di perangkat) ----------
 const simpanan = (() => { try { return JSON.parse(localStorage.getItem('simka.layar.saring') || '{}') } catch { return {} } })()
 const f = ref({ jk: simpanan.jk || '', jenjang: simpanan.jenjang || '', bidang: simpanan.bidang || '' })
 watch(f, (v) => { try { localStorage.setItem('simka.layar.saring', JSON.stringify(v)) } catch { /* abaikan */ } }, { deep: true })
 // Data slide pindahan dari beranda (Presensi Sesi, Santri Sesi, Ringkasan Tahfizh, Administrasi): langsung (Realtime), hari berjalan
-const rp = useRekapPresensi(); const ta = useTahunAjaran(); const tz = useTahfizh(); const br = useBeranda()
-const tambahan = computed(() => ({ presensi: rp.stat, santri: ta.statistik, tahfizh: tz.beranda, kelola: br.data?.kelola }))
+const rp = useRekapPresensi(); const ta = useTahunAjaran(); const tz = useTahfizh(); const br = useBeranda(); const kn = useKinerja()
+// Kinerja bidang: bulan berjalan s.d. kemarin (data hari lampau), dimuat saat dibuka lalu tiap jam
+const kinerja = ref(null); let pewaktuKinerja = null
+function muatKinerja(segar = false) { const p = periodeBerjalan(); kn.muat(p.mulai, p.selesai, segar).then((v) => { kinerja.value = v }).catch(() => {}) }
+const tambahan = computed(() => ({ presensi: rp.stat, santri: ta.statistik, tahfizh: tz.beranda, kelola: br.data?.kelola, kinerja: kinerja.value }))
 const slide = computed(() => (pt.data ? susunSlide(pt.data, f.value, tambahan.value) : []))
 const saringanTeks = computed(() => [f.value.jk === 'L' ? 'putra' : f.value.jk === 'P' ? 'putri' : '', f.value.jenjang ? JENJANG_PENDEK[f.value.jenjang] : '',
   f.value.bidang ? pt.data?.bidang.find((b) => b.id === f.value.bidang)?.nama : ''].filter(Boolean).join(', '))
@@ -109,25 +120,26 @@ const labelTgl = computed(() => { const d = new Date(`${tglPilih.value}T12:00:00
 
 onMounted(() => {
   pt.mulai(route.query.tgl && route.query.tgl < hariIniISO() ? route.query.tgl : null); detak = setInterval(() => (kini.value = new Date()), 1000)
-  if (admin.value) rp.mulai()
+  if (bolehRinci.value) rp.mulai()
+  muatKinerja(); pewaktuKinerja = setInterval(() => muatKinerja(true), 3600000)
   ta.muatStatistik().catch(() => {}); ta.dengarkan?.(); tz.muatBeranda().catch(() => {}); tz.dengarkanBeranda?.(); if (!br.data) br.muat()
   window.addEventListener('keydown', tombol); document.addEventListener('fullscreenchange', cekPenuh)
 })
 onBeforeUnmount(() => {
-  pt.berhenti(); clearInterval(detak); clearInterval(pewaktu); clearTimeout(jeda); if (admin.value) rp.berhenti()
+  pt.berhenti(); clearInterval(detak); clearInterval(pewaktu); clearTimeout(jeda); clearInterval(pewaktuKinerja); if (bolehRinci.value) rp.berhenti()
   window.removeEventListener('keydown', tombol); document.removeEventListener('fullscreenchange', cekPenuh)
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
 })
 
-// ---------- Detail (admin/superadmin): daftar, cetak, Excel ----------
+// ---------- Detail (admin, superadmin, pimpinan): daftar, cetak, Excel ----------
 const lembar = ref(false); const daftar = ref(null); const pratinjau = ref(false); const penanda = ref({ jabatan: 'Direktur', nama: '', niy: '' })
-function buka(k) { if (!admin.value || !k.daftar) return; daftar.value = k.daftar; lembar.value = true; jedaOtomatis() }
+function buka(k) { if (!bolehRinci.value || !k?.daftar) return; daftar.value = k.daftar; lembar.value = true; jedaOtomatis() }
 // Mengetahui: kepala bidang sesuai isi daftar (rekap kelas/kamar/halaqah/ekskul), selain itu Direktur
 async function cetak() { penanda.value = await penandaKelompok(daftar.value?.ttd || { jenis: 'umum' }).catch(() => penanda.value); pratinjau.value = true }
 function ekspor() {
   const x = daftar.value
   const ws = XLSX.utils.aoa_to_sheet([[x.judul], [`${formatPanjang(pt.data.tanggal)}, pukul ${formatJam(pt.data.waktu)} WITA${saringanTeks.value ? ' · ' + saringanTeks.value : ''}`], [],
-    ['No.', ...x.kolom.map((c) => c[1])], ...x.baris.map((b, i) => [i + 1, ...x.kolom.map((c) => b[c[0]] ?? '')]), ...(x.total ? [['', ...x.kolom.map((c) => x.total[c[0]] ?? '')]] : [])])
+    ['No.', ...x.kolom.map((c) => c[1])], ...x.baris.map((b, i) => [i + 1, ...x.kolom.map((c) => b[c[0]] ?? '')]), ...(x.total ? [['', ...x.kolom.map((c) => x.total[c[0]] ?? '')]] : []), ...(x.catatan?.length ? [[], ['Catatan:'], ...x.catatan.map((c, i) => [`${i + 1}. ${c}`])] : [])])
   ws['!cols'] = [{ wch: 5 }, ...x.kolom.map((c) => ({ wch: c[2] + 6 }))]
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Pantauan'); XLSX.writeFile(wb, `Pantauan-${x.judul.replace(/[^\w]+/g, '-')}-${pt.data.tanggal}.xlsx`)
 }
@@ -182,7 +194,7 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
             <span class="ml-auto hidden text-sm font-bold text-teks3 sm:block lg:text-lg">{{ i + 1 }}/{{ slide.length }}</span>
           </div>
           <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:gap-4 xl:grid-cols-5">
-            <component :is="admin ? 'button' : 'div'" v-for="k in s.kartu" :key="k.j" :type="admin ? 'button' : undefined" :class="['kartu-slide', 'w-' + k.w, admin && 'bisa']" :aria-label="admin ? `${k.j}: ${k.v}. Lihat daftar` : undefined" @click="buka(k)">
+            <component :is="bolehRinci && k.daftar ? 'button' : 'div'" v-for="k in s.kartu" :key="k.j" :type="bolehRinci && k.daftar ? 'button' : undefined" :class="['kartu-slide', 'w-' + k.w, bolehRinci && k.daftar && 'bisa']" :aria-label="bolehRinci && k.daftar ? `${k.j}: ${k.v}. Lihat daftar` : undefined" @click="buka(k)">
               <span class="ikon-slide"><component :is="k.i" :size="26" weight="duotone" /></span>
               <span :class="['angka', String(k.v).length > 7 && 'panjang']">{{ k.v }}</span>
               <span class="judul">{{ k.j }}</span>
@@ -190,8 +202,10 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
             </component>
           </div>
           <div v-if="s.grafik?.length" class="mt-4 grid gap-4 lg:mt-6 lg:grid-cols-2 lg:gap-5">
-            <div v-for="g in s.grafik" :key="g.judul" class="kartu grafik-slide flex items-center justify-center p-4 lg:p-5">
-              <GrafikBatang v-if="g.tipe === 'batang' && g.label.length" class="w-full" :judul="g.judul" :label="g.label" :seri="g.seri" :sumbu-y="g.sumbuY" />
+            <div v-for="g in s.grafik" :key="g.judul" :class="['kartu grafik-slide flex items-center justify-center p-4 lg:p-5', g.lebar && 'lg:col-span-2']">
+              <GrafikSkor v-if="g.tipe === 'skor' && g.data.length" class="w-full" :judul="g.judul" :data="g.data" :bisa="bolehRinci" @pilih="buka" />
+              <PetaKinerja v-else-if="g.tipe === 'peta' && g.baris.length" :judul="g.judul" :baris="g.baris" :total="g.total" :bisa="bolehRinci" @pilih="buka" />
+              <GrafikBatang v-else-if="g.tipe === 'batang' && g.label.length" class="w-full" :judul="g.judul" :label="g.label" :seri="g.seri" :sumbu-y="g.sumbuY" />
               <GrafikLingkaran v-else-if="g.tipe === 'lingkaran' && g.data.some((x) => x.nilai)" :judul="g.judul" :data="g.data" :satuan="g.satuan || 'santri'" />
               <p v-else class="py-10 text-center text-sm text-teks3">{{ g.judul }}: belum ada data {{ pt.data.lalu ? 'pada hari itu' : 'hari ini' }}.</p>
             </div>
@@ -216,6 +230,8 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
           <button class="tombol-garis w-pengajuan min-h-[40px] px-3 text-sm" @click="cetak"><PhEye :size="18" style="color: var(--c)" /> Cetak</button>
           <button class="tombol-garis w-santri min-h-[40px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Ekspor</button>
         </div>
+        <ul v-if="daftar.catatan?.length" class="mb-3 space-y-1 rounded-xl bg-permukaan2 p-3 text-sm text-teks2">
+          <li v-for="(c, i) in daftar.catatan" :key="i" class="flex gap-1.5"><span class="text-teks3">•</span><span>{{ c }}</span></li></ul>
         <div class="max-h-[60vh] overflow-auto rounded-xl border border-garis">
           <table class="w-full min-w-[560px] text-left text-sm">
             <thead class="sticky top-0 bg-permukaan2 text-teks2"><tr><th class="px-3 py-2 font-bold">No.</th><th v-for="c in daftar.kolom" :key="c[0]" class="px-3 py-2 font-bold">{{ c[1] }}</th></tr></thead>
@@ -240,6 +256,8 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
           <tr v-if="!daftar.baris.length"><td :colspan="daftar.kolom.length + 1" class="tengah">Tidak ada data.</td></tr>
         </tbody>
       </table>
+      <div v-if="daftar.catatan?.length" style="margin-top: 6pt"><p style="margin: 0 0 2pt; font-weight: bold">Catatan:</p>
+        <ol style="margin: 0; padding-left: 14pt"><li v-for="(c, i) in daftar.catatan" :key="i">{{ c }}</li></ol></div>
       <template #ttd>
         <TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: penanda.jabatan || 'Direktur', nama: penanda.nama, niy: penanda.niy }"
           :kanan="{ jabatan: sesi.pengguna?.jabatan || 'Pencetak', nama: sesi.pengguna?.nama_lengkap || '', niy: sesi.pengguna?.niy }" />

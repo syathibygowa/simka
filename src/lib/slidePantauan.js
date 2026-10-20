@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/slidePantauan.js | v1.5 | Perbaikan 13.7.0: slide Presensi Sesi, Santri Sesi, Ringkasan Tahfizh, Administrasi (pindahan dari beranda) | 16/10/2026
+// SIMKA PRO | src/lib/slidePantauan.js | v1.6 | 14.18.0: slide Kinerja Bidang (enam indikator sama untuk setiap bidang) | 21/10/2026
 // Penyusun slide Layar Pantauan dari muatan pantauan_langsung(): setiap slide berisi kartu statistik (dengan daftar
 // nama untuk detail admin/superadmin) dan grafik (batang/lingkaran). Saringan: jenis kelamin, jenjang, bidang.
 // Urutan slide: lihat URUT di akhir susunSlide (Pondok di depan).
@@ -14,6 +14,9 @@
 // v1.5: empat slide pindahan dari slider beranda (masing-masing 10 kartu): Presensi Sesi (statistik_presensi), Santri Sesi
 //       (statistik_santri + sesi absensi), Ringkasan Tahfizh (ringkasan_tahfizh_beranda), Administrasi (ringkasan_beranda.kelola).
 //       Hanya hari berjalan; sumber data dikirim Pantauan.vue lewat parameter x.
+// v1.6: slide Kinerja Bidang (x.kinerja = olah(kinerja_bidang()), bulan berjalan s.d. kemarin): kartu skor pondok, skor tiap
+//       bidang (daftar = pegawai × enam indikator + catatan), kelompok santri; grafik skor mendatar dan peta warna indikator.
+//       Kartu dan baris grafik dapat diketuk untuk rincian siap cetak.
 import {
   PhStudent, PhChalkboardTeacher, PhBookOpenText, PhBed, PhFirstAidKit, PhSignOut, PhSiren, PhUserCheck, PhClock, PhAirplaneTilt, PhUserMinus,
   PhHourglass, PhMoon, PhCalendarCheck, PhSignIn, PhProhibit, PhPackage, PhHandArrowDown, PhIdentificationBadge, PhUsersThree, PhGraduationCap,
@@ -25,6 +28,7 @@ import {
 } from '@phosphor-icons/vue'
 import { formatJam, formatWaktu } from './tanggal'
 import { JENIS_TITIPAN, PENGAMBIL } from './security'
+import { INDIKATOR, persenTeks, skorTeks } from './kinerja'
 
 const W = { hijau: '#1E7D4F', merah: '#C7332F', biru: '#2F5FA8', jingga: '#C26A12', ungu: '#7B3FA0', teal: '#127A7A', abu: '#7A8590', emas: '#A6791A' }
 const KODE = { H: 'Hadir', T: 'Terlambat', I: 'Izin', S: 'Sakit', A: 'Absen', B: 'Bolos' }
@@ -671,9 +675,10 @@ export function susunSlide(d, f, x = {}) {
 
   // Slide pindahan dari beranda (hanya hari berjalan)
   if (!d.lalu) slide.push(...slideBeranda(x, d, f))
+  if (!d.lalu && x.kinerja) slide.push(slideKinerja(x.kinerja))
 
   // Urutan slide: Pondok di depan, unit kerja menyusul sesuai alur
-  const URUT = ['pondok', 'santri', 'santrisesi', 'pegawai', 'presensisesi', 'smp', 'sma', 'walikelas', 'gurumapel', 'tahfizh', 'hafalan', 'tahfizhringkas', 'musyrif', 'kegiatan', 'klinik', 'security', 'ekskul', 'perizinan', 'lapor', 'dokumen', 'surat', 'keuangan', 'adminpeg', 'administrasi']
+  const URUT = ['pondok', 'santri', 'santrisesi', 'pegawai', 'presensisesi', 'kinerja', 'smp', 'sma', 'walikelas', 'gurumapel', 'tahfizh', 'hafalan', 'tahfizhringkas', 'musyrif', 'kegiatan', 'klinik', 'security', 'ekskul', 'perizinan', 'lapor', 'dokumen', 'surat', 'keuangan', 'adminpeg', 'administrasi']
   slide.sort((a, b) => URUT.indexOf(a.k) - URUT.indexOf(b.k))
 
   // Hari sebelumnya: ungkapan "hari ini" menjadi "hari itu"
@@ -802,4 +807,53 @@ export function slideBeranda(x = {}, d = {}, f = {}) {
       ] })
   }
   return hasil
+}
+
+// ---------- Kinerja Bidang (v1.6) ----------
+const WARNA_KARTU = ['presensi', 'pegawai', 'santri', 'tahfizh', 'pengajuan', 'klinik', 'security', 'laporan', 'tatausaha', 'gaji', 'agenda', 'musyrif']
+const tglPendek = (iso) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '')
+const K_KINERJA = [['niy', 'NIY', 9], ['nama', 'Nama pegawai', 21], ...INDIKATOR.map((x) => [x.k, x.pendek, 8]), ['skor', 'Skor', 7], ['pred', 'Predikat', 11]]
+const barisKinerja = (p) => ({ niy: p.niy || '–', nama: p.nama, jabatan: p.jabatan || '–', ...Object.fromEntries(INDIKATOR.map((x) => [x.k, p.ind[x.k].p == null ? '–' : persenTeks(p.ind[x.k].p)])),
+  skor: skorTeks(p.skor), pred: p.predikat?.n || '–' })
+const ketRumus = () => INDIKATOR.map((x, i) => `${i + 1}) ${x.n} = ${x.rumus}.`)
+
+/** Slide indikator kinerja bidang. k = olah(kinerja_bidang(mulai, selesai)) */
+export function slideKinerja(k) {
+  const periode = `${tglPendek(k.mulai)} s.d. ${tglPendek(k.selesai)}`
+  const bidang = k.bidang.filter((b) => b.skor != null || b.pegawai)
+  const urut = [...bidang].sort((a, b) => (b.skor ?? -1) - (a.skor ?? -1))
+  const daftarBidang = (b) => ({
+    judul: `Kinerja ${b.nama}`, kolom: K_KINERJA, tegak: false,
+    catatan: [`Periode ${periode}. Skor ${skorTeks(b.skor)} (${b.predikat?.n || '–'}).${b.kepala ? ' Kepala: ' + b.kepala + '.' : ''}`, ...b.catatan,
+      'Persentase per pegawai: absen santri dihitung dari kelompok yang diasuhnya; nilai bidang dihitung dari kelompok milik bidang.'],
+    baris: k.pegawai.filter((p) => p.bidang === b.id).sort((x, y) => (x.skor ?? 999) - (y.skor ?? 999)).map(barisKinerja),
+    total: { niy: '', nama: 'Nilai bidang', ...Object.fromEntries(INDIKATOR.map((x) => [x.k, b.ind[x.k].p == null ? '–' : persenTeks(b.ind[x.k].p)])), skor: skorTeks(b.skor), pred: b.predikat?.n || '–' },
+  })
+  const ringkasBaris = urut.map((b) => ({ niy: '', nama: b.nama, ...Object.fromEntries(INDIKATOR.map((x) => [x.k, b.ind[x.k].p == null ? '–' : persenTeks(b.ind[x.k].p)])), skor: skorTeks(b.skor), pred: b.predikat?.n || '–' }))
+  const daftarPondok = { judul: 'Indikator Kinerja Bidang', kolom: [['nama', 'Bidang', 24], ...INDIKATOR.map((x) => [x.k, x.pendek, 8.5]), ['skor', 'Skor', 7], ['pred', 'Predikat', 12]], baris: ringkasBaris,
+    total: { nama: 'Seluruh pondok', ...Object.fromEntries(INDIKATOR.map((x) => [x.k, k.pondok.ind[x.k].p == null ? '–' : persenTeks(k.pondok.ind[x.k].p)])), skor: skorTeks(k.pondok.skor), pred: k.pondok.predikat?.n || '–' },
+    catatan: [`Periode ${periode}. Enam indikator yang sama untuk setiap bidang, bobot sama; skor = rata-rata indikator yang berlaku.`, ...ketRumus(),
+      'Predikat: ≥ 90 sangat baik; 80–89 baik; 70–79 cukup; < 70 perlu pembinaan.'] }
+  const kurang = k.kelompok.filter((g) => g.ss && g.ss_isi < g.ss).sort((a, b) => (a.p ?? 0) - (b.p ?? 0))
+  const namaBidang = Object.fromEntries(k.bidang.map((b) => [b.id, b.nama]))
+  const JENIS = { kelas: 'Kelas', halaqah: 'Halaqah', kamar: 'Kamar', ekskul: 'Ekskul' }
+  const daftarKelompok = { judul: 'Absensi santri per kelompok yang belum lengkap', kolom: [['kelompok', 'Kelompok', 18], ['jenis', 'Jenis', 9], ['bidang', 'Bidang', 20], ['pengasuh', 'Pengasuh', 25], ['isi', 'Terisi', 9], ['jadwal', 'Terjadwal', 9], ['persen', 'Capaian', 10]],
+    baris: kurang.map((g) => ({ kelompok: g.nama, jenis: JENIS[g.jenis] || g.jenis, bidang: namaBidang[g.bidang] || '–', pengasuh: g.pengasuh || '–', isi: g.ss_isi, jadwal: g.ss, persen: persenTeks(g.p) })),
+    catatan: [`Periode ${periode}. Sesi absensi yang terjadwal dan sudah lewat tetapi belum diisi.`] }
+  const terendah = (b) => { const x = INDIKATOR.filter((i) => b.ind[i.k].p != null).sort((p, q) => b.ind[p.k].p - b.ind[q.k].p)[0]; return x ? `terendah ${x.pendek.toLowerCase()} ${persenTeks(b.ind[x.k].p)}` : 'belum ada data' }
+  const kartuBidang = urut.slice(0, 10).map((b, i) => kartu(b.nama.replace(/^Bidang (Kesetaraan )?/, 'Bid. '), skorTeks(b.skor), PhTarget, WARNA_KARTU[(i + 2) % WARNA_KARTU.length],
+    `${b.predikat?.n || '–'} · ${b.pegawai} pegawai · ${terendah(b)}`, daftarBidang(b)))
+  return {
+    k: 'kinerja', judul: 'Kinerja Bidang', ikon: PhChartLine, w: 'rekap',
+    sub: `Indikator kinerja bidang ${periode} · enam indikator sama untuk setiap bidang · ketuk untuk rincian`,
+    kartu: [
+      kartu('Skor seluruh pondok', skorTeks(k.pondok.skor), PhPresentationChart, 'presensi', `${k.pondok.predikat?.n || '–'} · ${k.pondok.pegawai} pegawai · ${bidang.length} bidang`, daftarPondok),
+      ...kartuBidang,
+      kartu('Kelompok belum lengkap', kurang.length, PhListChecks, 'santri', `dari ${k.kelompok.length} kelompok santri · ada sesi absensi belum terisi`, daftarKelompok),
+    ],
+    grafik: [
+      { tipe: 'skor', judul: 'Skor kinerja per bidang (0–100)', lebar: true, data: urut.filter((b) => b.skor != null).map((b) => ({ id: b.id, n: b.nama, v: b.skor, warna: b.predikat?.warna, ket: b.predikat?.n, daftar: daftarBidang(b) })) },
+      { tipe: 'peta', judul: 'Capaian enam indikator per bidang', lebar: true, baris: urut.map((b) => ({ ...b, daftar: daftarBidang(b) })), total: k.pondok },
+    ],
+  }
 }
