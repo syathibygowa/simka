@@ -1,4 +1,4 @@
-// SIMKA PRO | public/sw-dorong.js | v1.2 | Perbaikan: pelindung banjir notifikasi HP | 06/10/2026
+// SIMKA PRO | public/sw-dorong.js | v1.3 | 14.19.1: badge notifikasi baru (lonceng SIMKA) | 21/10/2026
 // Dimuat oleh service worker PWA (workbox importScripts). Menampilkan notifikasi dorong dari server
 // dan membuka halaman terkait saat notifikasi diketuk.
 self.addEventListener('push', (event) => {
@@ -9,7 +9,7 @@ self.addEventListener('push', (event) => {
   // terpisah dapat membuat antarmuka sistem Android (bilah status, layar kunci) macet. Paling banyak 3 notifikasi
   // tampil terpisah; selebihnya digabung menjadi SATU notifikasi ringkasan yang membuka halaman Notifikasi.
   event.waitUntil((async () => {
-    const umum = { icon: 'ikon/ikon-192.png', badge: 'ikon/badge-96.png', lang: 'id' }   // badge: siluet putih transparan
+    const umum = { icon: 'ikon/ikon-192.png', badge: 'ikon/badge-96.png?v=2', lang: 'id' }   // badge: siluet putih transparan
     let ada = []
     try { ada = await self.registration.getNotifications() } catch (e) { ada = [] }
     const terpisah = ada.filter((n) => n.tag !== 'simka-ringkas')
