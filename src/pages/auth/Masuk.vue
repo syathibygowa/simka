@@ -1,12 +1,14 @@
-<!-- SIMKA PRO | src/pages/auth/Masuk.vue | v1.5 | Fase 9 – Perbaikan: tombol Portal Wali merah gradasi jingga | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/auth/Masuk.vue | v1.6 | 14.19.0: sesi tersimpan yang tertunda karena koneksi dapat dilanjutkan tanpa masuk ulang | 21/10/2026 -->
 <script setup>
+// v1.6: bila sesi masih tersimpan di perangkat tetapi data akun belum dapat dimuat (sinyal lemah/server sibuk), tampil kotak
+//       "Lanjutkan sesi" dengan tombol Coba lagi; begitu koneksi kembali, aplikasi otomatis masuk tanpa mengetik sandi.
 // v1.2: "Ingat saya di perangkat ini". Username diingat di perangkat; kata sandi disimpan oleh PENGELOLA SANDI
 // peramban/HP (Google Password Manager, iCloud Keychain, dll.), bukan oleh aplikasi, sehingga tetap aman.
 // Saat halaman dibuka, isian terisi otomatis dari pengelola sandi (Chrome/Edge/Android lewat Credential Management
 // API; Safari/iPhone lewat saran isi otomatis keyboard) → pengguna cukup menekan Masuk.
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { PhUser, PhLockKey, PhEye, PhEyeSlash, PhCrown, PhUserGear, PhIdentificationBadge, PhUsersFour, PhCaretRight } from '@phosphor-icons/vue'
+import { PhArrowClockwise, PhWifiSlash, PhUser, PhLockKey, PhEye, PhEyeSlash, PhCrown, PhUserGear, PhIdentificationBadge, PhUsersFour, PhCaretRight } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import { MODE_DEMO } from '@/lib/supabase'
 import { formatHari, formatHijriah } from '@/lib/tanggal'
@@ -45,6 +47,10 @@ function lupakan() {
 }
 const galat = ref(''); const proses = ref(false)
 const lanjut = () => router.replace(sesi.wajibGantiSandi ? '/ganti-sandi' : (route.query.lanjut || '/'))
+// Sesi tertunda yang berhasil dimuat (otomatis saat online atau lewat tombol) langsung membuka aplikasi
+watch(() => sesi.masuk, (v) => { if (v) lanjut() })
+const mencoba = ref(false)
+async function cobaLanjut() { mencoba.value = true; try { if (!(await sesi.cobaLagi())) galat.value = sesi.galatSesi || 'Server belum dapat dihubungi. Periksa koneksi lalu coba lagi.' } finally { mencoba.value = false } }
 
 async function kirim() {
   galat.value = ''
@@ -83,6 +89,11 @@ const PERAN_DEMO = [
       <div class="mx-auto w-full max-w-md">
         <h1 class="text-2xl font-extrabold">Masuk</h1>
         <p class="mt-1 text-teks2">Gunakan username dan kata sandi akun pegawai Anda.</p>
+        <div v-if="sesi.sesiTertunda" class="mt-5 rounded-2xl border border-[#B7791F]/40 bg-[#FBF0DC] p-4 text-[#5C3B07] dark:bg-[#3A2A0E] dark:text-[#F2D9A6]" role="status">
+          <p class="flex items-center gap-2 font-bold"><PhWifiSlash :size="20" weight="duotone" /> Anda masih masuk di perangkat ini</p>
+          <p class="mt-1 text-sm">Data akun belum dapat dimuat karena koneksi atau server. Tidak perlu mengetik sandi lagi; tekan Coba lagi atau tunggu sinyal kembali.</p>
+          <button type="button" class="tombol-utama mt-3 w-full" :disabled="mencoba" @click="cobaLanjut"><PhArrowClockwise :size="20" weight="bold" :class="mencoba && 'animate-spin'" /> {{ mencoba ? 'Menghubungkan…' : 'Coba lagi' }}</button>
+        </div>
         <form class="mt-6 space-y-4" method="post" action="#" @submit.prevent="kirim" novalidate>
           <div>
             <label for="u" class="label-isian">Username</label>

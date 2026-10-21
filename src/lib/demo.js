@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demo.js | v1.16 | 14.15.0: aturan cetak bawaan katalog, pejabat Kepala Bidang Kesantrian | 19/10/2026
+// SIMKA PRO | src/lib/demo.js | v1.17 | 14.19.0: format nomor surat, SK, dan agenda masuk dihitung per bagian (kop) | 21/10/2026
 // Data contoh untuk MODE DEMO. Nama pegawai di bawah fiktif.
 import { KATALOG_FITUR } from './hakAkses'
 const menitLalu = (m) => new Date(Date.now() - m * 60000).toISOString()
@@ -124,8 +124,9 @@ export const LEMBAGA_DEMO = () => ({
     { id: 'h1', tanggal_mulai: '2026-12-25', tanggal_akhir: '2026-12-25', nama: 'Libur Natal', jenis: 'libur_nasional', berlaku_untuk: ['semua'] },
   ],
   doc_number_formats: [
-    { kode: 'surat', nama: 'Surat tata usaha (D/K)', pola: '{DK}.{URUT3}/{PERIHAL}/{UNIT}/{BLN_H_ROMAWI}/{THN_H}', grup_urut: 'surat', reset: 'tahun_hijriah', aktif: true },
-    { kode: 'sk', nama: 'Surat Keputusan (SK)', pola: '{DK}.{URUT3}/{PERIHAL}/{UNIT}/{BLN_H_ROMAWI}/{THN_H}', grup_urut: 'sk', reset: 'tahun_hijriah', aktif: true },
+    { kode: 'surat', nama: 'Surat tata usaha (D/K)', pola: '{DK}.{URUT3}/{PERIHAL}/{UNIT}/{BLN_H_ROMAWI}/{THN_H}', grup_urut: 'surat', reset: 'tahun_hijriah', aktif: true, per_kop: true },
+    { kode: 'sk', nama: 'Surat Keputusan (SK)', pola: '{DK}.{URUT3}/{PERIHAL}/{UNIT}/{BLN_H_ROMAWI}/{THN_H}', grup_urut: 'sk', reset: 'tahun_hijriah', aktif: true, per_kop: true },
+    { kode: 'agenda_masuk', nama: 'Nomor agenda surat masuk', pola: '{URUT3}/SM/{UNIT}/{BLN_H_ROMAWI}/{THN_H}', grup_urut: 'agenda_masuk', reset: 'tahun_hijriah', aktif: true, per_kop: true },
     { kode: 'pengajuan', nama: 'Dokumen pengajuan pegawai', pola: 'PGJ.{URUT3}/{UNIT}/{BLN_ROMAWI}/{THN}', grup_urut: 'pengajuan', reset: 'tahun_masehi', aktif: true },
     { kode: 'slip', nama: 'Slip gaji', pola: 'SLIP.{URUT3}/{UNIT}/{BLN}/{THN}', grup_urut: 'slip', reset: 'bulan_masehi', aktif: true },
   ],

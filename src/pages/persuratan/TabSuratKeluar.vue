@@ -1,13 +1,15 @@
-<!-- SIMKA PRO | src/pages/persuratan/TabSuratKeluar.vue | v1.1 | 14.2.0: saringan corong di HP | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/TabSuratKeluar.vue | v1.2 | 14.19.0: saringan dan penanda bagian penerbit (kop) | 21/10/2026 -->
 <script setup>
 // Daftar surat keluar: yang perlu tindakan (diperiksa TU, menunggu tanda tangan saya, ditolak) di atas, lalu draf dan surat terbit.
 // Diketuk membuka rincian; Tata Usaha dan pimpinan menyusun surat baru dari template.
+// v1.2: saringan bagian penerbit (Yayasan, Pondok, Wustha, SMA) dan lencana bagian pada setiap surat.
 import { ref, computed, watch, onMounted } from 'vue'
 import { PhMagnifyingGlass, PhPlus, PhNotePencil, PhHandPointing } from '@phosphor-icons/vue'
 import { usePersuratan } from '@/stores/persuratan'
 import { useUI } from '@/stores/ui'
 import { STATUS_KELUAR, KATEGORI_TEMPLATE } from '@/lib/suratKeluar'
-import { tambahHari } from '@/lib/persuratan'
+import { tambahHari, daftarBagian } from '@/lib/persuratan'
+import { useLembaga } from '@/stores/lembaga'
 import { formatPendek, hariIniISO } from '@/lib/tanggal'
 import InputTanggal from '@/components/InputTanggal.vue'
 import SaringCorong from '@/components/SaringCorong.vue'
@@ -15,8 +17,9 @@ import TombolAksi from '@/components/TombolAksi.vue'
 
 const props = defineProps({ versi: { type: Number, default: 0 } })
 const emit = defineEmits(['pilih', 'susun'])
-const ps = usePersuratan(); const ui = useUI()
-const daftar = ref([]); const memuat = ref(false); const cari = ref(''); const status = ref('')
+const ps = usePersuratan(); const ui = useUI(); const lembaga = useLembaga()
+const daftar = ref([]); const memuat = ref(false); const cari = ref(''); const status = ref(''); const bagian = ref('')
+const BAGIAN = computed(() => daftarBagian(lembaga.letterheads)); const infoBagian = (k) => BAGIAN.value.find((b) => b.k === (k || 'pondok'))
 const mulai = ref(tambahHari(hariIniISO(), -90)); const selesai = ref(hariIniISO())
 async function muat() {
   memuat.value = true
@@ -27,16 +30,18 @@ watch([mulai, selesai, () => props.versi], muat)
 const perluTindakan = (o) => (o.status === 'diperiksa' && ps.hak.kelola) || o.menunggu_saya || (o.status === 'ditolak' && (o.saya_penyusun || ps.hak.kelola))
 const tampil = computed(() => {
   const q = cari.value.toLowerCase().trim()
-  return daftar.value.filter((o) => (!status.value || o.status === status.value) && (!q || `${o.nomor || ''} ${o.perihal} ${o.kepada || ''} ${o.jenis_nama}`.toLowerCase().includes(q)))
+  return daftar.value.filter((o) => (!bagian.value || (o.kop_kode || 'pondok') === bagian.value) && (!status.value || o.status === status.value) && (!q || `${o.nomor || ''} ${o.perihal} ${o.kepada || ''} ${o.jenis_nama}`.toLowerCase().includes(q)))
 })
 const grup = computed(() => [{ judul: 'Perlu tindakan Anda', isi: tampil.value.filter(perluTindakan) }, { judul: 'Surat keluar', isi: tampil.value.filter((o) => !perluTindakan(o)) }])
 const ketTindakan = (o) => (o.menunggu_saya ? 'Menunggu tanda tangan Anda' : o.status === 'diperiksa' ? 'Periksa dan ajukan tanda tangan' : 'Perbaiki lalu ajukan ulang')
 </script>
 <template>
   <div>
-    <SaringCorong :jumlah="status ? 1 : 0" :ringkasan="`${formatPendek(mulai)} – ${formatPendek(selesai)}${status ? ' · ' + STATUS_KELUAR[status].n : ''}`" judul="Saring surat keluar">
+    <SaringCorong :jumlah="[bagian, status].filter(Boolean).length" :ringkasan="`${formatPendek(mulai)} – ${formatPendek(selesai)}${bagian ? ' · ' + infoBagian(bagian)?.n : ''}${status ? ' · ' + STATUS_KELUAR[status].n : ''}`" judul="Saring surat keluar">
       <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nomor, perihal, tujuan" aria-label="Cari surat keluar" /></div></template>
+      <select v-model="bagian" class="isian md:w-auto" aria-label="Saring bagian penerbit"><option value="">Semua bagian</option>
+        <option v-for="b in BAGIAN" :key="b.k" :value="b.k">{{ b.n }}</option></select>
       <select v-model="status" class="isian md:w-auto" aria-label="Saring status"><option value="">Semua status</option>
         <option v-for="(v, k) in STATUS_KELUAR" :key="k" :value="k">{{ v.n }}</option></select>
       <div class="grid w-full grid-cols-2 gap-3 md:w-auto md:min-w-[22rem]"><InputTanggal v-model="mulai" label="Tanggal surat dari" /><InputTanggal v-model="selesai" label="Sampai" /></div>
@@ -53,6 +58,7 @@ const ketTindakan = (o) => (o.menunggu_saya ? 'Menunggu tanda tangan Anda' : o.s
             <span class="chip-ikon h-11 w-11 text-xs font-extrabold">{{ o.perihal_kode }}</span>
             <span class="min-w-0 flex-1">
               <span class="flex flex-wrap items-center gap-1.5"><span class="lencana" :class="'w-' + STATUS_KELUAR[o.status].w">{{ STATUS_KELUAR[o.status].n }}</span>
+                <span v-if="infoBagian(o.kop_kode)" class="lencana" :class="'w-' + infoBagian(o.kop_kode).w">{{ infoBagian(o.kop_kode).n }}</span>
                 <span class="text-xs font-semibold text-teks3">{{ o.jenis_nama }}</span></span>
               <span class="mt-1 block font-bold leading-snug text-teks [overflow-wrap:anywhere]">{{ o.perihal }}</span>
               <span v-if="o.kepada" class="block truncate text-sm text-teks2">{{ o.kepada.split('\n')[0] }}</span>

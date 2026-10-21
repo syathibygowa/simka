@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/persuratan.js | v1.6 | 14.1.0: hak Surat Teguran (hak_persuratan.teguran), surat SP contoh mode demo | 17/10/2026
+// SIMKA PRO | src/stores/persuratan.js | v1.7 | 14.19.0: surat masuk dan buku agenda per bagian (kop) | 21/10/2026
 // Persuratan: hak, ketentuan, surat masuk (catat, ubah, batal), disposisi berantai (beri, tarik, selesai), ringkasan, buku agenda;
 // template surat (simpan, hapus) dan surat keluar (simpan draf, kirim ke TU, ajukan tanda tangan, batalkan, arsip, revisi);
 // buku agenda surat keluar = inventaris semua surat (Persuratan + surat dari modul lain).
@@ -43,9 +43,9 @@ function demo() {
       perihal: 'Undangan Rapat Koordinasi Pondok Pesantren se-Kabupaten Gowa', sifat: 'segera', lampiran: '1 lembar', created_at: jam(-2) }),
     s({ nomor_agenda: '013/SM/IV/1448', urut_agenda: 13, tanggal_terima: hari(-1), nomor_surat: '045/DPP-WI/X/2026', tanggal_surat: hari(-4), pengirim: 'DPP Wahdah Islamiyah',
       perihal: 'Pemberitahuan Daurah Tahfizh Nasional', sifat: 'penting', status: 'didisposisi', dibaca_tujuan: jam(-20), created_at: jam(-26) }),
-    s({ nomor_agenda: '012/SM/IV/1448', urut_agenda: 12, tanggal_terima: hari(-3), nomor_surat: '12/PKM-BP/X/2026', tanggal_surat: hari(-4), pengirim: 'Puskesmas Bontonompo',
+    s({ kop_kode: 'sma', nomor_agenda: '021/SM/SMAS-IAS/IV/1448', urut_agenda: 21, tanggal_terima: hari(-3), nomor_surat: '12/PKM-BP/X/2026', tanggal_surat: hari(-4), pengirim: 'Puskesmas Bontonompo',
       perihal: 'Jadwal Imunisasi dan Pemeriksaan Kesehatan Santri', status: 'selesai', dibaca_tujuan: jam(-70), selesai_pada: jam(-12), created_at: jam(-72) }),
-    s({ nomor_agenda: '011/SM/IV/1448', urut_agenda: 11, tanggal_terima: hari(-5), pengirim: 'Yayasan Pendidikan Mitra', perihal: 'Penawaran kerja sama beasiswa',
+    s({ kop_kode: 'yayasan', nomor_agenda: '003/SM/YPIA/IV/1448', urut_agenda: 3, tanggal_terima: hari(-5), pengirim: 'Yayasan Pendidikan Mitra', perihal: 'Penawaran kerja sama beasiswa',
       sifat: 'rahasia', tujuan_id: 'e-dir', created_at: jam(-120) }),
     s({ nomor_agenda: '010/SM/IV/1448', urut_agenda: 10, tanggal_terima: hari(-6), pengirim: 'Toko Buku Al-Ikhlas', perihal: 'Brosur penawaran mushaf dan kitab',
       tujuan_id: null, status: 'diarsipkan', created_at: jam(-144) }),
@@ -101,7 +101,7 @@ const sayaDemo = () => ({ superadmin: 'e-dir', admin: 'e-tu', pegawai: 'd-pg' }[
 function jsonDemo(s) {
   const D = demo(); const saya = sayaDemo(); const ds = D.disposisi.filter((x) => x.letter_id === s.id); const hi = hariIniISO()
   const sayaTerima = ds.filter((x) => x.kepada_id === saya && x.status !== 'selesai')
-  return { ...s, jumlah_berkas: s.berkas_ids.length, tujuan: s.tujuan_id ? orang(s.tujuan_id).nama : null, tujuan_jabatan: s.tujuan_id ? orang(s.tujuan_id).jabatan : null,
+  return { ...s, kop_kode: s.kop_kode || 'pondok', jumlah_berkas: s.berkas_ids.length, tujuan: s.tujuan_id ? orang(s.tujuan_id).nama : null, tujuan_jabatan: s.tujuan_id ? orang(s.tujuan_id).jabatan : null,
     disposisi_ringkas: ds.filter((x) => !x.induk_id).map((x) => ({ kepada: orang(x.kepada_id).nama, status: x.status })),
     jumlah_disposisi: ds.length, disposisi_terbuka: ds.filter((x) => x.status !== 'selesai').length,
     lewat_batas: ds.some((x) => x.status !== 'selesai' && x.batas && x.batas < hi),
@@ -174,9 +174,11 @@ export const usePersuratan = defineStore('persuratan', {
     },
     async catat(isi) {
       if (!MODE_DEMO) return rpc('catat_surat_masuk', { p: isi })
-      const D = demo(); const urut = Math.max(...D.surat.map((s) => s.urut_agenda)) + 1; const no = `${String(urut).padStart(3, '0')}/SM/IV/1448`
+      const D = demo(); const kop = isi.kop_kode || 'pondok'; const sama = D.surat.filter((s) => (s.kop_kode || 'pondok') === kop)
+      const urut = Math.max(0, ...sama.map((s) => s.urut_agenda)) + 1
+      const no = `${String(urut).padStart(3, '0')}/SM/${{ yayasan: 'YPIA', pondok: 'PPTQ-IAS', wustha: 'KW-IAS', sma: 'SMAS-IAS' }[kop] || kop}/IV/1448`
       const arsip = !!isi.arsip
-      D.surat.unshift({ ...isi, id: 'sm' + Date.now(), nomor_agenda: no, urut_agenda: urut, berkas_ids: [], tujuan_id: arsip ? null : isi.tujuan_id, status: arsip ? 'diarsipkan' : 'diteruskan',
+      D.surat.unshift({ ...isi, kop_kode: kop, id: 'sm' + Date.now(), nomor_agenda: no, urut_agenda: urut, berkas_ids: [], tujuan_id: arsip ? null : isi.tujuan_id, status: arsip ? 'diarsipkan' : 'diteruskan',
         dibaca_tujuan: null, dicatat_oleh: useSesi().pengguna?.nama_lengkap, created_at: new Date().toISOString(), selesai_pada: null, catatan_selesai: null })
       return { id: D.surat[0].id, nomor_agenda: no }
     },
@@ -230,10 +232,11 @@ export const usePersuratan = defineStore('persuratan', {
         keluar_terbit_bulan_ini: D.keluar.filter((o) => o.status === 'terbit').length,
         ttd_saya: D.keluar.filter((o) => o.status === 'menunggu_ttd' && o.penanda.some((p) => p.employee_id === saya)).length }
     },
-    async bukuAgenda(mulai, selesai) {
-      if (!MODE_DEMO) return (await rpc('buku_agenda_masuk', { p_mulai: mulai, p_selesai: selesai })) || []
+    /** Buku agenda surat masuk; kop kosong = semua bagian. */
+    async bukuAgenda(mulai, selesai, kop = null) {
+      if (!MODE_DEMO) return (await rpc('buku_agenda_masuk', { p_mulai: mulai, p_selesai: selesai, p_kop: kop || null })) || []
       const D = demo()
-      return D.surat.filter((s) => s.tanggal_terima >= mulai && s.tanggal_terima <= selesai).map((s) => ({ ...s, tujuan: s.tujuan_id ? orang(s.tujuan_id).nama : null,
+      return D.surat.filter((s) => s.tanggal_terima >= mulai && s.tanggal_terima <= selesai && (!kop || (s.kop_kode || 'pondok') === kop)).map((s) => ({ ...s, kop_kode: s.kop_kode || 'pondok', tujuan: s.tujuan_id ? orang(s.tujuan_id).nama : null,
         disposisi: D.disposisi.filter((x) => x.letter_id === s.id && !x.induk_id).map((x) => orang(x.kepada_id).nama).join('; ') || null }))
         .sort((a, b) => a.tanggal_terima.localeCompare(b.tanggal_terima) || a.urut_agenda - b.urut_agenda)
     },
@@ -364,9 +367,10 @@ export const usePersuratan = defineStore('persuratan', {
       if (!MODE_DEMO) return rpc('simpan_arsip_surat_keluar', { p_id: id, p_berkas: berkasId })
       demo().keluar.find((x) => x.id === id).berkas_arsip_id = 'demo'
     },
-    async bukuAgendaKeluar(mulai, selesai) {
-      if (!MODE_DEMO) return (await rpc('buku_agenda_keluar', { p_mulai: mulai, p_selesai: selesai })) || []
-      const tu = demo().keluar.filter((o) => ['terbit', 'dicabut', 'direvisi'].includes(o.status) && o.tanggal_surat >= mulai && o.tanggal_surat <= selesai)
+    /** Buku agenda surat keluar; kop kosong = semua bagian. */
+    async bukuAgendaKeluar(mulai, selesai, kop = null) {
+      if (!MODE_DEMO) return (await rpc('buku_agenda_keluar', { p_mulai: mulai, p_selesai: selesai, p_kop: kop || null })) || []
+      const tu = demo().keluar.filter((o) => ['terbit', 'dicabut', 'direvisi'].includes(o.status) && o.tanggal_surat >= mulai && o.tanggal_surat <= selesai && (!kop || (o.kop_kode || 'pondok') === kop))
         .map((o) => ({ ...o, sumber: 'tu', sumber_nama: 'Persuratan', penanda: o.penanda.map((p) => p.nama).join('; '), tautan: '/persuratan/keluar?surat=' + o.id }))
       const lain = [
         { sumber: 'pengajuan', sumber_nama: 'Pengajuan pegawai', id: 'rg-1', nomor: 'D.014/PPTQ-IAS/IV/1448', tanggal_surat: hari(-2), jenis_nama: 'Surat Izin', perihal: 'Izin 2 hari, keperluan keluarga',
@@ -377,8 +381,8 @@ export const usePersuratan = defineStore('persuratan', {
           kepada: 'Aisyah Nur Rahmah (NIS 2311015)', penanda: null, mode_ttd: 'basah', status: 'terbit', kode_validasi: null, tautan: '/santri' },
         { sumber: 'laporan', sumber_nama: 'Dokumen resmi', id: 'rg-3', nomor: null, tanggal_surat: hari(0), jenis_nama: 'Laporan kehadiran pegawai', perihal: 'Rekap kehadiran pegawai (September 2026)',
           kepada: 'Semua unit', penanda: 'Ust. Abdurrahman Hakim, Lc., M.Ag.', mode_ttd: 'elektronik', status: 'terbit', kode_validasi: 'P2LD-8NCE', tautan: '/rekap/pegawai' },
-      ].filter((x) => x.tanggal_surat >= mulai && x.tanggal_surat <= selesai)
-      return [...tu, ...lain].sort((a, b) => a.tanggal_surat.localeCompare(b.tanggal_surat))
+      ].map((x) => ({ ...x, kop_kode: 'pondok' })).filter((x) => x.tanggal_surat >= mulai && x.tanggal_surat <= selesai && (!kop || x.kop_kode === kop))
+      return [...tu.map((o) => ({ ...o, kop_kode: o.kop_kode || 'pondok' })), ...lain].sort((a, b) => a.tanggal_surat.localeCompare(b.tanggal_surat))
     },
     dengarkan(fn) {
       if (MODE_DEMO || this.saluran) return

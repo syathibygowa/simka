@@ -1,12 +1,15 @@
-<!-- SIMKA PRO | src/pages/persuratan/LembarCatatSurat.vue | v1.2 | Perbaikan 13.8.0: ringkasan surat masuk dengan gaya teks dan daftar otomatis | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/LembarCatatSurat.vue | v1.3 | 14.19.0: bagian penerima surat (Yayasan, Pondok, Wustha, SMA) dengan nomor agenda sendiri | 21/10/2026 -->
 <script setup>
 // Catat (atau ubah) surat masuk oleh Tata Usaha: data surat, sifat, pindaian (foto/PDF, beberapa berkas), dan pimpinan penerima.
 // Nomor agenda dibuat otomatis oleh server saat disimpan. Surat dapat langsung diarsipkan tanpa disposisi (mis. brosur).
+// v1.3: surat dicatat untuk satu bagian penerima (Yayasan, Pondok, Wustha, SMA); tiap bagian punya nomor agenda dan buku agenda sendiri.
+//       Bagian terakhir yang dipilih diingat di perangkat. Bagian tidak dapat diubah setelah nomor agenda terbit.
 import { ref, computed, watch } from 'vue'
 import { PhFloppyDisk, PhFilePdf, PhImage, PhX, PhPaperclip, PhArchive, PhInfo } from '@phosphor-icons/vue'
 import { usePersuratan } from '@/stores/persuratan'
 import { useUI } from '@/stores/ui'
-import { SIFAT_SURAT, CARA_TERIMA } from '@/lib/persuratan'
+import { SIFAT_SURAT, CARA_TERIMA, daftarBagian } from '@/lib/persuratan'
+import { useLembaga } from '@/stores/lembaga'
 import { hariIniISO } from '@/lib/tanggal'
 import { MODE_DEMO } from '@/lib/supabase'
 import { unggahKeDrive, kompresGambar, namaRapi } from '@/lib/penyimpanan'
@@ -17,16 +20,19 @@ import IsianTeksKaya from '@/components/IsianTeksKaya.vue'
 const buka = defineModel({ type: Boolean, default: false })
 const props = defineProps({ surat: { type: Object, default: null } })
 const emit = defineEmits(['selesai'])
-const ps = usePersuratan(); const ui = useUI()
+const ps = usePersuratan(); const ui = useUI(); const lembaga = useLembaga()
+const bagian = computed(() => daftarBagian(lembaga.letterheads))
+const KUNCI_BAGIAN = 'simka.surat.bagian'
+const bagianTerakhir = () => { try { return localStorage.getItem(KUNCI_BAGIAN) || 'pondok' } catch { return 'pondok' } }
 const isi = ref({}); const berkas = ref([]); const proses = ref(false); const langkah = ref('')
 const MAKS_BERKAS = 6
 watch(buka, async (v) => {
   if (!v) return
   const s = props.surat
-  isi.value = s ? { id: s.id, tanggal_terima: s.tanggal_terima, cara: s.cara, nomor_surat: s.nomor_surat || '', tanggal_surat: s.tanggal_surat || hariIniISO(),
+  isi.value = s ? { id: s.id, kop_kode: s.kop_kode || 'pondok', tanggal_terima: s.tanggal_terima, cara: s.cara, nomor_surat: s.nomor_surat || '', tanggal_surat: s.tanggal_surat || hariIniISO(),
     pengirim: s.pengirim, alamat_pengirim: s.alamat_pengirim || '', perihal: s.perihal, ringkasan: s.ringkasan || '', lampiran: s.lampiran || '', sifat: s.sifat,
     tujuan: s.status === 'diarsipkan' ? 'arsip' : s.tujuan_id || '', catatan: s.catatan || '' }
-    : { tanggal_terima: hariIniISO(), cara: 'langsung', nomor_surat: '', tanggal_surat: hariIniISO(), pengirim: '', alamat_pengirim: '', perihal: '', ringkasan: '',
+    : { kop_kode: bagianTerakhir(), tanggal_terima: hariIniISO(), cara: 'langsung', nomor_surat: '', tanggal_surat: hariIniISO(), pengirim: '', alamat_pengirim: '', perihal: '', ringkasan: '',
         lampiran: '', sifat: 'biasa', tujuan: '', catatan: '' }
   berkas.value = []
   try { await ps.muatPimpinan(); if (!s && !isi.value.tujuan) isi.value.tujuan = ps.pimpinan.find((p) => p.bawaan)?.id || '' } catch (e) { ui.toast(e.message, 'galat') }
@@ -61,7 +67,7 @@ async function simpan() {
       }
     }
     langkah.value = 'Menyimpan…'
-    const muatan = { tanggal_terima: x.tanggal_terima, cara: x.cara, nomor_surat: x.nomor_surat.trim(), tanggal_surat: x.tanggal_surat || null, pengirim: x.pengirim.trim(),
+    const muatan = { kop_kode: x.kop_kode, tanggal_terima: x.tanggal_terima, cara: x.cara, nomor_surat: x.nomor_surat.trim(), tanggal_surat: x.tanggal_surat || null, pengirim: x.pengirim.trim(),
       alamat_pengirim: x.alamat_pengirim.trim(), perihal: x.perihal.trim(), ringkasan: x.ringkasan.trim(), lampiran: x.lampiran.trim(), sifat: x.sifat,
       tujuan_id: x.tujuan === 'arsip' ? null : x.tujuan, arsip: x.tujuan === 'arsip', catatan: x.catatan.trim() }
     if (berkas.value.length) muatan.berkas_ids = ids
@@ -69,6 +75,7 @@ async function simpan() {
     if (x.id) { await ps.ubah({ ...muatan, id: x.id }); ui.toast('Perubahan surat tersimpan.') }
     else {
       const r = await ps.catat(muatan); id = r.id
+      try { localStorage.setItem(KUNCI_BAGIAN, x.kop_kode) } catch { /* abaikan */ }
       ui.toast(`Surat tercatat dengan nomor agenda ${r.nomor_agenda}.` + (muatan.arsip ? '' : ` ${tujuanPilih.value?.nama || 'Pimpinan'} mendapat notifikasi.`))
     }
     buka.value = false; emit('selesai', id)
@@ -79,7 +86,13 @@ async function simpan() {
   <LembarBawah v-model="buka" :judul="surat ? `Ubah surat ${surat.nomor_agenda}` : 'Catat surat masuk'" lebar>
     <div class="space-y-4 pb-2">
       <p v-if="!surat" class="flex items-start gap-2 rounded-xl bg-permukaan2 px-3 py-2 text-xs text-teks2"><PhInfo :size="16" class="mt-0.5 shrink-0" />
-        Nomor agenda dibuat otomatis saat disimpan (format dapat diubah di Setelan → Nomor Surat).</p>
+        Nomor agenda dibuat otomatis saat disimpan, berurutan untuk bagian yang dipilih (atur di Pengaturan → Penomoran).</p>
+      <div><p class="label-isian">Bagian penerima <span class="text-merah">*</span></p>
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Bagian penerima surat">
+          <button v-for="b in bagian" :key="b.k" type="button" role="radio" :aria-checked="isi.kop_kode === b.k" :disabled="!!surat" @click="isi.kop_kode = b.k"
+            :class="['flex min-h-[48px] items-center justify-center rounded-xl border px-3 text-center text-sm font-semibold', 'w-' + b.w, isi.kop_kode === b.k ? 'pilih' : 'border-garis text-teks2', surat && isi.kop_kode !== b.k && 'opacity-50']">{{ b.n }}</button>
+        </div>
+        <p v-if="surat" class="mt-1 text-xs text-teks3">Bagian tidak dapat diubah karena nomor agenda sudah terbit.</p></div>
       <div class="grid gap-3 sm:grid-cols-3">
         <InputTanggal v-model="isi.tanggal_terima" label="Tanggal terima" wajib />
         <div><label class="label-isian" for="sm-cara">Cara diterima</label>

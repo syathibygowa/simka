@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/persuratan.js | v1.0 | Fase 10 – Tahap 1 Surat masuk dan disposisi | 11/10/2026
+// SIMKA PRO | src/lib/persuratan.js | v1.1 | 14.19.0: bagian penerbit/penerima surat (Yayasan, Pondok, Wustha, SMA) | 21/10/2026
 // Label baku persuratan (Blueprint Bagian 35): sifat, status, cara diterima, status disposisi.
 import {
   PhEnvelopeSimple, PhWarningOctagon, PhLightning, PhLockKey, PhPaperPlaneTilt, PhStamp, PhCheckCircle, PhArchive, PhProhibit,
@@ -44,3 +44,13 @@ export function tambahHari(iso, n) {
   const d = new Date(`${iso}T00:00:00`); d.setDate(d.getDate() + Number(n || 0))
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
+
+// ---------- 14.19.0: bagian (kop) surat ----------
+// Empat bagian yang menerbitkan dan menerima surat, masing-masing dengan kop dan urutan nomor sendiri.
+export const WARNA_BAGIAN = { yayasan: 'pengumuman', pondok: 'beranda', wustha: 'walikelas', sma: 'rapor' }
+/** Daftar bagian dari kop surat aktif: [{ k, n, w }]. */
+export const daftarBagian = (letterheads = []) => letterheads.filter((x) => x.aktif !== false)
+  .sort((a, b) => (a.urutan ?? 0) - (b.urutan ?? 0)).map((x) => ({ k: x.kode, n: (x.nama || x.kode).replace(/^Kop\s+/i, ''), w: WARNA_BAGIAN[x.kode] || 'tatausaha' }))
+/** Nama pendek bagian dari kode kop. */
+export const namaBagian = (letterheads, kode) => daftarBagian(letterheads).find((b) => b.k === (kode || 'pondok'))?.n || kode || 'Pondok'
+

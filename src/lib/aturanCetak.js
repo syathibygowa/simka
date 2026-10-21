@@ -1,11 +1,12 @@
-// SIMKA PRO | src/lib/aturanCetak.js | v1.1 | 14.18.0: dokumen Laporan indikator kinerja bidang | 21/10/2026
+// SIMKA PRO | src/lib/aturanCetak.js | v1.2 | 14.19.0: peran Pimpinan sesuai bagian (Yayasan, Pondok, Wustha, SMA) untuk buku agenda | 21/10/2026
 // Katalog dokumen cetak beserta penanda tangan kiri ("Mengetahui", pimpinan/atasan), kanan (pegawai terkait), dan kop.
 // Nilai yang dipilih superadmin disimpan di tabel signer_rules (kiri, kanan, kop_kode); setiap DokumenCetak yang diberi
 // prop `jenis` membaca aturan ini lalu TandaTangan memakainya.
 //
 // Nilai kiri/kanan:
 //   - uuid pejabat (tabel signatories)                 → pejabat tetap
-//   - peran pejabat: direktur, kepala_unit, pimpinan_kelompok, kabid_tahfizh, kabid_kesantrian
+//   - peran pejabat: direktur, kepala_unit, pimpinan_kelompok, pimpinan_bagian, kabid_tahfizh, kabid_kesantrian
+//     (pimpinan_bagian, 14.19.0: Ketua Yayasan / Direktur / Kepala Wustha / Kepala SMA sesuai konteks.bagian = kode kop)
 //   - peran dokumen: pengasuh, pihak, pembuat, atasan_langsung (diambil dari halaman yang mencetak)
 //   - tidak_ada                                         → kolom dikosongkan
 // Nilai kop: null = sesuai unit dokumen (jenjang kelas/santri bila ada, selain itu kop bawaan halaman); kode kop = kop tetap.
@@ -16,6 +17,7 @@ export const PERAN = {
   direktur: { n: 'Direktur', pejabat: true },
   kepala_unit: { n: 'Kepala sekolah sesuai jenjang', pejabat: true },
   pimpinan_kelompok: { n: 'Pimpinan sesuai kelompok', pejabat: true },
+  pimpinan_bagian: { n: 'Pimpinan sesuai bagian (Yayasan/Pondok/Wustha/SMA)', pejabat: true },
   kabid_tahfizh: { n: 'Kepala Bidang Tahfizh', pejabat: true },
   kabid_kesantrian: { n: 'Kepala Bidang Kesantrian', pejabat: true },
   pengasuh: { n: 'Penanggung jawab kelompok/mapel' },
@@ -123,8 +125,8 @@ const DAFTAR = {
     d('keu_laporan', 'Laporan keuangan', 'Keuangan → Laporan', 'direktur', 'pembuat'),
   ],
   'Persuratan, Laporan, dan Sistem': [
-    d('surat_agenda_masuk', 'Buku agenda surat masuk', 'Persuratan → Surat masuk', 'direktur', 'pembuat'),
-    d('surat_agenda_keluar', 'Buku agenda surat keluar', 'Persuratan → Surat keluar', 'direktur', 'pembuat'),
+    d('surat_agenda_masuk', 'Buku agenda surat masuk', 'Persuratan → Buku agenda (per bagian)', 'direktur', 'pembuat', 'pimpinan_bagian'),
+    d('surat_agenda_keluar', 'Buku agenda surat keluar', 'Persuratan → Buku agenda (per bagian)', 'direktur', 'pembuat', 'pimpinan_bagian'),
     d('surat_disposisi', 'Lembar disposisi', 'Persuratan → Surat masuk', 'pihak', 'pembuat'),
     d('teguran_rekap', 'Rekap surat teguran pegawai', 'Persuratan → Surat teguran', 'direktur', 'pembuat'),
     d('dokumen_resmi', 'Registri dokumen resmi', 'Rekap dan Laporan → Dokumen resmi', 'direktur', 'pembuat'),
@@ -161,7 +163,7 @@ export const DIATUR_LAIN = [
 const bersih = (s) => (s ? { jabatan: s.jabatan_tertulis ?? s.jabatan ?? '', nama: s.nama || '', niy: s.niy || '' } : null)
 
 /** Pejabat dari daftar signatories. */
-export function pejabat(peran, signatories, jenjang = null, kelompok = null) {
+export function pejabat(peran, signatories, jenjang = null, kelompok = null, bagian = null) {
   const aktif = (signatories || []).filter((s) => s.aktif !== false)
   const cari = (re) => aktif.find((s) => re.test(s.jabatan_tertulis || ''))
   const direktur = () => bersih(aktif.find((s) => s.sumber_jabatan === 'DIREKTUR') || cari(/^direktur$/i) || cari(/^direktur/i)) || { jabatan: 'Direktur', nama: '', niy: '' }
@@ -171,6 +173,10 @@ export function pejabat(peran, signatories, jenjang = null, kelompok = null) {
   const kesantrian = () => bersih(cari(/kesantrian/i)) || { jabatan: 'Kepala Bidang Kesantrian', nama: '', niy: '' }
   if (peran === 'direktur') return direktur()
   if (peran === 'kepala_unit') return kepala(jenjang)
+  if (peran === 'pimpinan_bagian') {
+    if (bagian === 'yayasan') return bersih(aktif.find((s) => s.sumber_jabatan === 'YAYASAN') || cari(/yayasan/i)) || { jabatan: 'Ketua Yayasan', nama: '', niy: '' }
+    return bagian === 'sma' || bagian === 'wustha' ? kepala(bagian) : direktur()
+  }
   if (peran === 'kabid_tahfizh') return tahfizh()
   if (peran === 'kabid_kesantrian') return kesantrian()
   if (peran === 'pimpinan_kelompok') {
@@ -186,7 +192,7 @@ export function pejabat(peran, signatories, jenjang = null, kelompok = null) {
 
 /**
  * Susun aturan satu dokumen.
- * konteks: { jenjang, kelompok: { jenis, jenjang }, pengasuh, pihak, pembuat } — semuanya opsional.
+ * konteks: { jenjang, kelompok: { jenis, jenjang }, bagian (kode kop penerbit), pengasuh, pihak, pembuat } — semuanya opsional.
  * pengguna: pengguna masuk (untuk peran pembuat bila halaman tidak menyediakannya).
  */
 export function susunAturan(kode, { rules = [], signatories = [], letterheads = [], konteks = {}, pengguna = null } = {}) {
@@ -205,7 +211,7 @@ export function susunAturan(kode, { rules = [], signatories = [], letterheads = 
     if (v === dok.asli[posisi] && !PERAN[v]?.pejabat) return asal              // peran dokumen: dari halaman
     const tempel = (o) => (o ? { ...o, pengantar: asal?.pengantar } : asal)
     if (v === 'tidak_ada') return { pengantar: asal?.pengantar, jabatan: '', nama: '', niy: '', kosong: true }
-    const pj = pejabat(v, signatories, jenjang, k.kelompok)
+    const pj = pejabat(v, signatories, jenjang, k.kelompok, k.bagian || null)
     if (pj) return tempel(pj)
     if (v === dok.asli[posisi === 'kiri' ? 'kanan' : 'kiri']) return tempel(lain)  // tukar sisi
     if (k[v]) return tempel(k[v])
@@ -215,6 +221,7 @@ export function susunAturan(kode, { rules = [], signatories = [], letterheads = 
   }
   function kop(kopHalaman) {
     if (atur.kop) return atur.kop
+    if (k.bagian && letterheads.some((x) => x.kode === k.bagian)) return k.bagian
     if (jenjang && letterheads.some((x) => x.kode === jenjang)) return jenjang
     return kopHalaman
   }

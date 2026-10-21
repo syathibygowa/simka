@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/lembaga.js | v1.3 | Perbaikan 13.6.0: getter daftar logo terpusat | 15/10/2026
+// SIMKA PRO | src/stores/lembaga.js | v1.4 | 14.19.0: posisi nomor per bagian dan atur nomor berikutnya | 21/10/2026
 // Pengaturan lembaga: identitas, kalender, kop surat, penanda tangan, penomoran, integrasi.
 // Dibaca semua pengguna masuk (kop dan penanda tangan dipakai saat mencetak);
 // diubah hanya oleh superadmin (dijaga RLS di server).
@@ -122,6 +122,36 @@ export const useLembaga = defineStore('lembaga', {
       const { data, error } = await supabase.rpc('pratinjau_nomor', { p_format: format, p_dk: dk, p_perihal: perihal, p_kop: kop })
       if (error) throw new Error(pesanGalat(error))
       return data || ''
+    },
+
+    /** 14.19.0: posisi nomor tiap format; format per bagian (surat, SK, agenda masuk) satu baris per kop. */
+    async posisiNomor() {
+      if (MODE_DEMO) {
+        const awal = (this._demoNomor ||= { 'surat:pondok': 1230, 'surat:sma': 412, 'surat:wustha': 287, 'surat:yayasan': 96, 'sk:pondok': 44, 'sk:sma': 12, 'agenda_masuk:pondok': 318 })
+        const out = []
+        for (const f of this.doc_number_formats) {
+          const kops = f.per_kop ? this.letterheads.filter((k) => k.aktif !== false) : [null]
+          for (const k of kops) {
+            const kunci = f.kode + (k ? ':' + k.kode : ''); const terakhir = awal[kunci] || 0
+            const contoh = f.pola.replace('{DK}', 'D').replace('{URUT3}', String(terakhir + 1).padStart(3, '0')).replace('{URUT}', String(terakhir + 1))
+              .replace('{PERIHAL}', f.kode === 'sk' ? 'QR' : 'NZ').replace('{UNIT}', k?.kode_unit || this.kop('pondok')?.kode_unit || '').replace('{BLN_H_ROMAWI}', 'IV').replace('{THN_H}', '1448')
+              .replace('{BLN_ROMAWI}', 'X').replace('{BLN}', '10').replace('{THN}', '2026')
+            out.push({ format: f.kode, nama: f.nama, per_kop: !!f.per_kop, reset: f.reset, aktif: f.aktif, kop: k?.kode || null, kop_nama: k?.nama || null, periode: '1448',
+              terakhir, terpakai: Math.max(0, terakhir - 2), berikutnya: contoh })
+          }
+        }
+        return out
+      }
+      const { data, error } = await supabase.rpc('posisi_nomor')
+      if (error) throw new Error(pesanGalat(error))
+      return data || []
+    },
+    /** 14.19.0: atur nomor urut berikutnya (mis. 1231) untuk satu format dan bagian; server menolak nomor yang sudah terpakai. */
+    async aturNomorBerikutnya(format, kop, berikutnya) {
+      if (MODE_DEMO) { (this._demoNomor ||= {})[format + (kop ? ':' + kop : '')] = berikutnya - 1; return { berikutnya } }
+      const { data, error } = await supabase.rpc('atur_nomor_berikutnya', { p_format: format, p_kop: kop, p_berikutnya: berikutnya })
+      if (error) throw new Error(pesanGalat(error))
+      return data
     },
 
     /** Tanggal Hijriah versi server (memakai koreksi hari yang tersimpan). */

@@ -1,5 +1,9 @@
-// SIMKA PRO | src/stores/sesi.js | v1.34 | Perbaikan 14.0.0: izin admin efektif dimuat untuk semua pegawai (dari Hak Akses), ciri peran untuk menu | 17/10/2026
+// SIMKA PRO | src/stores/sesi.js | v1.35 | 14.19.0: sesi tetap masuk saat aplikasi dibuka ulang meski koneksi tersendat | 21/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
+// v1.35: aplikasi tidak lagi meminta masuk ulang setiap dibuka. Sebelumnya galat sementara saat memuat data pegawai (sinyal lemah,
+//        token sedang diperbarui) langsung memutus sesi (signOut) atau menampilkan halaman Masuk. Kini: data pegawai dicoba ulang,
+//        sesi hanya diputus bila akun benar-benar tidak punya data pegawai; bila koneksi gagal, sesi tersimpan tetap ada
+//        (sesiTertunda) dan dimuat ulang otomatis saat koneksi kembali, saat token diperbarui, atau lewat tombol Coba lagi.
 import { muatTemplatWA } from '@/lib/wa'
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO, panggilFungsi } from '@/lib/supabase'
@@ -12,9 +16,13 @@ const TUGAS_DEMO = {
 }
 const simpan = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch { /* penyimpanan peramban tidak tersedia */ } }
 const baca = (k) => { try { return localStorage.getItem(k) } catch { return null } }
+const jeda = (ms) => new Promise((ok) => setTimeout(ok, ms))
+// Sesi Supabase tersimpan di perangkat (kunci storageKey di lib/supabase.js) walau belum dapat diperbarui karena koneksi
+const adaSesiTersimpan = () => { try { return !!JSON.parse(localStorage.getItem('simka.sesi') || 'null')?.refresh_token } catch { return false } }
+let pendengarDipasang = false
 
 export const useSesi = defineStore('sesi', {
-  state: () => ({ pengguna: null, fitur: {}, izinAdmin: [], siap: false, wajibGantiSandi: false, punyaShift: false, fotoUrl: '', kelompokSaya: [], tugas: {}, persuratan: false, gaji: false, gajiLihat: false, keuangan: false, penilaian: false, pengujiUtas: false, beban: { saya: false, atur: false, rekap: false } }),
+  state: () => ({ pengguna: null, fitur: {}, izinAdmin: [], siap: false, sesiTertunda: false, galatSesi: '', wajibGantiSandi: false, punyaShift: false, fotoUrl: '', kelompokSaya: [], tugas: {}, persuratan: false, gaji: false, gajiLihat: false, keuangan: false, penilaian: false, pengujiUtas: false, beban: { saya: false, atur: false, rekap: false } }),
   getters: {
     masuk: (s) => !!s.pengguna,
     peran: (s) => s.pengguna?.peran ?? 'pegawai',
@@ -35,21 +43,72 @@ export const useSesi = defineStore('sesi', {
         this.siap = true
         return
       }
-      try {
-        const { data } = await supabase.rpc('waktu_server')
-        if (data?.iso) aturSelisihServer(data.iso)
-      } catch { /* jam peranti dipakai sementara */ }
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) await this.muatPegawai()
-      supabase.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') this.$reset() })
+      // Jam server tidak ditunggu (bila koneksi lambat, jam peranti dipakai sementara)
+      supabase.rpc('waktu_server').then(({ data }) => { if (data?.iso) aturSelisihServer(data.iso) }, () => {})
+      // Layar pembuka paling lama 8 detik. Bila koneksi lambat (token sedang diperbarui atau data akun belum termuat), pemuatan
+      // dilanjutkan di latar dan halaman Masuk menampilkan "Anda masih masuk"; begitu selesai, aplikasi terbuka sendiri.
+      const LAMBAT = 'lambat'; const tenggat = jeda(8000).then(() => LAMBAT)
+      const muat = (async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return adaSesiTersimpan() ? 'tertunda' : 'keluar'
+        await this.muatPegawai(session.user)
+        return 'ok'
+      })().catch((e) => { this.tandaiTertunda(e); return 'galat' })
+      const hasil = await Promise.race([muat, tenggat])
+      if (hasil === 'tertunda') this.tandaiTertunda(new Error('Koneksi ke server belum tersedia.'))
+      if (hasil === LAMBAT && !this.pengguna && adaSesiTersimpan()) { this.sesiTertunda = true; this.galatSesi = 'Koneksi lambat, data akun masih dimuat.' }
+      this.pasangPendengar()
       this.siap = true
     },
 
-    async muatPegawai() {
-      const { data: { user } } = await supabase.auth.getUser()
+    /** Sesi tersimpan tetapi data pegawai belum termuat karena koneksi/server; halaman Masuk menampilkan tombol Coba lagi. */
+    tandaiTertunda(e) {
+      if (e?.tanpaPegawai) return
+      this.sesiTertunda = !this.pengguna && adaSesiTersimpan(); this.galatSesi = e?.message || ''
+    },
+
+    /** Coba lagi memuat sesi tersimpan (tombol di halaman Masuk, saat online, atau saat token diperbarui). */
+    async cobaLagi() {
+      if (MODE_DEMO || this.pengguna) return !!this.pengguna
+      try {
+        let { data: { session } } = await supabase.auth.getSession()
+        if (!session && adaSesiTersimpan()) ({ data: { session } } = await supabase.auth.refreshSession())
+        if (!session) { this.sesiTertunda = adaSesiTersimpan(); return false }
+        await this.muatPegawai(session.user)
+        this.sesiTertunda = false; this.galatSesi = ''
+        return true
+      } catch (e) { this.tandaiTertunda(e); return false }
+    },
+
+    pasangPendengar() {
+      if (pendengarDipasang || MODE_DEMO) return
+      pendengarDipasang = true
+      supabase.auth.onAuthStateChange((ev, s) => {
+        if (ev === 'SIGNED_OUT') { this.$reset(); this.siap = true }
+        else if (['TOKEN_REFRESHED', 'SIGNED_IN'].includes(ev) && s && !this.pengguna && this.sesiTertunda) setTimeout(() => this.cobaLagi(), 0)
+      })
+      window.addEventListener('online', () => { if (this.sesiTertunda) this.cobaLagi() })
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && this.sesiTertunda) this.cobaLagi() })
+    },
+
+    async muatPegawai(userAwal = null) {
+      // Identitas akun dari sesi tersimpan (tanpa panggilan jaringan); getUser hanya bila sesi belum ada
+      let user = userAwal
+      if (!user) { const { data: { session } = {} } = await supabase.auth.getSession(); user = session?.user || null }
+      if (!user) { const { data } = await supabase.auth.getUser(); user = data?.user || null }
       if (!user) return
-      const { data, error } = await supabase.from('v_pegawai').select('*').eq('user_id', user.id).maybeSingle()
-      if (error || !data) { await supabase.auth.signOut(); throw new Error('Data pegawai untuk akun ini tidak ditemukan.') }
+      // Galat sementara (sinyal lemah, server sibuk, token sedang diperbarui): dicoba sekali lagi, sesi TIDAK diputus.
+      // (Pustaka Supabase sendiri sudah mengulang galat 503/520 dengan jeda, jadi pengulangan di sini cukup satu kali.)
+      let data = null; let error = null
+      for (let i = 0; i < 2; i++) {
+        ({ data, error } = await supabase.from('v_pegawai').select('*').eq('user_id', user.id).maybeSingle())
+        if (!error) break
+        if (i === 0) await jeda(800)
+      }
+      if (error) { const e = new Error('Data akun belum dapat dimuat karena koneksi atau server. Coba lagi sebentar.'); e.sementara = true; throw e }
+      // Hanya bila akun benar-benar tidak punya data pegawai, sesi diputus
+      if (!data) { await supabase.auth.signOut(); const e = new Error('Data pegawai untuk akun ini tidak ditemukan.'); e.tanpaPegawai = true; throw e }
+      this.sesiTertunda = false; this.galatSesi = ''
       const jabatan = [data.jabatan_struktural, ...(data.jabatan_fungsional || [])].filter(Boolean).join(', ')
         || (data.peran === 'superadmin' ? 'Pengelola sistem' : data.peran === 'admin' ? 'Admin' : 'Pegawai')
       this.pengguna = { ...data, jabatan }

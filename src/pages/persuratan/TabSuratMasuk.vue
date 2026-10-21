@@ -1,12 +1,14 @@
-<!-- SIMKA PRO | src/pages/persuratan/TabSuratMasuk.vue | v1.1 | 14.2.0: saringan corong di HP | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/TabSuratMasuk.vue | v1.2 | 14.19.0: saringan dan penanda bagian (Yayasan, Pondok, Wustha, SMA) | 21/10/2026 -->
 <script setup>
 // Daftar surat masuk. cakupan "untuk_saya": surat yang perlu saya disposisikan/tindak lanjuti (paling atas) dan yang melibatkan saya;
 // "masuk": semua surat yang boleh saya baca pada rentang tanggal terima. Diketuk membuka rincian. TU mencatat surat dari sini.
+// v1.2: saringan bagian penerima dan lencana bagian pada setiap surat.
 import { ref, computed, watch, onMounted } from 'vue'
 import { PhMagnifyingGlass, PhPlus, PhPaperclip, PhClock, PhHandPointing, PhArrowBendDownRight } from '@phosphor-icons/vue'
 import { usePersuratan } from '@/stores/persuratan'
 import { useUI } from '@/stores/ui'
-import { SIFAT_SURAT, STATUS_SURAT, tambahHari } from '@/lib/persuratan'
+import { SIFAT_SURAT, STATUS_SURAT, tambahHari, daftarBagian } from '@/lib/persuratan'
+import { useLembaga } from '@/stores/lembaga'
 import { formatPendek, hariIniISO } from '@/lib/tanggal'
 import InputTanggal from '@/components/InputTanggal.vue'
 import SaringCorong from '@/components/SaringCorong.vue'
@@ -15,8 +17,9 @@ import LembarCatatSurat from './LembarCatatSurat.vue'
 
 const props = defineProps({ cakupan: { type: String, required: true }, versi: { type: Number, default: 0 } })
 const emit = defineEmits(['pilih', 'berubah'])
-const ps = usePersuratan(); const ui = useUI()
-const daftar = ref([]); const memuat = ref(false); const cari = ref(''); const sifat = ref(''); const status = ref('')
+const ps = usePersuratan(); const ui = useUI(); const lembaga = useLembaga()
+const daftar = ref([]); const memuat = ref(false); const cari = ref(''); const sifat = ref(''); const status = ref(''); const bagian = ref('')
+const BAGIAN = computed(() => daftarBagian(lembaga.letterheads)); const infoBagian = (k) => BAGIAN.value.find((b) => b.k === (k || 'pondok'))
 const mulai = ref(tambahHari(hariIniISO(), props.cakupan === 'masuk' ? -30 : -90)); const selesai = ref(hariIniISO())
 async function muat() {
   memuat.value = true
@@ -27,7 +30,7 @@ watch([mulai, selesai, () => props.versi], muat)
 
 const tampil = computed(() => {
   const q = cari.value.toLowerCase().trim()
-  return daftar.value.filter((s) => (!sifat.value || s.sifat === sifat.value) && (!status.value || s.status === status.value)
+  return daftar.value.filter((s) => (!bagian.value || (s.kop_kode || 'pondok') === bagian.value) && (!sifat.value || s.sifat === sifat.value) && (!status.value || s.status === status.value)
     && (!q || `${s.nomor_agenda} ${s.nomor_surat || ''} ${s.pengirim} ${s.perihal} ${s.tujuan || ''}`.toLowerCase().includes(q)))
 })
 const perlu = computed(() => tampil.value.filter((s) => s.perlu_tindakan))
@@ -42,9 +45,11 @@ function keteranganSaya(s) {
 </script>
 <template>
   <div>
-    <SaringCorong :jumlah="[sifat, status].filter(Boolean).length" :ringkasan="[`${formatPendek(mulai)} – ${formatPendek(selesai)}`, sifat && SIFAT_SURAT[sifat].n, status && STATUS_SURAT[status].n].filter(Boolean).join(' · ')" judul="Saring surat">
+    <SaringCorong :jumlah="[bagian, sifat, status].filter(Boolean).length" :ringkasan="[`${formatPendek(mulai)} – ${formatPendek(selesai)}`, bagian && infoBagian(bagian)?.n, sifat && SIFAT_SURAT[sifat].n, status && STATUS_SURAT[status].n].filter(Boolean).join(' · ')" judul="Saring surat">
       <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nomor, pengirim, perihal" aria-label="Cari surat" /></div></template>
+      <select v-model="bagian" class="isian md:w-auto" aria-label="Saring bagian"><option value="">Semua bagian</option>
+        <option v-for="b in BAGIAN" :key="b.k" :value="b.k">{{ b.n }}</option></select>
       <select v-model="sifat" class="isian md:w-auto" aria-label="Saring sifat"><option value="">Semua sifat</option>
         <option v-for="(v, k) in SIFAT_SURAT" :key="k" :value="k">{{ v.n }}</option></select>
       <select v-model="status" class="isian md:w-auto" aria-label="Saring status"><option value="">Semua status</option>
@@ -63,6 +68,7 @@ function keteranganSaya(s) {
             <span class="min-w-0 flex-1">
               <span class="flex flex-wrap items-center gap-1.5">
                 <span class="text-xs font-bold tabular-nums text-teks2">{{ s.nomor_agenda }}</span>
+                <span v-if="infoBagian(s.kop_kode)" class="lencana" :class="'w-' + infoBagian(s.kop_kode).w">{{ infoBagian(s.kop_kode).n }}</span>
                 <span class="lencana" :class="'w-' + STATUS_SURAT[s.status].w">{{ STATUS_SURAT[s.status].n }}</span>
                 <span v-if="s.sifat !== 'biasa'" class="lencana" :class="'w-' + SIFAT_SURAT[s.sifat].w">{{ SIFAT_SURAT[s.sifat].n }}</span>
                 <span v-if="s.baru_saya" class="lencana w-klinik">Baru</span>

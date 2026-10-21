@@ -1,10 +1,11 @@
-<!-- SIMKA PRO | src/pages/persuratan/BukuAgendaKeluar.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/BukuAgendaKeluar.vue | v1.6 | 14.19.0: buku agenda surat keluar per bagian (kop) | 21/10/2026 -->
 <script setup>
 // Buku agenda surat keluar = inventaris SEMUA surat yang terbit di SIMKA PRO per rentang tanggal surat:
 //   Persuratan (surat Tata Usaha, termasuk yang dicabut/direvisi), surat pengajuan pegawai, surat keterangan sakit (Klinik),
 //   surat keterangan pindah santri, dan laporan resmi bertanda tangan. Saring per sumber, cari, klik baris untuk membuka
 //   surat di tempat asalnya (revisi surat Persuratan dari rinciannya; surat modul lain diperbarui di modulnya).
 //   Tabel (kartu di ponsel), Excel, cetak F4 mendatar.
+// v1.6: prop bagian (kode kop; kosong = semua) dari TabBukuAgenda; cetak memakai kop bagian dan "Mengetahui" pimpinan bagian.
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
@@ -19,6 +20,7 @@ import InputTanggal from '@/components/InputTanggal.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
+const props = defineProps({ bagian: { type: String, default: '' }, namaBagian: { type: String, default: 'Semua bagian' } })
 const ps = usePersuratan(); const sesi = useSesi(); const ui = useUI(); const router = useRouter()
 const mulai = ref(hariIniISO().slice(0, 8) + '01'); const selesai = ref(hariIniISO()); const baris = ref([]); const memuat = ref(false); const pratinjau = ref(false)
 const sumber = ref('semua'); const cari = ref('')
@@ -26,9 +28,9 @@ const direktur = ref({ jabatan: 'Direktur', nama: '', niy: '' })
 ambilPenandaTangan('Direktur').then((d) => { direktur.value = d }).catch(() => {})
 async function muat() {
   memuat.value = true
-  try { baris.value = await ps.bukuAgendaKeluar(mulai.value, selesai.value) } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false }
+  try { baris.value = await ps.bukuAgendaKeluar(mulai.value, selesai.value, props.bagian || null) } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false }
 }
-watch([mulai, selesai], muat, { immediate: true })
+watch([mulai, selesai, () => props.bagian], muat, { immediate: true })
 
 const SUMBER = [
   { k: 'tu', n: 'Persuratan', ikon: PhEnvelopeSimple, w: 'tatausaha' },
@@ -44,7 +46,7 @@ const tampil = computed(() => {
   return baris.value.filter((r) => (sumber.value === 'semua' || (r.sumber || 'tu') === sumber.value)
     && (!t || [r.nomor, r.jenis_nama, r.perihal, r.kepada, r.penanda, r.kode_validasi, r.pemohon].join(' ').toLowerCase().includes(t)))
 })
-const periode = computed(() => `Tanggal surat ${formatPanjang(mulai.value)} s.d. ${formatPanjang(selesai.value)}`
+const periode = computed(() => `${props.namaBagian} · tanggal surat ${formatPanjang(mulai.value)} s.d. ${formatPanjang(selesai.value)}`
   + (sumber.value === 'semua' ? '' : ` · Sumber: ${infoSumber(sumber.value).n}`))
 const tujuan = (r) => String(r.kepada || '–').split('\n').join(', ')
 const ttd = (r) => (r.mode_ttd === 'basah' ? 'Basah' : 'Elektronik')
@@ -57,7 +59,7 @@ function ekspor() {
     r.kode_validasi || '', r.disusun_oleh || '', r.pemohon || '', statusN(r)])
   const ws = XLSX.utils.aoa_to_sheet([['Buku Agenda Surat Keluar'], [periode.value], [], kolom, ...isi])
   ws['!cols'] = [18, 28, 12, 26, 40, 30, 30, 12, 12, 26, 26, 18].map((w) => ({ wch: w }))
-  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Surat Keluar'); XLSX.writeFile(wb, `Buku-Agenda-Surat-Keluar-${mulai.value}-${selesai.value}.xlsx`)
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Surat Keluar'); XLSX.writeFile(wb, `Buku-Agenda-Surat-Keluar-${props.namaBagian.replace(/\s+/g, '-')}-${mulai.value}-${selesai.value}.xlsx`)
 }
 </script>
 <template>
@@ -119,7 +121,7 @@ function ekspor() {
     <p class="mt-3 text-xs text-teks3">Surat dari Persuratan direvisi melalui rinciannya (tombol Revisi surat). Surat dari modul lain dibuka dan diperbarui di modul asalnya;
       dokumen penggantinya otomatis tercatat di sini.</p>
 
-    <DokumenCetak jenis="surat_agenda_keluar" kop="pondok" judul="Buku Agenda Surat Keluar" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
+    <DokumenCetak jenis="surat_agenda_keluar" :konteks="{ bagian: bagian || 'pondok' }" :kop="bagian || 'pondok'" :judul="bagian ? `Buku Agenda Surat Keluar ${namaBagian}` : 'Buku Agenda Surat Keluar'" :subjudul="periode" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap" mendatar>
       <table class="tabel kecil">
         <colgroup><col style="width: 4%" /><col style="width: 10%" /><col style="width: 15%" /><col style="width: 7%" /><col style="width: 22%" /><col style="width: 15%" />
           <col style="width: 14%" /><col style="width: 7%" /><col style="width: 6%" /></colgroup>
