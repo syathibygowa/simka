@@ -1,6 +1,10 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabMengajar.vue | v2.5 | 14.16.0: sakit/izin santri menurut jam pelajaran (sembuh sebelum pelajaran tidak lagi tertulis sakit) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabMengajar.vue | v2.6 | 14.18.1: metode/media dapat ditambah sendiri; ketikan pilihan lain ikut tersimpan | 21/10/2026 -->
 <script setup>
 // Jurnal mengajar (sepaket dengan Jurnal Harian).
+// v2.6: perbaikan "sudah dipilih tetapi diminta memilih": (1) metode dan media kini juga punya kotak "+ lain" (sebelumnya tidak ada,
+//       sehingga bila daftar pilihan di Pengaturan kosong guru tidak dapat memilih apa pun); (2) teks yang diketik di kotak "+ lain"
+//       otomatis dimasukkan saat Simpan (di iPhone kotak tidak kehilangan fokus saat tombol diketuk); tombol + untuk menambah;
+//       (3) bila isian wajib belum lengkap, layar bergulir ke isian itu dan menandainya.
 // v2.4: "Mengajar sebagai pengganti" — guru memilih tanggal, lalu jam pelajaran guru lain yang ia gantikan, dan mengisi jurnalnya
 //       (tercatat sebagai guru pengganti). Guru pengampu melihat nama pengganti dan jurnal itu tidak dapat ia ubah.
 // v2.3: isian lengkap — tujuan pembelajaran, kegiatan, alat/perlengkapan, sumber belajar/referensi (pilihan ketuk + tambah sendiri);
@@ -18,7 +22,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import {
   PhChalkboardTeacher, PhCheckCircle, PhLightning, PhFloppyDisk, PhListNumbers, PhXCircle, PhClock, PhCaretLeft, PhCaretRight, PhLockSimple,
-  PhGear, PhUsersThree, PhCaretDown, PhNotePencil, PhHourglass, PhWhatsappLogo, PhUserSwitch,
+  PhGear, PhUsersThree, PhCaretDown, PhNotePencil, PhHourglass, PhWhatsappLogo, PhUserSwitch, PhPlus,
 } from '@phosphor-icons/vue'
 import { useJadwal } from '@/stores/jadwal'
 import { useSesi } from '@/stores/sesi'
@@ -38,7 +42,21 @@ const atur = computed(() => jd.aturJurnal || { batas_hari: 1, absen_santri: true
 const wajib = (k) => !!atur.value.wajib?.[k]
 const lain = ref({ metode: '', media: '', alat: '', sumber: '' })
 const pilihan = (k) => [...new Set([...(atur.value[k] || []), ...(f.value?.[k] || [])])]
-function tambahLain(k) { const v = lain.value[k].trim(); if (v.length >= 2 && !f.value[k].includes(v)) f.value[k].push(v); lain.value[k] = '' }
+function tambahLain(k) { const v = (lain.value[k] || '').trim(); if (v.length >= 2 && !f.value[k].includes(v)) f.value[k].push(v); lain.value[k] = '' }
+// Isian pilihan (ketuk) + tambah sendiri; warna chip terpilih per isian
+const PILIHAN = [
+  { k: 'metode', n: 'Metode/strategi pembelajaran', lain: '+ metode lain', aktif: 'border-[#1E7D4F] bg-[#E2F1E8] font-semibold text-[#14583A] dark:bg-[#123524] dark:text-[#8FE0B5]' },
+  { k: 'media', n: 'Media pembelajaran', lain: '+ media lain', aktif: 'border-[#2F5FA8] bg-[#E3ECF8] font-semibold text-[#1F4580] dark:bg-[#15253D] dark:text-[#A9C6F0]' },
+  { k: 'alat', n: 'Alat/perlengkapan', lain: '+ alat lain', aktif: 'border-[#B7791F] bg-[#FBF0DC] font-semibold text-[#7A4E0B] dark:bg-[#3A2A0E] dark:text-[#F2C879]' },
+  { k: 'sumber', n: 'Sumber belajar/referensi', lain: '+ sumber lain', aktif: 'border-[#7A3FA0] bg-[#F1E7F8] font-semibold text-[#55267A] dark:bg-[#2E1B3D] dark:text-[#D7B6F0]' },
+]
+// Isian wajib yang belum lengkap: digulir ke layar dan ditandai merah sampai diisi
+const galat = ref('')
+function sorot(k, pesan) {
+  galat.value = k; ui.toast(pesan, 'galat')
+  const id = { subbab: 'jm-sub', kegiatan: 'jm-keg' }[k] || 'jm-' + k
+  setTimeout(() => { const el = document.getElementById(id); el?.scrollIntoView({ behavior: 'smooth', block: 'center' }); if (['INPUT', 'TEXTAREA'].includes(el?.tagName)) el.focus({ preventScroll: true }) }, 50)
+}
 async function muat() {
   memuat.value = true
   try { await jd.muatAturJurnal().catch(() => null); pekan.value = await jd.jadwalPekan(acuan.value) } catch (e) { ui.toast(e.message, 'galat') } finally { memuat.value = false }
@@ -66,11 +84,13 @@ const ringkas = computed(() => { const x = semuaBlok.value.filter((b) => b.tangg
 
 // ---------- Lembar isian satu pertemuan ----------
 const lembar = ref(false); const b = ref(null); const f = ref(null); const proses = ref(false)
+// Tanda merah hilang begitu isian yang kurang sudah diisi
+watch(() => f.value && galat.value && f.value[galat.value], (v) => { if (galat.value && (Array.isArray(v) ? v.length : String(v || '').trim().length >= 3)) galat.value = '' }, { deep: true })
 const peserta = ref([]); const absen = ref({}); const bukaAbsen = ref(false); const memuatPeserta = ref(false)
 const KODE = [['H', 'Hadir'], ['S', 'Sakit'], ['I', 'Izin'], ['A', 'Alfa'], ['B', 'Bolos'], ['T', 'Terlambat']]
 const WARNA_KODE = { H: 'presensi', S: 'klinik', I: 'jadwal', A: 'pengajuan', B: 'klinik', T: 'agenda' }
 async function buka(x) {
-  b.value = x
+  b.value = x; galat.value = ''
   const j = x.jurnal; const t = x.terakhir || {}
   f.value = { status: j?.status || 'terlaksana', bab: j?.bab || (j ? j.materi || '' : t.bab || ''), subbab: j?.subbab || '', metode: [...(j?.metode?.length ? j.metode : t.metode || [])],
     media: [...(j?.media?.length ? j.media : t.media || [])], keterangan: j?.keterangan || '', plan_id: j?.plan_id || null,
@@ -96,12 +116,15 @@ const saranBab = computed(() => [...new Set([b.value?.rencana?.topik, b.value?.t
 function sesuaiRencana() { Object.assign(f.value, { status: 'terlaksana', bab: b.value.rencana.topik, plan_id: b.value.rencana.id }) }
 async function simpan() {
   const x = f.value
+  // Teks yang masih di kotak "+ lain" ikut dimasukkan (tidak bergantung pada Enter atau hilangnya fokus)
+  for (const p of PILIHAN) tambahLain(p.k)
+  galat.value = ''
   if (x.status === 'terlaksana') {
-    if (x.bab.trim().length < 3) return ui.toast('Isi bab atau materi pokok yang diajarkan.', 'galat')
-    if (wajib('subbab') && x.subbab.trim().length < 3) return ui.toast('Isi sub-bab/pembahasan yang diajarkan.', 'galat')
-    if (wajib('tujuan') && x.tujuan.trim().length < 5) return ui.toast('Isi tujuan pembelajaran.', 'galat')
-    if (wajib('kegiatan') && x.kegiatan.trim().length < 10) return ui.toast('Uraikan kegiatan pembelajaran (minimal 10 huruf).', 'galat')
-    for (const [k, n] of [['metode', 'metode/strategi'], ['media', 'media'], ['alat', 'alat/perlengkapan'], ['sumber', 'sumber belajar']]) if (wajib(k) && !x[k].length) return ui.toast(`Pilih minimal satu ${n}.`, 'galat')
+    if (x.bab.trim().length < 3) return sorot('bab', 'Isi bab atau materi pokok yang diajarkan.')
+    if (wajib('subbab') && x.subbab.trim().length < 3) return sorot('subbab', 'Isi sub-bab/pembahasan yang diajarkan.')
+    if (wajib('tujuan') && x.tujuan.trim().length < 5) return sorot('tujuan', 'Isi tujuan pembelajaran (minimal 5 huruf).')
+    if (wajib('kegiatan') && x.kegiatan.trim().length < 10) return sorot('kegiatan', 'Uraikan kegiatan pembelajaran (minimal 10 huruf).')
+    for (const p of PILIHAN) if (wajib(p.k) && !x[p.k].length) return sorot(p.k, `${p.n} wajib diisi: ketuk minimal satu pilihan atau ketik sendiri lalu tekan +.`)
   }
   if (x.status === 'tidak_terlaksana' && x.keterangan.trim().length < 3) return ui.toast('Isi keterangan mengapa pelajaran tidak terlaksana.', 'galat')
   proses.value = true
@@ -226,43 +249,27 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
 
           <template v-if="f.status === 'terlaksana'">
             <div><label class="label-isian" for="jm-bab">Bab / materi pokok <span class="text-merah">*</span></label>
-              <input id="jm-bab" v-model="f.bab" class="isian" list="jm-saran" placeholder="Contoh: Bab 2 Fungsi" @input="f.plan_id = null" />
+              <input :class="galat === 'bab' && 'isian-galat'" id="jm-bab" v-model="f.bab" class="isian" list="jm-saran" placeholder="Contoh: Bab 2 Fungsi" @input="f.plan_id = null" />
               <datalist id="jm-saran"><option v-for="s in saranBab" :key="s" :value="s" /></datalist></div>
             <div><label class="label-isian" for="jm-sub">Sub-bab / pembahasan <span v-if="wajib('subbab')" class="text-merah">*</span></label>
-              <input id="jm-sub" v-model="f.subbab" class="isian" :placeholder="b.terakhir?.subbab ? `Sebelumnya: ${b.terakhir.subbab}` : 'Contoh: Fungsi kuadrat dan grafiknya'" /></div>
+              <input :class="galat === 'subbab' && 'isian-galat'" id="jm-sub" v-model="f.subbab" class="isian" :placeholder="b.terakhir?.subbab ? `Sebelumnya: ${b.terakhir.subbab}` : 'Contoh: Fungsi kuadrat dan grafiknya'" /></div>
             <div><label class="label-isian" for="jm-tujuan">Tujuan pembelajaran <span v-if="wajib('tujuan')" class="text-merah">*</span></label>
-              <input id="jm-tujuan" v-model="f.tujuan" class="isian" placeholder="Contoh: Santri dapat menggambar grafik fungsi kuadrat" /></div>
+              <input :class="galat === 'tujuan' && 'isian-galat'" id="jm-tujuan" v-model="f.tujuan" class="isian" placeholder="Contoh: Santri dapat menggambar grafik fungsi kuadrat" /></div>
             <div><label class="label-isian" for="jm-keg">Kegiatan pembelajaran <span v-if="wajib('kegiatan')" class="text-merah">*</span></label>
-              <textarea id="jm-keg" v-model="f.kegiatan" class="isian" rows="2" placeholder="Ringkas: pembukaan, inti, penutup; tugas yang diberikan" /></div>
-            <div>
-              <p class="label-isian">Metode/strategi pembelajaran <span v-if="wajib('metode')" class="text-merah">*</span></p>
-              <div class="flex flex-wrap gap-1.5">
-                <button v-for="m in pilihan('metode')" :key="m" type="button" :aria-pressed="f.metode.includes(m)" @click="togel(f.metode, m)"
-                  :class="['min-h-[36px] rounded-full border px-3 text-sm', f.metode.includes(m) ? 'border-[#1E7D4F] bg-[#E2F1E8] font-semibold text-[#14583A] dark:bg-[#123524] dark:text-[#8FE0B5]' : 'border-garis text-teks2']">{{ m }}</button>
+              <textarea :class="galat === 'kegiatan' && 'isian-galat'" id="jm-keg" v-model="f.kegiatan" class="isian" rows="2" placeholder="Ringkas: pembukaan, inti, penutup; tugas yang diberikan" /></div>
+            <div v-for="p in PILIHAN" :id="'jm-' + p.k" :key="p.k" :class="['rounded-xl', galat === p.k && 'isian-galat']">
+              <p class="label-isian">{{ p.n }} <span v-if="wajib(p.k)" class="text-merah">*</span>
+                <span v-if="f[p.k].length" class="font-normal text-teks3"> · {{ f[p.k].length }} dipilih</span></p>
+              <div class="flex flex-wrap items-center gap-1.5">
+                <button v-for="m in pilihan(p.k)" :key="m" type="button" :aria-pressed="f[p.k].includes(m)" @click="togel(f[p.k], m)"
+                  :class="['min-h-[36px] rounded-full border px-3 text-sm', f[p.k].includes(m) ? p.aktif : 'border-garis text-teks2']">{{ m }}</button>
+                <span class="inline-flex items-center rounded-full border border-dashed border-garis bg-permukaan pl-3">
+                  <input v-model="lain[p.k]" class="h-9 w-32 bg-transparent text-sm outline-none" :placeholder="p.lain" :aria-label="`${p.n} lainnya`" enterkeyhint="done"
+                    @keydown.enter.prevent="tambahLain(p.k)" @blur="tambahLain(p.k)" />
+                  <button type="button" class="grid h-9 w-9 place-items-center rounded-full text-teks2" :aria-label="`Tambahkan ${p.n.toLowerCase()}`" @click="tambahLain(p.k)"><PhPlus :size="16" weight="bold" /></button>
+                </span>
               </div>
-            </div>
-            <div>
-              <p class="label-isian">Media pembelajaran <span v-if="wajib('media')" class="text-merah">*</span></p>
-              <div class="flex flex-wrap gap-1.5">
-                <button v-for="m in pilihan('media')" :key="m" type="button" :aria-pressed="f.media.includes(m)" @click="togel(f.media, m)"
-                  :class="['min-h-[36px] rounded-full border px-3 text-sm', f.media.includes(m) ? 'border-[#2F5FA8] bg-[#E3ECF8] font-semibold text-[#1F4580] dark:bg-[#15253D] dark:text-[#A9C6F0]' : 'border-garis text-teks2']">{{ m }}</button>
-              </div>
-            </div>
-            <div>
-              <p class="label-isian">Alat/perlengkapan <span v-if="wajib('alat')" class="text-merah">*</span></p>
-              <div class="flex flex-wrap gap-1.5">
-                <button v-for="m in pilihan('alat')" :key="m" type="button" :aria-pressed="f.alat.includes(m)" @click="togel(f.alat, m)"
-                  :class="['min-h-[36px] rounded-full border px-3 text-sm', f.alat.includes(m) ? 'border-[#B7791F] bg-[#FBF0DC] font-semibold text-[#7A4E0B] dark:bg-[#3A2A0E] dark:text-[#F2C879]' : 'border-garis text-teks2']">{{ m }}</button>
-                <input v-model="lain.alat" class="h-9 w-36 rounded-full border border-dashed border-garis bg-permukaan px-3 text-sm" :placeholder="'+ alat lain'" :aria-label="'Alat/perlengkapan lainnya'" @keydown.enter.prevent="tambahLain('alat')" @blur="tambahLain('alat')" />
-              </div>
-            </div>
-            <div>
-              <p class="label-isian">Sumber belajar/referensi <span v-if="wajib('sumber')" class="text-merah">*</span></p>
-              <div class="flex flex-wrap gap-1.5">
-                <button v-for="m in pilihan('sumber')" :key="m" type="button" :aria-pressed="f.sumber.includes(m)" @click="togel(f.sumber, m)"
-                  :class="['min-h-[36px] rounded-full border px-3 text-sm', f.sumber.includes(m) ? 'border-[#7A3FA0] bg-[#F1E7F8] font-semibold text-[#55267A] dark:bg-[#2E1B3D] dark:text-[#D7B6F0]' : 'border-garis text-teks2']">{{ m }}</button>
-                <input v-model="lain.sumber" class="h-9 w-36 rounded-full border border-dashed border-garis bg-permukaan px-3 text-sm" :placeholder="'+ sumber lain'" :aria-label="'Sumber belajar/referensi lainnya'" @keydown.enter.prevent="tambahLain('sumber')" @blur="tambahLain('sumber')" />
-              </div>
+              <p v-if="galat === p.k" class="mt-1 text-xs font-semibold text-merah">Ketuk minimal satu pilihan, atau ketik sendiri lalu tekan +.</p>
             </div>
             <!-- Kehadiran santri -->
             <div v-if="atur.absen_santri" class="rounded-2xl border border-garis">
@@ -335,3 +342,7 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
 
   </div>
 </template>
+<style scoped>
+.isian-galat { box-shadow: 0 0 0 2px rgb(var(--merah)); }
+div.isian-galat { padding: .5rem; }
+</style>

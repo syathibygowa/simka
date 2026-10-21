@@ -1,11 +1,13 @@
-<!-- SIMKA PRO | src/pages/jurnal/PengaturanJurnalMengajar.vue | v1.1 | 14.4.0: pilihan alat dan sumber belajar, isian wajib dapat diatur | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/PengaturanJurnalMengajar.vue | v1.2 | 14.18.1: peringatan isian wajib tanpa daftar pilihan; isi pilihan bawaan | 21/10/2026 -->
 <script setup>
 // Pengaturan jurnal mengajar guru mapel (sebelumnya tombol di tab Jurnal mengajar): batas pengisian, absensi santri
 // oleh guru mapel, pilihan metode dan media. Diubah superadmin atau admin ber-izin Jadwal pelajaran; lainnya membaca.
+// v1.2: peringatan bila isian pilihan dicentang wajib tetapi daftar pilihannya kosong; tombol isi pilihan bawaan; ringkasan
+//       isian yang sedang diwajibkan.
 // v1.1: pilihan alat/perlengkapan dan sumber belajar/referensi; isian wajib (bab/materi pokok selalu wajib).
 import { ref, computed, onMounted } from 'vue'
 import { PhChalkboardTeacher, PhFloppyDisk } from '@phosphor-icons/vue'
-import { useJadwal } from '@/stores/jadwal'
+import { useJadwal, ATUR_JURNAL_DEMO } from '@/stores/jadwal'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
 
@@ -16,6 +18,11 @@ const WAJIB = [['subbab', 'Sub-bab/pembahasan'], ['metode', 'Metode/strategi'], 
 function salin(a) { fa.value = { batas_hari: a.batas_hari ?? 1, absen_santri: a.absen_santri !== false, metode: (a.metode || []).join('\n'), media: (a.media || []).join('\n'),
   alat: (a.alat || []).join('\n'), sumber: (a.sumber || []).join('\n'), wajib: { subbab: true, metode: true, ...(a.wajib || {}) } } }
 onMounted(async () => { try { salin(await jd.muatAturJurnal()) } catch (e) { ui.toast(e.message, 'galat') } })
+// Isian pilihan yang diwajibkan tetapi daftar pilihannya kosong (guru harus mengetik sendiri)
+const NAMA_PILIHAN = { metode: 'Metode/strategi', media: 'Media', alat: 'Alat/perlengkapan', sumber: 'Sumber belajar/referensi' }
+const kosongWajib = computed(() => (fa.value ? Object.keys(NAMA_PILIHAN).filter((k) => fa.value.wajib[k] && !fa.value[k].trim()) : []))
+const daftarWajib = computed(() => (fa.value ? ['Bab/materi pokok', ...WAJIB.filter(([k]) => fa.value.wajib[k]).map(([, n]) => n)] : []))
+function isiBawaan() { for (const k of Object.keys(NAMA_PILIHAN)) if (!fa.value[k].trim()) fa.value[k] = ATUR_JURNAL_DEMO[k].join('\n') }
 async function simpan() {
   const daftar = (t) => [...new Set(t.split('\n').map((x) => x.trim()).filter(Boolean))].slice(0, 30)
   proses.value = true
@@ -48,6 +55,11 @@ async function simpan() {
         <p class="mb-2 text-xs text-teks3">Bab/materi pokok selalu wajib. Absensi santri mengikuti pilihan "Absensi santri oleh guru mapel" di atas. Guru tetap dapat menambah pilihan sendiri.</p>
         <div class="grid gap-1 sm:grid-cols-2">
           <label v-for="[k, n] in WAJIB" :key="k" class="flex min-h-[40px] items-center gap-2 text-sm"><input v-model="fa.wajib[k]" type="checkbox" class="h-5 w-5 accent-[#1E7D4F]" :disabled="!boleh" /> {{ n }}</label>
+        </div>
+        <p class="mt-2 text-xs text-teks2">Saat ini guru wajib mengisi: <b>{{ daftarWajib.join(', ') }}</b>. Isian yang tidak dicentang boleh dikosongkan.</p>
+        <div v-if="kosongWajib.length" class="mt-2 flex flex-wrap items-center gap-2 rounded-xl bg-[#FBF0DC] p-3 text-sm text-[#7A4E0B] dark:bg-[#3A2A0E] dark:text-[#F2C879]" role="alert">
+          <span class="min-w-0 flex-1">{{ kosongWajib.map((k) => NAMA_PILIHAN[k]).join(', ') }} diwajibkan tetapi daftar pilihannya kosong, sehingga guru harus mengetik sendiri. Isi daftarnya agar guru cukup mengetuk.</span>
+          <button v-if="boleh" type="button" class="tombol-garis min-h-[40px] px-3 text-sm" @click="isiBawaan">Isi pilihan bawaan</button>
         </div>
       </div>
       <button v-if="boleh" class="tombol-utama" :disabled="proses" @click="simpan"><PhFloppyDisk :size="20" weight="duotone" /> Simpan pengaturan</button>

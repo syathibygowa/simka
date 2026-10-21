@@ -1,9 +1,10 @@
-<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.11 | 14.16.0: penanda sembuh/kembali dan menunggu klinik; riwayat penyelarasan otomatis | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.12 | 14.18.1: ketikan metode/media/alat/sumber lain ikut tersimpan saat Simpan | 21/10/2026 -->
 <script setup>
 // Pengisian absensi satu sesi: semua santri bawaan Hadir, ketuk kode HISBAT bagi yang tidak.
 // Pengampu halaqah/ekskul diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi (asrama tidak).
 // Admin ber-izin absensi_atas_nama dapat mengisi atas nama pengampu (tercatat di riwayat).
 // Halaqah: tab Absensi | Setoran (setoran terbuka setelah absensi tersimpan; ?tab=setoran membuka tab Setoran).
+// v1.12: teks di kotak "… lain" jurnal ekskul otomatis dimasukkan saat Simpan (di iPhone kotak tidak kehilangan fokus).
 // v1.9: jurnal ekskul ditambah jam mulai–selesai latihan (bawaan jam sesi), alat/perlengkapan, sumber belajar, catatan.
 // v1.8: santri Sakit dirujuk ke klinik hanya bila absensi jenis ini dicentang di Klinik → Ketentuan (bawaan: asrama saja);
 //       absensi lain cukup mencatat Sakit tanpa keluhan wajib.
@@ -112,6 +113,10 @@ function presensiDulu() { router.push({ path: '/presensi', query: { lanjut: rout
 
 async function simpan() {
   if (!bolehIsi.value) return
+  if (ekskul.value) {
+    tambahPilihan(rinci.value.metode, metodeLain); tambahPilihan(rinci.value.media, mediaLain)
+    tambahPilihan(rinci.value.alat, alatLain); tambahPilihan(rinci.value.sumber, sumberLain)
+  }
   if (ekskul.value) { const k = kurangJurnal(rinci.value); if (k) return ui.toast(k, 'galat') }
   const tanpaKeluhan = (d.value?.anggota || []).find((a) => perluKeluhan(a.id) && (ket.value[a.id] || '').trim().length < 3)
   if (tanpaKeluhan) return ui.toast(`Tuliskan keluhan singkat untuk ${tanpaKeluhan.nama} (Sakit) agar dirujuk ke klinik.`, 'galat')
