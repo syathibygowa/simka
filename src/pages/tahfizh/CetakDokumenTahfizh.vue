@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/CetakDokumenTahfizh.vue | v1.5 | 14.17.0: pilihan cetak sertifikat dengan atau tanpa bingkai | 20/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/CetakDokumenTahfizh.vue | v1.6 | 14.21.0: penanda tangan tunggal/ganda, kepala sertifikat dari Setelan Lembaga, suket hasil ujian tahsin | 24/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Cetak dokumen tahfizh F4 dari salinan beku (data) dokumen yang sudah terbit:
@@ -6,6 +6,9 @@ import { namaBerkas } from '@/lib/namaBerkas'
 //   sertifikat_hafalan Sertifikat Hafalan (sertifikasi 5, 10, 15 … juz) — bingkai sertifikat; Kepala Bidang Tahfizh dan Penguji
 //   sertifikat_tahfizh Sertifikat Tahfizhul Quran (ijazah hafalan akhir jenjang) — mengikuti format pondok; Direktur
 //   sertifikat_khataman Sertifikat Penghargaan Khataman Al-Qur'an 30 juz — bingkai portrait; Direktur (Mengetahui) dan Kepala Bidang Tahfizh
+//   suket_tahsin       Surat Keterangan Hasil Ujian Tahsin (14.21.0) — berkop pondok; Makhraj, Shifat, hasil, catatan
+// 14.21.0: penanda tangan diatur di Setelan → Penanda tangan (tunggal/ganda); orang yang sama hanya sekali dengan jabatan tertinggi
+//          (berlaku juga saat mencetak ulang dokumen lama). Kepala sertifikat (yayasan/pondok) mengikuti Setelan → Lembaga.
 // 14.17.0: sertifikat dapat dicetak dengan atau tanpa bingkai (untuk kertas sertifikat berbingkai dari Tata Usaha); pilihan diingat per perangkat.
 // Tanda tangan elektronik tampil sebagai QR Cek Keabsahan; tanda tangan basah dikosongkan. Draf/dicabut diberi catatan.
 import { computed, ref, onMounted, watch } from 'vue'
@@ -17,6 +20,7 @@ import { svgQR, alamatCek } from '@/lib/dokumen'
 import { alamatAset } from '@/lib/penyimpanan'
 import { ringkasJuz } from '@/lib/tahfizh'
 import { PENGATURAN_SERTIFIKAT, PENGATURAN_KHATAMAN, miring } from '@/lib/dokumenTahfizh'
+import { ttdUnik } from '@/lib/aturanCetak'
 import logoLokal from '@/assets/logo-pondok.png'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -28,11 +32,11 @@ const pratinjau = defineModel('pratinjau', { type: Boolean, default: false })
 const props = defineProps({ dok: { type: Object, required: true } })
 const lembaga = useLembaga(); lembaga.muat()
 const d = computed(() => props.dok.data || {})
-const ttd = computed(() => (props.dok.ttd?.length ? props.dok.ttd : d.value.penanda || []))
+const ttd = computed(() => ttdUnik(props.dok.ttd?.length ? props.dok.ttd : d.value.penanda || []))
 const status = computed(() => (props.dok.status === 'dicabut' ? 'dicabut' : props.dok.status_dokumen || ''))
 const draf = computed(() => status.value === 'draf')
 const basah = computed(() => props.dok.mode_ttd === 'basah')
-const sisi = (t) => ({ pengantar: t?.pengantar || (t?.urutan === 1 && props.dok.jenis !== 'sertifikat_tahfizh' ? 'Mengetahui,' : ''), jabatan: t?.jabatan, nama: t?.nama, niy: t?.niy,
+const sisi = (t) => ({ pengantar: ttd.value.length > 1 && t === ttd.value[0] ? 'Mengetahui,' : '', jabatan: t?.jabatan, nama: t?.nama, niy: t?.niy,
   kode: t?.status === 'ditandatangani' && !t?.basah && !basah.value && props.dok.kode ? props.dok.kode : '', waktu: t?.waktu })
 const qr = (t) => (sisi(t).kode ? svgQR(alamatCek(props.dok.kode)) : '')
 const waktuEl = (t) => (t?.waktu ? `${formatPendek(t.waktu)} ${formatJam(t.waktu)} WITA` : '')
@@ -43,6 +47,11 @@ const juzTeks = computed(() => ringkasJuz(d.value.juz || []))
 const angka = (n) => (n == null ? '–' : String(n).replace('.', ','))
 const kota = computed(() => lembaga.identitas?.kota_surat || 'Gowa')
 const tglGanda = (m, h) => [m ? formatPanjang(m) : '', h].filter(Boolean).join('/')
+// 14.21.0: kolom tanda tangan suket — tunggal di kanan, ganda kiri (Mengetahui) dan kanan
+const ttdKiri = computed(() => (ttd.value.length > 1 ? sisi(ttd.value[0]) : { kosong: true }))
+const ttdKanan = computed(() => sisi(ttd.value.length > 1 ? ttd.value[1] : ttd.value[0]))
+const namaPondok = computed(() => lembaga.identitas?.nama_lengkap || lembaga.kop('pondok')?.nama_lembaga || "Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa")
+const yangBertanda = computed(() => { const j = ttd.value.map((t) => t.jabatan).filter(Boolean); return j.length ? j.join(' dan ') : 'Kepala Bidang Tahfizh' })
 // Pengaturan kepala sertifikat (dibekukan saat terbit untuk Sertifikat Tahfizhul Quran)
 const atur = computed(() => ({ ...PENGATURAN_SERTIFIKAT, ...(props.dok.jenis === 'sertifikat_khataman' ? {} : d.value.pengaturan || {}) }))
 const kh = computed(() => ({ ...PENGATURAN_KHATAMAN, ...(props.dok.jenis === 'sertifikat_khataman' ? d.value.pengaturan || {} : {}) }))
@@ -50,6 +59,15 @@ const kh = computed(() => ({ ...PENGATURAN_KHATAMAN, ...(props.dok.jenis === 'se
 const tz = useTahfizh(); const aturKini = ref(null)
 onMounted(async () => { try { aturKini.value = await tz.pengaturanSertifikat() } catch { aturKini.value = null } })
 const sumberLogo = computed(() => aturKini.value || atur.value)
+// 14.21.0: kepala sertifikat selalu dari pengaturan terkini; kosong = Setelan → Lembaga (nama yayasan dan nama pondok)
+const bukanYPWI = (v) => (v && !/cabang gowa/i.test(v) ? v : '')
+const kepala = computed(() => {
+  const x = sumberLogo.value || {}; const up = (v) => String(v || '').toUpperCase()
+  const b1 = bukanYPWI(x.baris1) || up(lembaga.identitas?.nama_yayasan || lembaga.kop('yayasan')?.nama_lembaga || '')
+  if (x.baris2) return [b1, x.baris2, x.baris3]
+  const p = up(namaPondok.value); const i = p.indexOf(' IMAM ')
+  return [b1, i > 0 ? p.slice(0, i) : p, i > 0 ? p.slice(i + 1) : '']
+})
 const bukanLama = (u) => (u && !/logo-ypwi/i.test(u) ? u : '')
 // Nilai logo berupa rujukan daftar logo (Setelan → Logo) "logo:<kode>" atau tautan lama
 const logoKiri = computed(() => (bukanLama(sumberLogo.value.logo_kiri) ? lembaga.urlLogo(sumberLogo.value.logo_kiri) : ''))
@@ -59,13 +77,12 @@ const ganti = (e) => { if (!e.target.src.endsWith(logoLokal)) e.target.src = log
 // 14.17.0: cetak dengan/tanpa bingkai (bingkai, ornamen sudut, dan tanda air logo)
 const bingkai = ref((() => { try { return localStorage.getItem('simka.sertifikat.bingkai') !== 'tidak' } catch { return true } })())
 watch(bingkai, (v) => { try { localStorage.setItem('simka.sertifikat.bingkai', v ? 'ya' : 'tidak') } catch { /* abaikan */ } })
-const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kenaikan Juz', sertifikat_hafalan: 'Sertifikat Hafalan', sertifikat_tahfizh: 'Sertifikat Tahfizhul Quran', sertifikat_khataman: 'Sertifikat Penghargaan Khataman' }[props.dok.jenis]))
+const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kenaikan Juz', suket_tahsin: 'Surat Keterangan Hasil Ujian Tahsin', sertifikat_hafalan: 'Sertifikat Hafalan', sertifikat_tahfizh: 'Sertifikat Tahfizhul Quran', sertifikat_khataman: 'Sertifikat Penghargaan Khataman' }[props.dok.jenis]))
 </script>
 <template>
   <!-- ============ SURAT KETERANGAN UJIAN KENAIKAN JUZ ============ -->
   <DokumenCetak v-if="dok.jenis === 'suket_juz'" kop="pondok" judul="Surat Keterangan Ujian Kenaikan Juz" :nomor="dok.nomor" :nama-berkas="namaBerkas(d.nama, judulPratinjau, dok.nomor)" v-model:pratinjau="pratinjau" tanpa-catatan>
-    <p style="text-align: justify">Yang bertanda tangan di bawah ini, Penguji Ujian Kenaikan Juz dan Kepala Bidang Tahfizh Pondok Pesantren Tahfizhul Qur'an
-      Imam Asy-Syathiby Wahdah Islamiyah Gowa, menerangkan bahwa:</p>
+    <p style="text-align: justify">Yang bertanda tangan di bawah ini, {{ yangBertanda }} {{ namaPondok }}, menerangkan bahwa:</p>
     <table class="data" style="margin: 6pt 0 8pt 10mm">
       <tbody>
         <tr><td style="width: 44mm">Nama</td><td style="width: 4mm">:</td><td><b>{{ d.nama }}</b></td></tr>
@@ -85,7 +102,39 @@ const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kena
       Jumlah hafalan resmi saat surat ini diterbitkan: {{ d.total_juz ?? '–' }} juz.</p>
     <p style="margin-top: 6pt; text-align: justify">Demikian surat keterangan ini dibuat dengan sebenarnya untuk dipergunakan sebagaimana mestinya.</p>
     <template #ttd>
-      <TandaTangan :tanggal="dok.tanggal" :kiri="sisi(ttd[0])" :kanan="sisi(ttd[1])" />
+      <TandaTangan :tanggal="dok.tanggal" :kiri="ttdKiri" :kanan="ttdKanan" />
+      <CatatanValidasi :kode="dok.kode" :draf="draf" :basah="basah" :status="status" />
+    </template>
+  </DokumenCetak>
+
+  <!-- ============ SURAT KETERANGAN HASIL UJIAN TAHSIN (14.21.0) ============ -->
+  <DokumenCetak v-else-if="dok.jenis === 'suket_tahsin'" kop="pondok" judul="Surat Keterangan Hasil Ujian Tahsin" :nomor="dok.nomor" :nama-berkas="namaBerkas(d.nama, judulPratinjau, dok.nomor)" v-model:pratinjau="pratinjau" tanpa-catatan>
+    <p style="text-align: justify">Yang bertanda tangan di bawah ini, {{ yangBertanda }} {{ namaPondok }}, menerangkan bahwa:</p>
+    <table class="data" style="margin: 6pt 0 8pt 10mm">
+      <tbody>
+        <tr><td style="width: 44mm">Nama</td><td style="width: 4mm">:</td><td><b>{{ d.nama }}</b></td></tr>
+        <tr><td>NIS/NISN</td><td>:</td><td>{{ d.nis }}{{ d.nisn ? ' / ' + d.nisn : '' }}</td></tr>
+        <tr><td>Tempat, tanggal lahir</td><td>:</td><td>{{ ttl || '–' }}</td></tr>
+        <tr><td>Kelas</td><td>:</td><td>{{ d.kelas || '–' }}</td></tr>
+        <tr><td>Halaqah / muhaffizh</td><td>:</td><td>{{ d.halaqah || '–' }} / {{ d.muhaffizh || '–' }}</td></tr>
+      </tbody>
+    </table>
+    <p style="text-align: justify">telah mengikuti Ujian Tahsin (perbaikan bacaan Al-Qur'an) pada tanggal {{ d.tanggal_ujian ? formatPanjang(d.tanggal_ujian) : '–' }}
+      di hadapan penguji {{ d.penguji || '–' }} dengan hasil sebagai berikut:</p>
+    <table class="tabel" style="margin: 6pt 0">
+      <colgroup><col style="width: 8%"><col style="width: 42%"><col style="width: 20%"><col style="width: 30%"></colgroup>
+      <thead><tr><th>No.</th><th>Aspek yang dinilai</th><th>Nilai</th><th>Keterangan</th></tr></thead>
+      <tbody>
+        <tr><td class="tengah">1</td><td>Makhraj (makharijul huruf)</td><td class="tengah">{{ angka(d.makhraj) }}</td><td>Tempat keluarnya huruf</td></tr>
+        <tr><td class="tengah">2</td><td>Shifat (sifatul huruf)</td><td class="tengah">{{ angka(d.shifat) }}</td><td>Sifat-sifat huruf</td></tr>
+        <tr><td class="tengah" colspan="2">Rata-rata</td><td class="tengah">{{ angka(d.nilai) }}</td><td>KKM {{ angka(d.kkm) }}</td></tr>
+      </tbody>
+    </table>
+    <p style="text-align: justify">Dengan demikian, yang bersangkutan dinyatakan <b>{{ d.hasil === 'lulus' ? 'LULUS' : 'BELUM LULUS' }}</b> ujian tahsin{{ d.hasil === 'lulus' ? ' dan dapat mulai menghafal Al-Qur\'an pada program tahfizh reguler' : ' dan melanjutkan pembinaan tahsin' }}.</p>
+    <p v-if="d.catatan" style="margin-top: 4pt; text-align: justify">Catatan penguji: {{ d.catatan }}</p>
+    <p style="margin-top: 6pt; text-align: justify">Demikian surat keterangan ini dibuat dengan sebenarnya untuk dipergunakan sebagaimana mestinya.</p>
+    <template #ttd>
+      <TandaTangan :tanggal="dok.tanggal" :kiri="ttdKiri" :kanan="ttdKanan" />
       <CatatanValidasi :kode="dok.kode" :draf="draf" :basah="basah" :status="status" />
     </template>
   </DokumenCetak>
@@ -107,9 +156,9 @@ const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kena
             <img v-if="logoKiri" :src="logoKiri" alt="" @error="(e) => (e.target.style.display = 'none')" />
             <img :src="logoKanan" alt="" @error="ganti" />
           </div>
-          <p class="baris1">{{ atur.baris1 }}</p>
-          <p class="baris2">{{ atur.baris2 }}</p>
-          <p class="baris2">{{ atur.baris3 }}</p>
+          <p v-if="kepala[0]" class="baris1">{{ kepala[0] }}</p>
+          <p class="baris2">{{ kepala[1] }}</p>
+          <p v-if="kepala[2]" class="baris2">{{ kepala[2] }}</p>
 
           <!-- Sertifikat Tahfizhul Quran (format pondok) -->
           <template v-if="dok.jenis === 'sertifikat_tahfizh'">
@@ -123,12 +172,15 @@ const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kena
               {{ tglGanda(d.tanggal_hafal, d.tanggal_hafal_hijriah) }} dengan predikat:</p>
             <p class="predikat">{{ d.predikat }}</p>
             <p class="teks">{{ atur.penutup }}</p>
-            <div class="ttd-tunggal">
-              <p>{{ tglGanda(dok.tanggal, dok.tanggal_hijriah) }}</p>
-              <p>{{ ttd[0]?.jabatan || 'Direktur' }}</p>
-              <div class="ruang"><div v-if="qr(ttd[0])" class="qr-el"><span class="qr" v-html="qr(ttd[0])" /><span class="ket">Ditandatangani secara elektronik<br>{{ waktuEl(ttd[0]) }}</span></div></div>
-              <p class="nm">{{ ttd[0]?.nama }}</p>
-              <p v-if="ttd[0]?.niy" class="ni">NIY. {{ ttd[0].niy }}</p>
+            <p class="teks rapat" style="margin-top: 4mm">{{ kota }}, {{ tglGanda(dok.tanggal, dok.tanggal_hijriah) }}</p>
+            <div :class="ttd.length > 1 ? 'ttd-dua' : 'ttd-tunggal'">
+              <div v-for="(t, i) in ttd.slice(0, 2)" :key="i">
+                <p v-if="ttd.length > 1">{{ i === 0 ? 'Mengetahui,' : '&nbsp;' }}</p>
+                <p>{{ t.jabatan }}</p>
+                <div class="ruang"><div v-if="qr(t)" class="qr-el"><span class="qr" v-html="qr(t)" /><span class="ket">Ditandatangani secara elektronik<br>{{ waktuEl(t) }}</span></div></div>
+                <p class="nm">{{ t.nama }}</p>
+                <p v-if="t.niy" class="ni">NIY. {{ t.niy }}</p>
+              </div>
             </div>
           </template>
 
@@ -145,9 +197,9 @@ const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kena
             <p class="mahkota">KHATAM 30 JUZ</p>
             <p class="teks"><i>{{ kh.doa }}</i></p>
             <p class="teks rapat" style="margin-top: 4mm">{{ kota }}, {{ tglGanda(dok.tanggal, dok.tanggal_hijriah) }}</p>
-            <div class="ttd-dua">
+            <div :class="ttd.length > 1 ? 'ttd-dua' : 'ttd-tunggal'">
               <div v-for="(t, i) in ttd.slice(0, 2)" :key="i">
-                <p>{{ i === 0 ? 'Mengetahui,' : '&nbsp;' }}</p>
+                <p v-if="ttd.length > 1">{{ i === 0 ? 'Mengetahui,' : '&nbsp;' }}</p>
                 <p>{{ t.jabatan }}</p>
                 <div class="ruang"><div v-if="qr(t)" class="qr-el"><span class="qr" v-html="qr(t)" /><span class="ket">Ditandatangani secara elektronik<br>{{ waktuEl(t) }}</span></div></div>
                 <p class="nm">{{ t.nama }}</p>
@@ -169,9 +221,9 @@ const judulPratinjau = computed(() => ({ suket_juz: 'Surat Keterangan Ujian Kena
             <p class="predikat">{{ String(d.predikat_sertifikat || d.predikat || '').toUpperCase() }}</p>
             <p class="teks">Semoga Allah menjaga hafalan ini dan menjadikannya amal yang memberatkan timbangan kebaikan.</p>
             <p class="teks rapat" style="margin-top: 4mm">{{ kota }}, {{ tglGanda(dok.tanggal, dok.tanggal_hijriah) }}</p>
-            <div class="ttd-dua">
+            <div :class="ttd.length > 1 ? 'ttd-dua' : 'ttd-tunggal'">
               <div v-for="(t, i) in ttd.slice(0, 2)" :key="i">
-                <p>{{ i === 0 ? 'Mengetahui,' : '&nbsp;' }}</p>
+                <p v-if="ttd.length > 1">{{ i === 0 ? 'Mengetahui,' : '&nbsp;' }}</p>
                 <p>{{ t.jabatan }}</p>
                 <div class="ruang"><div v-if="qr(t)" class="qr-el"><span class="qr" v-html="qr(t)" /><span class="ket">Ditandatangani secara elektronik<br>{{ waktuEl(t) }}</span></div></div>
                 <p class="nm">{{ t.nama }}</p>

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/aturanCetak.js | v1.3 | 14.20.0: surat izin santri, surat izin kolektif, rekap perizinan santri | 22/10/2026
+// SIMKA PRO | src/lib/aturanCetak.js | v1.4 | 14.21.0: penanda tangan dokumen tahfizh (tunggal/ganda), saring penanda tangan ganda | 24/10/2026
 // Katalog dokumen cetak beserta penanda tangan kiri ("Mengetahui", pimpinan/atasan), kanan (pegawai terkait), dan kop.
 // Nilai yang dipilih superadmin disimpan di tabel signer_rules (kiri, kanan, kop_kode); setiap DokumenCetak yang diberi
 // prop `jenis` membaca aturan ini lalu TandaTangan memakainya.
@@ -55,6 +55,7 @@ const DAFTAR = {
     d('thz_capaian', 'Rekap status capaian hafalan bulanan', 'Tahfizh → Capaian', 'kabid_tahfizh', 'pengasuh'),
     d('thz_laporan', 'Laporan tahfizh', 'Tahfizh → Laporan', 'kabid_tahfizh', 'pengasuh'),
     d('thz_tahsin', 'Daftar santri tahsin', 'Tahfizh → Tahsin', 'kabid_tahfizh', 'pembuat'),
+    d('thz_ujian_tahsin', 'Rekap hasil ujian tahsin', 'Tahfizh → Tahsin → Ujian tahsin', 'kabid_tahfizh', 'pembuat'),
     d('thz_utas', 'Hasil dan pembagian penguji UTAS', 'Tahfizh → UTAS', 'kabid_tahfizh', 'pembuat'),
     d('thz_ketentuan', 'Ketentuan penilaian dan target tahfizh', 'Tahfizh → Ketentuan', 'direktur', 'kabid_tahfizh'),
   ],
@@ -157,10 +158,50 @@ export const DIATUR_LAIN = [
   { nama: 'Surat izin, sakit, dinas luar, dan cuti pegawai', tempat: 'Ditandatangani elektronik oleh atasan yang menyetujui pengajuan' },
   { nama: 'Laporan resmi kehadiran dan rekap layanan', tempat: 'Rekap dan Laporan → Laporan resmi (penanda tangan dipilih saat laporan dikirim untuk disahkan)' },
   { nama: 'Slip gaji, kuitansi, dan surat tagihan santri', tempat: 'Ditandatangani elektronik oleh bendahara (dan Direktur pada slip)' },
-  { nama: 'Surat keterangan ujian, sertifikat, syahadah, undangan dan sertifikat khataman', tempat: 'Ditandatangani elektronik oleh Kepala Bidang Tahfizh (dan Direktur pada sertifikat) saat dokumen diterbitkan' },
+  { nama: 'Undangan khataman dan syahadah', tempat: 'Ditandatangani elektronik oleh Kepala Bidang Tahfizh saat dokumen diterbitkan' },
   { nama: 'Rapor dan sampul rapor', tempat: 'Penilaian → Ketentuan → Penanda tangan tengah (per jenjang)' },
   { nama: 'Kartu pegawai dan kartu pelajar', tempat: 'Kartu memakai tanda tangan Direktur' },
 ]
+
+// ---------- 14.21.0: penanda tangan dokumen tahfizh (Setelan → Penanda tangan → Dokumen tahfizh) ----------
+// Disimpan di institution_settings kunci "ttd_tahfizh": { kode_dokumen: [peran kiri, peran kanan] } (satu peran = penanda tangan tunggal).
+// Orang yang sama hanya menandatangani sekali dengan jabatan tertinggi: Direktur › Kepala Bidang Tahfizh › Penguji › Muhaffizh.
+export const PERAN_TTD_TAHFIZH = {
+  direktur: { n: 'Direktur', peringkat: 4 },
+  kepala_tahfizh: { n: 'Kepala Bidang Tahfizh', peringkat: 3 },
+  penguji: { n: 'Penguji', peringkat: 2 },
+  muhaffizh: { n: 'Muhaffizh santri', peringkat: 1 },
+}
+export const DOK_TTD_TAHFIZH = [
+  { kode: 'suket_juz', nama: 'Surat Keterangan Ujian Kenaikan Juz', peran: ['muhaffizh', 'penguji', 'kepala_tahfizh', 'direktur'], bawaan: ['kepala_tahfizh', 'penguji'] },
+  { kode: 'sertifikat_hafalan', nama: 'Sertifikat Hafalan (sertifikasi 5, 10, 15 … juz)', peran: ['muhaffizh', 'penguji', 'kepala_tahfizh', 'direktur'], bawaan: ['kepala_tahfizh', 'penguji'] },
+  { kode: 'sertifikat_khataman', nama: 'Sertifikat Penghargaan Khataman 30 juz', peran: ['muhaffizh', 'kepala_tahfizh', 'direktur'], bawaan: ['direktur', 'kepala_tahfizh'] },
+  { kode: 'sertifikat_tahfizh', nama: 'Sertifikat Tahfizhul Quran (akhir jenjang)', peran: ['muhaffizh', 'kepala_tahfizh', 'direktur'], bawaan: ['direktur'] },
+  { kode: 'suket_tahsin', nama: 'Surat Keterangan Hasil Ujian Tahsin', peran: ['muhaffizh', 'penguji', 'kepala_tahfizh', 'direktur'], bawaan: ['kepala_tahfizh', 'penguji'] },
+]
+/** Peringkat jabatan tertulis (untuk menyaring penanda tangan ganda pada dokumen lama). */
+export function peringkatJabatan(j) {
+  const t = String(j || '').toLowerCase()
+  if (/direktur|mudir/.test(t)) return 4
+  if (/kepala|ka\.? ?bid/.test(t)) return 3
+  if (/penguji/.test(t)) return 2
+  if (/muhaffi/.test(t)) return 1
+  return 0
+}
+/** Penanda tangan unik: orang yang sama (nama/NIY) hanya sekali, dengan jabatan tertinggi pada posisinya. */
+export function ttdUnik(daftar = []) {
+  const hasil = []
+  for (const t of daftar.filter(Boolean)) {
+    const kunci = (x) => (x.employee_id || `${x.nama || ''}|${x.niy || ''}`).toLowerCase()
+    const i = hasil.findIndex((x) => x.nama && kunci(x) === kunci(t))
+    if (i < 0) { hasil.push({ ...t }); continue }
+    const lama = hasil[i]; const tanda = lama.status === 'ditandatangani' || t.status === 'ditandatangani'
+    const pilih = peringkatJabatan(t.jabatan) > peringkatJabatan(lama.jabatan) ? t : lama
+    hasil[i] = { ...pilih, status: tanda ? 'ditandatangani' : pilih.status, waktu: pilih.waktu || lama.waktu || t.waktu }
+  }
+  if (hasil.length === 1) hasil[0] = { ...hasil[0], pengantar: '' }
+  return hasil
+}
 
 // ---------- Penyelesaian aturan ----------
 const bersih = (s) => (s ? { jabatan: s.jabatan_tertulis ?? s.jabatan ?? '', nama: s.nama || '', niy: s.niy || '' } : null)

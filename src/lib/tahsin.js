@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/tahsin.js | v1.0 | 14.11.0: konstanta tahsin (tahapan bawaan, nilai, asal santri) | 18/10/2026
+// SIMKA PRO | src/lib/tahsin.js | v1.1 | 14.21.0: ujian tahsin (hasil, KKM), status Menunggu ujian | 24/10/2026
 // Tahsin: pembinaan bacaan Al-Qur'an bagi santri yang belum menghafal (umumnya santri baru atau pindahan).
 // Tahapan dapat diubah pengelola di server (pengaturan "tahsin"); daftar di bawah dipakai mode demo dan sebagai cadangan.
 export const TAHAPAN_BAWAAN = [
@@ -11,7 +11,10 @@ export const TAHAPAN_BAWAAN = [
   { nama: "Waqaf dan ibtida'", uraian: 'Tanda waqaf, cara berhenti dan memulai bacaan' },
   { nama: 'Tilawah lancar', uraian: "Membaca Al-Qur'an dengan tartil dan lancar; siap mulai menghafal" },
 ]
-export const CATATAN_LULUS_BAWAAN = 'Santri lulus tahsin bila seluruh tahapan tuntas dan bacaan dinilai lancar oleh pembina, lalu disahkan Kepala Bidang Tahfizh.'
+export const CATATAN_LULUS_BAWAAN = 'Santri diajukan ujian tahsin bila seluruh tahapan tuntas dan bacaan dinilai lancar oleh pembina. Penguji menilai Makhraj dan Shifat; santri yang dinyatakan lulus mulai menghafal.'
+/** 14.21.0: KKM ujian tahsin (rata-rata Makhraj dan Shifat) bila belum diatur. */
+export const KKM_TAHSIN = 75
+export const HASIL_TAHSIN = { lulus: { n: 'Lulus', w: 'presensi' }, belum_lulus: { n: 'Belum lulus', w: 'klinik' } }
 
 export const NILAI_TAHSIN = {
   lancar: { n: 'Lancar', w: 'presensi' },
@@ -21,7 +24,7 @@ export const NILAI_TAHSIN = {
 export const SUMBER_TAHSIN = { santri_baru: 'Santri baru', pindahan: 'Santri pindahan', rekomendasi: 'Rekomendasi muhaffizh', lainnya: 'Lainnya' }
 export const STATUS_TAHSIN = {
   berjalan: { n: 'Berjalan', w: 'tahsin' },
-  menunggu: { n: 'Diajukan lulus', w: 'pengajuan' },
+  menunggu: { n: 'Menunggu ujian', w: 'pengajuan' },
   lulus: { n: 'Lulus tahsin', w: 'presensi' },
   dihentikan: { n: 'Dihentikan', w: 'hakakses' },
 }

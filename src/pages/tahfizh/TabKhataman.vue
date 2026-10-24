@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabKhataman.vue | v1.1 | 14.17.0: khataman susulan (tanggal lampau) bagi pengelola khataman | 20/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabKhataman.vue | v1.2 | 14.21.0: hapus usulan khataman yang dibatalkan/ditolak (admin/superadmin) | 24/10/2026 -->
 <script setup>
 // Khataman Al-Qur'an 30 juz.
 //   Muhaffizh: "Usulkan khataman" untuk santri yang sudah khatam 30 juz (usulan tanggal, jam, tempat).
@@ -8,9 +8,10 @@
 //   Ubah jadwal (riwayat tersimpan; undangan dan sertifikat ikut diperbarui), tandai terlaksana (tercatat sebagai prestasi santri), batalkan.
 //   v1.1: Khataman susulan — pengelola khataman mencatat khataman yang sudah terlaksana sebelum SIMKA dipakai (tanggal lampau):
 //         langsung terlaksana, sertifikat bertanggal hari khataman terbit dan menunggu tanda tangan elektronik.
+//   v1.2 (14.21.0): admin/superadmin dapat menghapus usulan khataman yang dibatalkan atau ditolak.
 import { ref, computed, onMounted, watch } from 'vue'
 import { PhCrown, PhPaperPlaneTilt, PhCheckCircle, PhXCircle, PhCalendarBlank, PhClockCounterClockwise, PhPrinter, PhCertificate, PhEnvelopeSimple,
-  PhWhatsappLogo, PhUsersThree, PhHourglass, PhMapPin, PhX, PhConfetti, PhCalendarCheck as PhSusulan, PhMagnifyingGlass } from '@phosphor-icons/vue'
+  PhWhatsappLogo, PhUsersThree, PhHourglass, PhMapPin, PhX, PhConfetti, PhCalendarCheck as PhSusulan, PhMagnifyingGlass, PhTrash } from '@phosphor-icons/vue'
 import { useTahfizh } from '@/stores/tahfizh'
 import { useUI } from '@/stores/ui'
 import { useSantri } from '@/stores/santri'
@@ -24,11 +25,12 @@ import LembarLaporanGrup from '@/components/LembarLaporanGrup.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import InputJam from '@/components/InputJam.vue'
 import TombolWA from '@/components/TombolWA.vue'
+import { useSesi } from '@/stores/sesi'
 import PratinjauWA from '@/components/PratinjauWA.vue'
 import CetakUndanganKhataman from './CetakUndanganKhataman.vue'
 import CetakDokumenTahfizh from './CetakDokumenTahfizh.vue'
 
-const tz = useTahfizh(); const ui = useUI()
+const tz = useTahfizh(); const ui = useUI(); const sesi = useSesi()
 const status = ref('berjalan'); const daftar = ref([]); const memuat = ref(false); const proses = ref(false); const calon = ref([])
 async function muat() {
   memuat.value = true
@@ -140,6 +142,14 @@ async function cetakSertifikat(k) {
   try { const d = (await tz.daftarDokumen({ id: k.sertifikat.id }))[0]; if (!d) throw new Error('Sertifikat tidak ditemukan.'); dokSert.value = d; pratSert.value = true }
   catch (e) { ui.toast(e.message, 'galat') }
 }
+// 14.21.0: hapus usulan yang dibatalkan/ditolak (admin/superadmin)
+const bolehHapus = (k) => sesi.isAdmin && ['dibatalkan', 'ditolak'].includes(k.status)
+const hapusSemua = computed(() => daftar.value.filter(bolehHapus))
+async function hapusKhataman(x) {
+  if (!x.length) return
+  if (!(await ui.konfirmasi({ judul: x.length > 1 ? `Hapus ${x.length} usulan khataman?` : 'Hapus usulan khataman?', pesan: `${x.slice(0, 5).map((k) => k.nama).join(', ')}${x.length > 5 ? ', …' : ''}. Usulan dihapus permanen; undangan dan sertifikat yang pernah terbit tetap tercatat sebagai dicabut.`, ya: 'Hapus', bahaya: true }))) return
+  try { const n = await tz.hapusUsulan('khataman', x.map((k) => k.id)); ui.toast(`${n} usulan khataman dihapus.`); await muat() } catch (e) { ui.toast(e.message, 'galat') }
+}
 const STATUS_TTD = { sah: 'Sah', draf: 'Menunggu tanda tangan', dicabut: 'Dicabut', ditolak: 'Ditolak penanda tangan' }
 </script>
 <template>
@@ -148,6 +158,7 @@ const STATUS_TTD = { sah: 'Sah', draf: 'Menunggu tanda tangan', dicabut: 'Dicabu
       <select v-model="status" class="isian w-auto" aria-label="Saring status">
         <option value="berjalan">Usulan dan terjadwal</option><option value="selesai">Terlaksana</option><option value="ditolak">Ditolak</option><option value="dibatalkan">Dibatalkan</option><option value="">Semua</option></select>
       <span class="flex-1" />
+      <button v-if="hapusSemua.length > 1" class="tombol-garis" @click="hapusKhataman(hapusSemua)"><PhTrash :size="20" /> Hapus {{ hapusSemua.length }} usulan batal/ditolak</button>
       <button v-if="bolehKelola" class="tombol-garis" @click="bukaSusulan"><PhSusulan :size="20" weight="duotone" /> Khataman susulan</button>
       <button class="tombol-utama" :disabled="!calon.length" :title="calon.length ? '' : 'Belum ada santri khatam 30 juz di halaqah Anda'" @click="bukaUsul()"><PhPaperPlaneTilt :size="20" weight="duotone" /> Usulkan khataman</button>
     </div>
@@ -191,6 +202,7 @@ const STATUS_TTD = { sah: 'Sah', draf: 'Menunggu tanda tangan', dicabut: 'Dicabu
               <button v-if="k.status === 'dijadwalkan'" class="tombol-wa-garis w-presensi min-h-[38px] px-3 text-sm" @click="bukaGrup(k)"><PhUsersThree :size="18" weight="duotone" /> Pengumuman grup</button>
               <button v-if="k.boleh_selesai" class="tombol-garis w-presensi min-h-[38px] px-3 text-sm" @click="bukaAkhir(k, 'selesai')"><PhConfetti :size="18" weight="duotone" style="color: var(--c)" /> Tandai terlaksana</button>
               <button v-if="k.boleh_batal" class="tombol-garis min-h-[38px] px-3 text-sm" @click="bukaAkhir(k, 'batal')"><PhX :size="18" /> Batalkan</button>
+              <button v-if="bolehHapus(k)" class="tombol-garis min-h-[38px] px-3 text-sm" @click="hapusKhataman([k])"><PhTrash :size="18" /> Hapus</button>
             </div>
           </div>
         </div>

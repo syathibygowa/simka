@@ -1,5 +1,6 @@
-<!-- SIMKA PRO | src/pages/santri/KelolaPortalWali.vue | v1.4 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/KelolaPortalWali.vue | v1.5 | 14.21.0: tautan portal wali memakai alamat resmi aplikasi | 24/10/2026 -->
 <script setup>
+import { alamatAplikasi } from '@/lib/alamat'
 // Menu Portal Wali (superadmin; admin ber-izin Kelola santri). v1.1: menu tersendiri, tab di alamat #/portal-wali/:tab.
 // Tab: Ringkasan (kesiapan, tautan portal), Data belum lengkap, Sesi aktif (cabut), Percobaan gagal (buka kunci),
 // Pengaturan (buka/tutup portal, cara masuk, batas salah, BUTIR INFORMASI yang dapat dinyalakan/dimatikan; ubah hanya superadmin).
@@ -44,7 +45,7 @@ const kartu = computed(() => [
   { judul: 'Masuk 7 hari terakhir', nilai: r.value.masuk_7_hari, ikon: PhSignIn, warna: 'tahfizh', ket: 'Wali yang berhasil masuk' },
   { judul: 'Gagal 24 jam terakhir', nilai: r.value.gagal_24_jam, ikon: PhWarning, warna: 'security', ket: `${kp.terkunci.length} sedang terkunci` },
 ])
-const tautan = computed(() => `${location.origin}${location.pathname}#/wali`)
+const tautan = computed(() => `${alamatAplikasi()}#/wali`)  // 14.21.0: alamat resmi
 async function salin() {
   try { await navigator.clipboard.writeText(tautan.value); ui.toast('Tautan Portal Wali disalin.', 'sukses') }
   catch { ui.toast('Tautan tidak dapat disalin otomatis. Salin secara manual.', 'galat') }

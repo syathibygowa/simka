@@ -1,10 +1,11 @@
-// SIMKA PRO | src/lib/wa.js | v1.18 | 14.20.0: template WA minta persetujuan izin santri/kolektif dan izin kolektif ke wali | 22/10/2026
+// SIMKA PRO | src/lib/wa.js | v1.19 | 14.21.0: alamat resmi aplikasi, template WA minta tanda tangan dan ujian tahsin | 24/10/2026
 // Tautan WhatsApp wa.me dari WA pribadi pegawai (Bagian 25). Isi pesan diambil dari template WA yang
 // dikelola superadmin (Setelan → Template WA); bila belum dimuat, dipakai isi bawaan di bawah.
 import { supabase, MODE_DEMO } from '@/lib/supabase'
 import { useLembaga } from '@/stores/lembaga'
 import { useSesi } from '@/stores/sesi'
 import { formatHari, formatJam, sekarang } from '@/lib/tanggal'
+import { alamatAplikasi } from './alamat'
 
 export function nomorWA(hp) {
   let n = String(hp || '').replace(/[^0-9]/g, '')
@@ -15,7 +16,8 @@ export function nomorWA(hp) {
 export function tautanWA(hp, pesan) {
   return `https://wa.me/${nomorWA(hp)}?text=${encodeURIComponent(pesan)}`
 }
-export const alamatAplikasi = () => location.origin + location.pathname.replace(/index\.html$/, '')
+// 14.21.0: alamat resmi (simka.digital), bukan alamat GitHub Pages
+export { alamatAplikasi }
 
 export const BAWAAN_WA = {
   aktivasi: "Assalamu'alaikum warahmatullahi wabarakatuh, {nama}.\n\nAkun SIMKA PRO Anda telah aktif. Silakan masuk di {alamat_aplikasi} dengan username *{username}* dan kata sandi yang Anda buat saat mendaftar.\n\nJazakumullahu khairan.\nAdmin SIMKA PRO Imam Asy-Syathiby",
@@ -37,6 +39,8 @@ export const BAWAAN_WA = {
   izin_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan izin {jenis_izin} ananda *{nama_santri}* ({kelas}) *{status}*.\n• Alasan: {alasan}\n• Keluar: {waktu_keluar}\n• Batas kembali: {batas_kembali}\n• Penjemput: {penjemput}\n\nMohon ananda diantar kembali ke pondok sebelum batas waktu.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   izin_santri_minta: '{salam}, {nama}.\n\nMohon izin, kami mengajukan izin {jenis_izin} ananda *{nama_santri}* ({kelas}) yang menunggu persetujuan Antum sebagai {jabatan}:\n• Alasan: {alasan}\n• Keluar: {waktu_keluar}\n• Batas kembali: {batas_kembali}\n• Penjemput: {penjemput}\n{keterangan}\n\nMohon berkenan diputuskan di SIMKA PRO: {tautan}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   izin_kolektif_minta: '{salam}, {nama}.\n\nMohon izin, kami mengajukan *izin kolektif {kegiatan}* untuk {jumlah} santri yang menunggu persetujuan Antum sebagai {jabatan}:\n• Tempat: {tempat}\n• Keluar: {waktu_keluar}\n• Batas kembali: {batas_kembali}\n• Pendamping: {pendamping}\n• Santri: {daftar}\n{keterangan}\n\nMohon berkenan diputuskan di SIMKA PRO: {tautan}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  ttd_minta: '{salam}, {nama}.\n\nMohon izin, ada *{jenis_dokumen}* yang menunggu tanda tangan Antum sebagai {jabatan}:\n• Nomor: {nomor}\n• Perihal: {perihal}\n\nMohon berkenan ditandatangani di SIMKA PRO (menu Tanda tangan): {tautan}\n\n{penutup}\n{pengirim}',
+  tahsin_ujian_minta: '{salam}, {nama}.\n\nMohon izin, ananda *{nama_santri}* ({kelas}, halaqah {halaqah}) telah menuntaskan tahapan tahsin dan diajukan untuk *ujian tahsin*.\n{catatan}\n\nMohon berkenan diuji (Makhraj dan Shifat) di SIMKA PRO: {tautan}\n\n{penutup}\n{pengirim}',
   izin_kolektif_wali: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan ananda *{nama_santri}* ({kelas}) mengikuti *{kegiatan}* dan *{status}* izin keluar pondok bersama {jumlah} santri lainnya:\n• Tempat: {tempat}\n• Keluar: {waktu_keluar}\n• Batas kembali: {batas_kembali}\n• Pendamping: {pendamping}\n\nMohon doa Bapak/Ibu untuk kelancaran kegiatan ananda.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   titipan_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan titipan untuk ananda *{nama_santri}* ({kelas}) {status_titipan}.\n• Barang: {barang}\n• Pengirim: {pengirim_titipan}\n• Diterima di pos: {waktu_terima}\n{pengambilan}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   libur_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan bahwa pada *{periode_libur}* ananda *{nama_santri}* ({kelas}) *{status_libur}*.\n• Pulang: {waktu_pulang}\n• Batas kembali: {batas_kembali}\n{keterangan}\n\nMohon ananda dijemput dan diantar kembali tepat waktu.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
@@ -98,6 +102,7 @@ export const ISIAN_WA = [
   { grup: 'Perizinan santri', isian: [['jenis_izin', 'Jenis izin (pulang/keluar)'], ['waktu_keluar', 'Waktu keluar'],
     ['batas_kembali', 'Batas kembali'], ['penjemput', 'Nama dan hubungan penjemput'], ['kegiatan', 'Kegiatan izin kolektif (mis. lomba)'],
     ['pendamping', 'Pendamping izin kolektif'], ['daftar', 'Daftar santri izin kolektif'], ['jumlah', 'Jumlah santri']] },
+  { grup: 'Tanda tangan dokumen', isian: [['jenis_dokumen', 'Jenis dokumen'], ['nomor', 'Nomor dokumen'], ['perihal', 'Perihal/isi singkat'], ['jabatan', 'Jabatan penanda tangan']] },
   { grup: 'Security (titipan)', isian: [['status_titipan', 'Status titipan (diterima/diserahkan)'], ['barang', 'Jenis dan uraian barang'], ['pengirim_titipan', 'Pengirim titipan'],
     ['waktu_terima', 'Waktu titipan diterima di pos'], ['pengambilan', 'Keterangan pengambilan (nama dan waktu)']] },
   { grup: 'Libur santri', isian: [['periode_libur', 'Nama periode libur'], ['status_libur', 'Keputusan libur ananda'], ['waktu_pulang', 'Waktu pulang']] },

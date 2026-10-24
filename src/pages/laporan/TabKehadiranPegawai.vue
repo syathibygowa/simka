@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.8 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.9 | 14.21.0: cakupan Pilih pegawai (centang) untuk laporan kehadiran | 24/10/2026 -->
 <script setup>
 // Laporan kehadiran pegawai (menu Rekap → Kehadiran pegawai).
 // Jenis: rekap ringkas, rekap matriks (nama × tanggal, F4 mendatar), laporan individu, daftar perhatian.
@@ -6,9 +6,10 @@
 // Pegawai lain hanya melihat laporan dirinya. Hak cakupan diperiksa server. Periode: hari ini, pekan, bulan,
 // bulan lalu, semester, atau rentang bebas (paling lama 186 hari). Keluaran: layar, Excel, dan cetak F4.
 // v1.2: Terbitkan resmi (PanelResmi): salinan beku + permintaan tanda tangan pimpinan; versi resmi dibuka lewat ?resmi=id.
+// v1.9 (14.21.0): cakupan "Pilih pegawai (centang)" — hanya pegawai yang dicentang yang tampil, diekspor, dan dicetak; pilihan diingat per perangkat.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { PhUsersThree, PhChartPieSlice, PhWarningCircle, PhUserMinus, PhMagnifyingGlass, PhFileXls, PhPrinter, PhInfo, PhListBullets, PhGridNine, PhUser, PhFlag } from '@phosphor-icons/vue'
+import { PhUsersThree, PhChartPieSlice, PhWarningCircle, PhUserMinus, PhMagnifyingGlass, PhFileXls, PhPrinter, PhInfo, PhListBullets, PhGridNine, PhUser, PhFlag, PhCheckSquare, PhSquare } from '@phosphor-icons/vue'
 import { useLaporanKehadiran } from '@/stores/laporanKehadiran'
 import { usePegawai } from '@/stores/pegawai'
 import { useOrganisasi } from '@/stores/organisasi'
@@ -25,6 +26,7 @@ import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import { useAmbang, unduhExcelAmbang } from '@/stores/ambang'
 import TtdResmi from '@/components/cetak/TtdResmi.vue'
 import PanelResmi from '@/components/PanelResmi.vue'
+import LembarBawah from '@/components/LembarBawah.vue'
 import { useDokumenResmi } from '@/stores/dokumenResmi'
 
 const lk = useLaporanKehadiran(); const peg = usePegawai(); const org = useOrganisasi(); const sesi = useSesi(); const ui = useUI()
@@ -36,6 +38,11 @@ const IKON_JENIS = { ringkas: PhListBullets, matriks: PhGridNine, individu: PhUs
 
 const jenis = ref(pemantau.value ? 'ringkas' : 'individu')
 const cakupan = ref('semua'); const nilai = ref('')
+// 14.21.0: pegawai pilihan (dicentang); diingat per perangkat
+const KUNCI_PILIH = 'simka.laporan.pilihPegawai'
+const pilihPeg = ref((() => { try { return JSON.parse(localStorage.getItem(KUNCI_PILIH) || '[]') } catch { return [] } })())
+watch(pilihPeg, (v) => { try { localStorage.setItem(KUNCI_PILIH, JSON.stringify(v)) } catch { /* abaikan */ } }, { deep: true })
+const setPilih = computed(() => new Set(pilihPeg.value))
 const awal = periodeCepat('bulan'); const mulai = ref(awal.mulai); const selesai = ref(awal.selesai); const cepat = ref('bulan')
 const amb = useAmbang(); const ambang = ref(80); const cari = ref('')
 // 14.3.0: ambang perhatian bawaan mengikuti Setelan → Ambang kehadiran
@@ -61,6 +68,7 @@ const namaCakupan = computed(() => {
   if (c === 'semua') return 'Seluruh pegawai'
   if (c === 'bidang') return org.cariUnit(nilai.value)?.nama || '–'
   if (c === 'fungsional') return 'Jabatan ' + (org.fungsional.find((f) => f.id === nilai.value)?.nama || '–')
+  if (c === 'pilih') return `${pilihPeg.value.length} pegawai pilihan`
   return peg.cari(nilai.value)?.nama_lengkap || '–'
 })
 
@@ -68,15 +76,17 @@ async function muat() {
   if (resmi.value) return
   if (selesai.value < mulai.value) { ui.toast('Tanggal akhir tidak boleh sebelum tanggal mulai.', 'galat'); return }
   if (['bidang', 'fungsional', 'individu'].includes(cakupanEfektif.value) && !nilai.value) { lk.data = null; return }
+  if (cakupanEfektif.value === 'pilih' && !pilihPeg.value.length) { lk.data = null; return }
   try {
-    await lk.muat({ mulai: mulai.value, selesai: selesai.value, cakupan: cakupanEfektif.value, nilai: nilai.value || null, rinci: ['matriks', 'individu'].includes(jenis.value) })
+    await lk.muat({ mulai: mulai.value, selesai: selesai.value, cakupan: cakupanEfektif.value === 'pilih' ? 'semua' : cakupanEfektif.value, nilai: nilai.value || null, rinci: ['matriks', 'individu'].includes(jenis.value) })
   } catch (e) { ui.toast(e.message, 'galat') }
 }
 watch([jenis, cakupan, nilai], muat)
 
 const pegawai = computed(() => {
   const q = cari.value.trim().toLowerCase()
-  return (lk.data?.pegawai || []).filter((p) => !q || [p.nama, p.niy, p.unit, p.jabatan].join(' ').toLowerCase().includes(q))
+  const pilih = cakupanEfektif.value === 'pilih'
+  return (lk.data?.pegawai || []).filter((p) => (!pilih || setPilih.value.has(p.employee_id)) && (!q || [p.nama, p.niy, p.unit, p.jabatan].join(' ').toLowerCase().includes(q)))
 })
 const perhatian = computed(() => pegawai.value.filter((p) => p.sesi_wajib > 0 && (p.persen ?? 0) < Number(ambang.value)).sort((a, b) => (a.persen ?? 0) - (b.persen ?? 0)))
 const tampilBaris = computed(() => (jenis.value === 'perhatian' ? perhatian.value : pegawai.value))
@@ -144,18 +154,32 @@ async function cetak() {
 
 // ---------- Terbitkan resmi ----------
 const kunci = computed(() => (lk.data && !resmi.value
-  ? ['kehadiran_pegawai', jenis.value, cakupanEfektif.value, cakupanEfektif.value === 'saya' ? sesi.pengguna?.id : nilai.value || '-', lk.data.mulai, lk.data.selesai, jenis.value === 'perhatian' ? ambang.value : ''].join('|')
+  ? ['kehadiran_pegawai', jenis.value, cakupanEfektif.value, cakupanEfektif.value === 'saya' ? sesi.pengguna?.id : cakupanEfektif.value === 'pilih' ? [...pilihPeg.value].sort().join(',') : nilai.value || '-', lk.data.mulai, lk.data.selesai, jenis.value === 'perhatian' ? ambang.value : ''].join('|')
   : ''))
-const isiBeku = () => ({ versi: 1, param: { jenis: jenis.value, cakupan: cakupan.value, nilai: nilai.value, mulai: lk.data.mulai, selesai: lk.data.selesai, ambang: ambang.value, namaCakupan: namaCakupan.value }, data: lk.data })
+const isiBeku = () => {
+  const pilih = cakupanEfektif.value === 'pilih'; const ada = (r) => !pilih || setPilih.value.has(r.employee_id)
+  return { versi: 1, param: { jenis: jenis.value, cakupan: cakupan.value, nilai: nilai.value, pilih: pilih ? [...pilihPeg.value] : null, mulai: lk.data.mulai, selesai: lk.data.selesai, ambang: ambang.value, namaCakupan: namaCakupan.value },
+    data: pilih ? { ...lk.data, pegawai: (lk.data.pegawai || []).filter(ada), rinci: (lk.data.rinci || []).filter(ada) } : lk.data }
+}
 function terapkanResmi(d) {
   const p = d.isi?.param; if (!p) return ui.toast('Salinan beku dokumen tidak dapat dibaca.', 'galat')
   resmi.value = d; cari.value = ''
-  jenis.value = p.jenis; cakupan.value = p.cakupan; nilai.value = p.nilai; mulai.value = p.mulai; selesai.value = p.selesai; ambang.value = p.ambang ?? ambang.value
+  jenis.value = p.jenis; cakupan.value = p.cakupan; nilai.value = p.nilai; if (p.pilih) pilihPeg.value = [...p.pilih]; mulai.value = p.mulai; selesai.value = p.selesai; ambang.value = p.ambang ?? ambang.value
   lk.data = d.isi.data
   if (route.query.resmi !== d.id) router.replace({ query: { ...route.query, resmi: d.id } })
 }
 function tutupResmi() { resmi.value = null; const q = { ...route.query }; delete q.resmi; router.replace({ query: q }); muat() }
 const bukaSaring = ref(false)
+// ---------- 14.21.0: lembar centang pegawai ----------
+const lembarPilih = ref(false); const cariPilih = ref(''); const unitPilih = ref('')
+const calonPilih = computed(() => { const q = cariPilih.value.toLowerCase().trim()
+  return pegawaiPilihan.value.filter((p) => (!unitPilih.value || p.org_unit_id === unitPilih.value)
+    && (!q || `${p.nama_lengkap} ${p.niy || ''} ${p.nama_unit || ''}`.toLowerCase().includes(q))) })
+function centang(id) { pilihPeg.value = setPilih.value.has(id) ? pilihPeg.value.filter((x) => x !== id) : [...pilihPeg.value, id] }
+function centangSemua() { const ada = setPilih.value; pilihPeg.value = [...pilihPeg.value, ...calonPilih.value.map((p) => p.id).filter((id) => !ada.has(id))] }
+function kosongkanTampil() { const tampilId = new Set(calonPilih.value.map((p) => p.id)); pilihPeg.value = pilihPeg.value.filter((id) => !tampilId.has(id)) }
+function selesaiPilih() { lembarPilih.value = false; if (!pilihPeg.value.length) return ui.toast('Centang sedikitnya satu pegawai.', 'galat'); muat() }
+watch(cakupan, (c) => { if (c === 'pilih' && !resmi.value && !pilihPeg.value.length) lembarPilih.value = true })
 const periodeTeks = computed(() => (lk.data ? `${formatPendek(lk.data.mulai)} s.d. ${formatPendek(lk.data.selesai)}` : ''))
 const kanan = computed(() => (jenis.value === 'individu' && individu.value
   ? { jabatan: 'Pegawai yang bersangkutan', nama: individu.value.nama, niy: individu.value.niy }
@@ -178,7 +202,9 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <template v-if="pemantau && jenis !== 'individu'">
             <label class="block"><span class="label-isian">Cakupan</span>
-              <select v-model="cakupan" class="isian"><option value="semua">Semua pegawai</option><option value="bidang">Bidang/unit (beserta cabangnya)</option><option value="fungsional">Jabatan fungsional</option></select></label>
+              <select v-model="cakupan" class="isian"><option value="semua">Semua pegawai</option><option value="bidang">Bidang/unit (beserta cabangnya)</option><option value="fungsional">Jabatan fungsional</option><option value="pilih">Pilih pegawai (centang)</option></select></label>
+            <div v-if="cakupan === 'pilih'" class="block"><span class="label-isian">Pegawai pilihan</span>
+              <button type="button" class="tombol-garis w-full justify-start" @click="lembarPilih = true"><PhCheckSquare :size="20" weight="duotone" /> {{ pilihPeg.length ? `${pilihPeg.length} pegawai dicentang` : 'Centang pegawai…' }}</button></div>
             <label v-if="cakupan === 'bidang'" class="block"><span class="label-isian">Bidang/unit</span>
               <select v-model="nilai" class="isian"><option value="" disabled>Pilih bidang/unit</option>
                 <option v-for="u in unitPilihan" :key="u.id" :value="u.id">{{ ' '.repeat(u.tingkat * 2) }}{{ u.nama }}</option></select></label>
@@ -212,7 +238,7 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
       :kanan-jabatan="cakupanEfektif === 'saya' ? 'Pegawai yang bersangkutan' : 'Pembuat laporan'" @buka="terapkanResmi" @tutup="tutupResmi" />
 
     <p v-if="lk.memuat" class="py-10 text-center text-teks3">Menghitung kehadiran…</p>
-    <p v-else-if="!lk.data" class="kartu p-8 text-center text-teks3">Pilih {{ jenis === 'individu' ? 'pegawai' : cakupan === 'bidang' ? 'bidang/unit' : 'jabatan fungsional' }} lalu tekan Tampilkan.</p>
+    <p v-else-if="!lk.data" class="kartu p-8 text-center text-teks3">{{ cakupan === 'pilih' && jenis !== 'individu' ? 'Centang pegawai yang akan dimuat dalam laporan, lalu tekan Tampilkan.' : `Pilih ${jenis === 'individu' ? 'pegawai' : cakupan === 'bidang' ? 'bidang/unit' : 'jabatan fungsional'} lalu tekan Tampilkan.` }}</p>
     <template v-else>
       <div class="flex flex-wrap items-center gap-2">
         <label v-if="jenis !== 'individu'" class="relative min-w-[14rem] flex-1"><span class="sr-only">Cari pegawai</span>
@@ -311,6 +337,34 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
         </div>
       </template>
     </template>
+
+    <!-- 14.21.0: Centang pegawai -->
+    <LembarBawah v-model="lembarPilih" judul="Pilih pegawai untuk laporan" lebar>
+      <div class="space-y-3 pb-2">
+        <p class="text-sm text-teks2">Centang pegawai yang dimuat dalam laporan. Hanya pegawai tercentang yang tampil, diekspor, dan dicetak. Pilihan diingat di perangkat ini.</p>
+        <div class="grid gap-2 sm:grid-cols-2">
+          <input v-model="cariPilih" type="search" class="isian" placeholder="Cari nama, NIY, atau bidang" aria-label="Cari pegawai" />
+          <select v-model="unitPilih" class="isian" aria-label="Saring bidang/unit"><option value="">Semua bidang/unit</option>
+            <option v-for="u in unitPilihan" :key="u.id" :value="u.id">{{ ' '.repeat(u.tingkat * 2) }}{{ u.nama }}</option></select>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" class="tombol-garis min-h-[38px] px-3 text-sm" @click="centangSemua"><PhCheckSquare :size="18" /> Centang semua yang tampil ({{ calonPilih.length }})</button>
+          <button type="button" class="tombol-garis min-h-[38px] px-3 text-sm" @click="kosongkanTampil"><PhSquare :size="18" /> Kosongkan yang tampil</button>
+          <span class="ml-auto text-sm font-semibold">{{ pilihPeg.length }} dicentang</span>
+        </div>
+        <ul class="max-h-[50dvh] divide-y divide-garis overflow-y-auto rounded-2xl border border-garis">
+          <li v-for="p in calonPilih" :key="p.id">
+            <label class="flex min-h-[48px] cursor-pointer items-center gap-3 px-3 py-2">
+              <input type="checkbox" class="h-5 w-5 accent-[#1E7D4F]" :checked="setPilih.has(p.id)" @change="centang(p.id)" />
+              <span class="min-w-0 flex-1"><span class="block truncate text-sm font-semibold">{{ p.nama_lengkap }}</span>
+                <span class="block truncate text-xs text-teks3">{{ p.niy || '–' }} · {{ p.nama_unit || '–' }}</span></span>
+            </label>
+          </li>
+          <li v-if="!calonPilih.length" class="p-4 text-center text-sm text-teks3">Tidak ada pegawai yang cocok.</li>
+        </ul>
+        <button type="button" class="tombol-utama w-full" @click="selesaiPilih"><PhMagnifyingGlass :size="20" weight="bold" /> Tampilkan {{ pilihPeg.length }} pegawai</button>
+      </div>
+    </LembarBawah>
 
     <!-- Cetak F4 -->
     <DokumenCetak v-if="lk.data" v-model:pratinjau="pratinjau" kop="pondok" :judul="judulCetak" :subjudul="subjudul" :mendatar="jenis === 'matriks'" :pencetak="sesi.pengguna?.nama_lengkap">

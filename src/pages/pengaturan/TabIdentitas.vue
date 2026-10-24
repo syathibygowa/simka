@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengaturan/TabIdentitas.vue | v1.1 | Perbaikan 13.6.0: nama tab Setelan baru (Lembaga, Kalender, Logo, Nomor Surat) | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/TabIdentitas.vue | v1.2 | 14.21.0: nama yayasan (kepala sertifikat tahfizh) | 24/10/2026 -->
 <script setup>
 import { ref } from 'vue'
 import { PhFloppyDisk, PhCopySimple } from '@phosphor-icons/vue'
@@ -11,6 +11,7 @@ const proses = ref(false); const menyalin = ref('')
 
 const ISIAN = [
   { k: 'nama_lengkap', l: 'Nama lembaga lengkap', lebar: true },
+  { k: 'nama_yayasan', l: 'Nama yayasan', lebar: true, ket: 'Tampil di kepala sertifikat tahfizh dan sertifikat penghargaan, mis. Yayasan Pesantren Imam Asysyatiby (YPIA) Wahdah Islamiyah' },
   { k: 'nama_singkat', l: 'Nama singkat' }, { k: 'tagline', l: 'Tagline' },
   { k: 'npsn', l: 'NPSN', angka: true }, { k: 'nspp', l: 'NSPP', angka: true },
   { k: 'telepon', l: 'Telepon/WA kantor', angka: true }, { k: 'email', l: 'Email lembaga', jenis: 'email' },

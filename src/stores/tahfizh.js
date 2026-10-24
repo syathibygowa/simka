@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/tahfizh.js | v1.12 | 14.17.0: khataman susulan (tanggal lampau) oleh pengelola khataman | 20/10/2026
+// SIMKA PRO | src/stores/tahfizh.js | v1.13 | 14.21.0: hapus usulan dibatalkan, penguji tahsin, nomor HP penanda tangan (WA) | 24/10/2026
 // Tahfizh: hak pengguna, pengaturan per tahun ajaran (KKM, bobot, target, predikat, pekan efektif), penguji,
 // daftar santri beserta program, posisi hafalan, dan capaian juz resmi. Penulisan hanya lewat fungsi SQL.
 import { defineStore } from 'pinia'
@@ -19,15 +19,15 @@ import { hariIniISO } from '@/lib/tanggal'
 // ---------- Mode demo: dokumen tahfizh ----------
 let DOK_DEMO = null; let SET_DEMO = null
 const kodeDemoDok = () => { const a = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let k = ''; for (let i = 0; i < 8; i++) k += a[Math.floor(Math.random() * a.length)]; return k.slice(0, 4) + '-' + k.slice(4) }
-const KEPALA_DEMO = { nama: 'Ust. Abdurrahman Hafizh, Lc.', niy: '1988031220150101', jabatan: 'Kepala Bidang Tahfizh', pengantar: 'Mengetahui,' }
-const DIREKTUR_DEMO = { nama: 'Siswandi Safari, S.Pd.I., Lc., S.H., M.Ag.', niy: '1983020910201401', jabatan: 'Direktur' }
+const KEPALA_DEMO = { nama: 'Ust. Abdurrahman Hafizh, Lc.', niy: '1988031220150101', jabatan: 'Kepala Bidang Tahfizh', pengantar: 'Mengetahui,', no_hp: '081234500021' }
+const DIREKTUR_DEMO = { nama: 'Siswandi Safari, S.Pd.I., Lc., S.H., M.Ag.', niy: '1983020910201401', jabatan: 'Direktur', no_hp: '081234500001' }
 let urutDemo = 0
 function dokDemoBaru(jenis, s, x = {}, mode = 'elektronik') {
   const sesi = useSesi(); urutDemo++
   const ttd = (jenis === 'sertifikat_tahfizh' ? [DIREKTUR_DEMO] : jenis === 'sertifikat_khataman' ? [{ ...DIREKTUR_DEMO, pengantar: 'Mengetahui,' }, { ...KEPALA_DEMO, pengantar: '' }]
-    : [KEPALA_DEMO, { nama: x.penguji || sesi.pengguna?.nama_lengkap, niy: '2019070101', jabatan: 'Penguji' }])
+    : [KEPALA_DEMO, { nama: x.penguji || sesi.pengguna?.nama_lengkap, niy: x.penguji === KEPALA_DEMO.nama ? KEPALA_DEMO.niy : '2019070101', jabatan: 'Penguji', no_hp: '081234500031' }])
     .map((t, i) => ({ urutan: i + 1, ...t, status: mode === 'basah' || (i === 1) ? 'ditandatangani' : 'menunggu', waktu: mode === 'basah' ? null : i === 1 ? new Date().toISOString() : null, basah: mode === 'basah' }))
-  const pref = { suket_juz: 'SKJ', sertifikat_hafalan: 'SH', sertifikat_tahfizh: 'K', sertifikat_khataman: 'SKH' }[jenis]
+  const pref = { suket_juz: 'SKJ', sertifikat_hafalan: 'SH', sertifikat_tahfizh: 'K', sertifikat_khataman: 'SKH', suket_tahsin: 'SKT' }[jenis]
   return { id: 'dt' + Date.now() + urutDemo, jenis, student_id: s.student_id, exam_id: x.exam_id || null, nomor: `${pref}.${String(urutDemo).padStart(3, '0')}/PPTQ-IAS/V/1448`, tanggal: x.tanggal || hariIniISO(),
     tanggal_hijriah: '4 Jumadil Awal 1448', mode_ttd: mode, status: 'terbit', kode: kodeDemoDok(), status_dokumen: ttd.every((t) => t.status === 'ditandatangani') ? 'sah' : 'draf',
     diterbitkan_oleh: sesi.pengguna?.nama_lengkap, created_at: new Date().toISOString(), ttd, boleh_cabut: true,
@@ -40,6 +40,8 @@ function dokDemo(tz) {
   DOK_DEMO = s12 ? [
     { ...dokDemoBaru('sertifikat_tahfizh', s12, { total_juz: 15, tanggal_hafal: '2026-06-09', tanggal_hafal_hijriah: '23 Zulhijah 1447', predikat: 'ISTIMEWA (MUMTAZ)', pengaturan: PENGATURAN_SERTIFIKAT }, 'basah') },
     { ...dokDemoBaru('suket_juz', s8, { juz: [6], tanggal_ujian: hariIniISO(), nilai_tajwid: 92, nilai_itqan: 88, nilai_akhir: 90, huruf: 'B', predikat: 'Jayyid Jiddan (Sangat Baik)', kkm: 80, ujian_ke: 1, penguji: 'Ust. Muhammad Ikhsan, S.Pd.I.', total_juz: 6 }) },
+    // 14.21.0: penguji sekaligus Kepala Bidang Tahfizh → dicetak satu tanda tangan saja
+    { ...dokDemoBaru('suket_juz', s12, { juz: [11], tanggal_ujian: hariIniISO(), nilai_tajwid: 88, nilai_itqan: 86, nilai_akhir: 87, huruf: 'B', predikat: 'Jayyid Jiddan (Sangat Baik)', kkm: 80, ujian_ke: 1, penguji: KEPALA_DEMO.nama, total_juz: 11 }) },
     { ...dokDemoBaru('sertifikat_hafalan', s12, { juz: [], jenjang_juz: 10, tanggal_ujian: hariIniISO(), nilai_tajwid: 96, nilai_itqan: 95, nilai_akhir: 95.5, huruf: 'A', predikat: 'Mumtaz (Istimewa)', predikat_sertifikat: 'Pujian', kkm: 80, penguji: 'Ust. Muhammad Ikhsan, S.Pd.I.' }, 'basah') },
   ] : []
   return DOK_DEMO
@@ -51,12 +53,12 @@ const hakKhtDemo = () => useSesi().peran !== 'pegawai'
 const hariIniBulan = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01` }
 
 const rpc = async (nama, arg) => { const { data, error } = await supabase.rpc(nama, arg); if (error) throw new Error(pesanGalat(error)); return data }
-const HAK_KOSONG = { atur: false, validasi: false, pimpinan: false, muhaffizh: false, penguji_kenaikan: false, penguji_sertifikasi: false, dokumen: false, lihat: false }
+const HAK_KOSONG = { atur: false, validasi: false, pimpinan: false, muhaffizh: false, penguji_kenaikan: false, penguji_sertifikasi: false, penguji_tahsin: false, admin: false, dokumen: false, lihat: false }
 
 export const useTahfizh = defineStore('tahfizh', {
   state: () => ({
     hak: { ...HAK_KOSONG }, hakDimuat: false,
-    taId: '', pengaturan: null, predikat: [], target: [], bulan: [], penguji: { kenaikan: [], sertifikasi: [] },
+    taId: '', pengaturan: null, predikat: [], target: [], bulan: [], penguji: { kenaikan: [], sertifikasi: [], tahsin: [] },
     santri: [], memuat: false, galat: '', sesiSetoran: [], memuatSetoran: false, saluran: null, saluranUjian: null, beranda: null, saluranBeranda: null,
   }),
   getters: {
@@ -68,8 +70,8 @@ export const useTahfizh = defineStore('tahfizh', {
       const sesi = useSesi()
       if (MODE_DEMO) {
         const p = sesi.peran
-        this.hak = p === 'superadmin' ? { ...HAK_KOSONG, atur: true, validasi: true, dokumen: true, lihat: true }
-          : p === 'admin' ? { ...HAK_KOSONG, atur: sesi.izinAdmin.includes('atur_tahfizh'), validasi: sesi.izinAdmin.includes('validasi_tahfizh'), dokumen: sesi.izinAdmin.some((x) => ['atur_tahfizh', 'validasi_tahfizh', 'kelola_persuratan'].includes(x)), lihat: true }
+        this.hak = p === 'superadmin' ? { ...HAK_KOSONG, atur: true, validasi: true, dokumen: true, lihat: true, admin: true }
+          : p === 'admin' ? { ...HAK_KOSONG, admin: true, atur: sesi.izinAdmin.includes('atur_tahfizh'), validasi: sesi.izinAdmin.includes('validasi_tahfizh'), dokumen: sesi.izinAdmin.some((x) => ['atur_tahfizh', 'validasi_tahfizh', 'kelola_persuratan'].includes(x)), lihat: true }
             : { ...HAK_KOSONG, muhaffizh: true, penguji_kenaikan: true, lihat: true }
         this.hakDimuat = true; return this.hak
       }
@@ -89,23 +91,24 @@ export const useTahfizh = defineStore('tahfizh', {
         const susun = (jenis) => d.penguji.filter((x) => x.jenis === jenis).map((x) => {
           const p = nama(x.employee_id); return { ...x, nama: p?.nama_lengkap, niy: p?.niy, no_hp: p?.no_hp, jabatan: x.catatan || 'Penguji', bawaan: false }
         })
-        this.penguji = { kenaikan: susun('kenaikan'), sertifikasi: susun('sertifikasi') }
+        this.penguji = { kenaikan: susun('kenaikan'), sertifikasi: susun('sertifikasi'), tahsin: susun('tahsin') }
         return
       }
       if (!this.taId) return
-      const [s, p, t, b, k1, k2] = await Promise.all([
+      const [s, p, t, b, k1, k2, k3] = await Promise.all([
         supabase.from('tahfizh_settings').select('*').eq('academic_year_id', this.taId).maybeSingle(),
         supabase.from('predicate_ranges').select('*').eq('academic_year_id', this.taId).order('urutan'),
         supabase.from('tahfizh_targets').select('*').eq('academic_year_id', this.taId).order('program').order('tingkat'),
         supabase.from('tahfizh_months').select('*').eq('academic_year_id', this.taId).order('bulan'),
         supabase.rpc('penguji_tahfizh', { p_jenis: 'kenaikan' }),
         supabase.rpc('penguji_tahfizh', { p_jenis: 'sertifikasi' }),
+        supabase.rpc('penguji_tahfizh', { p_jenis: 'tahsin' }),
       ])
-      for (const r of [s, p, t, b, k1, k2]) if (r.error) throw new Error(pesanGalat(r.error))
+      for (const r of [s, p, t, b, k1, k2, k3]) if (r.error) throw new Error(pesanGalat(r.error))
       this.pengaturan = s.data
       this.predikat = p.data.map((x) => ({ ...x, nilai_min: Number(x.nilai_min), nilai_maks: Number(x.nilai_maks) }))
       this.target = t.data; this.bulan = b.data
-      this.penguji = { kenaikan: k1.data || [], sertifikasi: k2.data || [] }
+      this.penguji = { kenaikan: k1.data || [], sertifikasi: k2.data || [], tahsin: k3.data || [] }
     },
     async simpanPengaturan(isi) {
       if (MODE_DEMO) {
@@ -427,6 +430,17 @@ export const useTahfizh = defineStore('tahfizh', {
         this._dokKhtDemo(k); k.undangan = null; khtDemo().unshift(k); return k.id
       }
       return rpc('catat_khataman_susulan', { p })
+    },
+    /** 14.21.0 (mode demo): tambahkan dokumen tahfizh contoh, mis. suket hasil ujian tahsin. */
+    demoDokumenBaru(jenis, santri, data) { const d = dokDemoBaru(jenis, santri, data); dokDemo(this).unshift(d); return d },
+    /** 14.21.0: hapus permanen usulan yang dibatalkan/ditolak (admin/superadmin). jenis: ujian | khataman | tahsin */
+    async hapusUsulan(jenis, ids) {
+      if (MODE_DEMO) {
+        const daftar = jenis === 'ujian' ? ujianDemo() : jenis === 'khataman' ? khtDemo() : null
+        if (!daftar) return ids.length
+        const sisa = daftar.filter((x) => !ids.includes(x.id)); const n = daftar.length - sisa.length; daftar.splice(0, daftar.length, ...sisa); return n
+      }
+      return rpc('hapus_usulan_tahfizh', { p_jenis: jenis, p_ids: ids })
     },
     async batalkanKhataman(id, alasan) {
       if (MODE_DEMO) { if (String(alasan || '').trim().length < 5) throw new Error('Tuliskan alasan pembatalan (minimal 5 huruf).'); Object.assign(khtDemo().find((x) => x.id === id), { status: 'dibatalkan', alasan_batal: alasan }); return }

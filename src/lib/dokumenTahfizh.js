@@ -1,10 +1,11 @@
-// SIMKA PRO | src/lib/dokumenTahfizh.js | v1.3 | 14.10.0: Sertifikat Penghargaan Khataman dan status khataman | 18/10/2026
+// SIMKA PRO | src/lib/dokumenTahfizh.js | v1.4 | 14.21.0: suket hasil ujian tahsin; kepala sertifikat bawaan dari Setelan Lembaga | 24/10/2026
 // Istilah jenis dan status dokumen tahfizh, serta pengaturan bawaan kepala Sertifikat Tahfizhul Quran.
 export const JENIS_DOK_TAHFIZH = {
   suket_juz: { n: 'Suket kenaikan juz', panjang: 'Surat Keterangan Ujian Kenaikan Juz', w: 'agenda' },
   sertifikat_hafalan: { n: 'Sertifikat hafalan', panjang: 'Sertifikat Hafalan', w: 'tahfizh' },
   sertifikat_tahfizh: { n: 'Sertifikat Tahfizhul Quran', panjang: 'Sertifikat Tahfizhul Quran', w: 'prestasi' },
   sertifikat_khataman: { n: 'Sertifikat khataman', panjang: 'Sertifikat Penghargaan Khataman', w: 'libursantri' },
+  suket_tahsin: { n: 'Suket ujian tahsin', panjang: 'Surat Keterangan Hasil Ujian Tahsin', w: 'tahsin' },
 }
 /** Khataman Al-Qur'an 30 juz. */
 export const STATUS_KHATAMAN = {
@@ -25,9 +26,10 @@ export function statusDok(d) {
   return { k: 'sah', n: d.mode_ttd === 'basah' ? 'Sah (tanda tangan basah)' : 'Sah', w: 'presensi' }
 }
 export const PENGATURAN_SERTIFIKAT = {
-  baris1: 'YAYASAN PESANTREN WAHDAH ISLAMIYAH CABANG GOWA',
-  baris2: 'PONDOK PESANTREN TAHFIZHUL QURAN IMAM ASY-SYATHIBY',
-  baris3: 'WAHDAH ISLAMIYAH GOWA',
+  // 14.21.0: kosong = mengikuti Setelan → Lembaga (baris 1 nama yayasan; baris 2–3 nama pondok)
+  baris1: '',
+  baris2: '',
+  baris3: '',
   pembuka: "Dengan memohon ridho Allah _Subhanahu Wata'ala_, Pondok Pesantren Tahfizhul Quran Imam Asy-Syathiby Wahdah Islamiyah Gowa menerangkan bahwa:",
   program: 'Telah menyelesaikan Program Tahfizhul Quran di Pondok Pesantren Tahfizhul Quran Imam Asy-Syathiby Wahdah Islamiyah Gowa',
   penutup: 'Demikian sertifikat ini diberikan sebagai tanda hafalan untuk terus menjaga, mengamalkan dan menyebarkan nilai-nilai Al-Quran.',

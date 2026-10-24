@@ -1,13 +1,13 @@
-// SIMKA PRO | src/lib/dokumen.js | v1.4 | Tahap D: jenis dokumen tahfizh | 16/10/2026
+// SIMKA PRO | src/lib/dokumen.js | v1.5 | 14.21.0: alamat Cek Keabsahan memakai alamat resmi aplikasi; jenis suket tahsin | 24/10/2026
 // Kode validasi dokumen bertanda tangan elektronik: alamat halaman Cek Keabsahan (dibuka dengan memindai QR),
 // penyeragaman kode ketikan, label status, dan QR (SVG, tanpa layanan luar).
 import { svgQR } from './kartu'
+import { alamatAplikasi } from './alamat'
 export { svgQR }
 
 /** Alamat publik Cek Keabsahan Dokumen untuk satu kode (mengikuti alamat aplikasi saat ini). */
 export function alamatCek(kode) {
-  const dasar = `${location.origin}${location.pathname}`.replace(/index\.html$/, '')
-  return `${dasar}#/cek/${(kode || '').replace(/-/g, '')}`
+  return `${alamatAplikasi()}#/cek/${(kode || '').replace(/-/g, '')}`
 }
 /** Seragamkan ketikan pengguna menjadi XXXX-XXXX (huruf kapital, tanpa spasi/tanda). */
 export function rapikanKode(k) {
@@ -32,6 +32,7 @@ export const JENIS_DOKUMEN = {
   kuitansi: 'Kuitansi pembayaran santri',
   tagihan_santri: 'Surat tagihan santri',
   suket_juz: 'Surat keterangan ujian kenaikan juz',
+  suket_tahsin: 'Surat keterangan hasil ujian tahsin',
   sertifikat_hafalan: 'Sertifikat hafalan',
   sertifikat_tahfizh: 'Sertifikat Tahfizhul Quran',
 }

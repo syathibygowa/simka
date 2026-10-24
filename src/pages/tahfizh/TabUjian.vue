@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.6 | 14.13.0: saringan corong di HP, tombol disederhanakan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.7 | 14.21.0: hapus usulan ujian yang dibatalkan (admin/superadmin) | 24/10/2026 -->
 <script setup>
 // Ujian tahfizh: kenaikan juz, sertifikasi berjenjang (5, 10, 15 … juz), dan UTAS (Fase 12, TabUtas.vue).
 // Muhaffizh merekomendasikan → penguji aktif menerima notifikasi (dan dapat dikabari WA) → penguji mengambil/menjadwalkan
@@ -8,10 +8,12 @@
 // v1.5 (14.9.1): setelah rekomendasi muncul konfirmasi WA per santri ke penguji; penguji punya saringan "Antrian saya"; setelah menjadwalkan
 //   muncul WA jadwal ke muhaffizh; setelah menilai muncul WA hasil ke muhaffizh (nama, kelas, halaqah, muhaffizh, nilai, keterangan
 //   Lulus/Perbaikan/Tidak lulus, catatan perbaikan). Semua pesan dapat dipratinjau dan dikirim ulang dari kartu ujian.
+// v1.7 (14.21.0): admin/superadmin dapat menghapus usulan ujian yang dibatalkan (per kartu atau sekaligus).
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import {
   PhExam, PhCertificate, PhPaperPlaneTilt, PhHandGrabbing, PhPencilLine, PhX, PhWhatsappLogo, PhUserGear, PhCalendarBlank, PhMagnifyingGlass,
   PhHourglass, PhCheckCircle, PhXCircle, PhUsersThree, PhListChecks,
+  PhTrash,
 } from '@phosphor-icons/vue'
 import { useTahfizh } from '@/stores/tahfizh'
 import { useSesi } from '@/stores/sesi'
@@ -155,6 +157,14 @@ async function batal() {
   try { await tz.batalkanUjian(ujianPilih.value.id, alasanBatal.value.trim()); lembarBatal.value = false; ui.toast('Ujian dibatalkan.'); await muat() }
   catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
+// ---------- 14.21.0: hapus ujian yang dibatalkan (admin/superadmin) ----------
+const batalHapus = computed(() => (sesi.isAdmin ? tampil.value.filter((u) => u.status === 'dibatalkan') : []))
+async function hapusBatal(daftarHapus) {
+  if (!daftarHapus.length) return
+  if (!(await ui.konfirmasi({ judul: daftarHapus.length > 1 ? `Hapus ${daftarHapus.length} ujian yang dibatalkan?` : 'Hapus ujian yang dibatalkan?',
+    pesan: `${daftarHapus.slice(0, 5).map((u) => u.nama).join(', ')}${daftarHapus.length > 5 ? ', …' : ''}. Data usulan dihapus permanen dari daftar.`, ya: 'Hapus', bahaya: true }))) return
+  try { const n = await tz.hapusUsulan('ujian', daftarHapus.map((u) => u.id)); ui.toast(`${n} usulan ujian dihapus.`); await muat() } catch (e) { ui.toast(e.message, 'galat') }
+}
 const bolehBatal = (u) => ['menunggu', 'dijadwalkan'].includes(u.status) && (u.muhaffizh_saya || pengelola.value)
 
 // ---------- Pesan WhatsApp per ujian: rekomendasi → penguji, jadwal → muhaffizh, hasil → muhaffizh ----------
@@ -200,6 +210,7 @@ const bolehKirim = (u) => ({
           <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri atau halaqah" aria-label="Cari santri" /></div></template>
         <select v-model="status" class="isian w-auto" aria-label="Saring status"><option value="aktif">Daftar tunggu dan terjadwal</option><option value="selesai">Selesai (1 tahun)</option><option value="dibatalkan">Dibatalkan</option><option value="">Semua</option></select>
       </SaringCorong>
+      <button v-if="batalHapus.length > 1" class="tombol-garis" @click="hapusBatal(batalHapus)"><PhTrash :size="20" /> Hapus {{ batalHapus.length }} dibatalkan</button>
       <button v-if="tz.hak.muhaffizh || pengelola" class="tombol-utama" @click="bukaRek"><PhPaperPlaneTilt :size="20" weight="duotone" /> Rekomendasikan</button>
       <button v-if="pengujiAktif.length" class="tombol-wa-garis w-presensi" @click="bukaWA"><PhWhatsappLogo :size="20" weight="duotone" /> Kabari penguji</button>
       <button v-if="sayaPenguji" :class="['tombol-garis w-agenda', antrianSaya && 'font-bold ring-2 ring-[var(--c)]']" :aria-pressed="antrianSaya" @click="antrianSaya = !antrianSaya">
@@ -232,6 +243,7 @@ const bolehKirim = (u) => ({
             <p v-if="u.catatan_perbaikan" class="mt-1 text-sm"><b>Catatan perbaikan:</b> {{ u.catatan_perbaikan }}</p>
             <p v-if="u.catatan_penguji" class="mt-1 text-xs text-teks3">Catatan penguji: {{ u.catatan_penguji }}</p>
             <p v-if="u.alasan_batal" class="mt-1 text-xs text-teks3">Dibatalkan: {{ u.alasan_batal }}</p>
+            <button v-if="u.status === 'dibatalkan' && sesi.isAdmin" class="tombol-garis mt-2 min-h-[38px] px-3 text-sm" @click="hapusBatal([u])"><PhTrash :size="18" /> Hapus</button>
             <div v-if="u.hasil === 'tuntas' && (dokUjian[u.id] || bolehTerbit(u))" class="mt-3 flex flex-wrap items-center gap-2">
               <template v-if="dokUjian[u.id]">
                 <button class="tombol-garis w-prestasi min-h-[38px] px-3 text-sm" @click="cetakDok(dokUjian[u.id])"><PhCertificate :size="18" weight="duotone" style="color: var(--c)" /> Cetak {{ u.jenis === 'kenaikan' ? 'suket' : 'sertifikat' }}</button>

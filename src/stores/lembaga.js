@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/lembaga.js | v1.4 | 14.19.0: posisi nomor per bagian dan atur nomor berikutnya | 21/10/2026
+// SIMKA PRO | src/stores/lembaga.js | v1.5 | 14.21.0: pengaturan penanda tangan dokumen tahfizh, alamat resmi aplikasi | 24/10/2026
 // Pengaturan lembaga: identitas, kalender, kop surat, penanda tangan, penomoran, integrasi.
 // Dibaca semua pengguna masuk (kop dan penanda tangan dipakai saat mencetak);
 // diubah hanya oleh superadmin (dijaga RLS di server).
@@ -7,6 +7,7 @@ import { supabase, MODE_DEMO, panggilFungsi } from '@/lib/supabase'
 import { LEMBAGA_DEMO } from '@/lib/demo'
 import { unggahSupabase } from '@/lib/penyimpanan'
 import { daftarLogo, urlLogo } from '@/lib/logo'
+import { aturDomainAplikasi } from '@/lib/alamat'
 
 /** Pesan galat database dalam bahasa Indonesia. */
 export function pesanGalat(e) {
@@ -23,7 +24,7 @@ const URUT = { letterheads: 'urutan', signatories: 'urutan', signer_rules: 'urut
 
 export const useLembaga = defineStore('lembaga', {
   state: () => ({
-    identitas: {}, hijriah: { koreksi_hari: 0 }, integrasi: {},
+    identitas: {}, hijriah: { koreksi_hari: 0 }, integrasi: {}, ttd_tahfizh: {},
     letterheads: [], signatories: [], signer_rules: [], academic_years: [], holiday_calendars: [],
     holidays: [], doc_number_formats: [], letter_subject_codes: [],
     dimuat: false, memuat: false,
@@ -46,7 +47,8 @@ export const useLembaga = defineStore('lembaga', {
       try {
         if (MODE_DEMO) { if (!this.dimuat) this.$patch(LEMBAGA_DEMO()); return }
         const { data: set } = await supabase.from('institution_settings').select('kunci, nilai')
-        for (const r of set || []) if (['identitas', 'hijriah', 'integrasi'].includes(r.kunci)) this[r.kunci] = r.nilai || {}
+        for (const r of set || []) if (['identitas', 'hijriah', 'integrasi', 'ttd_tahfizh'].includes(r.kunci)) this[r.kunci] = r.nilai || {}
+        aturDomainAplikasi(this.integrasi?.domain_aplikasi)
         const hasil = await Promise.all(TABEL.map((t) => supabase.from(t).select('*').order(URUT[t])))
         TABEL.forEach((t, i) => { if (!hasil[i].error) this[t] = hasil[i].data || [] })
       } finally { this.memuat = false; this.dimuat = true }
@@ -67,6 +69,7 @@ export const useLembaga = defineStore('lembaga', {
         if (error) throw new Error(pesanGalat(error))
       }
       this[kunci] = { ...nilai }
+      if (kunci === 'integrasi') aturDomainAplikasi(nilai?.domain_aplikasi)
     },
 
     /** Tambah atau ubah satu baris. pk = nama kolom kunci; baru = true untuk baris baru. */

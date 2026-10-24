@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/tahsin.js | v1.0 | 14.11.0: penyimpanan data tahsin (daftar, calon, catat perkembangan, ajukan/putuskan lulus) | 18/10/2026
+// SIMKA PRO | src/stores/tahsin.js | v1.1 | 14.21.0: ujian tahsin (Makhraj, Shifat, hasil) dan riwayat ujian | 24/10/2026
 // Tahsin terpadu dengan Tahfizh. Penulisan hanya lewat fungsi SQL (security definer). Mode demo menyimpan data di memori.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -35,15 +35,21 @@ async function demo() {
       sumber: i === 1 ? 'pindahan' : 'santri_baru', tahap_awal: 1, tahap, catatan: i === 1 ? 'Pindahan dari pesantren lain; bacaan cepat tetapi makhraj belum tepat.' : null,
       pembina_id: 'p1', pembina: 'Ust. Hasan Basri, Lc.', muhaffizh: 'Ust. Hasan Basri, Lc.', wali: { nama: 'Bapak ' + s.nama.split(' ')[0], hubungan: 'ayah', no_hp: '081355500123' },
       diajukan_lulus_pada: i === 3 ? new Date(Date.now() - 864e5).toISOString() : null, pengaju: i === 3 ? 'Ust. Hasan Basri, Lc.' : null, catatan_ajuan: i === 3 ? 'Seluruh tahapan tuntas; tilawah sudah tartil.' : null,
-      dicatat_oleh: 'Ust. Hasan Basri, Lc.', dicatat_pada: mulai, _log: log }
+      dicatat_oleh: 'Ust. Hasan Basri, Lc.', dicatat_pada: mulai, _log: log, _ujian: [] }
   })
+  // 14.21.0: contoh satu santri yang sudah lulus ujian tahsin
+  const s = tz.santri[5] || tz.santri[0]
+  if (s) DEMO.push({ id: 'tsL', student_id: s.student_id, nis: s.nis, nama: s.nama, jenis_kelamin: s.jenis_kelamin, kelas: s.kelas, halaqah: s.halaqah, status: 'lulus', mulai: geser(70), selesai: geser(5),
+    sumber: 'santri_baru', tahap_awal: 1, tahap: 8, catatan: null, pembina_id: 'p1', pembina: 'Ust. Hasan Basri, Lc.', muhaffizh: 'Ust. Hasan Basri, Lc.', wali: { nama: 'Bapak ' + s.nama.split(' ')[0], hubungan: 'ayah', no_hp: '081355500123' },
+    pemutus: 'Ust. Abdurrahman Hafizh, Lc.', catatan_selesai: 'Lulus ujian tahsin (Makhraj 86, Shifat 82)', _log: [],
+    _ujian: [{ id: 'ux1', tanggal: geser(5), makhraj: 86, shifat: 82, nilai: 84, hasil: 'lulus', catatan: 'Makhraj dan sifat huruf sudah tepat.', penguji: 'Ust. Abdurrahman Hafizh, Lc.', dokumen_id: null }] })
   return DEMO
 }
 function bentukDemo(t) {
   const n = setDemo().tahapan.length; const b = t.status === 'berjalan'
   return { ...t, _log: undefined, tahap_nama: setDemo().tahapan[t.tahap - 1]?.nama || `Tahap ${t.tahap}`, jumlah_tahap: n, lama_hari: selisih(t.mulai, t.selesai || hariIniISO()),
     pertemuan: t._log.length, lancar: t._log.filter((l) => l.nilai === 'lancar').length, terakhir: t._log[0] || null,
-    boleh_bina: b, boleh_putus: b && pengelolaDemo() }
+    boleh_bina: b, boleh_putus: b && pengelolaDemo(), boleh_uji: b && pengelolaDemo(), boleh_hapus: t.status === 'dihentikan' && pengelolaDemo(), ujian: t._ujian || [] }
 }
 
 export const useTahsin = defineStore('tahsin', {
@@ -158,6 +164,37 @@ export const useTahsin = defineStore('tahsin', {
         await this.muatPenanda(); return
       }
       await rpc('putuskan_tahsin', { p_id: id, p_lulus: lulus, p_catatan: catatan || null }); await this.muatPenanda()
+    },
+    /** 14.21.0: nilai ujian tahsin. p: { tanggal, makhraj, shifat, hasil (lulus|belum_lulus), catatan } → { exam_id, nilai, hasil, dokumen } */
+    async nilaiUjian(id, p) {
+      if (MODE_DEMO) {
+        const t = (await demo()).find((x) => x.id === id); const m = Number(p.makhraj); const sf = Number(p.shifat)
+        if (!(m >= 0 && m <= 100 && sf >= 0 && sf <= 100) || p.makhraj === '' || p.shifat === '') throw new Error('Nilai Makhraj dan Shifat harus 0–100.')
+        if (!['lulus', 'belum_lulus'].includes(p.hasil)) throw new Error('Pilih hasil ujian: Lulus atau Belum lulus.')
+        if (p.hasil === 'belum_lulus' && String(p.catatan || '').trim().length < 5) throw new Error('Tuliskan catatan perbaikan untuk santri yang belum lulus (minimal 5 huruf).')
+        const u = { id: 'ux' + Date.now(), tanggal: p.tanggal || hariIniISO(), makhraj: m, shifat: sf, nilai: Math.round(((m + sf) / 2) * 100) / 100, hasil: p.hasil, catatan: p.catatan || null, penguji: namaSaya(), dokumen_id: null }
+        t._ujian = [u, ...(t._ujian || [])]
+        if (p.hasil === 'lulus') Object.assign(t, { status: 'lulus', selesai: u.tanggal, tahap: setDemo().tahapan.length, pemutus: namaSaya(), catatan_selesai: `Lulus ujian tahsin (Makhraj ${m}, Shifat ${sf})` })
+        else Object.assign(t, { diajukan_lulus_pada: null, pengaju: null, catatan_ajuan: `Belum lulus ujian tahsin: ${p.catatan}` })
+        let dok = null
+        if (p.hasil === 'lulus') {
+          const tz = useTahfizh(); if (!tz.santri.length) await tz.muatSantri()
+          const s = tz.santri.find((x) => x.student_id === t.student_id) || { student_id: t.student_id, nama: t.nama, nis: t.nis, kelas: t.kelas, halaqah: t.halaqah }
+          dok = tz.demoDokumenBaru('suket_tahsin', s, { tanggal_ujian: u.tanggal, makhraj: m, shifat: sf, nilai: u.nilai, hasil: 'lulus', catatan: u.catatan, penguji: u.penguji, muhaffizh: t.muhaffizh, kkm: 75 })
+          u.dokumen_id = dok.id
+        }
+        await this.muatPenanda(); return { exam_id: u.id, nilai: u.nilai, hasil: u.hasil, dokumen: dok ? { id: dok.id, nomor: dok.nomor } : null }
+      }
+      const h = await rpc('nilai_ujian_tahsin', { p_id: id, p }); await this.muatPenanda(); return h
+    },
+    /** 14.21.0: riwayat ujian tahsin pada rentang tanggal. */
+    async daftarUjian(mulai = null, selesai = null) {
+      if (MODE_DEMO) {
+        return (await demo()).flatMap((t) => (t._ujian || []).map((u) => ({ ...u, tahsin_id: t.id, student_id: t.student_id, nis: t.nis, nama: t.nama, jenis_kelamin: t.jenis_kelamin,
+          kelas: t.kelas, halaqah: t.halaqah, muhaffizh: t.muhaffizh, wali: t.wali, nomor: u.dokumen_id ? 'SKT.004/PPTQ-IAS/V/1448' : null })))
+          .filter((u) => (!mulai || u.tanggal >= mulai) && (!selesai || u.tanggal <= selesai)).sort((a, b) => (a.tanggal < b.tanggal ? 1 : -1))
+      }
+      return (await rpc('daftar_ujian_tahsin', { p_mulai: mulai, p_selesai: selesai })) || []
     },
     async hentikan(id, alasan) {
       if (MODE_DEMO) { if (String(alasan || '').trim().length < 5) throw new Error('Tuliskan alasan penghentian (minimal 5 huruf).')

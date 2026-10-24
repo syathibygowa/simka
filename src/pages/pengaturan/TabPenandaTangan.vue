@@ -1,8 +1,8 @@
-<!-- SIMKA PRO | src/pages/pengaturan/TabPenandaTangan.vue | v1.3 | 14.15.0: penanda tangan dan kop semua dokumen cetak diatur terpusat di sini | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/TabPenandaTangan.vue | v1.4 | 14.21.0: penanda tangan dokumen tahfizh (tunggal/ganda, jabatan tertinggi) | 24/10/2026 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { PhPlus, PhPencilSimple, PhFloppyDisk, PhTrash, PhLink, PhMagnifyingGlass, PhArrowCounterClockwise, PhCaretDown, PhInfo } from '@phosphor-icons/vue'
-import { KATALOG, KELOMPOK, PERAN, DIATUR_LAIN, peranUntuk } from '@/lib/aturanCetak'
+import { PhPlus, PhPencilSimple, PhFloppyDisk, PhTrash, PhLink, PhMagnifyingGlass, PhArrowCounterClockwise, PhCaretDown, PhInfo, PhCertificate } from '@phosphor-icons/vue'
+import { KATALOG, KELOMPOK, PERAN, DIATUR_LAIN, peranUntuk, PERAN_TTD_TAHFIZH, DOK_TTD_TAHFIZH } from '@/lib/aturanCetak'
 import { useLembaga } from '@/stores/lembaga'
 import { useOrganisasi } from '@/stores/organisasi'
 import { usePegawai } from '@/stores/pegawai'
@@ -54,6 +54,24 @@ async function simpanAturan(dok, ubah) {
 }
 const ubahAturan = (dok, kolom, v) => simpanAturan(dok, { [kolom]: v || null })
 const kembalikan = (dok) => simpanAturan(dok, { kiri: dok.bawaan.kiri, kanan: dok.bawaan.kanan, kop_kode: null })
+
+// ---------- 14.21.0: penanda tangan dokumen tahfizh (tunggal atau ganda) ----------
+const ttdThz = (d) => { const v = lembaga.ttd_tahfizh?.[d.kode]; return Array.isArray(v) && v.length ? v : d.bawaan }
+const sisiThz = (d, i) => ttdThz(d)[i] || ''
+const ubahThz = (d) => JSON.stringify(ttdThz(d)) !== JSON.stringify(d.bawaan)
+async function simpanThz(d, i, v) {
+  const a = [sisiThz(d, 0), sisiThz(d, 1)]; a[i] = v
+  let hasil = a.filter(Boolean)
+  if (hasil.length === 2 && hasil[0] === hasil[1]) hasil = [hasil[0]]
+  if (!hasil.length) return ui.toast('Pilih sedikitnya satu penanda tangan.', 'galat')
+  try {
+    await lembaga.simpanPengaturan('ttd_tahfizh', { ...(lembaga.ttd_tahfizh || {}), [d.kode]: hasil })
+    ui.toast(`Penanda tangan ${d.nama}: ${hasil.map((k) => PERAN_TTD_TAHFIZH[k].n).join(' dan ')}. Berlaku untuk dokumen yang terbit berikutnya.`)
+  } catch (e) { galat(e) }
+}
+async function bawaanThz(d) {
+  try { await lembaga.simpanPengaturan('ttd_tahfizh', { ...(lembaga.ttd_tahfizh || {}), [d.kode]: [...d.bawaan] }); ui.toast(`Penanda tangan ${d.nama} dikembalikan ke bawaan.`) } catch (e) { galat(e) }
+}
 </script>
 <template>
   <div class="space-y-5">
@@ -116,6 +134,29 @@ const kembalikan = (dok) => simpanAturan(dok, { kiri: dok.bawaan.kiri, kanan: do
         </div>
         <p v-if="!tampil.length" class="py-6 text-center text-sm text-teks3">Tidak ada dokumen yang cocok.</p>
       </div>
+    </section>
+
+    <section class="kartu p-5">
+      <h3 class="judul-bagian flex items-center gap-2"><PhCertificate :size="20" weight="duotone" /> Dokumen tahfizh</h3>
+      <p class="mb-3 text-sm text-teks3">Penanda tangan surat keterangan dan sertifikat tahfizh: pilih satu (tunggal) atau dua (kiri dan kanan) dari Muhaffizh santri, Penguji,
+        Kepala Bidang Tahfizh, dan Direktur. Bila dua kolom ternyata orang yang sama (mis. Kepala Bidang Tahfizh sekaligus penguji), hanya satu tanda tangan yang dipakai
+        dengan jabatan tertinggi (Direktur › Kepala Bidang Tahfizh › Penguji › Muhaffizh). Perubahan berlaku untuk dokumen yang terbit berikutnya.</p>
+      <ul class="divide-y divide-garis rounded-xl border border-garis">
+        <li v-for="d in DOK_TTD_TAHFIZH" :key="d.kode" class="p-3">
+          <div class="mb-2 flex items-start gap-2">
+            <div class="min-w-0 flex-1"><p class="font-semibold">{{ d.nama }}</p>
+              <p class="text-xs text-teks3">{{ ttdThz(d).length === 1 ? 'Penanda tangan tunggal' : 'Penanda tangan ganda' }}: {{ ttdThz(d).map((k) => PERAN_TTD_TAHFIZH[k]?.n).join(' (Mengetahui) dan ') }}</p></div>
+            <button v-if="ubahThz(d)" type="button" class="tombol-garis min-h-[36px] shrink-0 px-3 text-xs" @click="bawaanThz(d)"><PhArrowCounterClockwise :size="16" /> Bawaan</button>
+          </div>
+          <div class="grid gap-2 sm:grid-cols-2">
+            <label v-for="i in [0, 1]" :key="i" class="text-xs font-semibold text-teks3">{{ i === 0 ? 'Kolom kiri (Mengetahui)' : 'Kolom kanan' }}
+              <select class="isian mt-1 text-sm font-normal text-teks" :value="sisiThz(d, i)" @change="simpanThz(d, i, $event.target.value)">
+                <option value="">Tidak ada{{ i === 0 ? '' : ' (penanda tangan tunggal)' }}</option>
+                <option v-for="k in d.peran" :key="k" :value="k">{{ PERAN_TTD_TAHFIZH[k].n }}{{ k === d.bawaan[i] ? ' (bawaan)' : '' }}</option>
+              </select></label>
+          </div>
+        </li>
+      </ul>
     </section>
 
     <section class="kartu p-5">

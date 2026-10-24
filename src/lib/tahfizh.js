@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/tahfizh.js | v1.6 | 14.11.0: status bulanan Tahsin | 18/10/2026
+// SIMKA PRO | src/lib/tahfizh.js | v1.7 | 14.21.0: jenis penguji Ujian tahsin | 24/10/2026
 // Konversi posisi hafalan (Juz + Halaman ↔ total halaman), rentang juz, label program, dan penanda tangan tahfizh.
 // Posisi disimpan di server sebagai TOTAL HALAMAN: 20 halaman = 1 juz (10 juz 2 halaman = 202).
 import { supabase, MODE_DEMO } from './supabase'
@@ -13,7 +13,7 @@ export const KET_POSISI = {
   manzil: "Muraja'ah hafalan lama (posisi yang sedang diulang).",
 }
 export const SUMBER_JUZ = { awal: 'Data awal', ujian: 'Ujian kenaikan juz', sertifikasi: 'Sertifikasi', validasi: 'Usulan disetujui' }
-export const JENIS_PENGUJI = { kenaikan: 'Ujian kenaikan juz', sertifikasi: 'Sertifikasi hafalan' }
+export const JENIS_PENGUJI = { kenaikan: 'Ujian kenaikan juz', sertifikasi: 'Sertifikasi hafalan', tahsin: 'Ujian tahsin' }
 
 /** Total halaman → { juz, hal } */
 export const dariHal = (h) => { const n = Math.max(0, Number(h) || 0); return { juz: Math.floor(n / HAL_PER_JUZ), hal: n % HAL_PER_JUZ } }

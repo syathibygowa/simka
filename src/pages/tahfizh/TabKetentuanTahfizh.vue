@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabKetentuanTahfizh.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabKetentuanTahfizh.vue | v1.3 | 14.21.0: penguji ujian tahsin | 24/10/2026 -->
 <script setup>
 // Ketentuan tahfizh per tahun ajaran: umum (KKM, bobot Tajwid/Itqan, batas isian janggal, ambang rekap), target per program
 // dan tingkat, rentang predikat, bulan dan pekan efektif, serta penguji. Semua pegawai berhak-lihat dapat membaca;
@@ -73,7 +73,7 @@ function otomatis(b) { b.manual = false }
 const lembarPenguji = ref(false); const jenisPenguji = ref('kenaikan'); const cariPeg = ref(''); const catatanPenguji = ref('')
 async function bukaPenguji(j) { jenisPenguji.value = j; cariPeg.value = ''; catatanPenguji.value = ''; lembarPenguji.value = true; if (!peg.daftar.length) try { await peg.muat() } catch { /* daftar pegawai tidak tersedia */ } }
 const calon = computed(() => {
-  const ada = new Set(tz.penguji[jenisPenguji.value].map((p) => p.employee_id)); const q = cariPeg.value.toLowerCase().trim()
+  const ada = new Set((tz.penguji[jenisPenguji.value] || []).map((p) => p.employee_id)); const q = cariPeg.value.toLowerCase().trim()
   return peg.daftar.filter((p) => p.status_keaktifan === 'aktif' && p.status_akun === 'aktif' && !ada.has(p.id) && (!q || `${p.nama_lengkap} ${p.niy || ''}`.toLowerCase().includes(q))).slice(0, 30)
 })
 async function tambahPenguji(p) {
@@ -202,11 +202,11 @@ const juzHal = (h) => `${h} hal${h >= HAL_PER_JUZ ? ` (${formatPosisi(h)})` : ''
         <section class="kartu w-pegawai p-4">
           <p class="mb-1 flex items-center gap-2 font-bold"><PhUserCircleCheck :size="20" weight="duotone" style="color: var(--c)" /> Penguji</p>
           <p class="mb-3 text-xs text-teks3">Daftar penguji diatur sepenuhnya di sini: tambah, ubah keterangan, nonaktifkan sementara, atau hapus. Hanya penguji aktif yang menerima daftar tunggu ujian. Muhaffizh tidak menguji santri halaqahnya sendiri.</p>
-          <div v-for="j in ['kenaikan', 'sertifikasi']" :key="j" class="mb-3">
+          <div v-for="j in ['kenaikan', 'sertifikasi', 'tahsin']" :key="j" class="mb-3">
             <div class="mb-1 flex items-center gap-2"><p class="flex-1 text-sm font-bold">{{ JENIS_PENGUJI[j] }}</p>
               <button v-if="boleh" class="tombol-garis min-h-[34px] px-3 text-xs" @click="bukaPenguji(j)"><PhPlus :size="14" weight="bold" /> Penguji</button></div>
             <ul class="divide-y divide-garis rounded-xl border border-garis">
-              <li v-for="p in tz.penguji[j]" :key="p.employee_id" :class="['flex items-center gap-2 px-3 py-2 text-sm', !p.aktif && 'opacity-60']">
+              <li v-for="p in tz.penguji[j] || []" :key="p.employee_id" :class="['flex items-center gap-2 px-3 py-2 text-sm', !p.aktif && 'opacity-60']">
                 <span class="min-w-0 flex-1"><b class="block truncate">{{ p.nama }}</b><span class="text-xs text-teks3">{{ p.jabatan }}{{ p.aktif ? '' : ' · nonaktif' }}</span></span>
                 <template v-if="boleh">
                   <button class="tombol-ikon h-9 w-9" :aria-label="`Ubah keterangan ${p.nama}`" @click="bukaUbah(j, p)"><PhPencilSimple :size="16" /></button>
@@ -214,7 +214,7 @@ const juzHal = (h) => `${h} hal${h >= HAL_PER_JUZ ? ` (${formatPosisi(h)})` : ''
                   <button class="tombol-ikon h-9 w-9" :aria-label="`Hapus ${p.nama}`" @click="jenisPenguji = j; hapusPenguji(p)"><PhTrash :size="16" /></button>
                 </template>
               </li>
-              <li v-if="!tz.penguji[j].length" class="px-3 py-3 text-sm text-teks3">Belum ada penguji. Tekan + Penguji untuk menambahkan.</li>
+              <li v-if="!tz.penguji[j]?.length" class="px-3 py-3 text-sm text-teks3">Belum ada penguji. Tekan + Penguji untuk menambahkan.</li>
             </ul>
           </div>
         </section>

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demo.js | v1.17 | 14.19.0: format nomor surat, SK, dan agenda masuk dihitung per bagian (kop) | 21/10/2026
+// SIMKA PRO | src/lib/demo.js | v1.18 | 14.21.0: nama yayasan dan penanda tangan dokumen tahfizh (demo) | 24/10/2026
 // Data contoh untuk MODE DEMO. Nama pegawai di bawah fiktif.
 import { KATALOG_FITUR } from './hakAkses'
 const menitLalu = (m) => new Date(Date.now() - m * 60000).toISOString()
@@ -83,12 +83,14 @@ const ALAMAT_KOP = 'Jalan Poros Malino KM.04, Ling. Bontobaddo, Kel. Bontoramba,
 export const LEMBAGA_DEMO = () => ({
   identitas: {
     nama_lengkap: "Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa",
+    nama_yayasan: 'Yayasan Pesantren Imam Asysyatiby (YPIA) Wahdah Islamiyah',
     nama_singkat: 'IMAM ASY-SYATHIBY', tagline: "Generasi Qur'ani dan Berprestasi",
     npsn: '70023617', nspp: '502373060054', telepon: '085243324006', email: 'syathiby.gowa@gmail.com',
     alamat: 'Jl. Poros Malino Sungguminasa, Lingkungan Bontobaddo No.KM.04, Bontoramba, Kec. Somba Opu, Kabupaten Gowa, Sulawesi Selatan 92119',
     kota_surat: 'Gowa', logo_url: LOGO_PONDOK, logo_kemenag_url: KEMENAG, ikon_url: 'https://i.ibb.co.com/Kjq1b2Kw/Icon-SIMKA.png',
   },
   hijriah: { koreksi_hari: 0 },
+  ttd_tahfizh: { suket_juz: ['kepala_tahfizh', 'penguji'], sertifikat_hafalan: ['kepala_tahfizh', 'penguji'], sertifikat_tahfizh: ['direktur'], sertifikat_khataman: ['direktur', 'kepala_tahfizh'], suket_tahsin: ['kepala_tahfizh', 'penguji'] },
   integrasi: { gas_url: '', drive_folder_nama: 'SIMKA PRO', drive_folder_id: '', email_pengirim: 'syathiby.gowa@gmail.com', nama_pengirim: 'SIMKA PRO Imam Asy-Syathiby', domain_aplikasi: '' },
   letterheads: [
     { id: 'k1', kode: 'pondok', nama: 'Kop Pondok', nama_lembaga: "Pondok Pesantren Tahfizhul Qur'an Imam Asy-Syathiby Wahdah Islamiyah Gowa", npsn: '70023617', kode_unit: 'PPTQ-IAS', bentuk: 'gambar', gambar_url: 'kop/kop-pondok.jpg', logo_kiri_url: KEMENAG, logo_kanan_url: LOGO_PONDOK,

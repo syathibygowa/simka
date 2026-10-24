@@ -1,10 +1,11 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabDokumenTahfizh.vue | v1.3 | 14.13.0: saringan corong di HP | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabDokumenTahfizh.vue | v1.4 | 14.21.0: WA minta tanda tangan, suket ujian tahsin, kepala sertifikat dari Setelan Lembaga | 24/10/2026 -->
 <script setup>
 // Tab Dokumen pada menu Tahfizh:
 //   Dokumen terbit : suket ujian kenaikan juz, sertifikat hafalan, Sertifikat Tahfizhul Quran (kartu statistik, saringan, cetak, cabut)
 //   Sertifikat Tahfizhul Quran : calon santri kelas 9 dan 12 (aktif/lulus) beserta hafalan resmi; terbitkan sertifikat
 //   Pengaturan sertifikat : baris kepala yayasan/pondok, logo, kalimat (pengatur tahfizh)
 // ?dok=<id> membuka cetak dokumen (dari notifikasi); ?resmi=<id registri> dari kotak Tanda tangan.
+// v1.4 (14.21.0): tombol WA ke penanda tangan yang belum menandatangani; suket hasil ujian tahsin; kepala sertifikat kosong = Setelan → Lembaga.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { PhCertificate, PhFileText, PhSealCheck, PhHourglass, PhPrinter, PhProhibit, PhMagnifyingGlass, PhGraduationCap, PhGearSix, PhStudent } from '@phosphor-icons/vue'
@@ -25,6 +26,9 @@ import { MODE_DEMO } from '@/lib/supabase'
 import { unggahSupabase, alamatAset } from '@/lib/penyimpanan'
 import logoLokal from '@/assets/logo-pondok.png'
 import LembarTerbitTahfizh from './LembarTerbitTahfizh.vue'
+import TombolWA from '@/components/TombolWA.vue'
+import { ttdUnik } from '@/lib/aturanCetak'
+import { pesanWA, halamanAplikasi } from '@/lib/wa'
 
 const tz = useTahfizh(); const ui = useUI(); const route = useRoute(); const router = useRouter()
 const bagian = ref('terbit')
@@ -69,7 +73,12 @@ const statistik = computed(() => {
     { judul: 'Menunggu tanda tangan', nilai: n ?? d.filter((x) => x.status_dokumen === 'draf').length, ikon: PhHourglass, warna: 'pengajuan', ket: 'Tanda tangan elektronik' },
   ]
 })
-const ketDok = (d) => (d.jenis === 'suket_juz' ? `Juz ${ringkasJuz(d.data?.juz || [])} · nilai ${String(d.data?.nilai_akhir).replace('.', ',')}` : d.jenis === 'sertifikat_hafalan' ? `Sertifikasi ${d.data?.jenjang_juz} juz · nilai ${String(d.data?.nilai_akhir).replace('.', ',')}` : `Hafalan ${d.data?.total_juz} juz · ${d.data?.predikat}`)
+const ketDok = (d) => (d.jenis === 'suket_tahsin' ? `Ujian tahsin · Makhraj ${String(d.data?.makhraj).replace('.', ',')} · Shifat ${String(d.data?.shifat).replace('.', ',')} · ${d.data?.hasil === 'lulus' ? 'Lulus' : 'Belum lulus'}` : d.jenis === 'suket_juz' ? `Juz ${ringkasJuz(d.data?.juz || [])} · nilai ${String(d.data?.nilai_akhir).replace('.', ',')}` : d.jenis === 'sertifikat_hafalan' ? `Sertifikasi ${d.data?.jenjang_juz} juz · nilai ${String(d.data?.nilai_akhir).replace('.', ',')}` : `Hafalan ${d.data?.total_juz} juz · ${d.data?.predikat}`)
+
+// ---------- 14.21.0: WA minta tanda tangan ----------
+const pesanTtd = (d, t) => pesanWA('ttd_minta', { nama: t.nama, jabatan: t.jabatan, jenis_dokumen: JENIS_DOK_TAHFIZH[d.jenis]?.panjang || 'dokumen tahfizh', nomor: d.nomor,
+  perihal: `${d.data?.nama || ''} · ${ketDok(d)}`, tautan: halamanAplikasi('/rekap/tandatangan'), pengirim: sesi.pengguna?.nama_lengkap })
+const belumTtd = (d) => (d.status === 'terbit' && d.status_dokumen === 'draf' ? ttdUnik(d.ttd || []).filter((t) => t.status === 'menunggu' && t.employee_id !== sesi.pengguna?.id) : [])
 
 // ---------- Cabut ----------
 const lembarCabut = ref(false); const dokCabut = ref(null); const alasan = ref(''); const proses = ref(false)
@@ -105,6 +114,8 @@ async function unggahLogo(e, k) {
     ui.toast('Logo terunggah. Simpan pengaturan untuk memakainya.')
   } catch (er) { ui.toast(er.message, 'galat') } finally { mengunggah.value = '' }
 }
+const contohKepala = computed(() => { const up = (v) => String(v || '').toUpperCase(); const p = up(lembaga.identitas?.nama_lengkap); const i = p.indexOf(' IMAM ')
+  return { baris1: 'Kosong: ' + up(lembaga.identitas?.nama_yayasan || lembaga.kop('yayasan')?.nama_lembaga || 'nama yayasan'), baris2: 'Kosong: ' + (i > 0 ? p.slice(0, i) : p), baris3: i > 0 ? 'Kosong: ' + p.slice(i + 1) : '' } })
 async function bukaAtur() { lembaga.muat(); try { atur.value = await tz.pengaturanSertifikat(); lembarAtur.value = true } catch (e) { ui.toast(e.message, 'galat') } }
 async function simpanAtur() {
   proses.value = true
@@ -148,13 +159,14 @@ const BAGIAN = computed(() => [{ k: 'terbit', n: 'Dokumen terbit', i: PhCertific
               <p class="text-xs text-teks3 tabular-nums">{{ d.nomor }} · {{ formatPanjang(d.tanggal) }} · kode {{ d.kode || '–' }}</p>
               <p class="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
                 <span :class="['lencana', 'w-' + statusDok(d).w]">{{ statusDok(d).n }}</span>
-                <span v-for="t in d.ttd" :key="t.urutan" class="text-teks3">{{ t.jabatan }}: {{ t.status === 'ditandatangani' ? '✓' : 'menunggu' }}</span>
+                <span v-for="t in ttdUnik(d.ttd)" :key="t.urutan" class="text-teks3">{{ t.jabatan }}: {{ t.status === 'ditandatangani' ? '✓' : 'menunggu' }}</span>
               </p>
               <p v-if="d.alasan_cabut" class="mt-1 text-xs text-teks3">Dicabut: {{ d.alasan_cabut }}</p>
             </div>
           </div>
           <div class="mt-3 flex flex-wrap gap-2">
             <button class="tombol-utama min-h-[40px] px-4 text-sm" @click="cetak(d)"><PhPrinter :size="18" weight="duotone" /> {{ d.status === 'dicabut' ? 'Lihat' : 'Cetak' }}</button>
+            <TombolWA v-for="t in belumTtd(d)" :key="t.urutan" kecil :hp="t.no_hp" :pesan="pesanTtd(d, t)" :label="`Minta ttd ${t.jabatan}`" />
             <button v-if="d.boleh_cabut" class="tombol-garis min-h-[40px] px-3 text-sm" @click="bukaCabut(d)"><PhProhibit :size="18" /> Cabut</button>
           </div>
         </li>
@@ -204,8 +216,9 @@ const BAGIAN = computed(() => [{ k: 'terbit', n: 'Dokumen terbit', i: PhCertific
     <LembarBawah v-model="lembarAtur" judul="Pengaturan Sertifikat Tahfizhul Quran" lebar>
       <div class="space-y-3 pb-2">
         <p class="text-sm text-teks2">Kepala dan kalimat sertifikat. Gunakan _teks_ untuk huruf miring. Perubahan kalimat berlaku untuk sertifikat yang terbit berikutnya; perubahan logo langsung berlaku juga saat mencetak ulang.</p>
+        <p class="rounded-xl bg-permukaan2 p-3 text-xs text-teks2">Kosongkan baris kepala agar mengikuti Setelan → Lembaga (nama yayasan dan nama pondok). Isi hanya bila sertifikat memerlukan tulisan khusus.</p>
         <div v-for="[k, n] in [['baris1', 'Baris 1 (yayasan)'], ['baris2', 'Baris 2 (pondok, tebal)'], ['baris3', 'Baris 3 (tebal)']]" :key="k">
-          <label class="label-isian" :for="'as-' + k">{{ n }}</label><input :id="'as-' + k" v-model="atur[k]" class="isian" /></div>
+          <label class="label-isian" :for="'as-' + k">{{ n }}</label><input :id="'as-' + k" v-model="atur[k]" class="isian" :placeholder="contohKepala[k]" /></div>
         <div v-for="[k, n] in [['pembuka', 'Kalimat pembuka'], ['program', 'Kalimat program (sebelum jumlah juz)'], ['penutup', 'Kalimat penutup']]" :key="k">
           <label class="label-isian" :for="'as-' + k">{{ n }}</label><textarea :id="'as-' + k" v-model="atur[k]" rows="2" class="isian min-h-[64px]" /></div>
         <PilihLogo v-model="atur.logo_kanan" label="Logo utama" kosong="Logo pondok (bawaan)" />
