@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.15 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DetailSantri.vue | v1.16 | 14.20.0: tombol Rekap izin (pengganti buku saku perizinan) | 22/10/2026 -->
 <script setup>
 import { namaBerkas } from '@/lib/namaBerkas'
 // Biodata santri: identitas, kontak orang tua/wali (tombol WA), riwayat status dan mutasi;
@@ -11,7 +11,7 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   PhPencilSimple, PhTrash, PhEye, PhPrinter, PhClockCounterClockwise, PhArrowsLeftRight, PhSignOut, PhGraduationCap,
   PhCalendarBlank, PhIdentificationCard, PhUsersThree, PhArrowRight, PhFileText, PhToggleLeft, PhChalkboardTeacher, PhBed, PhBookOpenText, PhMedal, PhCheckSquareOffset, PhWarningCircle,
-  PhCamera, PhCards, PhEnvelopeSimple, PhArrowsClockwise, PhCaretRight, PhCertificate, PhSealCheck, PhStudent, PhFolderUser,
+  PhCamera, PhCards, PhEnvelopeSimple, PhArrowsClockwise, PhCaretRight, PhCertificate, PhSealCheck, PhStudent, PhFolderUser, PhDoorOpen,
 } from '@phosphor-icons/vue'
 import { useSantri } from '@/stores/santri'
 import { useSesi } from '@/stores/sesi'
@@ -35,6 +35,8 @@ import SeksiPrestasi from './SeksiPrestasi.vue'
 import SeksiDisiplin from './SeksiDisiplin.vue'
 import KartuSantri from '@/components/KartuSantri.vue'
 import LembarKartu from '@/components/cetak/LembarKartu.vue'
+import CetakRekapIzin from '@/pages/izin/CetakRekapIzin.vue'
+import { useIzin } from '@/stores/izin'
 import { useLembaga } from '@/stores/lembaga'
 import { usePersuratan } from '@/stores/persuratan'
 import { MODE_DEMO } from '@/lib/supabase'
@@ -141,6 +143,12 @@ async function simpanMutasi() {
 }
 
 // ---------- Cetak ----------
+// 14.20.0: Rekap perizinan santri (pengganti buku saku perizinan manual)
+const izS = useIzin(); const rekapIzin = ref(null); const pratinjauIzin = ref(false); const memuatIzin = ref(false)
+async function bukaRekapIzin() {
+  memuatIzin.value = true
+  try { rekapIzin.value = await izS.rekap(s.value.id); pratinjauIzin.value = true } catch (e) { ui.toast(e.message, 'galat') } finally { memuatIzin.value = false }
+}
 const pratinjauBio = ref(false); const pratinjauPindah = ref(false); const mutasiCetak = ref(null)
 const mutasiKeluar = computed(() => riwayat.value.mutasi.find((m) => m.jenis === 'keluar'))
 const mutasiMasuk = computed(() => riwayat.value.mutasi.find((m) => m.jenis === 'masuk'))
@@ -209,6 +217,7 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
         <button v-if="bolehKelola && ['aktif', 'nonaktif'].includes(s.status)" class="tombol-garis w-klinik" @click="bukaMutasi"><PhSignOut :size="20" weight="duotone" style="color: var(--c)" /> Mutasi keluar</button>
         <router-link :to="`/santri/${s.id}/rekam`" class="tombol-garis w-santri"><PhFolderUser :size="20" weight="duotone" style="color: var(--c)" /> Rekam kesantrian</router-link>
         <button class="tombol-garis" @click="pratinjauBio = true"><PhEye :size="20" weight="duotone" /> Pratinjau biodata</button>
+        <button class="tombol-garis w-shift" :disabled="memuatIzin" @click="bukaRekapIzin"><PhDoorOpen :size="20" weight="duotone" style="color: var(--c)" /> Rekap izin</button>
         <button class="tombol-garis w-santri" @click="bukaKartu"><PhCards :size="20" weight="duotone" style="color: var(--c)" /> Kartu pelajar</button>
         <button v-if="ps.hak.susun" class="tombol-garis w-tatausaha" @click="lembarSurat = true"><PhEnvelopeSimple :size="20" weight="duotone" style="color: var(--c)" /> Buat surat</button>
         <button v-if="mutasiKeluar" class="tombol-garis w-tatausaha" @click="bukaSuratPindah(mutasiKeluar)"><PhFileText :size="20" weight="duotone" style="color: var(--c)" /> Surat keterangan pindah</button>
@@ -369,6 +378,7 @@ const WARNA_KONTAK = { ayah: 'pegawai', ibu: 'klinik', wali: 'tahfizh' }
         </div>
       </div>
     </LembarBawah>
+    <CetakRekapIzin v-model:pratinjau="pratinjauIzin" :rekap="rekapIzin" />
     <LembarKartu v-if="kartu" v-model:pratinjau="cetakKartu" jenis="santri" :kartu="[kartu]" :foto="{ [kartu.student_id]: foto }" :identitas="lembaga.identitas" :direktur="direkturKartu" mode="berdampingan" />
 
     <!-- Buat surat santri -->

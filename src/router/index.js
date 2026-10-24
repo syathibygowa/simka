@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.34 | 14.9.0: rute Rekam Kesantrian | 18/10/2026
+// SIMKA PRO | src/router/index.js | v3.35 | 14.20.0: rute surat izin santri dan tab izin kolektif | 22/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu; meta.menu/meta.izin/meta.boleh mengikuti Hak Akses.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -60,6 +60,8 @@ const routes = [
       // Libur santri menjadi menu tersendiri; tautan lama (notifikasi) diarahkan ke menu baru
       { path: 'izin-santri/libur', redirect: '/libur-santri' },
       { path: 'libur-santri', component: () => import('@/pages/izin/LiburSantri.vue'), meta: { judul: 'Libur Santri', kembali: '/tugas' } },
+      // 14.20.0: tautan surat izin (registri dokumen) membuka pratinjau surat di menu Perizinan
+      { path: 'izin-santri/surat/:id', component: () => import('@/pages/izin/IzinSantri.vue'), props: (r) => ({ tab: 'riwayat', surat: r.params.id }), meta: { judul: 'Perizinan', kembali: '/tugas' } },
       { path: 'izin-santri/:tab?', component: () => import('@/pages/izin/IzinSantri.vue'), props: true, meta: { judul: 'Perizinan', kembali: '/tugas' } },
       { path: 'persuratan/:tab?', component: () => import('@/pages/persuratan/Persuratan.vue'), props: true, meta: { judul: 'Persuratan', kembali: '/tugas' } },
       { path: 'segera/tatausaha', redirect: '/persuratan' },

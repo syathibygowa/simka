@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/wa.js | v1.17 | 14.11.0: template WA tahsin (perkembangan dan lulus tahsin ke orang tua) | 18/10/2026
+// SIMKA PRO | src/lib/wa.js | v1.18 | 14.20.0: template WA minta persetujuan izin santri/kolektif dan izin kolektif ke wali | 22/10/2026
 // Tautan WhatsApp wa.me dari WA pribadi pegawai (Bagian 25). Isi pesan diambil dari template WA yang
 // dikelola superadmin (Setelan → Template WA); bila belum dimuat, dipakai isi bawaan di bawah.
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -35,6 +35,9 @@ export const BAWAAN_WA = {
   rekap_asrama: '{salam}, Bapak/Ibu {nama_wali}.\n\nRekap kehadiran asrama ananda *{nama_santri}* ({kamar}) periode {periode}:\n{rekap}\n\n{ketidakhadiran}\n\nMohon perhatian dan doanya.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   rekap_kamar: '{salam}.\n\nRekap kehadiran asrama *{kamar}* periode {periode}:\n• Rata-rata kehadiran: {persen}\n• Sesi terlaksana: {jumlah_sesi}\n• Hadir penuh: {hadir_penuh}\n{rincian}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   izin_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan izin {jenis_izin} ananda *{nama_santri}* ({kelas}) *{status}*.\n• Alasan: {alasan}\n• Keluar: {waktu_keluar}\n• Batas kembali: {batas_kembali}\n• Penjemput: {penjemput}\n\nMohon ananda diantar kembali ke pondok sebelum batas waktu.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  izin_santri_minta: '{salam}, {nama}.\n\nMohon izin, kami mengajukan izin {jenis_izin} ananda *{nama_santri}* ({kelas}) yang menunggu persetujuan Antum sebagai {jabatan}:\n• Alasan: {alasan}\n• Keluar: {waktu_keluar}\n• Batas kembali: {batas_kembali}\n• Penjemput: {penjemput}\n{keterangan}\n\nMohon berkenan diputuskan di SIMKA PRO: {tautan}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  izin_kolektif_minta: '{salam}, {nama}.\n\nMohon izin, kami mengajukan *izin kolektif {kegiatan}* untuk {jumlah} santri yang menunggu persetujuan Antum sebagai {jabatan}:\n• Tempat: {tempat}\n• Keluar: {waktu_keluar}\n• Batas kembali: {batas_kembali}\n• Pendamping: {pendamping}\n• Santri: {daftar}\n{keterangan}\n\nMohon berkenan diputuskan di SIMKA PRO: {tautan}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
+  izin_kolektif_wali: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan ananda *{nama_santri}* ({kelas}) mengikuti *{kegiatan}* dan *{status}* izin keluar pondok bersama {jumlah} santri lainnya:\n• Tempat: {tempat}\n• Keluar: {waktu_keluar}\n• Batas kembali: {batas_kembali}\n• Pendamping: {pendamping}\n\nMohon doa Bapak/Ibu untuk kelancaran kegiatan ananda.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   titipan_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan titipan untuk ananda *{nama_santri}* ({kelas}) {status_titipan}.\n• Barang: {barang}\n• Pengirim: {pengirim_titipan}\n• Diterima di pos: {waktu_terima}\n{pengambilan}\n\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   libur_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami informasikan bahwa pada *{periode_libur}* ananda *{nama_santri}* ({kelas}) *{status_libur}*.\n• Pulang: {waktu_pulang}\n• Batas kembali: {batas_kembali}\n{keterangan}\n\nMohon ananda dijemput dan diantar kembali tepat waktu.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
   tagihan_santri: '{salam}, Bapak/Ibu {nama_wali}.\n\nKami sampaikan tagihan ananda *{nama_santri}* (NIS {nis}, {kelas}):\n{rincian}\n\n*Jumlah: {total}*\nMohon dibayarkan paling lambat *{batas_bayar}*.\n\nPembayaran dapat ditransfer ke:\n{rekening}\n\nSurat tagihan resmi nomor {nomor}; keabsahan dapat diperiksa dengan kode {kode_validasi} di {tautan_cek}\n\nApabila sudah membayar, mohon kirimkan bukti transfer melalui nomor ini.\n{penutup}\n{pengirim}\n{jabatan_pengirim}',
@@ -93,7 +96,8 @@ export const ISIAN_WA = [
   { grup: 'Asrama (Musyrif)', isian: [['kamar', 'Nama kamar'], ['ketidakhadiran', 'Rincian tanggal ketidakhadiran santri'], ['persen', 'Rata-rata kehadiran kamar'],
     ['jumlah_sesi', 'Jumlah sesi terlaksana'], ['hadir_penuh', 'Jumlah santri hadir penuh'], ['rincian', 'Rincian per santri (salin grup)']] },
   { grup: 'Perizinan santri', isian: [['jenis_izin', 'Jenis izin (pulang/keluar)'], ['waktu_keluar', 'Waktu keluar'],
-    ['batas_kembali', 'Batas kembali'], ['penjemput', 'Nama dan hubungan penjemput']] },
+    ['batas_kembali', 'Batas kembali'], ['penjemput', 'Nama dan hubungan penjemput'], ['kegiatan', 'Kegiatan izin kolektif (mis. lomba)'],
+    ['pendamping', 'Pendamping izin kolektif'], ['daftar', 'Daftar santri izin kolektif'], ['jumlah', 'Jumlah santri']] },
   { grup: 'Security (titipan)', isian: [['status_titipan', 'Status titipan (diterima/diserahkan)'], ['barang', 'Jenis dan uraian barang'], ['pengirim_titipan', 'Pengirim titipan'],
     ['waktu_terima', 'Waktu titipan diterima di pos'], ['pengambilan', 'Keterangan pengambilan (nama dan waktu)']] },
   { grup: 'Libur santri', isian: [['periode_libur', 'Nama periode libur'], ['status_libur', 'Keputusan libur ananda'], ['waktu_pulang', 'Waktu pulang']] },

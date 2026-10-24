@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/aturanCetak.js | v1.2 | 14.19.0: peran Pimpinan sesuai bagian (Yayasan, Pondok, Wustha, SMA) untuk buku agenda | 21/10/2026
+// SIMKA PRO | src/lib/aturanCetak.js | v1.3 | 14.20.0: surat izin santri, surat izin kolektif, rekap perizinan santri | 22/10/2026
 // Katalog dokumen cetak beserta penanda tangan kiri ("Mengetahui", pimpinan/atasan), kanan (pegawai terkait), dan kop.
 // Nilai yang dipilih superadmin disimpan di tabel signer_rules (kiri, kanan, kop_kode); setiap DokumenCetak yang diberi
 // prop `jenis` membaca aturan ini lalu TandaTangan memakainya.
@@ -89,6 +89,9 @@ const DAFTAR = {
     d('sec_titipan', 'Daftar titipan santri', 'Security → Titipan', 'kabid_kesantrian', 'pembuat'),
     d('sec_kunjungan', 'Daftar kunjungan orang tua', 'Security → Kunjungan', 'kabid_kesantrian', 'pembuat'),
     d('pantauan', 'Daftar dari Layar Pantauan', 'Layar Pantauan', 'pimpinan_kelompok', 'pembuat'),
+    d('izin_surat_santri', 'Surat izin keluar/pulang santri', 'Perizinan Santri → Surat', 'pihak', 'pengasuh'),
+    d('izin_surat_kolektif', 'Surat izin kolektif santri', 'Perizinan Santri → Kolektif', 'pihak', 'pembuat'),
+    d('izin_rekap_santri', 'Rekap perizinan santri (buku saku)', 'Data Santri → Detail → Rekap perizinan', 'kabid_kesantrian', 'pembuat'),
   ],
   'Kepegawaian dan Presensi': [
     d('pgw_daftar', 'Daftar pegawai', 'Data Pegawai', 'direktur', 'pembuat'),

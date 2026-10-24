@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/izin/LembarAjukanIzin.vue | v1.0 | Fase 6 – Tahap 2 Status otomatis dan perizinan santri | 06/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/LembarAjukanIzin.vue | v1.1 | 14.20.0: kirim id izin baru agar tombol WA konfirmasi langsung muncul | 22/10/2026 -->
 <script setup>
 // Ajukan atau ubah izin keluar/pulang santri. Pengusul memilih santri asuhannya (atau santri kamar terpilih),
 // peran pengusul (menentukan kepala bidang pemutus), jenis izin, alasan, waktu keluar dan batas kembali, penjemput.
@@ -68,16 +68,16 @@ async function simpan() {
   const keluar = gabung(tglK.value, jamK.value || jamLokal(new Date())); const kembali = gabung(tglB.value, jamB.value || '17:00')
   if (new Date(kembali) <= new Date(keluar)) return ui.toast('Batas kembali harus setelah waktu keluar.', 'galat')
   if (x.jenis === 'pulang' && !x.penjemput.trim()) return ui.toast('Isi nama penjemput untuk izin pulang.', 'galat')
-  proses.value = true
+  proses.value = true; let baru = null
   try {
     const data = { ...x, keluar_pada: keluar, kembali_batas: kembali }
     if (props.izin) { await iz.ubah(props.izin.id, data); ui.toast('Izin diperbarui.') }
     else {
       if (!peran.value) throw new Error('Pilih peran pengusul.')
-      await iz.ajukan({ ...data, student_id: santri.value.id, peran: peran.value })
+      baru = await iz.ajukan({ ...data, student_id: santri.value.id, peran: peran.value })
       ui.toast(`Izin diajukan ke ${perluPimpinan.value ? UNIT_IZIN[unitPilih.value] + ', lalu Direktur/Wadir' : UNIT_IZIN[unitPilih.value]}.`)
     }
-    buka.value = false; emit('selesai')
+    buka.value = false; emit('selesai', baru ? { id: baru, unit: unitPilih.value, nama: santri.value.nama } : null)
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 </script>

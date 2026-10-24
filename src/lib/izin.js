@@ -1,7 +1,8 @@
-// SIMKA PRO | src/lib/izin.js | v1.1 | Fase 7 – Tahap 3 Libur santri | 06/10/2026
+// SIMKA PRO | src/lib/izin.js | v1.2 | 14.20.0: izin kolektif, surat izin, isi pesan WA minta persetujuan | 22/10/2026
 // Label baku perizinan santri (Blueprint Bagian 22–23): status, peran pengusul, unit pemutus, teks WA, hasil libur.
 import { PhHourglass, PhCheckCircle, PhXCircle, PhSignOut, PhSignIn, PhProhibit, PhSealCheck } from '@phosphor-icons/vue'
 import { formatWaktu } from './tanggal'
+import { halamanAplikasi } from './wa'
 
 export const STATUS_IZIN = {
   diajukan:          { n: 'Menunggu kepala bidang', p: 'Diajukan', w: 'pengajuan', ikon: PhHourglass },
@@ -12,7 +13,7 @@ export const STATUS_IZIN = {
   ditolak:           { n: 'Ditolak', p: 'Ditolak', w: 'klinik', ikon: PhXCircle },
   dibatalkan:        { n: 'Dibatalkan', p: 'Dibatalkan', w: 'hakakses', ikon: PhProhibit },
 }
-export const PERAN_PENGUSUL = { musyrif: 'Musyrif', wali_kelas: 'Wali kelas', muhaffizh: 'Muhaffizh', petugas_klinik: 'Petugas klinik', admin: 'Admin' }
+export const PERAN_PENGUSUL = { musyrif: 'Musyrif', wali_kelas: 'Wali kelas', muhaffizh: 'Muhaffizh', petugas_klinik: 'Petugas klinik', admin: 'Admin', pimpinan: 'Pimpinan', pendamping: 'Pendamping' }
 export const UNIT_IZIN = { KESANTRIAN: 'Kepala Bidang Kesantrian', TAHFIZH: 'Kepala Bidang Tahfizh', WUSTHA: 'Kepala Kesetaraan Wustha', SMA: 'Kepala SMA' }
 export const JENIS_IZIN = { pulang: 'Pulang (menginap)', keluar: 'Keluar beberapa jam', libur: 'Libur pondok' }
 
@@ -42,3 +43,41 @@ export function labelIzin(x) {
   return { n: STATUS_IZIN[x.status]?.n || x.status, w: STATUS_IZIN[x.status]?.w || 'hakakses' }
 }
 export const rentangIzin = (x) => `${formatWaktu(x.keluar_pada)} s.d. ${formatWaktu(x.kembali_batas)}`
+
+// ---------- 14.20.0: izin kolektif, surat, pesan WA ----------
+export const STATUS_KOLEKTIF = {
+  diajukan:         { n: 'Menunggu Kepala Bidang Kesantrian', w: 'pengajuan', ikon: PhHourglass },
+  disetujui_bidang: { n: 'Menunggu Direktur/Wadir', w: 'agenda', ikon: PhSealCheck },
+  disetujui:        { n: 'Disetujui', w: 'presensi', ikon: PhCheckCircle },
+  selesai:          { n: 'Selesai, semua kembali', w: 'rekap', ikon: PhSignIn },
+  ditolak:          { n: 'Ditolak', w: 'klinik', ikon: PhXCircle },
+  dibatalkan:       { n: 'Dibatalkan', w: 'hakakses', ikon: PhProhibit },
+}
+/** Ada surat resmi (bernomor) untuk izin ini. */
+export const adaSurat = (x) => !!x?.nomor_surat && ['disetujui', 'keluar', 'kembali', 'selesai'].includes(x.status)
+const penjemputTeks = (x) => (x.penjemput ? `${x.penjemput}${x.hubungan_penjemput ? ' (' + x.hubungan_penjemput + ')' : ''}` : '–')
+
+/** Isi pesan WA "minta persetujuan" izin perorangan kepada pemutus p ({ nama, jabatan, tingkat }). */
+export function dataMintaIzin(x, p, kelas = '') {
+  return { nama: p.nama, jabatan: p.jabatan, jenis_izin: x.jenis === 'keluar' ? 'keluar' : 'pulang', nama_santri: x.nama, kelas: kelas || x.kelas || x.kamar || '',
+    alasan: x.alasan, waktu_keluar: formatWaktu(x.keluar_pada) + ' WITA', batas_kembali: formatWaktu(x.kembali_batas) + ' WITA', penjemput: penjemputTeks(x),
+    keterangan: p.tingkat === 2 ? `Izin ${x.lama_hari} hari ini telah disetujui ${x.pemutus || 'kepala bidang'} dan memerlukan persetujuan pimpinan.` : '',
+    tautan: halamanAplikasi('/izin-santri/persetujuan') }
+}
+/** Isi pesan WA "minta persetujuan" izin kolektif. */
+export function dataMintaKolektif(k, p) {
+  const aktif = (k.anggota || []).filter((a) => !['dibatalkan', 'ditolak'].includes(a.status))
+  return { nama: p.nama, jabatan: p.jabatan, kegiatan: k.kegiatan, jumlah: aktif.length, tempat: k.tempat || '–', waktu_keluar: formatWaktu(k.keluar_pada) + ' WITA',
+    batas_kembali: formatWaktu(k.kembali_batas) + ' WITA', pendamping: k.pendamping || '–',
+    daftar: aktif.map((a) => `${a.nama}${a.kelas ? ' (' + a.kelas + ')' : ''}`).join(', '),
+    keterangan: p.tingkat === 2 ? 'Telah disetujui Kepala Bidang Kesantrian dan memerlukan persetujuan pimpinan.' : '',
+    tautan: halamanAplikasi(`/izin-santri/kolektif?izin=${k.id}`) }
+}
+/** Isi pesan WA izin kolektif kepada orang tua/wali seorang anggota. */
+export function dataWaliKolektif(k, a, kontak) {
+  return { nama_wali: kontak?.nama || 'orang tua/wali', nama_santri: a.nama, kelas: a.kelas || a.kamar || '', kegiatan: k.kegiatan,
+    status: { diajukan: 'sedang diajukan', disetujui_bidang: 'sedang diajukan', disetujui: 'telah mendapat', keluar: 'sedang menjalani', kembali: 'telah selesai menjalani', selesai: 'telah selesai menjalani' }[a.status] || 'mendapat',
+    jumlah: Math.max(0, (k.anggota || []).filter((x) => !['dibatalkan', 'ditolak'].includes(x.status)).length - 1), tempat: k.tempat || '–',
+    waktu_keluar: formatWaktu(k.keluar_pada) + ' WITA', batas_kembali: formatWaktu(k.kembali_batas) + ' WITA', pendamping: `${k.pendamping || '–'}${k.hp_pendamping ? ' (' + k.hp_pendamping + ')' : ''}` }
+}
+
