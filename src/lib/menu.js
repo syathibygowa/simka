@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v4.4 | 14.24.0: menu Dokumen berganti nama Pelaporan | 25/10/2026
+// SIMKA PRO | src/lib/menu.js | v4.5 | 14.25.0: menu Alumni dan Arsip Tahun Ajaran (admin/superadmin) | 25/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Fungsional, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -6,7 +6,7 @@
 import {
   PhHouse, PhFingerprint, PhUsersThree, PhStudent, PhBookOpenText, PhFileText, PhFirstAidKit,
   PhShieldCheck, PhChartBar, PhEnvelopeSimple, PhWallet, PhMegaphone, PhKey, PhGearSix, PhBell,
-  PhFiles, PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhCashRegister, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut, PhListMagnifyingGlass, PhChalkboard, PhPresentationChart, PhExam, PhTrophy, PhGavel,
+  PhFiles, PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhCashRegister, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut, PhListMagnifyingGlass, PhChalkboard, PhPresentationChart, PhExam, PhTrophy, PhGavel, PhGraduationCap, PhArchive,
 } from '@phosphor-icons/vue'
 
 // Aturan tampil setiap menu (v4.0, 14.0.0) — semuanya dapat diatur superadmin di Hak Akses:
@@ -47,6 +47,8 @@ export const MENU = [
   { kode: 'tahunajaran', nama: 'Naik Kelas', ikon: PhCalendarPlus, warna: 'agenda', ke: '/tahun-ajaran-baru', grup: 'Santri', fitur: 'kelompok_santri', min: 3,
     otomatis: (c) => c.peran === 'admin' && (c.izin || []).includes('kelompok_santri') },
   // Portal Wali: pengaturan butir informasi, kesiapan data, sesi wali, percobaan gagal, pengumuman wali
+  // Alumni (14.25.0): santri berstatus lulus, profil CV, rencana lanjut studi, buku alumni — khusus admin dan superadmin
+  { kode: 'alumni', nama: 'Alumni', ikon: PhGraduationCap, warna: 'alumni', ke: '/alumni', grup: 'Santri', admin: true },
   { kode: 'portalwali', nama: 'Portal Wali', ikon: PhUsersFour, warna: 'portalwali', ke: '/portal-wali', grup: 'Santri', fitur: 'portal_wali',
     otomatis: (c) => c.peran === 'admin' && (c.izin || []).includes('kelola_santri') },
   { kode: 'jadwalpelajaran', nama: 'Jadwal Pelajaran', ikon: PhCalendarDots, warna: 'jadwal', ke: '/jadwal-pelajaran', grup: 'Santri', fitur: 'jadwal_mengajar', admin: true,
@@ -95,6 +97,8 @@ export const MENU = [
   // Sistem
   { kode: 'auditlog',   nama: 'Audit Log',       ikon: PhClockCounterClockwise, warna: 'audit', ke: '/audit-log',     grup: 'Sistem', fitur: 'audit_log' },
   { kode: 'organisasi', nama: 'Organisasi', ikon: PhTreeStructure, warna: 'sistem',  ke: '/organisasi',        grup: 'Sistem', fitur: 'organisasi' },
+  // Arsip tahun ajaran (14.25.0): kelompok, santri, dan rapor tahun ajaran lalu — khusus admin dan superadmin
+  { kode: 'arsip',      nama: 'Arsip Tahun Ajaran', ikon: PhArchive,       warna: 'arsip',      ke: '/arsip',             grup: 'Sistem', admin: true },
   { kode: 'hakakses',   nama: 'Hak Akses',       ikon: PhKey,            warna: 'hakakses',   ke: '/hak-akses',         grup: 'Sistem', kunci: 'superadmin' },
   { kode: 'pengaturan', nama: 'Setelan',         ikon: PhGearSix,        warna: 'pengaturan', ke: '/pengaturan',        grup: 'Sistem', kunci: 'superadmin' },
   { kode: 'profil',     nama: 'Profil',          ikon: PhUserCircle,     warna: 'profil',     ke: '/profil',            grup: 'Akun', kunci: 'semua' },
