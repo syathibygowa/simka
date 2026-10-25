@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/hakAkses.js | v2.4 | 14.9.2: arti tingkat 1–2 Penilaian kini berpengaruh | 18/10/2026
+// SIMKA PRO | src/lib/hakAkses.js | v2.5 | 14.24.0: nama menu Pelaporan; dokumen resmi di Persuratan | 25/10/2026
 // Katalog Hak Akses Fitur: SATU fitur untuk setiap menu (atau sekelompok menu yang tidak terpisahkan), dikelompokkan sesuai
 // grup menu di sidebar. Isi ini sama dengan migrasi 20261020011200_hak_akses_semua_fitur.sql (+ 20261021011300, 20261022011400) dan dipakai sebagai cadangan bila
 // kolom keterangan belum ada di database serta sebagai data mode demo.
@@ -117,10 +117,10 @@ export const KATALOG_FITUR = [
     keterangan: 'Admin dan superadmin selalu dapat membuka. Bawaan: semua jabatan struktural.' },
 
   // ---------- Administrasi ----------
-  { kode: 'laporan', nama: 'Dokumen dan laporan kehadiran', kelompok: 'Administrasi', urutan: 1, menu: 'Dokumen (rekap presensi, laporan kehadiran, dokumen resmi)',
-    arti: { 1: 'Membuka menu Dokumen untuk data dirinya dan dokumen yang perlu ditandatanganinya', 2: 'Melihat laporan kehadiran seluruh pegawai dan santri', 3: 'Sama dengan input/ubah' },
+  { kode: 'laporan', nama: 'Pelaporan dan laporan kehadiran', kelompok: 'Administrasi', urutan: 1, menu: 'Pelaporan (rekap presensi, laporan kehadiran, tanda tangan)',
+    arti: { 1: 'Membuka menu Pelaporan untuk data dirinya dan dokumen yang perlu ditandatanganinya', 2: 'Melihat laporan kehadiran seluruh pegawai dan santri', 3: 'Sama dengan input/ubah' },
     keterangan: 'Pimpinan tetap melihat laporan anggota unitnya.', bawaan: { semua: 1 } },
-  { kode: 'tata_usaha', nama: 'Persuratan', kelompok: 'Administrasi', urutan: 2, menu: 'Persuratan',
+  { kode: 'tata_usaha', nama: 'Persuratan', kelompok: 'Administrasi', urutan: 2, menu: 'Persuratan (surat, buku agenda, dokumen resmi)',
     arti: { 1: 'Membuka menu Persuratan', 2: 'Mengelola surat masuk, surat keluar, dan buku agenda', 3: 'Sama dengan input/ubah' },
     keterangan: 'Pimpinan penerima surat dan penerima disposisi otomatis dapat membuka.', izin: [{ kode: 'kelola_persuratan', min: 2 }] },
   { kode: 'surat_teguran', nama: 'Surat teguran', kelompok: 'Administrasi', urutan: 3, menu: 'Persuratan → Surat Teguran (SP1–SP3)',

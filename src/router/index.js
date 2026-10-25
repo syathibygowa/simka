@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.35 | 14.20.0: rute surat izin santri dan tab izin kolektif | 22/10/2026
+// SIMKA PRO | src/router/index.js | v3.36 | 14.24.0: menu Pelaporan; Dokumen resmi di Persuratan; Ambang batas di Pelaporan | 25/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu; meta.menu/meta.izin/meta.boleh mengikuti Hak Akses.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -97,7 +97,10 @@ const routes = [
       { path: 'kelompok-pegawai', redirect: { path: '/pegawai', query: { tab: 'tim' } } },   // Tim Kerja kini tab di Data Pegawai
       { path: 'beban-kerja/:tab?', component: () => import('@/pages/beban/BebanKerja.vue'), props: true, meta: { judul: 'Ekuivalensi Jam Beban Kerja', kembali: '/tugas' } },
       { path: 'audit-log', component: () => import('@/pages/audit/AuditLog.vue'), meta: { judul: 'Audit Log', menu: 'auditlog', kembali: '/tugas' } },
-      { path: 'rekap/:tab?', component: () => import('@/pages/laporan/Laporan.vue'), props: true, meta: { judul: 'Dokumen', cetak: true, kembali: '/tugas' } },
+      // 14.24.0: Dokumen resmi pindah ke Persuratan; Ambang kehadiran pindah dari Setelan ke Pelaporan (Ambang batas)
+      { path: 'rekap/dokumen', redirect: (to) => ({ path: '/persuratan/dokumen', query: to.query }) },
+      { path: 'pengaturan/ambang', redirect: '/rekap/ambang' },
+      { path: 'rekap/:tab?', component: () => import('@/pages/laporan/Laporan.vue'), props: true, meta: { judul: 'Pelaporan', cetak: true, kembali: '/tugas' } },
       { path: 'laporan/:tab?', redirect: (to) => ({ path: `/rekap/${to.params.tab || ''}`, query: to.query }) },
       { path: 'segera/:kode', component: () => import('@/pages/umum/Segera.vue'), props: true, meta: { judul: 'Segera hadir', kembali: '/tugas' } },
       { path: ':salah(.*)*', component: () => import('@/pages/umum/TidakDitemukan.vue'), meta: { judul: 'Halaman tidak ditemukan', kembali: '/' } },

@@ -1,9 +1,9 @@
-<!-- SIMKA PRO | src/pages/pengaturan/Pengaturan.vue | v1.5 | 14.12.0: tab Kapasitas (database, retensi data, perawatan) | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengaturan/Pengaturan.vue | v1.6 | 14.24.0: Ambang kehadiran pindah ke Pelaporan → Ambang batas | 25/10/2026 -->
 <script setup>
 // Menu Pengaturan lembaga (superadmin). Setiap tab memiliki ikon dan warna sendiri.
 import { computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhBuildings, PhCalendarDots, PhStamp, PhSignature, PhHash, PhPlugsConnected, PhWhatsappLogo, PhImages, PhTrafficSignal, PhDatabase } from '@phosphor-icons/vue'
+import { PhBuildings, PhCalendarDots, PhStamp, PhSignature, PhHash, PhPlugsConnected, PhWhatsappLogo, PhImages, PhDatabase } from '@phosphor-icons/vue'
 import { useLembaga } from '@/stores/lembaga'
 import TabIdentitas from './TabIdentitas.vue'
 import TabKalender from './TabKalender.vue'
@@ -13,7 +13,6 @@ import TabPenandaTangan from './TabPenandaTangan.vue'
 import TabPenomoran from './TabPenomoran.vue'
 import TabIntegrasi from './TabIntegrasi.vue'
 import TabTemplateWA from './TabTemplateWA.vue'
-import TabAmbangKehadiran from './TabAmbangKehadiran.vue'
 import TabKapasitas from './TabKapasitas.vue'
 
 const props = defineProps({ tab: { type: String, default: 'identitas' } })
@@ -33,7 +32,6 @@ const TAB = [
   { k: 'penanda-tangan', n: 'Penanda tangan', ikon: PhSignature, w: 'pengajuan', komp: TabPenandaTangan },
   { k: 'penomoran', n: 'Nomor Surat', ikon: PhHash, w: 'santri', komp: TabPenomoran },
   { k: 'template-wa', n: 'Template WA', ikon: PhWhatsappLogo, w: 'presensi', komp: TabTemplateWA },
-  { k: 'ambang', n: 'Ambang kehadiran', ikon: PhTrafficSignal, w: 'beranda', komp: TabAmbangKehadiran },
   { k: 'integrasi', n: 'Integrasi', ikon: PhPlugsConnected, w: 'sistem', komp: TabIntegrasi },
   { k: 'kapasitas', n: 'Kapasitas', ikon: PhDatabase, w: 'audit', komp: TabKapasitas },
 ]

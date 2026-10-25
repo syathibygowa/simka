@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v4.3 | 14.9.2: menu Penilaian terbuka mulai hak Lihat (baca saja) | 18/10/2026
+// SIMKA PRO | src/lib/menu.js | v4.4 | 14.24.0: menu Dokumen berganti nama Pelaporan | 25/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Fungsional, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -80,7 +80,7 @@ export const MENU = [
   { kode: 'security',   nama: 'Security',        ikon: PhShieldCheck,    warna: 'security',   ke: '/security',          grup: 'Fungsional', fitur: 'gerbang', admin: true, izin: 'kelola_security',
     otomatis: (c) => t(c, 'pantauan') >= 1 || kel(c, 'kamar', 'kelas', 'halaqah') },
   // Dokumen: rekap presensi, laporan kehadiran, dan dokumen resmi dalam satu menu bertab (hemat menu)
-  { kode: 'rekap',      nama: 'Dokumen',         ikon: PhFiles,    warna: 'rekap',      ke: '/rekap',             grup: 'Administrasi', fitur: 'laporan' },
+  { kode: 'rekap',      nama: 'Pelaporan',       ikon: PhFiles,    warna: 'rekap',      ke: '/rekap',             grup: 'Administrasi', fitur: 'laporan' },
   // Persuratan: Tata Usaha/pengelola, pimpinan penerima surat, dan pegawai yang pernah menerima disposisi
   { kode: 'persuratan', nama: 'Persuratan',      ikon: PhEnvelopeSimple, warna: 'tatausaha',  ke: '/persuratan',        grup: 'Administrasi', fitur: 'tata_usaha', admin: true, izin: 'kelola_persuratan',
     otomatis: (c) => !!c.persuratan || t(c, 'surat_teguran') >= 1 || (c.izin || []).includes('kelola_teguran') },

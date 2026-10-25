@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/Persuratan.vue | v1.5 | 14.12.0: ringkasan dimuat berkala hanya saat layar terlihat | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/Persuratan.vue | v1.6 | 14.24.0: tab Dokumen resmi (dahulu di menu Dokumen) | 25/10/2026 -->
 <script setup>
 // Persuratan (Blueprint Bagian 35), satu menu bertab:
 //   Untuk saya  : surat yang perlu saya disposisikan dan disposisi yang ditujukan kepada saya
@@ -26,6 +26,7 @@ import LembarCatatSurat from './LembarCatatSurat.vue'
 import TabSuratKeluar from './TabSuratKeluar.vue'
 import TabTemplateSurat from './TabTemplateSurat.vue'
 import TabSuratTeguran from './TabSuratTeguran.vue'
+import TabDokumenResmi from '@/pages/laporan/TabDokumenResmi.vue'
 import LembarSusunSurat from './LembarSusunSurat.vue'
 import LembarRincianKeluar from './LembarRincianKeluar.vue'
 
@@ -38,6 +39,8 @@ const TAB = computed(() => [
   ...(ps.hak.susun ? [{ k: 'template', n: 'Template', ikon: PhFileText, w: 'pengumuman' }] : []),
   // Surat Teguran SP1–SP3 (14.1.0): pemegang fitur Surat teguran, Tata Usaha, atasan langsung, dan pengusul
   ...(bolehTeguran.value ? [{ k: 'teguran', n: 'Surat teguran', ikon: PhWarningOctagon, w: 'klinik' }] : []),
+  // 14.24.0: Dokumen resmi (registri dokumen bertanda tangan elektronik), dahulu di menu Dokumen
+  { k: 'dokumen', n: 'Dokumen resmi', ikon: PhSealCheck, w: 'verifikasi' },
   { k: 'ketentuan', n: 'Ketentuan', ikon: PhListChecks, w: 'pengaturan' },
 ])
 const bolehTeguran = computed(() => { const h = ps.hak.teguran || {}; return !!(h.lihat || h.usul || h.kelola || h.tu || h.atasan || h.punya) })
@@ -107,7 +110,7 @@ function ubah(s) { suratUbah.value = s; bukaRincian.value = false; lembarUbah.va
 <template>
   <div v-if="ps.hakDimuat">
     <BilahTab class="mb-4" :tab="TAB" :model-value="aktif" label="Bagian persuratan" @update:model-value="(k) => router.replace(`/persuratan/${k}`)" />
-    <div v-if="!['ketentuan', 'template', 'teguran'].includes(aktif)" class="-mx-4 mb-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:overflow-visible sm:px-0"
+    <div v-if="!['ketentuan', 'template', 'teguran', 'dokumen'].includes(aktif)" class="-mx-4 mb-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:overflow-visible sm:px-0"
       :class="kartu.length > 4 ? 'sm:grid-cols-3 xl:grid-cols-6' : kartu.length > 2 ? 'sm:grid-cols-4' : 'sm:grid-cols-2 sm:max-w-xl'">
       <KartuStatistik v-for="k in kartu" :key="k.judul" class="w-[44%] shrink-0 snap-start sm:w-auto" :judul="k.judul" :nilai="k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket" />
     </div>
@@ -116,6 +119,7 @@ function ubah(s) { suratUbah.value = s; bukaRincian.value = false; lembarUbah.va
     <TabBukuAgenda v-else-if="aktif === 'agenda'" />
     <TabTemplateSurat v-else-if="aktif === 'template'" />
     <TabSuratTeguran v-else-if="aktif === 'teguran'" :versi="versi" />
+    <TabDokumenResmi v-else-if="aktif === 'dokumen'" />
     <TabKetentuanSurat v-else />
     <LembarRincianSurat v-model="bukaRincian" :id="suratId" :versi="versi" @berubah="segarkan" @ubah="ubah" />
     <LembarCatatSurat v-model="lembarUbah" :surat="suratUbah" @selesai="(id) => { segarkan(); pilih(id) }" />

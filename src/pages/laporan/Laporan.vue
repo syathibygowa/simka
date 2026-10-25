@@ -1,18 +1,18 @@
-<!-- SIMKA PRO | src/pages/laporan/Laporan.vue | v1.7 | 14.18.0: tab Kinerja bidang (indikator kinerja bidang) | 21/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/Laporan.vue | v1.8 | 14.24.0: menu Pelaporan; tab Ambang batas; Dokumen resmi pindah ke Persuratan | 25/10/2026 -->
 <script setup>
-// Menu Dokumen: satu menu bertab untuk semua rekap dan laporan resmi (hemat menu sidebar).
+// Menu Pelaporan (14.24.0, dahulu Dokumen; Dokumen resmi pindah ke Persuratan, Ambang batas pindah dari Setelan): satu menu bertab untuk semua rekap dan laporan resmi (hemat menu sidebar).
 // Tab: Presensi harian (admin/superadmin; dahulu menu Rekap Presensi), Kehadiran pegawai (semua pegawai: dirinya;
 // pimpinan: bidangnya; admin, Direktur, Wadir, Yayasan: seluruh pondok), Dokumen resmi (registri dokumen bertanda
 // tangan elektronik), Kinerja bidang (14.18.0: pimpinan, admin, pengguna Layar Pantauan, pengelola laporan), Tanda tangan (kotak masuk permintaan tanda tangan laporan resmi), Kehadiran santri (pengasuh: kelompok asuhannya). Rekap bulanan/periode lama diganti tab Kehadiran pegawai. Laporan modul lain menyusul di sini.
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhSealCheck, PhCalendarCheck, PhUsersThree, PhStudent, PhSquaresFour, PhSignature, PhTarget } from '@phosphor-icons/vue'
+import { PhCalendarCheck, PhUsersThree, PhStudent, PhSquaresFour, PhSignature, PhTarget, PhTrafficSignal } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import { useDokumenResmi } from '@/stores/dokumenResmi'
 import BilahTab from '@/components/BilahTab.vue'
 import RekapPresensi from '@/pages/rekap/RekapPresensi.vue'
 import TabKehadiranPegawai from './TabKehadiranPegawai.vue'
-import TabDokumenResmi from './TabDokumenResmi.vue'
+import TabAmbangKehadiran from '@/pages/pengaturan/TabAmbangKehadiran.vue'
 import TabKehadiranSantri from './TabKehadiranSantri.vue'
 import TabRekapLayanan from './TabRekapLayanan.vue'
 import TabTandaTangan from './TabTandaTangan.vue'
@@ -33,10 +33,11 @@ const TAB = computed(() => [
   { k: 'layanan', n: 'Rekap layanan', ikon: PhSquaresFour, w: 'security' },
   // Kinerja bidang: enam indikator yang sama untuk setiap bidang (bahan laporan ke Direktur dan Yayasan)
   ...(pantau.value || sesi.tingkat('pantauan') >= 1 ? [{ k: 'kinerja', n: 'Kinerja bidang', ikon: PhTarget, w: 'rekap' }] : []),
-  { k: 'dokumen', n: 'Dokumen resmi', ikon: PhSealCheck, w: 'verifikasi' },
   // Tanda tangan: pimpinan, admin, dan siapa pun yang pernah diminta tanda tangan
   ...(sesi.isAdmin || sesi.pimpinanTinggi || dr.masuk.length || props.tab === 'tandatangan'
     ? [{ k: 'tandatangan', n: dr.menunggu.length ? `Tanda tangan (${dr.menunggu.length})` : 'Tanda tangan', ikon: PhSignature, w: 'pengajuan' }] : []),
+  // 14.24.0: Ambang batas (dahulu Setelan → Ambang kehadiran), diatur superadmin
+  ...(sesi.isSuperadmin ? [{ k: 'ambang', n: 'Ambang batas', ikon: PhTrafficSignal, w: 'beranda' }] : []),
 ])
 const ALIAS = { periode: 'pegawai' }
 const aktif = computed({
@@ -52,7 +53,7 @@ const aktif = computed({
     <TabKehadiranSantri v-else-if="aktif === 'santri'" />
     <TabRekapLayanan v-else-if="aktif === 'layanan'" />
     <TabKinerjaBidang v-else-if="aktif === 'kinerja'" />
-    <TabDokumenResmi v-else-if="aktif === 'dokumen'" />
+    <TabAmbangKehadiran v-else-if="aktif === 'ambang'" />
     <TabTandaTangan v-else-if="aktif === 'tandatangan'" />
   </div>
 </template>

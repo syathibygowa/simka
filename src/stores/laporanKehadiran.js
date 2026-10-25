@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/laporanKehadiran.js | v1.1 | Perbaikan 14.0.0: pemegang Dokumen tingkat Input/ubah memantau laporan kehadiran | 17/10/2026
+// SIMKA PRO | src/stores/laporanKehadiran.js | v1.2 | 14.24.0: laporan fungsional per jenis tugas sesi | 25/10/2026
 // Memuat laporan kehadiran pegawai dari server (hak cakupan diperiksa server) atau data contoh pada mode demo.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -8,9 +8,12 @@ import { useSesi } from './sesi'
 import { daftarTanggal } from '@/lib/laporanKehadiran'
 
 const acak = (s) => { let x = 7; for (const c of s) x = (x * 31 + c.charCodeAt(0)) % 99991; const y = Math.sin(x) * 10000; return y - Math.floor(y) }
-async function demo(mulai, selesai, cakupan, nilai, rinci) {
+const POLA_DEMO = { sekolah: /guru|wali kelas/i, tahfizh: /muhaffi|tahfi/i, asrama: /musyrif/i, security: /security|keamanan/i, medis: /klinik|medis|perawat/i, kantor: /staf|tata usaha|bendahara|admin|operator/i }
+const SESI_DEMO = { sekolah: 'Jam sekolah', tahfizh: 'Halaqah subuh', asrama: 'Asrama malam', security: 'Jaga gerbang', medis: 'Jaga klinik', kantor: 'Jam kantor' }
+async function demo(mulai, selesai, cakupan, nilai, rinci, tugas = null) {
   const peg = usePegawai(); if (!peg.daftar.length) await peg.muat()
   let daftar = peg.daftar.filter((p) => p.status_akun === 'aktif')
+  if (tugas) daftar = daftar.filter((p) => POLA_DEMO[tugas]?.test(`${(p.jabatan_fungsional || []).join(' ')} ${p.nama_unit || ''}`))
   if (cakupan === 'saya') daftar = daftar.slice(0, 1)
   if (cakupan === 'individu') daftar = daftar.filter((p) => p.id === nilai)
   if (cakupan === 'bidang') daftar = daftar.filter((p) => p.org_unit_id === nilai)
@@ -21,7 +24,7 @@ async function demo(mulai, selesai, cakupan, nilai, rinci) {
     for (const d of hari) {
       const r = acak(p.id + d); const st = r < 0.74 ? 'hadir' : r < 0.86 ? 'terlambat' : r < 0.89 ? 'dinas_luar' : r < 0.93 ? 'izin' : r < 0.955 ? 'sakit' : r < 0.97 ? 'cuti' : 'tanpa_keterangan'
       hit[st]++; const tm = st === 'terlambat' ? 3 + Math.round(r * 40) % 25 : 0; menit += tm; if (r > 0.5 && r < 0.53) cepat++
-      if (rinci) baris.push({ employee_id: p.id, tanggal: d, nama_pola: (p.jabatan_fungsional || ['Staf'])[0], nama_sesi: 'Jam kerja', mulai: `${d}T07:30:00+08:00`, selesai: `${d}T14:00:00+08:00`,
+      if (rinci) baris.push({ employee_id: p.id, tanggal: d, nama_pola: (p.jabatan_fungsional || ['Staf'])[0], nama_sesi: tugas ? SESI_DEMO[tugas] : 'Jam kerja', mulai: `${d}T07:30:00+08:00`, selesai: `${d}T14:00:00+08:00`,
         status: st, terlambat_menit: tm, datang_pada: ['hadir', 'terlambat', 'dinas_luar'].includes(st) ? `${d}T07:${String(10 + tm + 20).padStart(2, '0')}:00+08:00` : null,
         pulang_pada: ['hadir', 'terlambat'].includes(st) ? `${d}T14:0${Math.round(r * 9)}:00+08:00` : null, status_pulang: ['hadir', 'terlambat'].includes(st) ? 'tepat' : null,
         titik: ['hadir', 'terlambat'].includes(st) ? 'Gedung Utama' : null, keterangan: st === 'izin' ? 'Keperluan keluarga' : st === 'sakit' ? 'Demam' : st === 'dinas_luar' ? 'Rapat di kantor Kemenag' : null,
@@ -38,11 +41,14 @@ async function demo(mulai, selesai, cakupan, nilai, rinci) {
 export const useLaporanKehadiran = defineStore('laporanKehadiran', {
   state: () => ({ data: null, memuat: false }),
   actions: {
-    async muat({ mulai, selesai, cakupan, nilai = null, rinci = false }) {
+    /** tugas (14.24.0): jenis tugas sesi (sekolah, tahfizh, asrama, kantor, security, medis) — hanya sesi tugas itu yang dihitung */
+    async muat({ mulai, selesai, cakupan, nilai = null, rinci = false, tugas = null }) {
       this.memuat = true
       try {
-        if (MODE_DEMO) { this.data = await demo(mulai, selesai, cakupan, nilai, rinci); return this.data }
-        const { data, error } = await supabase.rpc('laporan_kehadiran_pegawai', { p_mulai: mulai, p_selesai: selesai, p_cakupan: cakupan, p_nilai: nilai, p_rinci: rinci })
+        if (MODE_DEMO) { this.data = await demo(mulai, selesai, cakupan, nilai, rinci, tugas); return this.data }
+        const { data, error } = tugas
+          ? await supabase.rpc('laporan_kehadiran_tugas', { p_mulai: mulai, p_selesai: selesai, p_cakupan: cakupan, p_nilai: nilai, p_rinci: rinci, p_tugas: tugas })
+          : await supabase.rpc('laporan_kehadiran_pegawai', { p_mulai: mulai, p_selesai: selesai, p_cakupan: cakupan, p_nilai: nilai, p_rinci: rinci })
         if (error) throw new Error(pesanGalat(error))
         this.data = data; return data
       } finally { this.memuat = false }

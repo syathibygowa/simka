@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabRekapJurnal.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabRekapJurnal.vue | v1.6 | 14.24.0: tabel ceklist memuat persentase per butir (kolom akhir) dan per hari (baris akhir) | 25/10/2026 -->
 <script setup>
 import { namaBerkas, periodeRentang } from '@/lib/namaBerkas'
 // Rekap jurnal per periode: persentase pengisian (hari terisi ÷ hari wajib), butir ceklist, dan kegiatan per status.
@@ -64,7 +64,12 @@ async function tabelCeklist(r) {
     const m = await jr.matriks(r.employee_id, mulai.value, akhir.value)
     const cek = new Set((m.cek || []).map((c) => `${c.item_id}|${c.tanggal}`))
     const butir = (m.butir || []).map((b) => ({ ...b, hari: (m.hari || []).map((h) => cek.has(`${b.item_id}|${h.tanggal}`)), n: (m.hari || []).filter((h) => cek.has(`${b.item_id}|${h.tanggal}`)).length }))
-    matriks.value = { r, hari: m.hari || [], butir, wajib: (m.hari || []).filter((h) => h.wajib).length }
+    // 14.24.0: persentase per butir (hari wajib dicentang ÷ hari wajib) dan per hari (butir dicentang ÷ jumlah butir)
+    const hr = m.hari || []; const wajib = hr.filter((h) => h.wajib).length; const pr = (a, b) => (b ? Math.round((1000 * a) / b) / 10 : null)
+    for (const b of butir) b.persen = pr(b.hari.filter((v, j) => v && hr[j].wajib).length, wajib)
+    const perHari = hr.map((h, j) => (butir.length ? pr(butir.filter((b) => b.hari[j]).length, butir.length) : null))
+    const total = pr(butir.reduce((t, b) => t + b.hari.filter((v, j) => v && hr[j].wajib).length, 0), butir.length * wajib)
+    matriks.value = { r, hari: hr, butir, wajib, perHari, total }
     pratinjauM.value = true
   } catch (e) { ui.toast(e.message, 'galat') }
 }
@@ -175,18 +180,21 @@ const namaUnit = computed(() => (unit.value ? org.cariUnit(unit.value)?.nama : '
         </tbody>
       </table>
       <table class="tabel kecil matriks-cetak">
-        <colgroup><col style="width:3%"><col style="width:33%"><col v-for="h in matriks.hari" :key="h.tanggal" :style="{ width: lebarTgl }"><col style="width:6%"></colgroup>
-        <thead><tr><th>No.</th><th>Kegiatan/butir ceklist</th><th v-for="h in matriks.hari" :key="h.tanggal" :style="!h.wajib ? 'background:#e6e6e6' : ''">{{ Number(h.tanggal.slice(8)) }}</th><th>Jml.</th></tr></thead>
+        <colgroup><col style="width:3%"><col style="width:28%"><col v-for="h in matriks.hari" :key="h.tanggal" :style="{ width: lebarTgl }"><col style="width:5%"><col style="width:6%"></colgroup>
+        <thead><tr><th>No.</th><th>Kegiatan/butir ceklist</th><th v-for="h in matriks.hari" :key="h.tanggal" :style="!h.wajib ? 'background:#e6e6e6' : ''">{{ Number(h.tanggal.slice(8)) }}</th><th>Jml.</th><th>%</th></tr></thead>
         <tbody>
           <template v-for="(b, i) in matriks.butir" :key="b.item_id">
-            <tr v-if="i === 0 || matriks.butir[i - 1].kelompok !== b.kelompok"><td :colspan="matriks.hari.length + 3" style="font-style: italic">{{ b.kelompok }}</td></tr>
+            <tr v-if="i === 0 || matriks.butir[i - 1].kelompok !== b.kelompok"><td :colspan="matriks.hari.length + 4" style="font-style: italic">{{ b.kelompok }}</td></tr>
             <tr><td class="tengah">{{ i + 1 }}</td><td>{{ b.uraian }}</td>
-              <td v-for="(v, j) in b.hari" :key="j" class="tengah" :style="!matriks.hari[j].wajib ? 'background:#f0f0f0' : ''">{{ v ? '✓' : '' }}</td><td class="tengah">{{ b.n }}</td></tr>
+              <td v-for="(v, j) in b.hari" :key="j" class="tengah" :style="!matriks.hari[j].wajib ? 'background:#f0f0f0' : ''">{{ v ? '✓' : '' }}</td><td class="tengah">{{ b.n }}</td><td class="tengah">{{ persen(b.persen) }}</td></tr>
           </template>
-          <tr v-if="!matriks.butir.length"><td :colspan="matriks.hari.length + 3" class="tengah">Belum ada butir ceklist template untuk pegawai ini.</td></tr>
+          <tr v-if="matriks.butir.length"><td colspan="2" style="font-weight: 700">Persentase terceklist per hari</td>
+            <td v-for="(v, j) in matriks.perHari" :key="j" class="tengah" style="font-size: 6.5pt" :style="!matriks.hari[j].wajib ? 'background:#f0f0f0' : ''">{{ matriks.hari[j].wajib ? Math.round(v ?? 0) : '' }}</td>
+            <td /><td class="tengah" style="font-weight: 700">{{ persen(matriks.total) }}</td></tr>
+          <tr v-if="!matriks.butir.length"><td :colspan="matriks.hari.length + 4" class="tengah">Belum ada butir ceklist template untuk pegawai ini.</td></tr>
         </tbody>
       </table>
-      <p style="margin-top: 4pt; font-size: 8.5pt">✓ = butir dikerjakan (dicentang) pada tanggal itu. Kolom berarsir = bukan hari wajib (libur atau izin/sakit/cuti yang disetujui).</p>
+      <p style="margin-top: 4pt; font-size: 8.5pt">✓ = butir dikerjakan (dicentang) pada tanggal itu. Kolom berarsir = bukan hari wajib (libur atau izin/sakit/cuti yang disetujui). Kolom % = hari wajib terceklist ÷ {{ matriks.wajib }} hari wajib; baris akhir = persentase butir terceklist setiap hari (%); pojok kanan bawah = persentase keseluruhan.</p>
       <template #ttd>
         <TandaTangan :kiri="{ pengantar: 'Mengetahui,', jabatan: 'Atasan Langsung', nama: '.....................................' }" :kanan="{ jabatan: 'Pegawai', nama: matriks.r.nama, niy: matriks.r.niy }" />
       </template>

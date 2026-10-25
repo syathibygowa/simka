@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengajuan/Pengajuan.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengajuan/Pengajuan.vue | v1.6 | 14.24.0: Pengajuan saya tanpa saringan status (tampilan umum) | 25/10/2026 -->
 <script setup>
 // Pengajuan izin, sakit, dinas luar, dan cuti. Tab: Pengajuan saya (semua pegawai), Persetujuan (pejabat
 // penyetuju dan Plt), Semua (admin ber-izin lihat_pengajuan/superadmin: rekap, Excel, cetak F4), Ketentuan (dibaca semua).
@@ -52,6 +52,7 @@ onMounted(async () => {
 async function muatSemua() { try { await pg.muat('semua', { mulai: mulai.value, akhir: akhir.value }) } catch (e) { ui.toast(e.message, 'galat') } }
 watch(tab, (t) => { if (t === 'semua') muatSemua(); else if (t !== 'ketentuan') pg.muat(t).catch((e) => ui.toast(e.message, 'galat')) })
 watch([mulai, akhir], () => tab.value === 'semua' && muatSemua())
+watch(tab, (t) => { if (t === 'saya') saring.value = 'semua' })
 
 const SARING = [{ k: 'semua', n: 'Semua' }, { k: 'menunggu', n: 'Menunggu' }, { k: 'disetujui', n: 'Disetujui' }, { k: 'ditolak', n: 'Ditolak' }, { k: 'dibatalkan', n: 'Dibatalkan' }]
 const sumber = computed(() => (tab.value === 'persetujuan' ? pg.persetujuan : tab.value === 'semua' ? pg.semua : pg.saya))
@@ -118,7 +119,8 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
             <select id="pj-unit" v-model="unit" class="isian w-auto max-w-full"><option value="">Semua bidang</option>
               <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
         </SaringCorong>
-        <div class="mb-3 flex flex-wrap items-center gap-2">
+        <!-- 14.24.0: Pengajuan saya tampil umum tanpa saringan status -->
+        <div v-if="tab !== 'saya'" class="mb-3 flex flex-wrap items-center gap-2">
           <div class="bilah-tab kecil" role="tablist" aria-label="Saring status">
             <button v-for="s in SARING" :key="s.k" @click="saring = s.k" :class="['tab-garis', (saring === s.k) && 'aktif']" role="tab" :aria-selected="saring === s.k">{{ s.n }}</button>
           </div>
