@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/izin.js | v1.2 | 14.20.0: izin kolektif, surat izin, isi pesan WA minta persetujuan | 22/10/2026
+// SIMKA PRO | src/lib/izin.js | v1.3 | 14.22.0: pesan WA pimpinan sesuai tahap persetujuan | 25/10/2026
 // Label baku perizinan santri (Blueprint Bagian 22–23): status, peran pengusul, unit pemutus, teks WA, hasil libur.
 import { PhHourglass, PhCheckCircle, PhXCircle, PhSignOut, PhSignIn, PhProhibit, PhSealCheck } from '@phosphor-icons/vue'
 import { formatWaktu } from './tanggal'
@@ -61,7 +61,8 @@ const penjemputTeks = (x) => (x.penjemput ? `${x.penjemput}${x.hubungan_penjempu
 export function dataMintaIzin(x, p, kelas = '') {
   return { nama: p.nama, jabatan: p.jabatan, jenis_izin: x.jenis === 'keluar' ? 'keluar' : 'pulang', nama_santri: x.nama, kelas: kelas || x.kelas || x.kamar || '',
     alasan: x.alasan, waktu_keluar: formatWaktu(x.keluar_pada) + ' WITA', batas_kembali: formatWaktu(x.kembali_batas) + ' WITA', penjemput: penjemputTeks(x),
-    keterangan: p.tingkat === 2 ? `Izin ${x.lama_hari} hari ini telah disetujui ${x.pemutus || 'kepala bidang'} dan memerlukan persetujuan pimpinan.` : '',
+    keterangan: p.tingkat === 2 ? (x.status === 'disetujui_bidang' ? `Izin ${x.lama_hari} hari ini telah disetujui ${x.pemutus || 'kepala bidang'} dan memerlukan persetujuan pimpinan.`
+      : `Izin ${x.lama_hari} hari ini sedang menunggu ${x.pemutus || 'kepala bidang'} dan selanjutnya memerlukan persetujuan pimpinan.`) : '',
     tautan: halamanAplikasi('/izin-santri/persetujuan') }
 }
 /** Isi pesan WA "minta persetujuan" izin kolektif. */
@@ -70,7 +71,7 @@ export function dataMintaKolektif(k, p) {
   return { nama: p.nama, jabatan: p.jabatan, kegiatan: k.kegiatan, jumlah: aktif.length, tempat: k.tempat || '–', waktu_keluar: formatWaktu(k.keluar_pada) + ' WITA',
     batas_kembali: formatWaktu(k.kembali_batas) + ' WITA', pendamping: k.pendamping || '–',
     daftar: aktif.map((a) => `${a.nama}${a.kelas ? ' (' + a.kelas + ')' : ''}`).join(', '),
-    keterangan: p.tingkat === 2 ? 'Telah disetujui Kepala Bidang Kesantrian dan memerlukan persetujuan pimpinan.' : '',
+    keterangan: p.tingkat === 2 ? (k.status === 'disetujui_bidang' ? 'Telah disetujui Kepala Bidang Kesantrian dan memerlukan persetujuan pimpinan.' : 'Sedang menunggu Kepala Bidang Kesantrian dan selanjutnya memerlukan persetujuan pimpinan.') : '',
     tautan: halamanAplikasi(`/izin-santri/kolektif?izin=${k.id}`) }
 }
 /** Isi pesan WA izin kolektif kepada orang tua/wali seorang anggota. */

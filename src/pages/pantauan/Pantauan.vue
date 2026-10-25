@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.6 | 14.18.0: rincian kartu untuk kepala bidang ke atas; slide Kinerja Bidang | 21/10/2026 -->
+<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.7 | 14.22.0: baris belum/tidak hadir pada rincian kartu diberi warna merah lembut | 25/10/2026 -->
 <script setup>
 // Layar Pantauan (Blueprint Bagian 28) berbentuk SLIDE layar penuh untuk presentasi dan SmartTV.
 //   Dibuka dari tombol "Layar Pantauan" di Beranda (bukan menu). Slide: Santri, Pegawai, SMP, SMA, Tahfizh, Hafalan, Asrama,
@@ -236,7 +236,7 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
           <table class="w-full min-w-[560px] text-left text-sm">
             <thead class="sticky top-0 bg-permukaan2 text-teks2"><tr><th class="px-3 py-2 font-bold">No.</th><th v-for="c in daftar.kolom" :key="c[0]" class="px-3 py-2 font-bold">{{ c[1] }}</th></tr></thead>
             <tbody class="divide-y divide-garis">
-              <tr v-for="(r, i) in daftar.baris" :key="i"><td class="px-3 py-2 tabular-nums text-teks3">{{ i + 1 }}</td><td v-for="c in daftar.kolom" :key="c[0]" class="px-3 py-2">{{ r[c[0]] ?? '–' }}</td></tr>
+              <tr v-for="(r, i) in daftar.baris" :key="i" :class="r._tidak && 'baris-tidak'"><td class="px-3 py-2 tabular-nums text-teks3">{{ i + 1 }}</td><td v-for="c in daftar.kolom" :key="c[0]" class="px-3 py-2">{{ r[c[0]] ?? '–' }}</td></tr>
               <tr v-if="daftar.total && daftar.baris.length" class="bg-permukaan2 font-bold"><td /><td v-for="c in daftar.kolom" :key="c[0]" class="px-3 py-2">{{ daftar.total[c[0]] }}</td></tr>
             </tbody>
           </table>
@@ -251,7 +251,7 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
       <table class="tabel kecil">
         <thead><tr><th style="width:5%">No.</th><th v-for="c in daftar.kolom" :key="c[0]" :style="{ width: c[2] + '%' }">{{ c[1] }}</th></tr></thead>
         <tbody>
-          <tr v-for="(r, i) in daftar.baris" :key="i"><td class="tengah">{{ i + 1 }}</td><td v-for="c in daftar.kolom" :key="c[0]" :class="typeof r[c[0]] === 'number' && 'tengah'">{{ r[c[0]] ?? '–' }}</td></tr>
+          <tr v-for="(r, i) in daftar.baris" :key="i" :class="r._tidak && 'baris-tidak-cetak'"><td class="tengah">{{ i + 1 }}</td><td v-for="c in daftar.kolom" :key="c[0]" :class="typeof r[c[0]] === 'number' && 'tengah'">{{ r[c[0]] ?? '–' }}</td></tr>
           <tr v-if="daftar.total && daftar.baris.length"><td /><td v-for="c in daftar.kolom" :key="c[0]" :class="typeof daftar.total[c[0]] === 'number' && 'tengah'">{{ daftar.total[c[0]] }}</td></tr>
           <tr v-if="!daftar.baris.length"><td :colspan="daftar.kolom.length + 1" class="tengah">Tidak ada data.</td></tr>
         </tbody>
@@ -266,6 +266,9 @@ const kendali = ref(false) // HP: saringan dan tombol disembunyikan agar slide l
   </div>
 </template>
 <style scoped>
+/* 14.22.0: baris pegawai/santri yang belum/tidak hadir — merah lembut */
+.baris-tidak { background: rgb(var(--merah) / 0.1); }
+.baris-tidak-cetak { background: #FDECEA; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .ikon-judul { display: grid; place-items: center; height: 3.25rem; width: 3.25rem; flex-shrink: 0; border-radius: 1rem; color: #fff;
   background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 65%, #000)); }
 @media (min-width: 1024px) { .ikon-judul { height: 4rem; width: 4rem; } }

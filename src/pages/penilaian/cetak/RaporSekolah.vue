@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/cetak/RaporSekolah.vue | v1.1 | Tahap C: tabel Prestasi (dari catatan prestasi santri bertanda rapor) | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/cetak/RaporSekolah.vue | v1.2 | 14.22.0: judul rapor di atas identitas; identitas Wustha 2 kolom 3 baris Title Case | 25/10/2026 -->
 <script setup>
 // Rapor sekolah per santri (data_rapor):
 //   SMA (Kurikulum Merdeka) : Nilai + Capaian Kompetensi per mapel (berkelompok), Kokurikuler, Ekstrakurikuler,
@@ -7,10 +7,11 @@
 //                             Pengembangan Diri, Pencapaian Program Tahfizhul Qur'an, Ketidakhadiran, Catatan, Kenaikan kelas
 // Tanda tangan: orang tua kiri, wali kelas kanan, kepala tengah bawah. Kepala rapor (kop + identitas) berulang per halaman.
 // v1.1: tabel Prestasi tampil bila santri memiliki prestasi bertanda rapor dalam rentang semester (menu Prestasi Santri).
+// v1.2 (14.22.0): judul rapor di atas identitas (SMA dan Wustha); identitas Wustha Nama/NISN/NIS · Kelas/Semester/Tahun Ajaran dalam Title Case.
 import { computed } from 'vue'
 import HalRapor from '@/components/cetak/rapor/HalRapor.vue'
 import TtdRapor from '@/components/cetak/rapor/TtdRapor.vue'
-import { barisNilai, kelompokkan, hitungLeger, namaKelasRapor, SEMESTER_RAPOR, SEMESTER_KATA, nisNisn, persenHadir, kalimatHadir, deskripsiKok, barisPd,
+import { barisNilai, kelompokkan, hitungLeger, namaKelasRapor, SEMESTER_RAPOR, nisNisn, persenHadir, kalimatHadir, deskripsiKok, barisPd,
   teksKeputusan, kopRapor, tanggalRapor, waliUtama } from '@/lib/rapor'
 import { predikatDari, sebutanPredikat } from '@/lib/penilaian'
 import { ringkasJuz } from '@/lib/tahfizh'
@@ -41,19 +42,21 @@ const rataKelas = (b, f) => { const v = b.n.map((x) => x[f]).filter((x) => x != 
 <template>
   <HalRapor v-for="b in daftar" :key="b.s.id" :kop="kop">
     <template #kepala>
+      <!-- 14.22.0: judul rapor di atas identitas (seperti rapor tahfizh); identitas Wustha 2 kolom × 3 baris, Title Case -->
+      <p class="judul-rapor" style="margin-top: 2pt">{{ ket.judul || 'Laporan Hasil Belajar' }}</p>
       <table v-if="sma" class="identitas"><colgroup><col style="width:17%"><col style="width:45%"><col style="width:15%"><col style="width:23%"></colgroup><tbody>
         <tr><td>Nama Murid</td><td>: {{ b.s.nama.toUpperCase() }}</td><td>Fase</td><td>: {{ fase }}</td></tr>
         <tr><td>NIS/NISN</td><td>: {{ nisNisn(b.s) }}</td><td>Semester</td><td>: {{ SEMESTER_RAPOR[D.semester] }}</td></tr>
         <tr><td>Kelas</td><td>: {{ kelas }}</td><td>Tahun Ajaran</td><td>: {{ D.ta.nama }}</td></tr></tbody></table>
-      <table v-else class="identitas"><colgroup><col style="width:17%"><col style="width:45%"><col style="width:20%"><col style="width:18%"></colgroup><tbody>
-        <tr><td>NAMA</td><td>: {{ b.s.nama.toUpperCase() }}</td><td>KELAS/SEMESTER</td><td>: {{ kelas }} / {{ SEMESTER_KATA[D.semester] }}</td></tr>
-        <tr><td>NOMOR INDUK</td><td>: {{ b.s.nis }}</td><td>TAHUN AJARAN</td><td>: {{ D.ta.nama }}</td></tr></tbody></table>
+      <table v-else class="identitas"><colgroup><col style="width:15%"><col style="width:47%"><col style="width:15%"><col style="width:23%"></colgroup><tbody>
+        <tr><td>Nama</td><td>: {{ b.s.nama.toUpperCase() }}</td><td>Kelas</td><td>: {{ kelas }}</td></tr>
+        <tr><td>NISN</td><td>: {{ b.s.nisn || '-' }}</td><td>Semester</td><td>: {{ SEMESTER_RAPOR[D.semester] }}</td></tr>
+        <tr><td>NIS</td><td>: {{ b.s.nis || '-' }}</td><td>Tahun Ajaran</td><td>: {{ D.ta.nama }}</td></tr></tbody></table>
     </template>
 
     <!-- ================= SMA ================= -->
     <template v-if="sma">
-      <p class="judul-rapor">{{ ket.judul || 'Laporan Hasil Belajar' }}</p>
-      <table class="tabel"><colgroup><col style="width:6%"><col style="width:27%"><col style="width:9%"><col style="width:58%"></colgroup>
+      <table class="tabel" style="margin-top: 4pt"><colgroup><col style="width:6%"><col style="width:27%"><col style="width:9%"><col style="width:58%"></colgroup>
         <thead><tr><th>No</th><th>Mata Pelajaran</th><th>Nilai</th><th>Capaian Kompetensi</th></tr></thead>
         <tbody><template v-for="g in kelompokkan(b.n)" :key="g.kelompok">
           <tr v-if="g.kelompok"><td colspan="4" class="kelompok">{{ g.kelompok }}</td></tr>
@@ -73,7 +76,7 @@ const rataKelas = (b, f) => { const v = b.n.map((x) => x[f]).filter((x) => x != 
 
     <!-- ================= WUSTHA ================= -->
     <template v-else>
-      <table class="tabel kecil"><colgroup><col style="width:4.5%"><col style="width:15.5%"><col style="width:5.5%"><col style="width:6%"><col style="width:7.5%"><col :style="{ width: ket.sikap_di_rapor ? '18.5%' : '23%' }"><col style="width:6%"><col style="width:7.5%"><col :style="{ width: ket.sikap_di_rapor ? '18.5%' : '23%' }"><col v-if="ket.sikap_di_rapor" style="width:10.5%"></colgroup>
+      <table class="tabel kecil" style="margin-top: 4pt"><colgroup><col style="width:4.5%"><col style="width:15.5%"><col style="width:5.5%"><col style="width:6%"><col style="width:7.5%"><col :style="{ width: ket.sikap_di_rapor ? '18.5%' : '23%' }"><col style="width:6%"><col style="width:7.5%"><col :style="{ width: ket.sikap_di_rapor ? '18.5%' : '23%' }"><col v-if="ket.sikap_di_rapor" style="width:10.5%"></colgroup>
         <thead>
           <tr><th rowspan="2">No.</th><th rowspan="2">MATA PELAJARAN</th><th rowspan="2">{{ label }}</th><th colspan="3">PENGETAHUAN</th><th colspan="3">KETERAMPILAN</th><th v-if="ket.sikap_di_rapor" rowspan="2">SIKAP</th></tr>
           <tr><th>Angka</th><th>Pre&shy;dikat</th><th>Deskripsi</th><th>Angka</th><th>Pre&shy;dikat</th><th>Deskripsi</th></tr>

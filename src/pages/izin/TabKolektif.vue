@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/izin/TabKolektif.vue | v1.0 | 14.20.0: izin kolektif santri (lomba/kegiatan luar beberapa santri sekaligus) | 22/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabKolektif.vue | v1.1 | 14.22.0: WA ke Kepala Bidang Kesantrian, Direktur, dan Wakil Direktur untuk semua yang berwenang | 25/10/2026 -->
 <script setup>
 // Izin kolektif: satu pengajuan untuk beberapa santri walau berbeda kelas, kamar, atau jenjang (mis. lomba di luar pondok).
 // Mekanisme: diputus satu kali oleh Kepala Bidang Kesantrian (lalu Direktur/Wadir bila melebihi batas hari) untuk semua
@@ -53,8 +53,9 @@ const ringkasSebaran = (k) => { const kel = new Set(aktifAnggota(k).map((a) => a
 
 // ---------- WA ----------
 const tingkat = (k) => (k.status === 'disetujui_bidang' ? 2 : 1)
-const menungguWA = (k) => ['diajukan', 'disetujui_bidang'].includes(k.status) && !k.boleh_putus
-const pemutusWA = (k) => kontak.value.filter((p) => p.tingkat === tingkat(k))
+const menungguWA = (k) => ['diajukan', 'disetujui_bidang'].includes(k.status)
+// 14.22.0: termasuk Direktur/Wakil Direktur bila izin melebihi batas hari; pemutus tidak mengirim ke dirinya sendiri
+const pemutusWA = (k) => kontak.value.filter((p) => (p.tingkat === tingkat(k) || (k.perlu_pimpinan && p.tingkat === 2)) && p.employee_id !== sesi.pengguna?.id)
 const pesanMinta = (k, p) => pesanWA('izin_kolektif_minta', { ...dataMintaKolektif(k, p), pengirim: sesi.pengguna?.nama_lengkap })
 const wali = (a) => { const s = san.cari(a.student_id); return s ? kontakUtama(s) : null }
 const pesanWali = (k, a) => pesanWA('izin_kolektif_wali', { ...dataWaliKolektif(k, a, wali(a)), pengirim: sesi.pengguna?.nama_lengkap, jabatan_pengirim: k.pendamping === sesi.pengguna?.nama_lengkap ? 'Pendamping' : '' })
@@ -133,7 +134,7 @@ function surat(k) { cetak.value = k; pratinjau.value = true }
                 <button class="tombol-garis min-h-[38px] px-3 text-sm" @click="bukaPutus(k, 'tolak')"><PhX :size="18" /> Tolak</button>
               </template>
               <template v-if="menungguWA(k)">
-                <TombolWA v-for="p in pemutusWA(k)" :key="p.employee_id || p.nama" kecil :hp="p.no_hp" :pesan="pesanMinta(k, p)" :label="`Minta persetujuan ${tingkat(k) === 2 ? 'pimpinan' : 'Ka. Bid. Kesantrian'}`" />
+                <TombolWA v-for="p in pemutusWA(k)" :key="p.employee_id || p.nama" kecil :hp="p.no_hp" :pesan="pesanMinta(k, p)" :label="`${p.tingkat === tingkat(k) ? 'Minta persetujuan' : 'Kabari'} ${p.nama} (${p.tingkat === 2 ? p.jabatan : 'Ka. Bid. Kesantrian'})`" />
                 <span v-if="!pemutusWA(k).length" class="self-center text-xs text-teks3">Kontak pemutus belum tercatat.</span>
               </template>
               <button v-if="k.boleh_catat" class="tombol-garis w-shift min-h-[38px] px-3 text-sm" @click="catat(k, 'keluar')"><PhSignOut :size="18" style="color: var(--c)" /> Catat semua keluar</button>
@@ -168,7 +169,7 @@ function surat(k) { cetak.value = k; pratinjau.value = true }
           <span>Izin kolektif <b>{{ baru.kegiatan }}</b> ({{ aktifAnggota(baru).length }} santri, {{ ringkasSebaran(baru) }}) menunggu keputusan Kepala Bidang Kesantrian{{ baru.perlu_pimpinan ? ', lalu Direktur/Wakil Direktur' : '' }}.
             Pemutus dan pengasuh santri sudah menerima notifikasi SIMKA.</span></p>
         <div><p class="label-isian">Langkah 1 · minta persetujuan Kepala Bidang Kesantrian</p>
-          <div class="flex flex-wrap gap-2"><TombolWA v-for="p in pemutusWA(baru)" :key="p.employee_id || p.nama" :hp="p.no_hp" :pesan="pesanMinta(baru, p)" :label="p.nama" />
+          <div class="flex flex-wrap gap-2"><TombolWA v-for="p in pemutusWA(baru)" :key="p.employee_id || p.nama" :hp="p.no_hp" :pesan="pesanMinta(baru, p)" :label="`${p.nama} (${p.jabatan})`" />
             <p v-if="!pemutusWA(baru).length" class="text-sm text-teks3">Kepala Bidang Kesantrian belum tercatat di Data Pegawai (jabatan struktural).</p></div></div>
         <p v-if="baru.perlu_pimpinan" class="text-sm text-teks2"><b>Langkah 2</b> · setelah disetujui kepala bidang, tombol "Minta persetujuan pimpinan" muncul pada kartu ini.</p>
         <p class="text-sm text-teks2"><b>Langkah {{ baru.perlu_pimpinan ? 3 : 2 }}</b> · kabari orang tua/wali tiap santri lewat tombol WA pada daftar "Santri &amp; WA wali".</p>

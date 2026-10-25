@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.6 | 14.20.0: surat izin, WA minta persetujuan berjenjang, konfirmasi sesudah mengajukan | 22/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.7 | 14.22.0: konfirmasi WA ke semua pemutus (kepala bidang, Direktur, Wakil Direktur) untuk pengusul, admin, superadmin | 25/10/2026 -->
 <script setup>
 // Daftar izin santri. Dipakai di menu Perizinan (cakupan tetap) dan menu Musyrif (disaring per kamar,
 // dengan pilihan Menunggu/Aktif/Semua). Aksi sesuai hak dari server: setujui/tolak, ubah, batalkan,
@@ -6,6 +6,8 @@
 // v1.6: tombol Surat (surat izin bernomor dan berkode validasi; anggota izin kolektif mencetak surat kolektifnya); tombol WA
 //       "Minta persetujuan" ke kepala bidang/unit (izin diajukan) lalu ke Direktur/Wadir (izin berjenjang yang sudah disetujui
 //       kepala bidang); sesudah mengajukan langsung tampil lembar konfirmasi berisi tombol WA pemutus dan orang tua/wali.
+// v1.7 (14.22.0): tombol "Konfirmasi pemutus" juga untuk admin, superadmin, dan pejabat lain; lembar berisi semua pemutus
+//       (kepala bidang/unit, Direktur, Wakil Direktur) dengan tingkat yang sedang ditunggu ditandai.
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import {
   PhPaperPlaneTilt, PhCheck, PhX, PhPencilSimple, PhSignOut, PhSignIn, PhWhatsappLogo, PhHourglass, PhWarningCircle, PhCheckCircle, PhUser, PhMagnifyingGlass, PhProhibit,
@@ -57,9 +59,16 @@ onMounted(async () => { await san.muat(); muat(); iz.dengarkan(muat) })
 // ---------- WA minta persetujuan (berjenjang) ----------
 const kontak = ref({})
 // Tombol tampil bagi pengusul/pengelola (bukan pemutus izin itu sendiri) selama izin menunggu; anggota kolektif lewat tab Kolektif
-const menungguWA = (x) => !x.kolektif_id && ['diajukan', 'disetujui_bidang'].includes(x.status) && !x.boleh_putus && (x.boleh_ubah || x.boleh_batal)
+const menungguWA = (x) => !x.kolektif_id && ['diajukan', 'disetujui_bidang'].includes(x.status) && (x.boleh_ubah || x.boleh_batal || x.boleh_putus || sesi.isAdmin)
 const tingkatMenunggu = (x) => (x.status === 'disetujui_bidang' ? 2 : 1)
-const pemutusWA = (x) => (kontak.value[x.unit_kode || 'KESANTRIAN'] || []).filter((p) => p.tingkat === tingkatMenunggu(x))
+const pemutusWA = (x) => (kontak.value[x.unit_kode || 'KESANTRIAN'] || []).filter((p) => p.tingkat === tingkatMenunggu(x) && p.employee_id !== sesi.pengguna?.id)
+// 14.22.0: lembar konfirmasi WA ke semua pemutus (tingkat 1 kepala bidang/unit, tingkat 2 Direktur/Wakil Direktur)
+const lembarPemutus = ref(false); const izinPemutus = ref(null)
+async function bukaPemutus(x) {
+  izinPemutus.value = x; lembarPemutus.value = true
+  const u = x.unit_kode || 'KESANTRIAN'; if (!kontak.value[u]) { try { kontak.value = { ...kontak.value, [u]: await iz.kontakPemutus(u) } } catch (e) { ui.toast(e.message, 'galat') } }
+}
+const semuaPemutus = (x) => (kontak.value[x?.unit_kode || 'KESANTRIAN'] || []).filter((p) => p.employee_id !== sesi.pengguna?.id && (p.tingkat === 1 || x.perlu_pimpinan || x.status === 'disetujui_bidang'))
 const kelasSantri = (x) => { const s = san.cari(x.student_id); return s ? labelRombel(s) : x.kelas || '' }
 const pesanMinta = (x, p) => pesanWA('izin_santri_minta', dataMintaIzin(x, p, kelasSantri(x)))
 
@@ -186,7 +195,8 @@ const kosong = computed(() => ({ persetujuan: 'Tidak ada izin yang menunggu kepu
               <button v-if="x.boleh_ubah" class="tombol-garis min-h-[38px] px-3 text-sm" @click="ubah(x)"><PhPencilSimple :size="18" /> Ubah</button>
               <button v-if="adaSurat(x)" class="tombol-garis w-tatausaha min-h-[38px] px-3 text-sm" :disabled="memuatSurat === x.id" @click="bukaSurat(x)"><PhFileText :size="18" weight="duotone" style="color: var(--c)" /> Surat</button>
               <template v-if="menungguWA(x)">
-                <TombolWA v-for="p in pemutusWA(x)" :key="p.employee_id || p.nama" kecil :hp="p.no_hp" :pesan="pesanMinta(x, p)"
+                <button class="tombol-wa-garis w-presensi min-h-[38px] px-3 text-sm" @click="bukaPemutus(x)"><PhWhatsappLogo :size="18" weight="duotone" /> Konfirmasi pemutus</button>
+                <TombolWA v-for="p in pemutusWA(x).slice(0, 1)" :key="p.employee_id || p.nama" kecil :hp="p.no_hp" :pesan="pesanMinta(x, p)"
                   :label="`Minta persetujuan ${tingkatMenunggu(x) === 2 ? 'pimpinan' : (p.jabatan || '').replace(/^Kepala\s+/, 'Ka. ')}`" />
               </template>
               <button class="tombol-wa-garis w-presensi min-h-[38px] px-3 text-sm" @click="waWali(x)"><PhWhatsappLogo :size="18" weight="duotone" /> Wali</button>
@@ -224,6 +234,24 @@ const kosong = computed(() => ({ persetujuan: 'Tidak ada izin yang menunggu kepu
           <TombolWA :hp="kontakWali(izinBaru)?.no_hp" :pesan="pesanWali(izinBaru)" :label="kontakWali(izinBaru)?.nama ? `WA ${kontakWali(izinBaru).nama}` : 'WA orang tua/wali'" />
         </div>
         <button class="tombol-garis w-full" @click="lembarKonfirmasi = false">Selesai</button>
+      </div>
+    </LembarBawah>
+    <LembarBawah v-model="lembarPemutus" judul="Konfirmasi WA ke pemutus izin">
+      <div v-if="izinPemutus" class="space-y-3 pb-2">
+        <p class="text-sm"><b>{{ izinPemutus.nama }}</b> · {{ JENIS_IZIN[izinPemutus.jenis] }} · {{ izinPemutus.lama_hari }} hari<br /><span class="text-teks2">{{ izinPemutus.alasan }}</span></p>
+        <p class="rounded-xl bg-permukaan2 p-3 text-xs text-teks2">Sedang menunggu <b>{{ tingkatMenunggu(izinPemutus) === 2 ? 'Direktur/Wakil Direktur' : izinPemutus.pemutus }}</b>.
+          Kirim pengingat agar izin segera diputuskan; pemutus sudah menerima notifikasi SIMKA.</p>
+        <div v-for="t in [1, 2]" :key="t">
+          <template v-if="semuaPemutus(izinPemutus).some((p) => p.tingkat === t)">
+            <p class="label-isian flex items-center gap-1.5"><PhSealCheck :size="18" /> {{ t === 1 ? 'Tingkat 1 · ' + (izinPemutus.pemutus || 'kepala bidang') : 'Tingkat 2 · Direktur/Wakil Direktur' }}
+              <span v-if="tingkatMenunggu(izinPemutus) === t" class="lencana w-pengajuan">Sedang ditunggu</span></p>
+            <div class="flex flex-wrap gap-2">
+              <TombolWA v-for="p in semuaPemutus(izinPemutus).filter((q) => q.tingkat === t)" :key="p.employee_id || p.nama" :hp="p.no_hp" :pesan="pesanMinta(izinPemutus, p)" :label="`${p.nama} (${p.jabatan})`" />
+            </div>
+          </template>
+        </div>
+        <p v-if="!semuaPemutus(izinPemutus).length" class="text-sm text-teks3">Pejabat pemutus belum tercatat di Data Pegawai (jabatan struktural).</p>
+        <button class="tombol-garis w-full" @click="lembarPemutus = false">Tutup</button>
       </div>
     </LembarBawah>
     <LembarBawah v-model="lembarPutus" :judul="keputusan === 'setuju' ? 'Setujui izin' : 'Tolak izin'">

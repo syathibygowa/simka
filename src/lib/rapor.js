@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/rapor.js | v1.1 | Perbaikan 13.6.0: logo rapor dari daftar logo terpusat | 15/10/2026
+// SIMKA PRO | src/lib/rapor.js | v1.2 | 14.22.0: nama kelas rapor tidak ganda | 25/10/2026
 // Pengolah data cetak rapor (data_rapor / data_rapor_tahfizh): nilai per mapel rapor (pembulatan, predikat, deskripsi
 // otomatis), jumlah/rata-rata/peringkat untuk leger, kehadiran (persentase dan kalimat), keputusan akhir tahun,
 // identitas sekolah, serta label kelas Romawi.
@@ -14,7 +14,10 @@ export function namaKelasRapor(k) {
   if (!k) return ''
   const m = /^(\d{1,2})\s*([A-Za-z]*)$/.exec(String(k.nama || '').trim())
   const dasar = m && ROMAWI[m[1]] ? `${ROMAWI[m[1]]}${m[2] ? (k.jenjang === 'wustha' ? ' ' : '.') + m[2].toUpperCase() : ''}` : k.nama
-  return k.keterangan ? `${dasar} (${k.keterangan})` : dasar
+  // 14.22.0: keterangan yang sama dengan nama kelas (mis. "Kelas 8A", "VIII A") tidak diulang
+  const rata = (t) => String(t || '').toLowerCase().replace(/kelas/g, '').replace(/[^a-z0-9]/g, '')
+  const ket = String(k.keterangan || '').trim()
+  return ket && !rata(ket).includes(rata(dasar)) && !rata(ket).includes(rata(k.nama)) && rata(ket) !== rata(dasar) ? `${dasar} (${ket})` : dasar
 }
 export const SEMESTER_RAPOR = { 1: '1 (Ganjil)', 2: '2 (Genap)' }
 export const SEMESTER_KATA = { 1: 'GANJIL', 2: 'GENAP' }

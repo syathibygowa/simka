@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/pantauan.js | v1.4 | Data contoh slide unit kerja (wali kelas, guru mapel, dokumen, persuratan, keuangan, administrasi pegawai) | 14/10/2026
+// SIMKA PRO | src/stores/pantauan.js | v1.5 | 14.22.0: data contoh sesi pegawai per jenis tugas (sekolah, halaqah, asrama) | 25/10/2026
 // v1.3: muatan memuat pegawai_sesi (kehadiran pegawai per sesi kerja) dan grup (rekap kelompok aktif L/P dan pengasuh).
 // v1.2: muat(tanggal) — hari sebelumnya = keadaan pada akhir hari itu (23.59 WITA); Realtime/berkala hanya untuk hari ini.
 // Pantauan Langsung (Blueprint Bagian 28): satu muatan kondisi hari ini (santri, pegawai, sesi kegiatan, Security),
@@ -69,9 +69,14 @@ async function demo(tanggal) {
   const ujian = [{ id: 'uj1', jenis: 'kenaikan', juz: 5, nama: sx(2).nama, nis: sx(2).nis, jk: sx(2).jk, jenjang: sx(2).jenjang, kelas: sx(2).kelas, halaqah: sx(2).halaqah, status: 'selesai', hasil: 'tuntas', nilai: 86, jadwal: iso(4), penguji: NAMA[1] },
     { id: 'uj2', jenis: 'sertifikasi', juz: null, jenjang_sertifikasi: 5, nama: sx(4).nama, nis: sx(4).nis, jk: sx(4).jk, jenjang: sx(4).jenjang, kelas: sx(4).kelas, halaqah: sx(4).halaqah, status: 'dijadwalkan', hasil: null, nilai: null, jadwal: iso(-2), penguji: NAMA[5] }]
   const stSesi = (st, k) => (['izin', 'sakit', 'cuti', 'dinas_luar'].includes(st) ? st : st === 'libur' ? null : st === 'belum' ? (k ? 'akan_datang' : 'belum') : k && st === 'terlambat' ? 'hadir' : st)
-  const pegawai_sesi = Object.fromEntries(pegawai.filter((p) => p.status !== 'libur').map((p, i) => [p.id, p.musyrif
-    ? [{ n: 'Asrama pagi', mulai: '05:00', st: stSesi(p.status, 0) }, { n: 'Asrama malam', mulai: '20:00', st: lalu ? (i % 3 ? 'hadir' : 'tanpa_keterangan') : stSesi(p.status, 1) }]
-    : [{ n: 'Sekolah', mulai: '07:00', st: stSesi(p.status, 0) }]]))
+  // 14.22.0: setiap sesi membawa jenis tugas (kal: sekolah/tahfizh/asrama); pegawai merangkap punya beberapa jenis sesi
+  const pegawai_sesi = Object.fromEntries(pegawai.filter((p) => p.status !== 'libur').map((p, i) => {
+    const ss = []; const muh = p.muhaffizh || p.bidang_kode === 'TAHFIZH'
+    if (muh) ss.push({ n: 'Halaqah subuh', mulai: '04:30', kal: 'tahfizh', pola: 'Halaqah tahfizh', st: stSesi(p.status, 0) })
+    if (p.musyrif) ss.push({ n: 'Asrama pagi', mulai: '05:30', kal: 'asrama', pola: 'Asrama', st: stSesi(p.status, 0) }, { n: 'Asrama malam', mulai: '20:00', kal: 'asrama', pola: 'Asrama', st: lalu ? (i % 3 ? 'hadir' : 'tanpa_keterangan') : stSesi(p.status, 1) })
+    if (!p.musyrif && (!muh || ['WUSTHA', 'SMA'].includes(p.bidang_kode) || i % 3 === 0)) ss.push({ n: 'Sekolah', mulai: '07:00', kal: 'sekolah', pola: 'Guru', st: muh && i % 2 === 0 && !lalu ? 'belum' : stSesi(p.status, 0) })
+    return [p.id, ss]
+  }))
   const grup = kel.kelompok.filter((g) => g.aktif !== false && ['kelas', 'kamar', 'halaqah', 'ekskul'].includes(g.jenis)).map((g) => {
     const ang = kel.anggota.filter((a) => a.group_id === g.id && !a.selesai).map((a) => santri.find((x) => x.id === a.student_id)).filter(Boolean)
     return { id: g.id, jenis: g.jenis, nama: g.nama, jk: g.jenis_kelamin, jenjang: g.jenjang, tingkat: g.tingkat, pengasuh: (g.pengasuh || []).map((x) => x.nama).join(', ') || null,
