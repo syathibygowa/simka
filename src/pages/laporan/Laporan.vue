@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/Laporan.vue | v1.8 | 14.24.0: menu Pelaporan; tab Ambang batas; Dokumen resmi pindah ke Persuratan | 25/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/Laporan.vue | v1.9 | 14.26.0: tab Laporan fungsional di samping Kehadiran pegawai | 25/10/2026 -->
 <script setup>
 // Menu Pelaporan (14.24.0, dahulu Dokumen; Dokumen resmi pindah ke Persuratan, Ambang batas pindah dari Setelan): satu menu bertab untuk semua rekap dan laporan resmi (hemat menu sidebar).
 // Tab: Presensi harian (admin/superadmin; dahulu menu Rekap Presensi), Kehadiran pegawai (semua pegawai: dirinya;
@@ -6,7 +6,7 @@
 // tangan elektronik), Kinerja bidang (14.18.0: pimpinan, admin, pengguna Layar Pantauan, pengelola laporan), Tanda tangan (kotak masuk permintaan tanda tangan laporan resmi), Kehadiran santri (pengasuh: kelompok asuhannya). Rekap bulanan/periode lama diganti tab Kehadiran pegawai. Laporan modul lain menyusul di sini.
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhCalendarCheck, PhUsersThree, PhStudent, PhSquaresFour, PhSignature, PhTarget, PhTrafficSignal } from '@phosphor-icons/vue'
+import { PhCalendarCheck, PhUsersThree, PhStudent, PhSquaresFour, PhSignature, PhTarget, PhTrafficSignal, PhIdentificationBadge } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import { useDokumenResmi } from '@/stores/dokumenResmi'
 import BilahTab from '@/components/BilahTab.vue'
@@ -27,6 +27,8 @@ const lihatPresensi = computed(() => sesi.isAdmin || ['verval_presensi', 'atur_p
 const TAB = computed(() => [
   ...(lihatPresensi.value ? [{ k: 'harian', n: 'Presensi harian', ikon: PhCalendarCheck, w: 'presensi' }] : []),
   { k: 'pegawai', n: pantau.value ? 'Kehadiran pegawai' : 'Kehadiran saya', ikon: PhUsersThree, w: 'pegawai' },
+  // 14.26.0: Laporan fungsional — kehadiran satu jenis tugas sesi saja (guru, muhaffizh, musyrif, kantor, …)
+  { k: 'fungsional', n: 'Laporan fungsional', ikon: PhIdentificationBadge, w: 'gurumapel' },
   // Kehadiran santri: pemantau (admin, pimpinan, pemegang hak data santri) dan pengasuh kelompok
   ...(pantau.value || sesi.luas('data_santri') || sesi.kelompokSaya.length ? [{ k: 'santri', n: 'Kehadiran santri', ikon: PhStudent, w: 'santri' }] : []),
   // Rekap layanan: Security, libur santri, pengajuan pegawai, klinik (pilihan sesuai hak)
@@ -49,7 +51,8 @@ const aktif = computed({
   <div class="space-y-4">
     <BilahTab v-model="aktif" :tab="TAB" label="Bagian rekap" />
     <RekapPresensi v-if="aktif === 'harian'" tab="harian" tertanam />
-    <TabKehadiranPegawai v-else-if="aktif === 'pegawai'" />
+    <TabKehadiranPegawai v-else-if="aktif === 'pegawai'" key="umum" />
+    <TabKehadiranPegawai v-else-if="aktif === 'fungsional'" key="fungsional" fungsional />
     <TabKehadiranSantri v-else-if="aktif === 'santri'" />
     <TabRekapLayanan v-else-if="aktif === 'layanan'" />
     <TabKinerjaBidang v-else-if="aktif === 'kinerja'" />

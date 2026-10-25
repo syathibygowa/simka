@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/arsip/ArsipTA.vue | v1.0 | 14.25.0: arsip tahun ajaran (kelompok, santri, rapor tahun ajaran lalu) | 25/10/2026 -->
+<!-- SIMKA PRO | src/pages/arsip/ArsipTA.vue | v1.1 | 14.26.0: bilah tab di atas (seragam dengan menu lain) | 25/10/2026 -->
 <script setup>
 // Arsip Tahun Ajaran (khusus admin dan superadmin). Pergantian tahun ajaran (menu Naik Kelas) membuka lembaran baru tanpa
 // menghapus data lama: kelompok, keanggotaan, nilai, dan rapor tahun ajaran sebelumnya tetap tersimpan dan dapat dibuka di sini.
@@ -101,6 +101,8 @@ watch([kelas, semester], () => { D.value = null })
         <p class="text-sm text-teks3">Buka kembali kelompok, santri, dan rapor tahun ajaran mana pun. Pergantian tahun ajaran membuka lembaran baru tanpa menghapus data lama.</p></div>
     </div>
 
+    <BilahTab class="mb-4" :tab="TAB" :model-value="aktif" label="Bagian arsip tahun ajaran" @update:model-value="pindahTab" />
+
     <section class="kartu flex flex-wrap items-end gap-3 p-4">
       <div class="min-w-[200px] flex-1"><label class="label-isian" for="ar-ta">Tahun ajaran</label>
         <select id="ar-ta" v-model="taId" class="isian"><option v-for="t in daftarTA" :key="t.id" :value="t.id">{{ labelTA(t) }}</option></select></div>
@@ -108,11 +110,9 @@ watch([kelas, semester], () => { D.value = null })
       <p v-if="ta.mulai" class="mb-2 text-sm text-teks3">{{ formatPanjang(ta.mulai) }} – {{ formatPanjang(ta.selesai) }}</p>
     </section>
 
-    <div class="-mx-4 mt-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 xl:grid-cols-5">
+    <div class="-mx-4 my-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 xl:grid-cols-5">
       <KartuStatistik v-for="k in statistik" :key="k.judul" class="w-[46%] shrink-0 snap-start sm:w-auto" :judul="k.judul" :nilai="k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket" />
     </div>
-
-    <BilahTab class="my-4" :tab="TAB" :model-value="aktif" label="Bagian arsip tahun ajaran" @update:model-value="pindahTab" />
 
     <p v-if="memuat" class="py-10 text-center text-teks3">Memuat arsip…</p>
     <template v-else-if="A">

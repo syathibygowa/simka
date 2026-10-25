@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabKetentuanNilai.vue | v1.3 | Perbaikan 13.6.0: logo rapor dari daftar logo terpusat | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabKetentuanNilai.vue | v1.4 | 14.26.0: keterangan ceklist capaian TP | 25/10/2026 -->
 <script setup>
 // Ketentuan per jenis rapor: judul, kop (dari kop surat sistem), label ambang (KKM/KKTP) dan nilai bawaannya, pembulatan,
 // bagian rapor (keterampilan, sikap di rapor, kokurikuler, daftar TP, rata-rata, peringkat), fase per kelas (SMA),
@@ -26,7 +26,7 @@ const sekolah = computed(() => jenis.value !== 'tahfizh')
 const SAKELAR = computed(() => sekolah.value ? [
   { k: 'pakai_keterampilan', n: 'Nilai keterampilan terpisah', ket: 'Kolom Pengetahuan dan Keterampilan (angka, predikat, deskripsi) seperti rapor Wustha.' },
   { k: 'sikap_di_rapor', n: 'Sikap dicetak di rapor', ket: 'Nonaktif: sikap tetap diisi guru di akhir semester dan tampil di leger.' },
-  { k: 'pakai_tp', n: 'Deskripsi memuat tujuan pembelajaran', ket: 'Kalimat capaian diikuti daftar TP yang diisi guru (Kurikulum Merdeka).' },
+  { k: 'pakai_tp', n: 'Deskripsi memuat tujuan pembelajaran', ket: 'Kalimat capaian diikuti daftar TP yang diisi guru (Kurikulum Merdeka). Guru mapel dapat menceklist TP yang dikuasai setiap santri (tab Capaian TP): TP tercentang menjadi capaian tertinggi, sisanya capaian terendah. Dapat dipakai untuk SMA maupun Wustha.' },
   { k: 'pakai_kokurikuler', n: 'Bagian kokurikuler', ket: 'Nilai dimensi profil lulusan diisi wali kelas; deskripsi tertinggi dan terendah tersusun otomatis.' },
   { k: 'tampil_rata', n: 'Rata-rata nilai dicetak di rapor', ket: 'Baris "Rata-rata nilai" di bawah tabel mapel.' },
   { k: 'tampil_peringkat', n: 'Peringkat dicetak di rapor', ket: 'Nonaktif: peringkat hanya tampil di leger.' },

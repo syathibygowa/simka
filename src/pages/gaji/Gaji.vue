@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gaji/Gaji.vue | v2.1 | Fase 11 – Tahap 6 Pengelola gaji = ditunjuk superadmin (bukan jabatan Bendahara) | 11/10/2026 -->
+<!-- SIMKA PRO | src/pages/gaji/Gaji.vue | v2.2 | 14.26.0: warna tab tidak kembar (gaya tab seragam) | 25/10/2026 -->
 <script setup>
 // Dua menu memakai halaman ini (prop "menu"), agar tab tidak terlalu banyak:
 // MENU GAJI (/gaji)
@@ -59,9 +59,9 @@ const SEMUA = computed(() => [
     { k: 'jabatan', n: 'Per jabatan', ikon: PhIdentificationBadge, w: 'presensi' },
     { k: 'tarif', n: 'Tarif', ikon: PhCoins, w: 'tahfizh' },
     { k: 'rekening', n: 'Rekening', ikon: PhBank, w: 'shift', lencana: tanpaRekening.value || 0 },
-    { k: 'pengingat', n: 'Pengingat kenaikan', ikon: PhTrendUp, w: 'presensi' },
+    { k: 'pengingat', n: 'Pengingat kenaikan', ikon: PhTrendUp, w: 'audit' },
     { k: 'ketentuan', n: 'Ketentuan', ikon: PhListChecks, w: 'pengaturan' },
-    ...(gaji.hak.slip_saya ? [{ k: 'slip', n: 'Slip saya', ikon: PhReceipt, w: 'gaji' }] : []),
+    ...(gaji.hak.slip_saya ? [{ k: 'slip', n: 'Slip saya', ikon: PhReceipt, w: 'datapresensi' }] : []),
   ] : []),
 ])
 const TAB = computed(() => SEMUA.value.filter((t) => TAB_TUNJANGAN.includes(t.k) === (props.menu === 'tunjangan')))

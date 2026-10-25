@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabTahsin.vue | v1.3 | 14.21.0: ujian tahsin (Makhraj, Shifat, hasil), suket hasil ujian, WA penguji, hapus data dihentikan | 24/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabTahsin.vue | v1.4 | 14.26.0: sub-tab Santri/Ujian tahsin memakai gaya tab seragam | 25/10/2026 -->
 <script setup>
 // Tahsin — pembinaan bacaan Al-Qur'an bagi santri yang belum menghafal (umumnya santri baru atau pindahan).
 //   Muhaffizh/pengelola: "Tandai santri tahsin" (mulai, asal, tahap awal, pembina).
@@ -231,10 +231,10 @@ async function cetakUjian() { kepala.value = await penandaTahfizh(); pratinjauUj
       <select v-model="halaqah" class="isian w-auto" aria-label="Saring halaqah"><option value="">Semua halaqah</option><option v-for="h in daftarHalaqah" :key="h" :value="h">{{ h }}</option></select>
     </SaringCorong>
     <div class="mt-2 flex flex-wrap items-center gap-2">
-      <div class="flex gap-1 rounded-full bg-permukaan2 p-1" role="tablist" aria-label="Bagian tahsin">
-        <button v-for="b in [{ k: 'santri', n: 'Santri tahsin', i: PhUserSound }, { k: 'ujian', n: 'Ujian tahsin', i: PhExam }]" :key="b.k" type="button" role="tab" :aria-selected="bagian === b.k" @click="bagian = b.k"
-          :class="['flex min-h-[38px] items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold', bagian === b.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">
-          <component :is="b.i" :size="18" weight="duotone" style="color: var(--c)" />{{ b.n }}<span v-if="b.k === 'ujian' && menungguUji.length" class="lencana w-pengajuan">{{ menungguUji.length }}</span></button>
+      <div class="bilah-tab kecil" role="tablist" aria-label="Bagian tahsin">
+        <button v-for="b in [{ k: 'santri', n: 'Santri tahsin', i: PhUserSound, w: 'tahsin' }, { k: 'ujian', n: 'Ujian tahsin', i: PhExam, w: 'agenda' }]" :key="b.k" type="button" role="tab" :aria-selected="bagian === b.k" @click="bagian = b.k"
+          :class="['tab-garis', 'w-' + b.w, bagian === b.k && 'aktif']">
+          <component :is="b.i" :size="18" weight="duotone" /><span>{{ b.n }}</span><span v-if="b.k === 'ujian' && menungguUji.length" class="lencana-tab">{{ menungguUji.length }}</span></button>
       </div>
       <span class="flex-1" />
       <template v-if="bagian === 'santri'">

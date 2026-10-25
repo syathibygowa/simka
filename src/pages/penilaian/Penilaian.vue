@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/Penilaian.vue | v1.1 | Fase 12 – Tahap 6 Rekap dan permintaan ubah nilai | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/Penilaian.vue | v1.2 | 14.26.0: warna tab tidak kembar (gaya tab seragam) | 25/10/2026 -->
 <script setup>
 // Menu Penilaian (kelompok menu Penilaian). v1.1: Rekap (kemajuan pengisian untuk pimpinan) dan Permintaan ubah nilai.
 //   Rekap          : kemajuan pengisian rapor per kelas, guru, UTAS, ekskul (semester berjalan)
@@ -42,7 +42,7 @@ const TAB = computed(() => [
   { k: 'periode', n: 'Periode', ikon: PhCalendarCheck, w: 'agenda', jumlah: dibuka.value ? `${dibuka.value} dibuka` : null },
   { k: 'mapel', n: 'Mapel rapor', ikon: PhListNumbers, w: 'rapor', lencana: kurangSumber.value || null },
   { k: 'komponen', n: 'Komponen nilai', ikon: PhScales, w: 'gurumapel' },
-  { k: 'predikat', n: 'Predikat', ikon: PhMedal, w: 'pengajuan' },
+  { k: 'predikat', n: 'Predikat', ikon: PhMedal, w: 'prestasi' },
   { k: 'catatan', n: 'Catatan otomatis', ikon: PhChatText, w: 'walikelas' },
   { k: 'ketentuan', n: 'Ketentuan rapor', ikon: PhGearSix, w: 'pengaturan' },
 ])

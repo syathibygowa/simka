@@ -1,9 +1,9 @@
-// SIMKA PRO | src/lib/rapor.js | v1.3 | 14.23.0: nilai, predikat, dan deskripsi gabungan rapor Wustha | 25/10/2026
+// SIMKA PRO | src/lib/rapor.js | v1.4 | 14.26.0: deskripsi capaian tertinggi/terendah dari ceklist TP (SMA dan Wustha) | 25/10/2026
 // Pengolah data cetak rapor (data_rapor / data_rapor_tahfizh): nilai per mapel rapor (pembulatan, predikat, deskripsi
 // otomatis), jumlah/rata-rata/peringkat untuk leger, kehadiran (persentase dan kalimat), keputusan akhir tahun,
 // identitas sekolah, serta label kelas Romawi.
 import { predikatDari, bulatkan } from './penilaian'
-import { deskripsiOtomatis } from './nilai'
+import { deskripsiOtomatis, deskripsiCapaian } from './nilai'
 import { formatPanjang } from './tanggal'
 import { deskripsiKokurikuler, deskripsiPd } from './catatanRapor'
 
@@ -64,13 +64,14 @@ function rapikan(t, adaTp) {
 /** Baris nilai satu santri untuk setiap mapel rapor. */
 /** Nilai gabungan (rata-rata pengetahuan dan keterampilan), predikat, dan deskripsi gabungan (dengan tujuan pembelajaran bila dipakai).
     Deskripsi yang ditulis guru dipakai apa adanya (pengetahuan lalu keterampilan bila keduanya ditulis). */
-function gabungan(n, k, x, pred, tp, pakaiTp, des) {
+function gabungan(n, k, x, pred, tp, pakaiTp, des, capai = null) {
   const ada = [n, k].filter((v) => v != null).map(Number)
   const g = ada.length ? bulatkan(ada.reduce((a, v) => a + v, 0) / ada.length, des) : null
   const p = predikatDari(g, pred)
   const tulis = [x.deskripsi, x.deskripsi_2].map((t) => String(t || '').trim()).filter(Boolean)
   let d = ''
   if (tulis.length) d = tulis.map((t) => (/[.!?]$/.test(t) ? t : t + '.')).join(' ')
+  else if (g != null && capai != null && tp.length) d = deskripsiCapaian(g, pred, tp, capai, { gabung: k != null }) || ''   // 14.26.0: ceklist TP
   else if (g != null) {
     let kal = String(p?.deskripsi || '').trim()
     if (k != null && /pengetahuan/i.test(kal) && !/keterampilan/i.test(kal)) kal = kal.replace(/pengetahuan/i, 'pengetahuan dan keterampilan')
@@ -86,12 +87,14 @@ export function barisNilai(santri, D) {
     const n = bulatkan(x.nilai, des); const k = bulatkan(x.keterampilan ?? (ket.keterampilan_ikut !== false ? x.nilai : null), des)
     const p = predikatDari(n, pred); const pk = predikatDari(k, pred)
     const tp = (x.tp || []).filter(Boolean)
+    const capai = Array.isArray(x.tp_capai) ? x.tp_capai : null   // 14.26.0: TP yang dicentang guru (null = belum diceklist)
+    const dCapai = n == null ? null : deskripsiCapaian(n, pred, tp, capai)
     return {
       ...m, nilai: n, keterampilan: k, huruf: p?.huruf || '', huruf_ket: pk?.huruf || '', tuntas: n == null ? null : n >= Number(m.kkm), sikap: x.sikap || '',
-      deskripsi: x.deskripsi || (n == null ? '' : rapikan(deskripsiOtomatis(n, pred, { tp, pakaiTp: !!ket.pakai_tp }), !!ket.pakai_tp && tp.length > 0)),
+      deskripsi: x.deskripsi || dCapai || (n == null ? '' : rapikan(deskripsiOtomatis(n, pred, { tp, pakaiTp: !!ket.pakai_tp }), !!ket.pakai_tp && tp.length > 0)),
       deskripsi_2: x.deskripsi_2 || (k == null ? '' : deskripsiOtomatis(k, pred, { keterampilan: true })),
       // 14.23.0: rapor Wustha sederhana — satu predikat dan satu deskripsi dari rata-rata nilai pengetahuan dan keterampilan
-      ...gabungan(n, k, x, pred, tp, !!ket.pakai_tp, des),
+      ...gabungan(n, k, x, pred, tp, !!ket.pakai_tp, des, capai),
     }
   })
 }

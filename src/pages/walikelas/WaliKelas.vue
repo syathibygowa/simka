@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/WaliKelas.vue | v1.2 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/WaliKelas.vue | v1.3 | 14.26.0: warna tab tidak kembar (gaya tab seragam) | 25/10/2026 -->
 <script setup>
 // Menu Wali Kelas. Wali kelas melihat kelasnya; admin, superadmin, dan pimpinan (pemegang hak Absensi Kelas/Jadwal
 // mengajar menurut jenjangnya) melihat semua kelas. Tab:
@@ -33,7 +33,7 @@ onMounted(() => { muat(true); san.muat().catch(() => {}) })
 /** Pemantau = admin/superadmin, pemegang hak Absensi Kelas cakupan luas, atau yang melihat lebih dari kelas asuhannya. */
 const pemantau = computed(() => sesi.isAdmin || sesi.luas('absensi_kelas') || wk.kelas.some((k) => !k.asuhan_saya))
 const TAB = computed(() => [
-  ...(pemantau.value ? [{ k: 'ringkasan', n: 'Semua kelas', ikon: PhSquaresFour, w: 'walikelas' }] : []),
+  ...(pemantau.value ? [{ k: 'ringkasan', n: 'Semua kelas', ikon: PhSquaresFour, w: 'kelompoksantri' }] : []),
   { k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'walikelas' }, { k: 'santri', n: 'Santri', ikon: PhStudent, w: 'santri' },
   { k: 'pelajaran', n: 'Pelajaran', ikon: PhBookOpenText, w: 'gurumapel' }, { k: 'rekap', n: 'Rekap absensi', ikon: PhChartBar, w: 'rekap' },
   { k: 'izin', n: 'Perizinan', ikon: PhSignOut, w: 'pengajuan' }, { k: 'rapor', n: 'Rapor', ikon: PhExam, w: 'rapor' }])

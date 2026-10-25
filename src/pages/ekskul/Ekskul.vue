@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/ekskul/Ekskul.vue | v1.4 | Perbaikan 13.7.0: kategori indoor/outdoor, pertemuan sepekan tanpa memilih tanggal | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/ekskul/Ekskul.vue | v1.5 | 14.26.0: tab Leger (kehadiran dan nilai semua ekskul per santri); warna tab tidak kembar | 25/10/2026 -->
 <script setup>
 // Ekskul: Pertemuan (absensi HISBAT + jurnal materi per pertemuan), Jadwal pertemuan (otomatis menjadi sesi
 // presensi pembina/pelatih), dan Rekap (kehadiran santri, jurnal materi; Excel dan cetak F4).
@@ -7,10 +7,11 @@
 // v1.2: tab Dasbor — perkembangan semua ekskul (pertemuan, kehadiran, jurnal materi) untuk admin/pimpinan/pembina.
 // v1.4: sub-tab kategori Semua/Indoor/Outdoor berlaku di semua tab; Pertemuan tampil sepekan (seperti jurnal mengajar guru)
 //       sehingga pelatih langsung memilih pertemuan sesuai jadwal; kategori diatur di tab Jadwal.
+// v1.5 (14.26.0): tab Leger — kehadiran dan nilai setiap santri di semua ekskul, menandai santri tanpa ekskul (pemantau ekskul).
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BilahTab from '@/components/BilahTab.vue'
-import { PhMedal, PhCalendarDots, PhChartBar, PhCaretRight, PhCaretLeft, PhPencilSimple, PhPlus, PhX, PhFloppyDisk, PhMapPin, PhUserCircle, PhInfo, PhGauge, PhExam, PhCheckCircle, PhNotePencil, PhHourglass, PhLockSimple } from '@phosphor-icons/vue'
+import { PhMedal, PhCalendarDots, PhChartBar, PhCaretRight, PhCaretLeft, PhPencilSimple, PhPlus, PhX, PhFloppyDisk, PhMapPin, PhUserCircle, PhInfo, PhGauge, PhExam, PhCheckCircle, PhNotePencil, PhHourglass, PhLockSimple, PhTable } from '@phosphor-icons/vue'
 import { KATEGORI_EKSKUL, TAB_KATEGORI, BELUM_KATEGORI, cocokKategori } from '@/lib/ekskul'
 import { useAbsensiSantri } from '@/stores/absensiSantri'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
@@ -23,11 +24,13 @@ import LembarBawah from '@/components/LembarBawah.vue'
 import TabRekapEkskul from './TabRekapEkskul.vue'
 import TabDasborEkskul from './TabDasborEkskul.vue'
 import TabNilaiEkskul from './TabNilaiEkskul.vue'
+import TabLegerEkskul from './TabLegerEkskul.vue'
 
 const props = defineProps({ tab: { type: String, default: '' } })
 const router = useRouter(); const abs = useAbsensiSantri(); const kel = useKelompokSantri(); const sesi = useSesi(); const ui = useUI()
-const TAB = [{ k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'ekskul' }, { k: 'pertemuan', n: 'Pertemuan', ikon: PhMedal, w: 'ekskul' }, { k: 'jadwal', n: 'Jadwal', ikon: PhCalendarDots, w: 'agenda' }, { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' }, { k: 'nilai', n: 'Nilai rapor', ikon: PhExam, w: 'rapor' }]
-const aktif = computed(() => (TAB.some((t) => t.k === props.tab) ? props.tab : lihatSemua.value ? 'dasbor' : 'pertemuan'))
+const TAB = computed(() => [{ k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'beranda' }, { k: 'pertemuan', n: 'Pertemuan', ikon: PhMedal, w: 'ekskul' }, { k: 'jadwal', n: 'Jadwal', ikon: PhCalendarDots, w: 'agenda' }, { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' }, { k: 'nilai', n: 'Nilai rapor', ikon: PhExam, w: 'rapor' },
+  ...(lihatSemua.value ? [{ k: 'leger', n: 'Leger', ikon: PhTable, w: 'gurumapel' }] : [])])
+const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : lihatSemua.value ? 'dasbor' : 'pertemuan'))
 const lihatSemua = computed(() => sesi.isAdmin || sesi.tingkat('absensi_ekskul') >= 1 && sesi.tingkat('data_santri') >= 1)
 const bolehAtur = computed(() => sesi.bolehAdmin('kelompok_santri') || sesi.tingkat('kelompok_santri') >= 2)
 // Saringan kategori (tersimpan di perangkat): '' semua · indoor · outdoor
@@ -166,6 +169,7 @@ const pembina = (g) => (g.pengasuh || []).filter((p) => p.berlaku !== false).map
     </template>
 
     <TabNilaiEkskul v-else-if="aktif === 'nilai'" :kategori="kategori" />
+    <TabLegerEkskul v-else-if="aktif === 'leger'" :kategori="kategori" />
     <TabRekapEkskul v-else :semua="lihatSemua" :kategori="kategori" />
 
     <LembarBawah v-model="lembar" :judul="`Jadwal ${gEdit?.nama || ''}`">

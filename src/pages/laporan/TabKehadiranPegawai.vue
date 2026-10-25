@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.10 | 14.24.0: laporan fungsional per jenis tugas sesi (guru, muhaffizh, musyrif, kantor, dll.) | 25/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.11 | 14.26.0: laporan fungsional menjadi tab tersendiri (prop fungsional); pilihan tugas bergaya tab | 25/10/2026 -->
 <script setup>
 // Laporan kehadiran pegawai (menu Rekap → Kehadiran pegawai).
 // Jenis: rekap ringkas, rekap matriks (nama × tanggal, F4 mendatar), laporan individu, daftar perhatian.
@@ -8,10 +8,11 @@
 // v1.2: Terbitkan resmi (PanelResmi): salinan beku + permintaan tanda tangan pimpinan; versi resmi dibuka lewat ?resmi=id.
 // v1.10 (14.24.0): sub-tab Laporan umum / Laporan fungsional — fungsional hanya menghitung sesi satu jenis tugas (guru, muhaffizh,
 //   musyrif, kantor, security, klinik) sehingga tidak bercampur dengan sesi fungsi lain; cakupan bidang, jabatan, dan centang tetap berlaku.
+// v1.11 (14.26.0): tab Kehadiran pegawai kembali semua sesi; Laporan fungsional menjadi tab tersendiri di menu Pelaporan (prop fungsional).
 // v1.9 (14.21.0): cakupan "Pilih pegawai (centang)" — hanya pegawai yang dicentang yang tampil, diekspor, dan dicetak; pilihan diingat per perangkat.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { PhUsersThree, PhChartPieSlice, PhWarningCircle, PhUserMinus, PhMagnifyingGlass, PhFileXls, PhPrinter, PhInfo, PhListBullets, PhGridNine, PhUser, PhFlag, PhCheckSquare, PhSquare } from '@phosphor-icons/vue'
+import { PhUsersThree, PhChartPieSlice, PhWarningCircle, PhUserMinus, PhMagnifyingGlass, PhFileXls, PhPrinter, PhInfo, PhListBullets, PhGridNine, PhUser, PhFlag, PhCheckSquare, PhSquare, PhChalkboardTeacher, PhBookOpenText, PhBuildings, PhBriefcase, PhShieldCheck, PhFirstAidKit, PhIdentificationBadge } from '@phosphor-icons/vue'
 import { useLaporanKehadiran } from '@/stores/laporanKehadiran'
 import { usePegawai } from '@/stores/pegawai'
 import { useOrganisasi } from '@/stores/organisasi'
@@ -32,6 +33,7 @@ import LembarBawah from '@/components/LembarBawah.vue'
 import { useLembaga } from '@/stores/lembaga'
 import { useDokumenResmi } from '@/stores/dokumenResmi'
 
+const props = defineProps({ fungsional: Boolean })
 const lk = useLaporanKehadiran(); const peg = usePegawai(); const org = useOrganisasi(); const sesi = useSesi(); const ui = useUI()
 const route = useRoute(); const router = useRouter(); const dr = useDokumenResmi()
 const resmi = ref(null) // versi resmi (salinan beku) yang sedang ditampilkan
@@ -43,10 +45,13 @@ const jenis = ref(pemantau.value ? 'ringkas' : 'individu')
 const cakupan = ref('semua'); const nilai = ref('')
 // 14.24.0: laporan fungsional (per jenis tugas sesi)
 const lembaga = useLembaga(); lembaga.muat().catch(() => {})
-const ragam = ref('umum'); const tugas = ref('')
+const ragam = ref(props.fungsional ? 'fungsional' : 'umum'); const tugas = ref('')
 const LABEL_TUGAS = { sekolah: 'Guru (jam sekolah)', tahfizh: 'Muhaffizh (halaqah)', asrama: 'Musyrif (asrama)', kantor: 'Kantor dan staf', security: 'Security', medis: 'Klinik (medis)' }
 const daftarTugas = computed(() => { const ada = (lembaga.holiday_calendars || []).map((c) => c.jenis_tugas); const k = [...new Set([...ada, 'kantor'])]
-  return k.map((x) => ({ k: x, n: LABEL_TUGAS[x] || (lembaga.holiday_calendars || []).find((c) => c.jenis_tugas === x)?.nama || x })) })
+  return k.map((x) => ({ k: x, n: LABEL_TUGAS[x] || (lembaga.holiday_calendars || []).find((c) => c.jenis_tugas === x)?.nama || x, ikon: IKON_TUGAS[x]?.[0] || PhIdentificationBadge, w: IKON_TUGAS[x]?.[1] || 'pegawai' })) })
+// Ikon dan warna tab tugas (sama dengan menu terkait)
+const IKON_TUGAS = { sekolah: [PhChalkboardTeacher, 'walikelas'], tahfizh: [PhBookOpenText, 'tahfizh'], asrama: [PhBuildings, 'musyrif'], kantor: [PhBriefcase, 'tatausaha'], security: [PhShieldCheck, 'security'], medis: [PhFirstAidKit, 'klinik'] }
+watch(daftarTugas, (d) => { if (ragam.value === 'fungsional' && !tugas.value && d.length) tugas.value = d[0].k }, { immediate: true })
 const tugasEfektif = computed(() => (ragam.value === 'fungsional' ? tugas.value || null : null))
 const namaTugas = computed(() => (tugasEfektif.value ? daftarTugas.value.find((t) => t.k === tugasEfektif.value)?.n || tugasEfektif.value : ''))
 // 14.21.0: pegawai pilihan (dicentang); diingat per perangkat
@@ -204,15 +209,12 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
     <!-- 14.2.0: di HP saringan dilipat menjadi bilah corong setelah hasil tampil -->
     <SaringCorong v-model:buka="bukaSaring" :lipat="!!lk.data && !resmi" :ringkasan="`${periodeTeks} · ${namaCakupan}`" judul="Ubah saringan laporan" tanpa-tombol>
       <fieldset :disabled="!!resmi" :class="['kartu w-full min-w-0 space-y-4 p-4', resmi && 'opacity-60']">
-        <!-- 14.24.0: Laporan umum (semua sesi) atau fungsional (satu jenis tugas) -->
-        <div class="flex flex-wrap items-center gap-2">
-          <div class="flex gap-1 rounded-full bg-permukaan2 p-1" role="tablist" aria-label="Ragam laporan">
-            <button v-for="r in [{ k: 'umum', n: 'Laporan umum (semua sesi)' }, { k: 'fungsional', n: 'Laporan fungsional (per tugas)' }]" :key="r.k" type="button" role="tab" :aria-selected="ragam === r.k" @click="ragam = r.k"
-              :class="['min-h-[38px] rounded-full px-3.5 text-sm font-semibold', ragam === r.k ? 'bg-permukaan text-teks shadow-kartu' : 'text-teks2']">{{ r.n }}</button>
-          </div>
-          <div v-if="ragam === 'fungsional'" class="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Jenis tugas">
-            <button v-for="t in daftarTugas" :key="t.k" type="button" role="radio" :aria-checked="tugas === t.k" @click="tugas = t.k"
-              :class="['min-h-[36px] rounded-full border px-3 text-sm font-semibold', tugas === t.k ? 'border-[#1E7D4F] bg-[#E2F1E8] text-[#14583A] dark:bg-[#123524] dark:text-[#8FE0B5]' : 'border-garis text-teks2']">{{ t.n }}</button>
+        <!-- 14.26.0: tab Laporan fungsional — pilih satu jenis tugas sesi -->
+        <div v-if="ragam === 'fungsional'">
+          <p class="label-isian">Tugas yang dilaporkan</p>
+          <div class="bilah-tab kecil" role="tablist" aria-label="Jenis tugas">
+            <button v-for="t in daftarTugas" :key="t.k" type="button" role="tab" :aria-selected="tugas === t.k" @click="tugas = t.k"
+              :class="['tab-garis', 'w-' + t.w, tugas === t.k && 'aktif']"><component :is="t.ikon" :size="18" weight="duotone" /><span>{{ t.n }}</span></button>
           </div>
         </div>
         <p v-if="ragam === 'fungsional'" class="text-xs text-teks3">Hanya sesi presensi dari pola bertugas {{ namaTugas || '…' }} yang dihitung (mis. muhaffizh hanya sesi halaqah), tidak bercampur dengan sesi fungsi lain. Pegawai tanpa sesi tugas ini tidak ditampilkan.</p>

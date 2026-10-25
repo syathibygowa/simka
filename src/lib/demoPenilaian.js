@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoPenilaian.js | v1.1 | Fase 12 – Tahap 5 identitas sekolah per rapor | 13/10/2026
+// SIMKA PRO | src/lib/demoPenilaian.js | v1.2 | 14.26.0: demo Wustha memakai TP (ceklist capaian) | 25/10/2026
 // v1.1: identitas sekolah per jenis rapor (sampul dan halaman identitas sekolah).
 // Pengaturan penilaian contoh untuk MODE DEMO (mengikuti isi awal migrasi 8200). Semua data fiktif.
 import { dataJadwalDemo } from './demoJadwal'
@@ -48,7 +48,7 @@ export function dataPenilaianDemo() {
   const ketentuan = {
     sma: k('sma', { judul: 'Laporan Hasil Belajar', kop_kode: 'sma', label_ambang: 'KKTP', pakai_kokurikuler: true, pakai_tp: true, signatory_id: 's3', jabatan_ttd: 'Kepala Sekolah',
       penanda: { jabatan: 'Kepala SMA', nama: 'H. Afrianto, Lc, M.H.', niy: '1994042801202001' }, fase: { 10: 'E', 11: 'F', 12: 'F' }, dimensi: DIMENSI }),
-    wustha: k('wustha', { judul: 'Pencapaian Kompetensi Peserta Didik', kop_kode: 'wustha', ambang_bawaan: 70, pakai_keterampilan: true, sikap_di_rapor: true, tampil_rata: true,
+    wustha: k('wustha', { judul: 'Pencapaian Kompetensi Peserta Didik', kop_kode: 'wustha', ambang_bawaan: 70, pakai_keterampilan: true, pakai_tp: true, sikap_di_rapor: true, tampil_rata: true,
       signatory_id: 's2', jabatan_ttd: 'Kepala Kesetaraan', penanda: { jabatan: 'Kepala Kesetaraan Wustha (SMP)', nama: 'Chamdar Nur, S.Pd.I., SH., Lc., M.Pd.', niy: '1983042805201401' } }),
     tahfizh: k('tahfizh', { judul: "Laporan Hasil Capaian Hafalan Al-Qur'an", ambang_bawaan: 80, jabatan_ttd: 'Kepala Tahfizh' }),
   }

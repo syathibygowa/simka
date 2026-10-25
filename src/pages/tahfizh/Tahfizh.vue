@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/Tahfizh.vue | v1.10 | 14.11.0: tab Tahsin (santri yang belum menghafal) | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/Tahfizh.vue | v1.11 | 14.26.0: warna tab tidak kembar (gaya tab seragam) | 25/10/2026 -->
 <script setup>
 // Menu Tahfizh. Tahap D: tab Dokumen (dokumen tahfizh bernomor; terbuka juga bagi penguji dan Tata Usaha). Fase 12: tab Rapor (catatan muhaffizh per halaqah); UTAS di tab Ujian. Tahap 5: tab Laporan (15 laporan dan grafik). Tahap 4: tab Ujian (kenaikan juz, sertifikasi). Tahap 3: tab Capaian (status bulanan, usulan juz). Tahap 2: tab Setoran (sesi halaqah per tanggal). Tahap 1: tab Data hafalan (program, posisi, capaian juz resmi, data awal) dan
 // Ketentuan (KKM, target, predikat, pekan efektif, penguji; diubah oleh pemegang izin atur_tahfizh).
@@ -35,7 +35,7 @@ const TAB = [
   { k: 'ujian', n: 'Ujian', ikon: PhExam, w: 'agenda' },
   { k: 'khataman', n: 'Khataman', ikon: PhCrown, w: 'prestasi' },
   { k: 'laporan', n: 'Laporan', ikon: PhChartPieSlice, w: 'laporan' },
-  { k: 'dokumen', n: 'Dokumen', ikon: PhCertificate, w: 'prestasi' },
+  { k: 'dokumen', n: 'Dokumen', ikon: PhCertificate, w: 'tatausaha' },
   { k: 'rapor', n: 'Rapor', ikon: PhNotePencil, w: 'rapor' },
   { k: 'santri', n: 'Data hafalan', ikon: PhBookOpenText, w: 'tahfizh' },
   { k: 'ketentuan', n: 'Ketentuan', ikon: PhListChecks, w: 'pengaturan' },

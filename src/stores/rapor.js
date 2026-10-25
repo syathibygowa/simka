@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/rapor.js | v1.3 | 14.9.3: data demo hanya santri aktif | 18/10/2026
+// SIMKA PRO | src/stores/rapor.js | v1.4 | 14.26.0: demo capaian TP (tp_capai) | 25/10/2026
 // v1.1: dataRapor (rapor SMA/Wustha, leger, sampul), dataRaporTahfizh, simpanNilaiManual, simpanKeputusan.
 // v1.2: dataRapor menambah foto_id dan prestasi (bertanda masuk rapor, dalam rentang semester) per santri (pelengkap_rapor).
 // Isian pelengkap rapor oleh pengasuh kelompok:
@@ -54,7 +54,7 @@ function biodataDemo(s) {
     ayah: { nama: AYAH[i], pekerjaan: 'Wiraswasta', no_hp: '081234567890', alamat: null }, ibu: { nama: IBU[i], pekerjaan: 'Ibu rumah tangga', no_hp: null, alamat: null }, wali: null,
     alamat_ortu: s.alamat || 'Jl. Poros Malino, Bontoramba, Somba Opu, Gowa' }
 }
-const TP_DEMO = { MTK: ['bilangan berpangkat', 'persamaan linear'], BIND: ['teks eksposisi', 'teks laporan hasil observasi'], BING: ['descriptive text', 'simple present tense'], PAI: ['berbuat baik kepada orang tua'] }
+const TP_DEMO = { MTK: ['bilangan berpangkat', 'persamaan linear', 'teorema Pythagoras'], BIND: ['teks eksposisi', 'teks laporan hasil observasi'], BING: ['descriptive text', 'simple present tense'], PAI: ['berbuat baik kepada orang tua'] }
 function rentangDemo(smt) { return smt === 1 ? { mulai: '2026-07-13', selesai: '2026-12-31' } : { mulai: '2027-01-01', selesai: '2027-06-30' } }
 function tahfizhSantriDemo(s, smt, kel) {
   const t = s.id + 'h' + smt; const tz = dataTahfizhDemo(); const total = (tz.juz[s.id] || []).length; const r = rentangDemo(smt)
@@ -96,6 +96,21 @@ export const useRapor = defineStore('rapor', {
             return { id: s.id, nis: s.nis, nama: s.nama_lengkap, jenis_kelamin: s.jenis_kelamin, jenjang: s.jenjang, kelas: kelasDari(kel, s.id), sesi: k.sesi, hadir: k.hadir, nilai: x?.nilai || null, deskripsi: x?.deskripsi || null } }) }
       }
       return rpc('nilai_ekskul', { p_group: groupId, p_semester: smt })
+    },
+    /** 14.26.0: Leger ekskul satu semester — kehadiran dan nilai setiap santri di semua ekskul; santri tanpa ekskul ikut tampil. */
+    async legerEkskul(smt) {
+      if (MODE_DEMO) {
+        await useSantri().muat()
+        const { san, kel } = siapDemo()
+        const ek = kel.kelompok.filter((g) => g.jenis === 'ekskul' && g.aktif).sort((a, b) => a.nama.localeCompare(b.nama))
+        const peta = {}
+        for (const g of ek) for (const s of anggotaDemo(kel, san, g.id)) { const k = hadirDemo(g.id + s.id + smt, 14); const x = demo.pd[`${smt}|${g.id}|${s.id}`]
+          ;(peta[s.id] ||= {})[g.id] = { a: true, s: k.sesi, h: k.hadir, n: x?.nilai || (k.hadir / k.sesi >= 0.9 ? 'A' : k.hadir / k.sesi >= 0.75 ? 'B' : 'C') } }
+        return { ta: '2026/2027', semester: smt, ekskul: ek.map((g) => ({ id: g.id, nama: g.nama, kategori: g.kategori_ekskul || null, pembina: (g.pengasuh || []).filter((p) => p.peran === 'utama').map((p) => p.nama).join(', ') })),
+          santri: san.daftar.filter((s) => s.status === 'aktif').map((s) => ({ id: s.id, nis: s.nis, nisn: s.nisn, nama: s.nama_lengkap, jenis_kelamin: s.jenis_kelamin, jenjang: s.jenjang,
+            kelas: kelasDari(kel, s.id), tingkat: s.tingkat, ekskul: peta[s.id] || {} })).sort((a, b) => String(a.jenjang).localeCompare(String(b.jenjang)) || (a.tingkat - b.tingkat) || String(a.kelas).localeCompare(String(b.kelas)) || a.nama.localeCompare(b.nama)) }
+      }
+      return rpc('leger_ekskul', { p_semester: smt, p_ta: null })
     },
     /** isi: [{ student_id, nilai, deskripsi }] */
     async simpanEkskul(groupId, smt, isi) {
@@ -211,7 +226,8 @@ export const useRapor = defineStore('rapor', {
             for (const m of mapel) {
               if (m.sumber === 'manual') { const v = demo.manual[`${smt}|${m.id}|${x.id}`]; if (v) nilai[m.id] = { nilai: v.nilai, keterampilan: v.keterampilan, deskripsi: v.deskripsi } }
               else if (m.sumber === 'tahfizh') nilai[m.id] = { nilai: tz.utas.nilai, keterampilan: tz.utas.nilai }
-              else if ((m.sumber_mapel || []).length) { const n = antara(t + m.nama, 66, 98); nilai[m.id] = { nilai: n, keterampilan: g.jenjang === 'wustha' ? Math.min(100, n + antara(t + m.nama + 'k', -4, 4)) : n, sikap: antara(t + m.nama + 's', 0, 3) ? 'A' : 'B', tp: TP_DEMO[m.sumber_mapel[0].kode] || ['materi pokok semester ini'] } }
+              else if ((m.sumber_mapel || []).length) { const n = antara(t + m.nama, 66, 98); nilai[m.id] = { nilai: n, keterampilan: g.jenjang === 'wustha' ? Math.min(100, n + antara(t + m.nama + 'k', -4, 4)) : n, sikap: antara(t + m.nama + 's', 0, 3) ? 'A' : 'B', tp: TP_DEMO[m.sumber_mapel[0].kode] || ['materi pokok semester ini'],
+                tp_capai: antara(t + m.nama + 'c', 0, 2) ? (TP_DEMO[m.sumber_mapel[0].kode] || ['materi pokok semester ini']).slice(0, antara(t + m.nama + 'j', 1, 2)) : null } }
             }
             return { ...biodataDemo(s), kehadiran: { hari: x.kehadiran.sesi, hadir: x.kehadiran.hadir, sakit: x.kehadiran.sakit, izin: x.kehadiran.izin, absen: x.kehadiran.absen }, nilai,
               pd: (x.pd || []).map((p) => ({ ...p, deskripsi: null })), kokurikuler: x.kokurikuler, catatan: x.catatan,

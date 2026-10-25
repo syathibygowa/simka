@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/nilai.js | v1.0 | Fase 12 – Tahap 2 Isian nilai guru mapel | 13/10/2026
+// SIMKA PRO | src/stores/nilai.js | v1.1 | 14.26.0: ceklist capaian TP per santri (tp_tercapai) | 25/10/2026
 // Isian nilai guru mapel: daftar kelas–mapel yang terlihat beserta kemajuan pengisian, lembar nilai satu penugasan ×
 // semester (isian per komponen, nilai rapor, sikap, tujuan pembelajaran). Penulisan hanya lewat fungsi SQL.
 import { defineStore } from 'pinia'
@@ -44,6 +44,7 @@ function lembarDemo(id, smt) {
     ketentuan: { label_ambang: ket.label_ambang, desimal: ket.desimal, pakai_keterampilan: ket.pakai_keterampilan, keterampilan_ikut: ket.keterampilan_ikut, pakai_tp: ket.pakai_tp, sikap_di_rapor: ket.sikap_di_rapor },
     kategori, predikat: pn.predikat.filter((p) => p.kelompok === jenis), sikap_pilihan: pn.predikat.filter((p) => p.kelompok === 'sikap'),
     kolom, tp: (demo.tp.get(kunci(id, smt)) || []).map((teks, i) => ({ id: 'tp' + i, teks })), santri, skor, akhir,
+    capaian_tp: Object.fromEntries(santri.map((s) => [s.id, demo.akhir.get(`${kunci(id, smt)}|${s.id}`)?.tp_tercapai]).filter(([, v]) => Array.isArray(v))),
   }
 }
 
@@ -102,7 +103,7 @@ export const useNilai = defineStore('nilai', {
       const { tugas, semester } = this.lembar
       if (MODE_DEMO) {
         for (const x of isi) { const k = `${kunci(tugas.assignment_id, semester)}|${x.student_id}`; const lama = demo.akhir.get(k) || {}; const baru = { ...lama }
-          for (const f of ['nilai', 'keterampilan', 'sikap', 'deskripsi', 'deskripsi_2']) if (f in x) baru[f] = x[f] === '' ? null : x[f]
+          for (const f of ['nilai', 'keterampilan', 'sikap', 'deskripsi', 'deskripsi_2', 'tp_tercapai']) if (f in x) baru[f] = x[f] === '' ? null : x[f]
           demo.akhir.set(k, baru) }
         return this.muatLembar(tugas.assignment_id, semester)
       }

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/IsiNilai.vue | v1.3 | 14.3.0: komponen Kehadiran otomatis dari absensi pelajaran | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/IsiNilai.vue | v1.4 | 14.26.0: tab Capaian TP (ceklist TP per santri → deskripsi capaian tertinggi/terendah) | 25/10/2026 -->
 <script setup>
 // Lembar nilai satu kelas–mapel × semester (Guru Mapel → Nilai). Bagian:
 //   Isian nilai : isian per komponen (Harian 1, Harian 2, Ulangan, UTS, UAS, …) yang ditambah guru sendiri; tampilan tabel
@@ -8,15 +8,18 @@
 //                 otomatis yang dapat diganti per santri
 //   Sikap       : diisi di akhir semester (A/B/C/K)
 //   TP          : tujuan pembelajaran (rapor SMA: dipakai pada deskripsi capaian)
+//   Capaian TP  : (14.26.0) guru mencentang TP yang dikuasai setiap santri; TP tercentang = capaian tertinggi (kalimat predikat nilai),
+//                 TP tidak tercentang = capaian terendah (kalimat predikat terendah). Belum diceklist = deskripsi otomatis lama.
 // v1.1: periode ditutup/batas pengisian lewat → guru pengampu mengajukan permintaan ubah nilai (AjukanUbahNilai).
 // Perubahan disimpan dengan tombol Simpan; meninggalkan halaman dengan perubahan belum tersimpan meminta konfirmasi.
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
-import { PhPlus, PhFloppyDisk, PhPencilSimple, PhTrash, PhTable, PhListBullets, PhLockSimple, PhLink, PhMagicWand, PhInfo, PhCheckCircle, PhWarningCircle, PhTarget, PhSmiley, PhCalculator, PhNotePencil } from '@phosphor-icons/vue'
+import { PhPlus, PhFloppyDisk, PhPencilSimple, PhTrash, PhTable, PhListBullets, PhLockSimple, PhLink, PhMagicWand, PhInfo, PhCheckCircle, PhWarningCircle, PhTarget, PhSmiley, PhCalculator, PhNotePencil, PhListChecks, PhCheckSquare, PhSquare, PhArrowCounterClockwise } from '@phosphor-icons/vue'
 import { useNilai } from '@/stores/nilai'
 import { useUI } from '@/stores/ui'
 import { MODE_NILAI, STATUS_PERIODE, ASPEK, predikatDari } from '@/lib/penilaian'
-import { hitungAkumulasi, deskripsiOtomatis, LABEL_SEMESTER } from '@/lib/nilai'
+import { hitungAkumulasi, deskripsiOtomatis, deskripsiCapaian, predikatTerendah, LABEL_SEMESTER } from '@/lib/nilai'
+import { bulatkan } from '@/lib/penilaian'
 import { useAmbang } from '@/stores/ambang'
 import { JENJANG_PENDEK } from '@/lib/santri'
 import { hariIniISO, formatPendek } from '@/lib/tanggal'
@@ -57,7 +60,8 @@ const tpTeks = ref(''); const tpUbah = ref(false)
 function reset() {
   skor.value = new Map((L.value?.skor || []).map(([c, s, v]) => [`${c}|${s}`, Number(v)])); ubahSkor.value = new Map()
   akhir.value = Object.fromEntries(santri.value.map((s) => { const a = (L.value.akhir || []).find((x) => x.student_id === s.id) || {}
-    return [s.id, { nilai: a.nilai ?? '', keterampilan: a.keterampilan ?? '', sikap: a.sikap || '', deskripsi: a.deskripsi || '', deskripsi_2: a.deskripsi_2 || '' }] }))
+    const tp = L.value.capaian_tp?.[s.id]
+    return [s.id, { nilai: a.nilai ?? '', keterampilan: a.keterampilan ?? '', sikap: a.sikap || '', deskripsi: a.deskripsi || '', deskripsi_2: a.deskripsi_2 || '', tp: Array.isArray(tp) ? [...tp] : null }] }))
   ubahAkhir.value = new Set(); tpTeks.value = (L.value?.tp || []).map((t) => t.teks).join('\n'); tpUbah.value = false
 }
 const nilaiSel = (c, s) => (ubahSkor.value.has(`${c}|${s}`) ? ubahSkor.value.get(`${c}|${s}`) : skor.value.get(`${c}|${s}`) ?? '')
@@ -73,8 +77,15 @@ const nilaiRapor = (s) => (akumulasi.value ? saran(s).nilai : akhir.value[s]?.ni
 const nilaiKet = (s) => { const v = akhir.value[s]?.keterampilan; return v === '' || v == null ? nilaiRapor(s) : Number(v) }
 const pred = (n) => predikatDari(n, L.value?.predikat || [])
 const tpList = computed(() => tpTeks.value.split('\n').map((x) => x.trim()).filter(Boolean))
-const deskripsi = (s, k = false) => (k ? akhir.value[s]?.deskripsi_2 : akhir.value[s]?.deskripsi)
-  || deskripsiOtomatis(k ? nilaiKet(s) : nilaiRapor(s), L.value?.predikat || [], { tp: tpList.value, pakaiTp: !!ket.value.pakai_tp && !k, keterampilan: k })
+// 14.26.0: nilai acuan capaian TP — Wustha (pengetahuan + keterampilan) memakai rata-rata keduanya seperti di rapor
+const nilaiCapaian = (s) => { const n = nilaiRapor(s); if (!dua.value || n == null) return n; const k = nilaiKet(s); return k == null ? n : bulatkan((n + k) / 2, ket.value.desimal || 0) }
+const dCapaian = (s) => deskripsiCapaian(nilaiCapaian(s), L.value?.predikat || [], tpList.value, akhir.value[s]?.tp ?? null, { gabung: dua.value })
+const deskripsi = (s, k = false) => {
+  const tulis = k ? akhir.value[s]?.deskripsi_2 : akhir.value[s]?.deskripsi
+  if (tulis) return tulis
+  const c = dCapaian(s); if (c) return k ? '' : c   // 14.26.0: ceklist TP → satu deskripsi capaian
+  return deskripsiOtomatis(k ? nilaiKet(s) : nilaiRapor(s), L.value?.predikat || [], { tp: tpList.value, pakaiTp: !!ket.value.pakai_tp && !k, keterampilan: k })
+}
 const kotor = computed(() => ubahSkor.value.size + ubahAkhir.value.size + (tpUbah.value ? 1 : 0))
 onBeforeRouteLeave(async () => (kotor.value ? ui.konfirmasi({ judul: 'Tinggalkan lembar nilai?', pesan: `Ada ${kotor.value} perubahan yang belum disimpan.`, ya: 'Tinggalkan', bahaya: true }) : true))
 
@@ -84,7 +95,8 @@ const TAB = computed(() => [
   { k: 'isian', n: 'Isian nilai', ikon: PhCalculator, w: 'gurumapel', jumlah: kolom.value.length },
   { k: 'rapor', n: 'Nilai rapor', ikon: PhCheckCircle, w: 'rapor', ket: `${santri.value.filter((s) => nilaiRapor(s.id) != null).length}/${santri.value.length}` },
   { k: 'sikap', n: 'Sikap', ikon: PhSmiley, w: 'presensi', ket: `${santri.value.filter((s) => akhir.value[s.id]?.sikap).length}/${santri.value.length}` },
-  ...(ket.value.pakai_tp ? [{ k: 'tp', n: 'Tujuan pembelajaran', ikon: PhTarget, w: 'tahfizh', jumlah: tpList.value.length }] : []),
+  ...(ket.value.pakai_tp ? [{ k: 'tp', n: 'Tujuan pembelajaran', ikon: PhTarget, w: 'tahfizh', jumlah: tpList.value.length },
+    { k: 'capaian', n: 'Capaian TP', ikon: PhListChecks, w: 'penilaian', ket: `${santri.value.filter((s) => akhir.value[s.id]?.tp).length}/${santri.value.length}` }] : []),
 ])
 
 // ---------- Isian (kolom) ----------
@@ -113,7 +125,7 @@ const bolehTambah = (k) => k.sumber !== 'kehadiran' && k.aktif && (k.berulang ||
 // ---------- Simpan ----------
 async function simpanSemua() {
   const isi = [...ubahAkhir.value].map((s) => { const a = akhir.value[s]; return { student_id: s, ...(akumulasi.value ? {} : { nilai: a.nilai === '' ? '' : Number(a.nilai) }),
-    keterampilan: a.keterampilan === '' ? '' : Number(a.keterampilan), sikap: a.sikap, deskripsi: a.deskripsi, deskripsi_2: a.deskripsi_2 } })
+    keterampilan: a.keterampilan === '' ? '' : Number(a.keterampilan), sikap: a.sikap, deskripsi: a.deskripsi, deskripsi_2: a.deskripsi_2, tp_tercapai: a.tp } })
   for (const x of isi) for (const f of ['nilai', 'keterampilan']) if (x[f] !== '' && x[f] != null && !(x[f] >= 0 && x[f] <= 100)) return ui.toast('Nilai harus 0–100.', 'galat')
   const per = {}
   for (const [k, v] of ubahSkor.value) { const [c, s] = k.split('|'); (per[c] ||= []).push({ student_id: s, nilai: v }) }
@@ -134,6 +146,23 @@ async function simpanTP() {
   if (tpList.value.length > 20) return ui.toast('Paling banyak 20 tujuan pembelajaran.', 'galat')
   proses.value = 'tp'
   try { await nl.simpanTP(tpList.value); reset(); ui.toast('Tujuan pembelajaran disimpan.') } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = '' }
+}
+
+// ---------- 14.26.0: Capaian TP ----------
+const tpTersimpan = computed(() => (L.value?.tp || []).map((t) => t.teks))
+const capai = (s) => akhir.value[s]?.tp
+const tercentang = (s, t) => !!capai(s)?.includes(t)
+function togTP(s, t) { const x = new Set(capai(s) || []); x.has(t) ? x.delete(t) : x.add(t); setAkhir(s, 'tp', tpTersimpan.value.filter((y) => x.has(y))) }
+const setTP = (s, v) => setAkhir(s, 'tp', v)
+function centangBelum() { let n = 0; for (const s of santri.value) if (!capai(s.id)) { setTP(s.id, [...tpTersimpan.value]); n++ } ui.toast(n ? `${n} santri dicentang semua TP. Tekan Simpan.` : 'Semua santri sudah diceklist.') }
+const ringkasCapai = (s) => { const c = capai(s); if (!c) return null; const n = tpTersimpan.value.filter((t) => c.includes(t)).length; return { n, dari: tpTersimpan.value.length } }
+/** Peringatan ringan: nilai berpredikat di atas terendah tetapi tidak satu pun TP dicentang (atau sebaliknya). */
+const peringatan = (s) => {
+  const r = ringkasCapai(s); const p = pred(nilaiCapaian(s)); const d = predikatTerendah(L.value?.predikat || [])
+  if (!r || !p || !d) return ''
+  if (r.n === 0 && p.huruf !== d.huruf) return `Nilai berpredikat ${p.huruf}, tetapi tidak ada TP yang dicentang.`
+  if (r.n === r.dari && p.huruf === d.huruf) return `Nilai berpredikat ${p.huruf}, tetapi semua TP dicentang tercapai.`
+  return ''
 }
 
 // ---------- Deskripsi khusus ----------
@@ -275,7 +304,7 @@ const ringkasSaran = computed(() => { const v = santri.value.map((s) => saran(s.
                   <span v-if="akhir[s.id].keterampilan === ''" class="block text-[10px] text-teks3">= pengetahuan</span></td>
                 <td class="px-2 py-2 text-center font-bold">{{ pred(nilaiRapor(s.id))?.huruf || '–' }}</td>
                 <td class="min-w-[220px] px-2 py-2 text-xs text-teks2">
-                  <p>{{ deskripsi(s.id) || '–' }}</p><p v-if="dua" class="mt-1 border-t border-garis pt-1">{{ deskripsi(s.id, true) || '–' }}</p>
+                  <p>{{ deskripsi(s.id) || '–' }}</p><p v-if="dua && !dCapaian(s.id)" class="mt-1 border-t border-garis pt-1">{{ deskripsi(s.id, true) || '–' }}</p>
                   <button v-if="boleh" type="button" class="mt-1 flex items-center gap-1 text-[11px] font-semibold" style="color: var(--c)" @click="bukaDes(s)">
                     <PhNotePencil :size="12" /> {{ akhir[s.id].deskripsi || akhir[s.id].deskripsi_2 ? 'Deskripsi khusus' : 'Ubah deskripsi' }}</button>
                 </td>
@@ -315,6 +344,45 @@ const ringkasSaran = computed(() => { const v = santri.value.map((s) => saran(s.
           <p class="mt-1 text-xs text-teks3">Dipakai pada deskripsi capaian rapor SMA, mis. "{{ (L.predikat[L.predikat.length - 1]?.deskripsi) || 'Perlu bimbingan…' }} {{ tpList.slice(0, 3).join(', ') || 'Demokrasi' }}". Paling banyak 20.</p>
           <button v-if="boleh" class="tombol-utama mt-3 w-full" :disabled="!!proses || !tpUbah" @click="simpanTP"><PhFloppyDisk :size="20" weight="duotone" /> {{ proses === 'tp' ? 'Menyimpan…' : 'Simpan tujuan pembelajaran' }}</button>
         </section>
+      </template>
+
+      <!-- ================= CAPAIAN TP (14.26.0) ================= -->
+      <template v-else-if="tab === 'capaian'">
+        <section class="kartu mb-3 p-4 text-sm">
+          <p class="text-teks2">Centang TP yang <b>sudah dikuasai</b> setiap santri. TP tercentang menjadi <b>capaian tertinggi</b> (kalimat predikat nilai santri), TP yang tidak dicentang menjadi <b>capaian terendah</b> (kalimat predikat {{ predikatTerendah(L.predikat)?.huruf || 'terendah' }}).
+            Semua dicentang: hanya capaian tertinggi. Tidak ada yang dicentang: semua TP masuk capaian terendah. Belum diceklist: deskripsi otomatis seperti sebelumnya.{{ dua ? ' Rapor Wustha memakai satu deskripsi dari rata-rata nilai pengetahuan dan keterampilan.' : '' }}</p>
+          <div v-if="boleh && tpTersimpan.length" class="mt-3 flex flex-wrap gap-2">
+            <button class="tombol-garis min-h-[38px] px-3 text-sm" @click="centangBelum"><PhCheckSquare :size="16" weight="duotone" /> Centang semua TP untuk santri yang belum diceklist</button>
+          </div>
+        </section>
+        <p v-if="tpUbah" class="kartu w-laporan mb-3 p-4 text-sm font-semibold" style="color: var(--c)">Daftar TP berubah tetapi belum disimpan. Simpan dahulu di tab Tujuan pembelajaran.</p>
+        <p v-if="!tpTersimpan.length" class="kartu p-6 text-center text-sm text-teks3">Belum ada tujuan pembelajaran. Isi dahulu di tab <b>Tujuan pembelajaran</b>.</p>
+        <ul v-else class="grid gap-3 xl:grid-cols-2">
+          <li v-for="(s, i) in santri" :key="s.id" :class="['kartu p-4', ubahAkhir.has(s.id) && 'ring-2 ring-[color:var(--c)]']">
+            <div class="flex flex-wrap items-start gap-2">
+              <span class="w-6 pt-0.5 text-right text-xs text-teks3 tabular-nums">{{ i + 1 }}</span>
+              <div class="min-w-0 flex-1"><p class="truncate font-semibold">{{ s.nama }}</p>
+                <p class="text-xs text-teks3">{{ s.nis }} · nilai {{ nilaiCapaian(s.id) ?? '–' }}{{ pred(nilaiCapaian(s.id)) ? ' (' + pred(nilaiCapaian(s.id)).huruf + ')' : '' }}</p></div>
+              <span v-if="ringkasCapai(s.id)" class="lencana w-presensi">{{ ringkasCapai(s.id).n }}/{{ ringkasCapai(s.id).dari }} TP tercapai</span>
+              <span v-else class="lencana w-audit">Belum diceklist</span>
+            </div>
+            <div class="mt-2 flex flex-wrap gap-1.5" role="group" :aria-label="`Capaian TP ${s.nama}`">
+              <button v-for="(t, j) in tpTersimpan" :key="t" type="button" :disabled="!boleh" :aria-pressed="tercentang(s.id, t)" @click="togTP(s.id, t)"
+                :class="['flex min-h-[38px] items-center gap-1.5 rounded-xl border px-2.5 text-left text-xs font-semibold', tercentang(s.id, t) ? 'border-[color:var(--c)] text-teks' : 'border-garis text-teks2']"
+                :style="tercentang(s.id, t) ? 'background: color-mix(in srgb, var(--c) 14%, transparent)' : ''">
+                <component :is="tercentang(s.id, t) ? PhCheckSquare : PhSquare" :size="16" :weight="tercentang(s.id, t) ? 'fill' : 'regular'" :style="tercentang(s.id, t) ? 'color: var(--c)' : ''" class="shrink-0" />
+                {{ j + 1 }}. {{ t }}</button>
+            </div>
+            <div v-if="boleh" class="mt-2 flex flex-wrap gap-3 text-xs font-semibold">
+              <button type="button" class="min-h-[32px]" style="color: var(--c)" @click="setTP(s.id, [...tpTersimpan])">Centang semua</button>
+              <button type="button" class="min-h-[32px] text-teks2" @click="setTP(s.id, [])">Kosongkan</button>
+              <button v-if="capai(s.id)" type="button" class="flex min-h-[32px] items-center gap-1 text-teks3" @click="setTP(s.id, null)"><PhArrowCounterClockwise :size="13" /> Kembali ke otomatis</button>
+            </div>
+            <p v-if="peringatan(s.id)" class="mt-2 flex items-start gap-1.5 text-xs font-semibold text-[#9A5B00] dark:text-[#F2C24B]"><PhWarningCircle :size="14" class="mt-0.5 shrink-0" /> {{ peringatan(s.id) }}</p>
+            <p class="mt-2 rounded-xl bg-permukaan2 p-2.5 text-xs leading-relaxed text-teks2"><span class="font-semibold text-teks">Deskripsi rapor:</span>
+              {{ akhir[s.id].deskripsi ? akhir[s.id].deskripsi + ' (deskripsi khusus guru)' : dCapaian(s.id) || deskripsiOtomatis(nilaiRapor(s.id), L.predikat, { tp: tpList, pakaiTp: !!ket.pakai_tp }) || 'Nilai rapor belum ada.' }}</p>
+          </li>
+        </ul>
       </template>
 
       <!-- Bilah simpan -->
