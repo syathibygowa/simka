@@ -1,9 +1,9 @@
-<!-- SIMKA PRO | src/pages/penilaian/cetak/RaporSekolah.vue | v1.2 | 14.22.0: judul rapor di atas identitas; identitas Wustha 2 kolom 3 baris Title Case | 25/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/cetak/RaporSekolah.vue | v1.3 | 14.23.0: rapor Wustha sederhana (nilai pengetahuan, keterampilan, satu predikat dan deskripsi) | 25/10/2026 -->
 <script setup>
 // Rapor sekolah per santri (data_rapor):
 //   SMA (Kurikulum Merdeka) : Nilai + Capaian Kompetensi per mapel (berkelompok), Kokurikuler, Ekstrakurikuler,
 //                             Ketidakhadiran + persentase + catatan, Catatan wali kelas, Keputusan (semester 2)
-//   Wustha (K13 disesuaikan): KKM, Pengetahuan & Keterampilan (angka, predikat, deskripsi), Sikap, rata-rata;
+//   Wustha (K13 disesuaikan): KKM, Nilai Pengetahuan, Nilai Keterampilan, satu Predikat dan satu Deskripsi gabungan (14.23.0), Sikap (opsional), rata-rata;
 //                             Pengembangan Diri, Pencapaian Program Tahfizhul Qur'an, Ketidakhadiran, Catatan, Kenaikan kelas
 // Tanda tangan: orang tua kiri, wali kelas kanan, kepala tengah bawah. Kepala rapor (kop + identitas) berulang per halaman.
 // v1.1: tabel Prestasi tampil bila santri memiliki prestasi bertanda rapor dalam rentang semester (menu Prestasi Santri).
@@ -76,21 +76,21 @@ const rataKelas = (b, f) => { const v = b.n.map((x) => x[f]).filter((x) => x != 
 
     <!-- ================= WUSTHA ================= -->
     <template v-else>
-      <table class="tabel kecil" style="margin-top: 4pt"><colgroup><col style="width:4.5%"><col style="width:15.5%"><col style="width:5.5%"><col style="width:6%"><col style="width:7.5%"><col :style="{ width: ket.sikap_di_rapor ? '18.5%' : '23%' }"><col style="width:6%"><col style="width:7.5%"><col :style="{ width: ket.sikap_di_rapor ? '18.5%' : '23%' }"><col v-if="ket.sikap_di_rapor" style="width:10.5%"></colgroup>
+      <!-- 14.23.0: rapor Wustha sederhana — Nilai Pengetahuan, Nilai Keterampilan, satu Predikat dan satu Deskripsi (gabungan) -->
+      <table class="tabel kecil" style="margin-top: 4pt"><colgroup><col style="width:5%"><col style="width:17%"><col style="width:6%"><col style="width:11%"><col style="width:11%"><col style="width:8%">
+        <col :style="{ width: ket.sikap_di_rapor ? '31%' : '42%' }"><col v-if="ket.sikap_di_rapor" style="width:11%"></colgroup>
         <thead>
-          <tr><th rowspan="2">No.</th><th rowspan="2">MATA PELAJARAN</th><th rowspan="2">{{ label }}</th><th colspan="3">PENGETAHUAN</th><th colspan="3">KETERAMPILAN</th><th v-if="ket.sikap_di_rapor" rowspan="2">SIKAP</th></tr>
-          <tr><th>Angka</th><th>Pre&shy;dikat</th><th>Deskripsi</th><th>Angka</th><th>Pre&shy;dikat</th><th>Deskripsi</th></tr>
+          <tr><th>No.</th><th>Mata Pelajaran</th><th>{{ label }}</th><th>Nilai Pengetahuan</th><th>Nilai Keterampilan</th><th>Predikat</th><th>Deskripsi</th><th v-if="ket.sikap_di_rapor">Sikap</th></tr>
         </thead>
         <tbody><template v-for="g in kelompokkan(b.n)" :key="g.kelompok">
-          <tr v-if="g.kelompok"><td :colspan="ket.sikap_di_rapor ? 10 : 9" class="kelompok">{{ g.kelompok }}</td></tr>
+          <tr v-if="g.kelompok"><td :colspan="ket.sikap_di_rapor ? 8 : 7" class="kelompok">{{ g.kelompok }}</td></tr>
           <tr v-for="m in g.item" :key="m.id"><td class="tengah">{{ m.no }}.</td><td>{{ m.nama }}</td><td class="tengah">{{ Number(m.kkm) }}</td>
-            <td class="tengah">{{ m.nilai ?? '' }}</td><td class="tengah">{{ m.huruf }}</td><td>{{ m.deskripsi }}</td>
-            <td class="tengah">{{ m.keterampilan ?? '' }}</td><td class="tengah">{{ m.huruf_ket }}</td><td>{{ m.deskripsi_2 }}</td>
+            <td class="tengah">{{ m.nilai ?? '' }}</td><td class="tengah">{{ m.keterampilan ?? '' }}</td><td class="tengah">{{ m.huruf_gabung }}</td><td style="text-align: justify">{{ m.deskripsi_gabung }}</td>
             <td v-if="ket.sikap_di_rapor" class="tengah">{{ m.sikap ? sebutSikap(m.sikap) : '-' }}</td></tr>
         </template>
-        <tr v-if="ket.tampil_rata"><td colspan="3" class="kelompok tengah">Rata-rata Nilai</td><td colspan="3" class="tengah">Nilai Pengetahuan: {{ rataKelas(b, 'nilai') }}</td>
-          <td colspan="3" class="tengah">Nilai Keterampilan: {{ rataKelas(b, 'keterampilan') }}</td><td v-if="ket.sikap_di_rapor" /></tr>
-        <tr v-if="ket.tampil_peringkat"><td colspan="3" class="kelompok tengah">Peringkat Kelas</td><td :colspan="ket.sikap_di_rapor ? 7 : 6">{{ b.peringkat ?? '' }} dari {{ leger.length }} santri</td></tr>
+        <tr v-if="ket.tampil_rata"><td colspan="3" class="kelompok tengah">Rata-rata Nilai</td><td class="tengah">{{ rataKelas(b, 'nilai') }}</td><td class="tengah">{{ rataKelas(b, 'keterampilan') }}</td>
+          <td :colspan="ket.sikap_di_rapor ? 3 : 2" /></tr>
+        <tr v-if="ket.tampil_peringkat"><td colspan="3" class="kelompok tengah">Peringkat Kelas</td><td :colspan="ket.sikap_di_rapor ? 5 : 4">{{ b.peringkat ?? '' }} dari {{ leger.length }} santri</td></tr>
         </tbody></table>
 
       <table class="tabel" style="margin-top: 10pt"><colgroup><col style="width:6%"><col style="width:28%"><col style="width:9%"><col style="width:14%"><col style="width:43%"></colgroup>

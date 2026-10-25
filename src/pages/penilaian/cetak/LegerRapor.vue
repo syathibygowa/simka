@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/cetak/LegerRapor.vue | v1.0 | Fase 12 – Tahap 5 Leger dan laporan ketercapaian | 13/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/cetak/LegerRapor.vue | v1.1 | 14.23.0: judul di atas identitas; nilai di bawah KKM berlatar merah lembut | 25/10/2026 -->
 <script setup>
 // Leger nilai (seragam SMA dan Wustha, F4 mendatar): nilai setiap mapel rapor, jumlah, rata-rata, peringkat, sikap
 // (terbanyak dari isian guru; untuk SMA sikap hanya tampil di leger), dan ketidakhadiran (S, I, A dalam hari).
@@ -31,13 +31,14 @@ const catatan = computed(() => {
 <template>
   <HalRapor :kop="kop" :mendatar="mode === 'leger'">
     <template #kepala>
-      <table class="identitas"><colgroup><col style="width:12%"><col style="width:48%"><col style="width:12%"><col style="width:28%"></colgroup><tbody>
+      <!-- 14.23.0: judul dokumen di atas identitas -->
+      <p class="judul-rapor" style="margin-top: 2pt">{{ mode === 'leger' ? `Leger Nilai ${D.kelas.jenjang === 'sma' ? 'Rapor' : 'Rapor Wustha'}` : 'Laporan Ketercapaian Nilai Mata Pelajaran' }}</p>
+      <table class="identitas"><colgroup><col style="width:14%"><col style="width:44%"><col style="width:16%"><col style="width:26%"></colgroup><tbody>
         <tr><td>Kelas</td><td>: {{ namaKelasRapor(D.kelas) }}</td><td>Semester</td><td>: {{ SEMESTER_RAPOR[D.semester] }}</td></tr>
         <tr><td>Wali Kelas</td><td>: {{ wali?.nama || '-' }}</td><td>Tahun Ajaran</td><td>: {{ D.ta.nama }}</td></tr></tbody></table>
     </template>
     <template v-if="mode === 'leger'">
-      <p class="judul-rapor">Leger Nilai {{ D.kelas.jenjang === 'sma' ? 'Rapor' : 'Rapor Wustha' }}</p>
-      <table class="tabel kecil">
+      <table class="tabel kecil" style="margin-top: 4pt">
         <colgroup><col style="width:2.6%"><col style="width:6%"><col style="width:15%"><col style="width:2.4%"><col v-for="m in mapel" :key="m.id" :style="{ width: lebarMapel }">
           <col style="width:4.5%"><col style="width:4%"><col style="width:3.2%"><col style="width:3.2%"><col style="width:2.6%"><col style="width:2.6%"><col style="width:2.6%"></colgroup>
         <thead><tr><th rowspan="2">No.</th><th rowspan="2">NIS</th><th rowspan="2">Nama</th><th rowspan="2">JK</th><th :colspan="mapel.length">Nilai Mata Pelajaran</th>
@@ -45,15 +46,14 @@ const catatan = computed(() => {
           <tr><th v-for="m in mapel" :key="m.id" :title="m.nama">{{ singkat(m) }}</th><th>S</th><th>I</th><th>A</th></tr>
           <tr><th colspan="4">{{ label }}</th><th v-for="m in mapel" :key="m.id">{{ Number(m.kkm) }}</th><th colspan="7" /></tr></thead>
         <tbody><tr v-for="(b, i) in leger" :key="b.s.id"><td class="tengah">{{ i + 1 }}</td><td>{{ b.s.nis }}</td><td>{{ b.s.nama }}</td><td class="tengah">{{ b.s.jenis_kelamin }}</td>
-          <td v-for="x in b.n" :key="x.id" class="tengah" :style="x.tuntas === false ? 'text-decoration: underline' : ''">{{ x.nilai ?? '' }}</td>
+          <td v-for="x in b.n" :key="x.id" :class="['tengah', x.tuntas === false && 'bawah-kkm']">{{ x.nilai ?? '' }}</td>
           <td class="tengah">{{ b.jumlah || '' }}</td><td class="tengah">{{ b.rata ?? '' }}</td><td class="tengah">{{ b.peringkat ?? '' }}</td><td class="tengah">{{ b.sikap }}</td>
           <td class="tengah">{{ b.s.kehadiran?.sakit ?? 0 }}</td><td class="tengah">{{ b.s.kehadiran?.izin ?? 0 }}</td><td class="tengah">{{ b.s.kehadiran?.absen ?? 0 }}</td></tr>
           <tr><td colspan="4" class="kelompok">Rata-rata kelas</td><td v-for="m in mapel" :key="m.id" class="tengah">{{ m.rata != null ? Math.round(m.rata) : '' }}</td><td colspan="7" /></tr></tbody></table>
-      <p style="margin-top: 3pt; font-size: 8pt">{{ mapel.map((m) => `${singkat(m)} = ${m.nama}`).join('; ') }}. Nilai bergaris bawah: di bawah {{ label }}. Absen dalam hari.</p>
+      <p style="margin-top: 3pt; font-size: 8pt">{{ mapel.map((m) => `${singkat(m)} = ${m.nama}`).join('; ') }}. Nilai berlatar merah muda: di bawah {{ label }}. Absen dalam hari.</p>
     </template>
     <template v-else>
-      <p class="judul-rapor">Laporan Ketercapaian Nilai Mata Pelajaran</p>
-      <table class="tabel kecil"><colgroup><col style="width:5%"><col style="width:12%"><col style="width:39%"><col style="width:5%"><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:9%"></colgroup>
+      <table class="tabel kecil" style="margin-top: 4pt"><colgroup><col style="width:5%"><col style="width:12%"><col style="width:39%"><col style="width:5%"><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:9%"></colgroup>
         <thead><tr><th>No.</th><th>NIS</th><th>Nama Lengkap Peserta Didik</th><th>JK</th><th>Total Nilai Mapel</th><th>Rata-rata Nilai Mapel</th><th>Kehadiran</th><th>Rank</th></tr></thead>
         <tbody><tr v-for="(b, i) in leger" :key="b.s.id"><td class="tengah">{{ i + 1 }}</td><td>{{ b.s.nis }}</td><td>{{ b.s.nama }}</td><td class="tengah">{{ b.s.jenis_kelamin }}</td>
           <td class="tengah">{{ b.jumlah || 0 }}</td><td class="tengah">{{ b.rata ?? 0 }}</td><td class="tengah">{{ b.hadir ?? 100 }}%</td><td class="tengah">{{ b.peringkat ?? '' }}</td></tr></tbody></table>
@@ -72,3 +72,7 @@ const catatan = computed(() => {
     <TandaTangan :kiri="kiri" :kanan="kanan" :kota="ket.tempat || ''" :tanggal="tanggalRapor(D)" />
   </HalRapor>
 </template>
+<style scoped>
+/* 14.23.0: nilai di bawah KKM berlatar merah lembut (ikut tercetak) */
+.bawah-kkm { background: #FDE2DF !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+</style>
