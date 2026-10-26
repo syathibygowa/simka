@@ -1,7 +1,8 @@
-<!-- SIMKA PRO | src/pages/absensisantri/AbsensiSantri.vue | v1.5 | 14.12.0: muat berkala hanya saat layar terlihat | 18/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/AbsensiSantri.vue | v1.6 | 14.27.0: urutan Sebelumnya/Berikutnya untuk halaman isian | 26/10/2026 -->
 <script setup>
 // Absensi santri HISBAT. Tab: Sesi saya (pengasuh), Pantauan (admin/pimpinan: semua kelompok, langsung),
 // Rekap (per kelompok dan periode; Excel, cetak F4, WA ke wali).
+import { aturUrutan, keAbsensi } from '@/lib/urutan'
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { berkala } from '@/lib/hemat'
 import { useRouter } from 'vue-router'
@@ -50,7 +51,7 @@ const statistik = computed(() => {
     { judul: 'Izin · Sakit · Absen', nilai: `${sum('jumlah_izin')} · ${sum('jumlah_sakit')} · ${sum('jumlah_absen')}`, ikon: PhWarningCircle, warna: 'pengajuan', ket: `Bolos ${sum('jumlah_bolos')} · Terlambat ${sum('jumlah_terlambat')}` },
   ]
 })
-const buka = (s) => router.push(`/absensi-santri/isi/${s.group_id}/${s.tanggal}/${s.sesi}`)
+const buka = (s) => { aturUrutan('absensi', daftar.value.map((x) => ({ ke: keAbsensi(x), label: `${x.nama_sesi} · ${x.nama_kelompok}` }))); router.push(keAbsensi(s)) }
 const pilihTab = (k) => router.replace(`/absensi-santri/${k}`)
 </script>
 <template>

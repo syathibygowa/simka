@@ -1,7 +1,8 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabNilaiGuru.vue | v1.2 | Perbaikan 13.6.0: sub-tab bergaris bawah, saring dan warna kartu per jenjang | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabNilaiGuru.vue | v1.3 | 14.27.0: urutan Sebelumnya/Berikutnya untuk halaman isian | 26/10/2026 -->
 <script setup>
 // Tab Nilai di menu Guru Mapel: kelas–mapel yang diampu (guru) atau semua (pengelola nilai/pimpinan) untuk satu semester,
 // beserta status periode, cara menentukan nilai, dan kemajuan pengisian (nilai rapor dan sikap). Ketuk kartu → lembar nilai.
+import { aturUrutan } from '@/lib/urutan'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { PhExam, PhMagnifyingGlass, PhLockSimple, PhLockSimpleOpen, PhHourglassMedium, PhCaretRight, PhLink } from '@phosphor-icons/vue'
@@ -23,7 +24,8 @@ const milik = computed(() => daftar.value.filter((x) => x.milik_saya))
 const lain = computed(() => daftar.value.filter((x) => !x.milik_saya))
 const IKON = { disiapkan: PhHourglassMedium, dibuka: PhLockSimpleOpen, ditutup: PhLockSimple }
 const persen = (x) => (x.santri ? Math.round((x.terisi / x.santri) * 100) : 0)
-const buka = (x) => router.push({ path: `/guru-mapel/nilai/${x.assignment_id}`, query: { smt: semester.value } })
+const keLembar = (x) => ({ path: `/guru-mapel/nilai/${x.assignment_id}`, query: { smt: semester.value } })
+const buka = (x) => { aturUrutan('nilai', [...milik.value, ...lain.value].map((y) => ({ ke: keLembar(y), label: `${y.mapel} · ${y.kelas}` }))); router.push(keLembar(x)) }
 </script>
 <template>
   <div class="space-y-4">

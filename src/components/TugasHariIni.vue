@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/TugasHariIni.vue | v1.1 | Perbaikan: Gerbang tidak tampil bagi superadmin/admin/pimpinan yang bukan Security | 14/10/2026 -->
+<!-- SIMKA PRO | src/components/TugasHariIni.vue | v1.2 | 14.27.0: urutan Sebelumnya/Berikutnya untuk halaman isian | 26/10/2026 -->
 <script setup>
 // Panel "Tugas saya hari ini" di beranda: satu ketukan langsung ke pekerjaan tupoksi.
 //   Musyrif/muhaffizh/wali kelas/pembina : setiap sesi absensi kelompok asuhan hari ini (status dan tombol langsung absen)
@@ -6,6 +6,7 @@
 //   Medis                                : antrean klinik yang menunggu pemeriksaan
 //   Security                             : santri di luar dan terlambat kembali → halaman gerbang
 // Ditambah baris pintasan menu tupoksi. Data hanya dimuat untuk tupoksi yang dimiliki (hemat kuota).
+import { aturUrutan } from '@/lib/urutan'
 import { ref, computed, onMounted } from 'vue'
 import {
   PhClipboardText, PhChalkboardTeacher, PhFirstAidKit, PhShieldCheck, PhBookOpenText, PhBuildings, PhChalkboard, PhMedal, PhPresentationChart,
@@ -48,6 +49,8 @@ const ST = {
   terbuka: { n: 'Absen sekarang', w: 'presensi', i: PhPlayCircle }, belum_buka: { n: 'Belum dibuka', w: 'hakakses', i: PhHourglass },
   terisi: { n: 'Terisi', w: 'presensi', i: PhCheckCircle }, lewat: { n: 'Lewat, segera isi', w: 'pengajuan', i: PhWarningCircle }, tidak_terisi: { n: 'Tidak terisi', w: 'klinik', i: PhWarningCircle },
 }
+// 14.27.0: urutan sesi absensi untuk tombol Sebelumnya/Berikutnya di halaman isi absensi
+const simpanUrutan = () => aturUrutan('absensi', item.value.filter((x) => String(x.ke).startsWith('/absensi-santri/isi/') && x.st !== ST.belum_buka).map((x) => ({ ke: x.ke, label: x.judul })))
 const item = computed(() => {
   const d = sesiSaya.value.map((s) => ({ k: `${s.group_id}-${s.sesi}`, ikon: IKON_JENIS[s.jenis] || PhUsersThree, w: W_JENIS[s.jenis] || 'santri',
     judul: `${s.nama_sesi} · ${s.nama_kelompok}`, sub: `${String(s.jam_mulai || '').slice(0, 5)}${s.status === 'belum_buka' && s.buka ? ` · dibuka ${formatJam(s.buka)}` : ''}${s.status === 'terisi' && s.jumlah_hadir != null ? ` · hadir ${s.jumlah_hadir}/${s.jumlah_anggota}` : ''}`,
@@ -83,7 +86,7 @@ const pintasan = computed(() => [
     <ul v-if="memuat" class="grid gap-2 sm:grid-cols-2" aria-hidden="true"><li v-for="i in 2" :key="i" class="h-16 animate-pulse rounded-2xl bg-permukaan2" /></ul>
     <ul v-else-if="item.length" class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
       <li v-for="x in item" :key="x.k" :class="['min-w-0', 'w-' + x.w]">
-        <router-link :to="x.ke" class="flex min-h-[64px] items-center gap-3 rounded-2xl border border-garis p-3 transition hover:bg-permukaan2 active:scale-[.99]">
+        <router-link :to="x.ke" @click="simpanUrutan" class="flex min-h-[64px] items-center gap-3 rounded-2xl border border-garis p-3 transition hover:bg-permukaan2 active:scale-[.99]">
           <span class="chip-ikon h-11 w-11 shrink-0"><component :is="x.ikon" :size="24" weight="duotone" /></span>
           <span class="min-w-0 flex-1"><b class="block truncate text-sm">{{ x.judul }}</b><span class="block truncate text-xs text-teks3">{{ x.sub }}</span>
             <span :class="['lencana mt-1', 'w-' + x.st.w]"><component :is="x.st.i" :size="13" weight="fill" /> {{ x.st.n }}</span></span>

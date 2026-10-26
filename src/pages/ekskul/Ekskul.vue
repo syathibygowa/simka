@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/ekskul/Ekskul.vue | v1.5 | 14.26.0: tab Leger (kehadiran dan nilai semua ekskul per santri); warna tab tidak kembar | 25/10/2026 -->
+<!-- SIMKA PRO | src/pages/ekskul/Ekskul.vue | v1.6 | 14.27.0: urutan Sebelumnya/Berikutnya untuk halaman isian | 26/10/2026 -->
 <script setup>
 // Ekskul: Pertemuan (absensi HISBAT + jurnal materi per pertemuan), Jadwal pertemuan (otomatis menjadi sesi
 // presensi pembina/pelatih), dan Rekap (kehadiran santri, jurnal materi; Excel dan cetak F4).
@@ -8,6 +8,7 @@
 // v1.4: sub-tab kategori Semua/Indoor/Outdoor berlaku di semua tab; Pertemuan tampil sepekan (seperti jurnal mengajar guru)
 //       sehingga pelatih langsung memilih pertemuan sesuai jadwal; kategori diatur di tab Jadwal.
 // v1.5 (14.26.0): tab Leger — kehadiran dan nilai setiap santri di semua ekskul, menandai santri tanpa ekskul (pemantau ekskul).
+import { aturUrutan, keAbsensi } from '@/lib/urutan'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BilahTab from '@/components/BilahTab.vue'
@@ -65,7 +66,8 @@ const ringkasPekan = computed(() => { const x = hariPekan.value.flatMap((h) => h
 const labelPekan = computed(() => `${formatPendek(senin.value)} – ${formatPendek(tambahHari(senin.value, 6))}`)
 function bukaPertemuan(s) {
   if (s.st === 'nanti') return ui.toast('Pertemuan ini belum dimulai. Jurnal dapat diisi saat atau setelah pertemuan.', 'info')
-  router.push(`/absensi-santri/isi/${s.group_id}/${s.tanggal}/${s.sesi}`)
+  aturUrutan('absensi', hariPekan.value.flatMap((h) => h.sesi).filter((x) => x.st !== 'nanti').map((x) => ({ ke: keAbsensi(x), label: x.nama_kelompok || x.sesi })))
+  router.push(keAbsensi(s))
 }
 // ---------- Kategori (tab Jadwal) ----------
 const kelompokJadwal = computed(() => {

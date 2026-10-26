@@ -1,8 +1,9 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabDasborKelas.vue | v1.1 | 14.2.0: tombol WhatsApp hijau | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabDasborKelas.vue | v1.2 | 14.27.0: urutan Sebelumnya/Berikutnya untuk halaman isian | 26/10/2026 -->
 <script setup>
 // Dasbor satu kelas: kartu statistik langsung (hari ini, pekan ini, bulan ini, tidak hadir hari ini), absensi kelas
 // hari ini dengan tombol isi, pelajaran hari ini (jurnal mengajar setiap jam: terlaksana/belum diisi), santri yang perlu
 // perhatian (Absen atau kehadiran pekan ini di bawah 85%) dengan WA ke orang tua/wali, dan santri yang sedang ditangani Klinik.
+import { aturUrutan, keAbsensi } from '@/lib/urutan'
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { PhSun, PhCalendarDots, PhCalendarBlank, PhUserMinus, PhCheckSquareOffset, PhWarningCircle, PhWhatsappLogo, PhFirstAidKit, PhCopy, PhBookOpenText } from '@phosphor-icons/vue'
@@ -69,7 +70,7 @@ function waWali(x) {
 
 const tidakDiisi = computed(() => olahRinci(d.value, (s) => s.tanggal >= awalBl).tidakDiisi)
 const statusSesi = (s) => STATUS_SESI[s.status] || STATUS_SESI.lewat
-const isi = (s) => router.push(`/absensi-santri/isi/${wk.pilih}/${s.tanggal}/${s.sesi || s.kode}`)
+const isi = (s) => { aturUrutan('absensi', sesiHari.value.filter((x) => x.status !== 'belum_buka').map((x) => ({ ke: keAbsensi(x, wk.pilih), label: x.nama || x.kode }))); router.push(keAbsensi(s, wk.pilih)) }
 const asuhanSaya = computed(() => !!wk.kelasPilih?.asuhan_saya)
 
 async function salinHariIni() {

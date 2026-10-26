@@ -1,8 +1,9 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabSetoran.vue | v1.1 | Perbaikan 13.6.0: sub-tab bergaris bawah | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabSetoran.vue | v1.2 | 14.27.0: urutan Sebelumnya/Berikutnya untuk halaman isian | 26/10/2026 -->
 <script setup>
 // Daftar sesi setoran halaqah pada satu tanggal (bawaan hari ini). Muhaffizh: halaqah asuhannya.
 // Admin/pimpinan Bidang Tahfizh: dapat beralih ke "Semua halaqah" untuk memantau kepatuhan pengisian (langsung/realtime).
 // Ketuk kartu untuk membuka formulir halaqah (tab Absensi | Setoran).
+import { aturUrutan, keAbsensi } from '@/lib/urutan'
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { PhSunHorizon, PhSun, PhMoonStars, PhTrendUp, PhWarning, PhCheckCircle, PhClock, PhUsersThree, PhCaretRight, PhBookOpenText, PhListChecks } from '@phosphor-icons/vue'
@@ -38,6 +39,7 @@ const statistik = computed(() => {
   ]
 })
 function buka(x) {
+  aturUrutan('absensi', tampil.value.filter((y) => y.status !== 'belum_buka').map((y) => ({ ke: { path: keAbsensi(y), query: y.absensi === 'terisi' ? { tab: 'setoran' } : {} }, label: y.nama_kelompok || y.sesi })))
   router.push({ path: `/absensi-santri/isi/${x.group_id}/${x.tanggal}/${x.sesi}`, query: x.absensi === 'terisi' ? { tab: 'setoran' } : {} })
 }
 </script>

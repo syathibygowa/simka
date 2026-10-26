@@ -1,9 +1,10 @@
-<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.12 | 14.18.1: ketikan metode/media/alat/sumber lain ikut tersimpan saat Simpan | 21/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.13 | 14.27.0: tombol Kembali, Sebelumnya, Berikutnya (atas dan bawah) | 26/10/2026 -->
 <script setup>
 // Pengisian absensi satu sesi: semua santri bawaan Hadir, ketuk kode HISBAT bagi yang tidak.
 // Pengampu halaqah/ekskul diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi (asrama tidak).
 // Admin ber-izin absensi_atas_nama dapat mengisi atas nama pengampu (tercatat di riwayat).
 // Halaqah: tab Absensi | Setoran (setoran terbuka setelah absensi tersimpan; ?tab=setoran membuka tab Setoran).
+// v1.13: bilah Kembali / Sebelumnya / Berikutnya di atas dan bawah (urutan dari daftar asal); perubahan belum tersimpan dikonfirmasi.
 // v1.12: teks di kotak "… lain" jurnal ekskul otomatis dimasukkan saat Simpan (di iPhone kotak tidak kehilangan fokus).
 // v1.9: jurnal ekskul ditambah jam mulai–selesai latihan (bawaan jam sesi), alat/perlengkapan, sumber belajar, catatan.
 // v1.8: santri Sakit dirujuk ke klinik hanya bila absensi jenis ini dicentang di Klinik → Ketentuan (bawaan: asrama saja);
@@ -15,7 +16,7 @@
 // v1.4: santri yang sedang sakit (Klinik) atau izin (Perizinan) otomatis S/I dan terkunci dengan labelnya.
 //       Santri yang ditandai Sakit wajib diberi keluhan singkat; saat disimpan otomatis dirujuk ke klinik.
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router'
 import { PhFingerprint, PhCheckCircle, PhFloppyDisk, PhClockCounterClockwise, PhWarningCircle, PhCrown, PhUserSwitch, PhWhatsappLogo, PhArrowCounterClockwise, PhMagnifyingGlass, PhNotebook, PhCamera, PhMapPin, PhListChecks, PhBookOpenText, PhFirstAidKit, PhSignOut, PhLockSimple, PhUsersThree } from '@phosphor-icons/vue'
 import { useAbsensiSantri } from '@/stores/absensiSantri'
 import { useSantri } from '@/stores/santri'
@@ -36,6 +37,7 @@ import { METODE_EKSKUL, MEDIA_EKSKUL, ALAT_EKSKUL, SUMBER_EKSKUL, JURNAL_KOSONG,
 import { laporanAbsensi, FORMAT_ABSENSI } from '@/lib/laporanGrup'
 import { useKelompokSantri } from '@/stores/kelompokSantri'
 import LembarLaporanGrup from '@/components/LembarLaporanGrup.vue'
+import NavUrutan from '@/components/NavUrutan.vue'
 
 const route = useRoute(); const router = useRouter()
 const abs = useAbsensiSantri(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
@@ -85,6 +87,11 @@ async function muat() {
   } catch (e) { galat.value = e.message }
 }
 onMounted(muat)
+// 14.27.0: pindah sesi lewat Sebelumnya/Berikutnya memakai komponen yang sama → muat ulang; perubahan belum tersimpan dikonfirmasi
+watch(() => route.path, (b, l) => { if (b !== l && /^\/absensi-santri\/isi\//.test(b)) { d.value = null; tab.value = route.query.tab === 'setoran' ? 'setoran' : 'absensi'; muat() } })
+const jagaPerubahan = async () => (d.value && berubah.value && !proses.value ? ui.konfirmasi({ judul: 'Tinggalkan absensi?', pesan: 'Ada perubahan absensi yang belum disimpan.', ya: 'Tinggalkan', bahaya: true }) : true)
+onBeforeRouteLeave(jagaPerubahan)
+onBeforeRouteUpdate((to, from) => (to.path !== from.path ? jagaPerubahan() : true))
 
 const jenis = computed(() => JENIS_ABSENSI[d.value?.jenis] || JENIS_ABSENSI.kelas)
 /** Status otomatis per santri: { kode, sumber: klinik|izin, keterangan } — terkunci, tidak dapat diubah pengasuh. */
@@ -177,6 +184,7 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
 </script>
 <template>
   <div class="mx-auto max-w-3xl pb-28">
+    <NavUrutan class="mb-3" jenis="absensi" />
     <p v-if="galat" class="kartu w-klinik flex gap-3 p-5 font-semibold" style="color: var(--c)"><PhWarningCircle :size="24" class="shrink-0" /> {{ galat }}</p>
     <template v-else-if="d">
       <!-- Kepala sesi -->
@@ -367,6 +375,7 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
           <button v-if="halaqah" class="tombol-utama mt-4 w-full" @click="lembarWA = false; gantiTab('setoran')"><PhBookOpenText :size="20" weight="duotone" /> Lanjut isi setoran</button>
         </div>
       </LembarBawah>
+      <NavUrutan class="mt-6" jenis="absensi" />
     </template>
     <p v-else class="py-16 text-center text-teks3">Memuat absensi…</p>
   </div>
