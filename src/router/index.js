@@ -1,4 +1,4 @@
-// SIMKA PRO | src/router/index.js | v3.37 | 14.25.0: rute Alumni, Profil Alumni, Arsip Tahun Ajaran (admin/superadmin) | 25/10/2026
+// SIMKA PRO | src/router/index.js | v3.38 | 14.28.0: rute Rapat dan rincian rapat | 26/10/2026
 // Router berbasis hash (cocok untuk GitHub Pages). meta.cetak menampilkan tombol cetak
 // di bilah atas; meta.peran membatasi halaman untuk peran tertentu; meta.menu/meta.izin/meta.boleh mengikuti Hak Akses.
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -47,6 +47,8 @@ const routes = [
       { path: 'disiplin-santri/:tab?', component: () => import('@/pages/disiplin/DisiplinSantri.vue'), props: true, meta: { judul: 'Kedisiplinan Santri', kembali: '/tugas' } },
       { path: 'prestasi-santri', component: () => import('@/pages/prestasi/PrestasiSantri.vue'), meta: { judul: 'Prestasi Santri', cetak: true, kembali: '/tugas' } },
       { path: 'absensi-santri/:tab?', component: () => import('@/pages/absensisantri/AbsensiSantri.vue'), props: true, meta: { judul: 'Absensi Santri', kembali: '/tugas' } },
+      { path: 'rapat', component: () => import('@/pages/rapat/Rapat.vue'), meta: { judul: 'Rapat', kembali: '/tugas' } },
+      { path: 'rapat/:id', component: () => import('@/pages/rapat/DetailRapat.vue'), meta: { judul: 'Rincian Rapat', kembali: '/rapat' } },
       { path: 'alumni/profil/:id', component: () => import('@/pages/alumni/ProfilAlumni.vue'), meta: { judul: 'Profil Alumni', peran: ['admin', 'superadmin'], kembali: '/alumni' } },
       { path: 'alumni/:tab?', component: () => import('@/pages/alumni/Alumni.vue'), props: true, meta: { judul: 'Alumni', peran: ['admin', 'superadmin'], kembali: '/tugas' } },
       { path: 'arsip/:tab?', component: () => import('@/pages/arsip/ArsipTA.vue'), props: true, meta: { judul: 'Arsip Tahun Ajaran', peran: ['admin', 'superadmin'], kembali: '/tugas' } },

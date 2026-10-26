@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/agenda/Agenda.vue | v1.8 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/agenda/Agenda.vue | v1.9 | 14.28.0: agenda jenis Rapat terhubung ke menu Rapat (konfirmasi, presensi, notulen) | 26/10/2026 -->
 <script setup>
 // Agenda dan kalender pondok. Semua pegawai melihat agenda yang ditujukan kepadanya beserta hari libur pondok
 // dalam kalender bulanan. Admin ber-izin kelola_agenda membuat agenda dengan sasaran dan pengingat H-n;
@@ -9,6 +9,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { PhCaretLeft, PhCaretRight, PhPlus, PhCalendarStar, PhUsersThree, PhConfetti, PhDotsThreeCircle, PhSparkle, PhClock, PhMapPin, PhBell, PhPencilSimple, PhTrash, PhWhatsappLogo, PhPrinter, PhCalendarBlank, PhRepeat, PhLink, PhPaperclip, PhX, PhSkipForward, PhCheck } from '@phosphor-icons/vue'
 import { useAgenda } from '@/stores/agenda'
+import { useRapat } from '@/stores/rapat'
 import { useLembaga } from '@/stores/lembaga'
 import { usePengumuman } from '@/stores/pengumuman'
 import { useSesi } from '@/stores/sesi'
@@ -59,6 +60,12 @@ const berlaku = (a) => (a.berlaku_untuk || []).map((k) => (k === 'semua' ? 'semu
 
 // ---------- Detail ----------
 const lihatLibur = ref(null)
+// 14.28.0: buka rapat untuk kejadian agenda ini (dibuat otomatis bila belum ada)
+const rpt = useRapat(); const keRapat = ref(false)
+async function bukaRapat(a) {
+  keRapat.value = true
+  try { const id = await rpt.dariAgenda(a.id, a.mulai); router.push(`/rapat/${id}`) } catch (e) { ui.toast(e.message, 'galat') } finally { keRapat.value = false }
+}
 const terpilih = computed(() => {
   if (!props.id) return lihatLibur.value
   const semua = ag.daftar.filter((a) => a.id === props.id && a.sumber === 'agenda')
@@ -247,6 +254,10 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
             <span class="chip-ikon h-10 w-10 shrink-0"><PhPaperclip :size="20" weight="duotone" /></span>
             <span class="min-w-0 flex-1"><span class="block truncate font-semibold">{{ terpilih.nama_lampiran || 'Lampiran' }}</span><span class="block text-xs text-teks3">{{ membuka ? 'Mengambil berkas…' : 'Ketuk untuk membuka' }}</span></span></button>
         </div>
+        <!-- 14.28.0: agenda Rapat → rapat (konfirmasi hadir, presensi, notulen) -->
+        <button v-if="terpilih.sumber === 'agenda' && terpilih.jenis === 'rapat'" class="w-rapat mt-3 flex w-full items-center gap-3 rounded-xl border border-garis p-3 text-left hover:bg-permukaan2" :disabled="keRapat" @click="bukaRapat(terpilih)">
+          <span class="chip-ikon h-10 w-10 shrink-0"><PhUsersThree :size="20" weight="duotone" /></span>
+          <span class="min-w-0 flex-1"><span class="block font-semibold">{{ keRapat ? 'Membuka rapat…' : 'Buka rapat' }}</span><span class="block text-xs text-teks3">Konfirmasi kehadiran, presensi, dan notulen rapat tanggal ini</span></span></button>
         <p v-if="kelola && terpilih.sumber === 'agenda'" class="mt-3 text-sm text-teks2">Sasaran: {{ terpilih.ringkasan_sasaran }}<template v-if="terpilih.penerima != null"> · {{ terpilih.penerima }} penerima</template></p>
         <p v-if="terpilih.sumber === 'libur'" class="mt-3 text-sm text-teks3">Diatur di Setelan → Kalender.</p>
         <div v-if="kelola && terpilih.sumber === 'agenda'" class="mt-4 flex flex-wrap gap-2">

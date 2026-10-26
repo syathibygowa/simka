@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/token.css | v3.4 | 14.25.0: warna Alumni (.w-alumni) dan Arsip (.w-arsip) | 25/10/2026 */
+/* SIMKA PRO | src/styles/token.css | v3.5 | 14.28.0: warna Rapat (.w-rapat) | 26/10/2026 */
 /* =====================================================================
    SIMKA PRO · Token warna dan tema
    Semua warna teks sudah diuji kontrasnya (WCAG AA, ≥ 4,5:1) terhadap
@@ -87,6 +87,7 @@
 .w-tahsin     { --c: #6E4A1F; --c2: #0F7A5C; }   /* cokelat mushaf — tahsin (perbaikan bacaan), 8,3:1 */
 .w-alumni     { --c: #1E5A8A; --c2: #B7791F; }   /* biru toga — alumni, 7,0:1 */
 .w-arsip      { --c: #5B4636; --c2: #2F5D50; }   /* cokelat arsip — arsip tahun ajaran, 9,1:1 */
+.w-rapat      { --c: #3F51B5; --c2: #0E7C86; }   /* biru indigo — rapat, 6,4:1 */
 
 .dark .w-beranda    { --c: #FF8A7A; --c2: #FFB074; }
 .dark .w-presensi   { --c: #5BD69A; --c2: #4FD1D3; }
@@ -132,6 +133,7 @@
 .dark .w-disiplin   { --c: #FF9A8B; --c2: #E0B48C; }
 .dark .w-alumni     { --c: #8CC4F5; --c2: #F2C24B; }
 .dark .w-arsip      { --c: #E2C3A6; --c2: #8FD3BF; }
+.dark .w-rapat      { --c: #A9B6FF; --c2: #6FD6DD; }
 .dark .w-tahsin     { --c: #E8C08F; --c2: #5FD9B2; }
 
 /* Warna notifikasi dari database (kolom warna) */

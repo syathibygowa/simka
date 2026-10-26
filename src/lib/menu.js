@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v4.5 | 14.25.0: menu Alumni dan Arsip Tahun Ajaran (admin/superadmin) | 25/10/2026
+// SIMKA PRO | src/lib/menu.js | v4.6 | 14.28.0: menu Rapat (semua pegawai; kelola admin/superadmin) | 26/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Fungsional, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -6,7 +6,7 @@
 import {
   PhHouse, PhFingerprint, PhUsersThree, PhStudent, PhBookOpenText, PhFileText, PhFirstAidKit,
   PhShieldCheck, PhChartBar, PhEnvelopeSimple, PhWallet, PhMegaphone, PhKey, PhGearSix, PhBell,
-  PhFiles, PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhCashRegister, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut, PhListMagnifyingGlass, PhChalkboard, PhPresentationChart, PhExam, PhTrophy, PhGavel, PhGraduationCap, PhArchive,
+  PhFiles, PhUserCircle, PhSquaresFour, PhUserCheck, PhNotebook, PhIdentificationCard, PhTreeStructure, PhCoins, PhCashRegister, PhMapPinArea, PhCalendarStar, PhSealCheck, PhChartLineUp, PhClockCounterClockwise, PhFolderOpen, PhCalendarCheck, PhUsersFour, PhClockCountdown, PhChalkboardTeacher, PhCheckSquareOffset, PhMedal, PhCalendarDots, PhChartPieSlice, PhCalendarPlus, PhBuildings, PhSignOut, PhListMagnifyingGlass, PhChalkboard, PhPresentationChart, PhExam, PhTrophy, PhGavel, PhGraduationCap, PhArchive, PhPresentation,
 } from '@phosphor-icons/vue'
 
 // Aturan tampil setiap menu (v4.0, 14.0.0) — semuanya dapat diatur superadmin di Hak Akses:
@@ -32,6 +32,8 @@ export const MENU = [
   { kode: 'aturpresensi', nama: 'Penjadwalan', ikon: PhMapPinArea, warna: 'aturpresensi', ke: '/atur-presensi', grup: 'Presensi', fitur: 'atur_presensi', izin: 'atur_presensi' },
   // Layanan pegawai (milik setiap pegawai)
   { kode: 'pengajuan',  nama: 'Pengajuan',       ikon: PhFileText,       warna: 'pengajuan',  ke: '/pengajuan',         grup: 'Layanan Pegawai', fitur: 'pengajuan' },
+  // Rapat (14.28.0): undangan, konfirmasi, presensi, notulen — peserta melihat rapatnya; admin/superadmin mengelola
+  { kode: 'rapat',      nama: 'Rapat',           ikon: PhPresentation,   warna: 'rapat',      ke: '/rapat',             grup: 'Layanan Pegawai', kunci: 'semua' },
   { kode: 'jurnal',     nama: 'Jurnal Harian',   ikon: PhNotebook,       warna: 'tatausaha',  ke: '/jurnal',            grup: 'Layanan Pegawai', fitur: 'jurnal_harian' },
   { kode: 'berkas',     nama: 'Berkas Saya',     ikon: PhFolderOpen,     warna: 'berkas',     ke: '/berkas',            grup: 'Layanan Pegawai', fitur: 'berkas_pegawai' },
   // Kepegawaian (pengelolaan data pegawai)
