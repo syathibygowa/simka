@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/rapat/Rapat.vue | v1.0 | 14.28.0: menu Rapat (jadwal, rapat saya, rekap kehadiran) | 26/10/2026 -->
+<!-- SIMKA PRO | src/pages/rapat/Rapat.vue | v1.1 | 14.29.0: rekap per bulan atau rentang tanggal; persentase di bawah ambang batas merah lembut; urut jabatan | 26/10/2026 -->
 <script setup>
 // Menu Rapat. Semua pegawai melihat rapat yang mengundangnya (dari Agenda jenis Rapat atau dibuat admin), konfirmasi hadir/izin,
 // lalu membaca notulen. Admin dan superadmin melihat seluruh rapat, membuat/mengubah rapat, dan membuka Rekap kehadiran rapat.
@@ -18,6 +18,8 @@ import { ambilPenandaTangan } from '@/lib/penandatangan'
 import BilahTab from '@/components/BilahTab.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
+import InputTanggal from '@/components/InputTanggal.vue'
+import { useAmbang } from '@/stores/ambang'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import LembarRapat from './LembarRapat.vue'
@@ -55,9 +57,12 @@ const lembar = ref(false)
 const selesaiBuat = (id) => { rp.muat(geser(hari, -120), geser(hari, 60)); if (id) router.push(`/rapat/${id}`) }
 
 // ---------- Rekap (admin) ----------
+const amb = useAmbang(); amb.muat()   // 14.29.0: persentase di bawah ambang batas (Pelaporan → Ambang batas, batas pegawai) merah lembut
+const modeR = ref('bulan')   // bulan | rentang
 const bulanAwal = hari.slice(0, 7); const rMulai = ref(bulanAwal + '-01'); const rSelesai = ref(hari); const R = ref(null); const memuatR = ref(false); const pratinjau = ref(false)
 const direktur = ref({ jabatan: 'Direktur', nama: '', niy: '' })
 async function muatRekap() {
+  if (rSelesai.value < rMulai.value) return ui.toast('Tanggal akhir tidak boleh sebelum tanggal awal.', 'galat')
   memuatR.value = true
   try { R.value = await rp.rekap(rMulai.value, rSelesai.value, jenis.value || null) } catch (e) { ui.toast(e.message, 'galat') } finally { memuatR.value = false }
 }
@@ -135,10 +140,20 @@ function ekspor() {
     <!-- Rekap (admin) -->
     <template v-else>
       <section class="kartu flex flex-wrap items-center gap-2 p-3">
-        <button class="tombol-ikon" aria-label="Bulan sebelumnya" @click="pilihBulan(-1)"><PhCaretLeft :size="20" /></button>
-        <p class="min-w-[140px] text-center font-bold">{{ labelBulan }}</p>
-        <button class="tombol-ikon" aria-label="Bulan berikutnya" @click="pilihBulan(1)"><PhCaretRight :size="20" /></button>
-        <span class="text-xs text-teks3">{{ formatPendek(rMulai) }} – {{ formatPendek(rSelesai) }}</span>
+        <div class="bilah-tab kecil" role="tablist" aria-label="Jenis periode">
+          <button v-for="m in [{ k: 'bulan', n: 'Per bulan', w: 'agenda' }, { k: 'rentang', n: 'Rentang tanggal', w: 'rapat' }]" :key="m.k" type="button" role="tab" :aria-selected="modeR === m.k"
+            :class="['tab-garis', 'w-' + m.w, modeR === m.k && 'aktif']" @click="modeR = m.k; if (m.k === 'bulan') pilihBulan(0)">{{ m.n }}</button>
+        </div>
+        <template v-if="modeR === 'bulan'">
+          <button class="tombol-ikon" aria-label="Bulan sebelumnya" @click="pilihBulan(-1)"><PhCaretLeft :size="20" /></button>
+          <p class="min-w-[140px] text-center font-bold">{{ labelBulan }}</p>
+          <button class="tombol-ikon" aria-label="Bulan berikutnya" @click="pilihBulan(1)"><PhCaretRight :size="20" /></button>
+          <span class="text-xs text-teks3">{{ formatPendek(rMulai) }} – {{ formatPendek(rSelesai) }}</span>
+        </template>
+        <template v-else>
+          <div class="w-44"><InputTanggal v-model="rMulai" label="Dari tanggal" /></div>
+          <div class="w-44"><InputTanggal v-model="rSelesai" label="Sampai tanggal" /></div>
+        </template>
         <span class="flex-1" />
         <button class="w-pengajuan tombol-garis px-4 text-sm" :disabled="!R?.rapat?.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" style="color: var(--c)" /> Cetak rekap</button>
         <button class="w-gaji tombol-garis px-4 text-sm" :disabled="!R?.rapat?.length" @click="ekspor"><PhFileXls :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
@@ -149,21 +164,21 @@ function ekspor() {
           <h3 class="mb-2 font-bold">Rapat dalam periode</h3>
           <table class="w-full min-w-[640px] text-sm">
             <thead><tr class="border-b border-garis text-left text-xs text-teks3"><th class="py-2 pr-2">Tanggal</th><th class="px-2">Rapat</th><th class="px-2">Jenis</th><th class="px-2 text-center">Peserta</th><th class="px-2 text-center">Hadir</th><th class="px-2 text-center">Izin</th><th class="px-2 text-center">Alpa</th><th class="pl-2 text-center">%</th></tr></thead>
-            <tbody><tr v-for="m in R.rapat" :key="m.id" class="cursor-pointer border-b border-garis/60 hover:bg-permukaan2" @click="buka(m)">
+            <tbody><tr v-for="m in R.rapat" :key="m.id" :class="['cursor-pointer border-b border-garis/60 hover:bg-permukaan2', amb.kelas(persenHadir(m.hadir, m.peserta), 'pegawai')]" @click="buka(m)">
               <td class="py-2 pr-2 tabular-nums">{{ formatPendek(m.tanggal) }}</td><td class="px-2 font-semibold">{{ m.judul }}</td><td class="px-2">{{ JENIS_RAPAT[m.jenis]?.n }}</td>
               <td class="px-2 text-center tabular-nums">{{ m.peserta }}</td><td class="px-2 text-center tabular-nums">{{ m.hadir }}</td><td class="px-2 text-center tabular-nums">{{ m.izin }}</td><td class="px-2 text-center tabular-nums">{{ m.alpa }}</td>
-              <td class="pl-2 text-center font-bold tabular-nums">{{ persenHadir(m.hadir, m.peserta) }}</td></tr>
+              <td :class="['pl-2 text-center font-bold tabular-nums', amb.bawah(persenHadir(m.hadir, m.peserta), 'pegawai') && 'persen-ambang']">{{ persenHadir(m.hadir, m.peserta) }}</td></tr>
               <tr v-if="!R.rapat.length"><td colspan="8" class="py-6 text-center text-teks3">Tidak ada rapat pada periode ini.</td></tr></tbody>
           </table>
         </section>
         <section class="kartu mt-3 overflow-x-auto p-4">
-          <h3 class="mb-2 font-bold">Kehadiran per pegawai</h3>
+          <h3 class="mb-2 font-bold">Kehadiran per pegawai <span class="text-xs font-normal text-teks3">(urut jabatan; di bawah {{ amb.batas('pegawai') }}% berwarna merah)</span></h3>
           <table class="w-full min-w-[640px] text-sm">
             <thead><tr class="border-b border-garis text-left text-xs text-teks3"><th class="py-2 pr-2">Nama</th><th class="px-2">Bidang</th><th class="px-2 text-center">Undangan</th><th class="px-2 text-center">Hadir</th><th class="px-2 text-center">Terlambat</th><th class="px-2 text-center">Izin</th><th class="px-2 text-center">Alpa</th><th class="pl-2 text-center">%</th></tr></thead>
-            <tbody><tr v-for="p in pegawaiR" :key="p.employee_id" class="border-b border-garis/60">
+            <tbody><tr v-for="p in pegawaiR" :key="p.employee_id" :class="['border-b border-garis/60', amb.kelas(p.persen, 'pegawai')]">
               <td class="py-2 pr-2 font-semibold">{{ p.nama }}</td><td class="px-2 text-teks2">{{ p.unit || '–' }}</td><td class="px-2 text-center tabular-nums">{{ p.undangan }}</td><td class="px-2 text-center tabular-nums">{{ p.hadir }}</td>
               <td class="px-2 text-center tabular-nums">{{ p.terlambat }}</td><td class="px-2 text-center tabular-nums">{{ p.izin }}</td><td class="px-2 text-center tabular-nums">{{ p.alpa }}</td>
-              <td :class="['pl-2 text-center font-bold tabular-nums', p.persen != null && p.persen < 75 && 'persen-ambang']">{{ p.persen ?? '–' }}</td></tr></tbody>
+              <td :class="['pl-2 text-center font-bold tabular-nums', amb.bawah(p.persen, 'pegawai') && 'persen-ambang']">{{ p.persen ?? '–' }}</td></tr></tbody>
           </table>
         </section>
       </template>
@@ -173,14 +188,14 @@ function ekspor() {
         <table class="tabel">
           <colgroup><col style="width:4%"><col style="width:10%"><col style="width:34%"><col style="width:14%"><col style="width:7%"><col style="width:7%"><col style="width:8%"><col style="width:8%"><col style="width:8%"></colgroup>
           <thead><tr><th>No.</th><th>Tanggal</th><th>Rapat</th><th>Jenis</th><th>Peserta</th><th>Hadir</th><th>Izin/sakit</th><th>Tanpa ket.</th><th>Kehadiran</th></tr></thead>
-          <tbody><tr v-for="(m, i) in R?.rapat || []" :key="m.id"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ formatPendek(m.tanggal) }}</td><td>{{ m.judul }}</td><td>{{ JENIS_RAPAT[m.jenis]?.n }}</td>
+          <tbody><tr v-for="(m, i) in R?.rapat || []" :key="m.id" :class="amb.kelasCetak(persenHadir(m.hadir, m.peserta), 'pegawai')"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ formatPendek(m.tanggal) }}</td><td>{{ m.judul }}</td><td>{{ JENIS_RAPAT[m.jenis]?.n }}</td>
             <td class="tengah">{{ m.peserta }}</td><td class="tengah">{{ m.hadir }}</td><td class="tengah">{{ m.izin }}</td><td class="tengah">{{ m.alpa }}</td><td class="tengah">{{ persenHadir(m.hadir, m.peserta) }}%</td></tr></tbody>
         </table>
         <p style="font-weight: 700; margin: 8pt 0 4pt">B. Kehadiran per pegawai</p>
         <table class="tabel">
           <colgroup><col style="width:4%"><col style="width:12%"><col style="width:28%"><col style="width:20%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:8%"></colgroup>
           <thead><tr><th>No.</th><th>NIY</th><th>Nama</th><th>Bidang</th><th>Undangan</th><th>Hadir</th><th>Izin/sakit</th><th>Tanpa ket.</th><th>Kehadiran</th></tr></thead>
-          <tbody><tr v-for="(p, i) in pegawaiR" :key="p.employee_id"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ p.niy || '–' }}</td><td>{{ p.nama }}</td><td>{{ p.unit || '–' }}</td>
+          <tbody><tr v-for="(p, i) in pegawaiR" :key="p.employee_id" :class="amb.kelasCetak(p.persen, 'pegawai')"><td class="tengah">{{ i + 1 }}</td><td class="tengah">{{ p.niy || '–' }}</td><td>{{ p.nama }}</td><td>{{ p.unit || '–' }}</td>
             <td class="tengah">{{ p.undangan }}</td><td class="tengah">{{ p.hadir }}</td><td class="tengah">{{ p.izin }}</td><td class="tengah">{{ p.alpa }}</td><td class="tengah">{{ p.persen != null ? p.persen + '%' : '–' }}</td></tr></tbody>
         </table>
         <template #ttd>

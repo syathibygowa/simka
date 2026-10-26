@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/rapat.js | v1.0 | 14.28.0: rapat (daftar, rincian, konfirmasi, presensi, notulen, rekap) | 26/10/2026
+// SIMKA PRO | src/stores/rapat.js | v1.1 | 14.29.0: demo peserta dan rekap urut jabatan | 26/10/2026
 // Rapat lahir dari Agenda berjenis Rapat (peserta = sasaran agenda: tim kerja, bidang, jabatan, pegawai) atau dibuat admin.
 // Peserta melihat rapatnya, konfirmasi hadir/izin, menekan "Saya hadir", dan membaca notulen. Admin/superadmin mengelola.
 import { defineStore } from 'pinia'
@@ -7,6 +7,7 @@ import { pesanGalat } from './lembaga'
 import { useSesi } from './sesi'
 import { usePegawai } from './pegawai'
 import { hariIniISO } from '@/lib/tanggal'
+import { urutJabatan, urutkanPeserta } from '@/lib/rapat'
 
 const rpc = async (nama, arg) => { const { data, error } = await supabase.rpc(nama, arg); if (error) throw new Error(pesanGalat(error)); return data }
 const geser = (n) => { const d = new Date(hariIniISO() + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) }
@@ -57,8 +58,8 @@ function detailDemo(m) {
   const nama = (id) => peg.cari(id)?.nama_lengkap || null
   return { rapat: { ...m, peserta: undefined, pimpinan: nama(m.pimpinan_id), pimpinan_niy: peg.cari(m.pimpinan_id)?.niy, notulis: nama(m.notulis_id), notulis_niy: peg.cari(m.notulis_id)?.niy,
       agenda_judul: m.agenda_id ? m.judul : null }, boleh_kelola: admin, saya: m.peserta.find((x) => x.employee_id === s) || null,
-    peserta: m.peserta.map((x) => { const p = peg.cari(x.employee_id) || {}
-      return { ...x, nama: p.nama_lengkap, niy: p.niy, jenis_kelamin: p.jenis_kelamin, no_hp: admin ? p.no_hp || '081234500000' : null, unit: p.nama_unit, jabatan: p.jabatan_struktural || (p.jabatan_fungsional || []).join(', ') } }) }
+    peserta: urutkanPeserta(m.peserta.map((x) => { const p = peg.cari(x.employee_id) || {}
+      return { ...x, nama: p.nama_lengkap, niy: p.niy, jenis_kelamin: p.jenis_kelamin, no_hp: admin ? p.no_hp || '081234500000' : null, unit: p.nama_unit, jabatan: p.jabatan_struktural || (p.jabatan_fungsional || []).join(', '), urut: urutJabatan(p.jabatan_struktural, p.jabatan_fungsional) } })) }
 }
 
 export const useRapat = defineStore('rapat', {
@@ -128,12 +129,12 @@ export const useRapat = defineStore('rapat', {
     async rekap(mulai, selesai, jenis = null, unit = null) {
       if (MODE_DEMO) {
         const d = (await demo()).filter((m) => m.tanggal >= mulai && m.tanggal <= selesai && m.status !== 'batal' && (!jenis || m.jenis === jenis)); const peg = usePegawai(); const per = {}
-        for (const m of d) for (const p of m.peserta) { const x = per[p.employee_id] ||= { employee_id: p.employee_id, nama: peg.cari(p.employee_id)?.nama_lengkap, niy: peg.cari(p.employee_id)?.niy, unit: peg.cari(p.employee_id)?.nama_unit, undangan: 0, hadir: 0, terlambat: 0, izin: 0, alpa: 0 }
+        for (const m of d) for (const p of m.peserta) { const x = per[p.employee_id] ||= { employee_id: p.employee_id, nama: peg.cari(p.employee_id)?.nama_lengkap, niy: peg.cari(p.employee_id)?.niy, unit: peg.cari(p.employee_id)?.nama_unit, urut: urutJabatan(peg.cari(p.employee_id)?.jabatan_struktural, peg.cari(p.employee_id)?.jabatan_fungsional), undangan: 0, hadir: 0, terlambat: 0, izin: 0, alpa: 0 }
           if (m.status === 'selesai' || m.tanggal < hariIniISO()) x.undangan++; if (['hadir', 'terlambat'].includes(p.kehadiran)) x.hadir++; if (p.kehadiran === 'terlambat') x.terlambat++; if (['izin', 'sakit', 'dinas_luar'].includes(p.kehadiran)) x.izin++; if (p.kehadiran === 'alpa') x.alpa++ }
         return { rapat: d.map((m) => ({ id: m.id, tanggal: m.tanggal, judul: m.judul, jenis: m.jenis, unit: m.unit, status: m.status, peserta: m.peserta.length,
           hadir: m.peserta.filter((p) => ['hadir', 'terlambat'].includes(p.kehadiran)).length, terlambat: m.peserta.filter((p) => p.kehadiran === 'terlambat').length,
           izin: m.peserta.filter((p) => ['izin', 'sakit', 'dinas_luar'].includes(p.kehadiran)).length, alpa: m.peserta.filter((p) => p.kehadiran === 'alpa').length })).sort((a, b) => a.tanggal.localeCompare(b.tanggal)),
-          pegawai: Object.values(per).sort((a, b) => String(a.nama).localeCompare(String(b.nama))) }
+          pegawai: urutkanPeserta(Object.values(per)) }
       }
       return await rpc('rekap_rapat', { p_mulai: mulai, p_selesai: selesai, p_jenis: jenis, p_unit: unit })
     },

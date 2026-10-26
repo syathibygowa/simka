@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/rapat/DetailRapat.vue | v1.0 | 14.28.0: rincian rapat (konfirmasi, presensi, notulen, laporan WA, pengingat WA, cetak) | 26/10/2026 -->
+<!-- SIMKA PRO | src/pages/rapat/DetailRapat.vue | v1.1 | 14.29.0: peserta urut jabatan; notulen berformat (tebal, miring, penomoran otomatis) | 26/10/2026 -->
 <script setup>
 // Rincian satu rapat (/rapat/:id) — dibuka peserta yang diundang dan admin/superadmin.
 //   Peserta  : konfirmasi Hadir/Izin/Sakit/Dinas luar (dengan alasan), tombol "Saya hadir" saat rapat berlangsung, baca notulen.
@@ -23,6 +23,8 @@ import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import IsianTeksKaya from '@/components/IsianTeksKaya.vue'
+import { teksKaya } from '@/lib/teksKaya'
 import LembarRapat from './LembarRapat.vue'
 
 const route = useRoute(); const router = useRouter(); const rp = useRapat(); const sesi = useSesi(); const ui = useUI()
@@ -230,18 +232,20 @@ const statistik = computed(() => {
         <section v-if="!suntingN" class="kartu space-y-4 p-5">
           <div v-if="!r.pembahasan && !r.keputusan && !(r.tindak_lanjut || []).length" class="py-4 text-center text-sm text-teks3">
             <PhNotebook :size="36" weight="duotone" class="mx-auto" /><p class="mt-2">Notulen belum diisi.</p></div>
-          <div v-if="r.pembahasan"><h3 class="mb-1 font-bold">Pokok pembahasan</h3><p class="whitespace-pre-line text-sm text-teks2">{{ r.pembahasan }}</p></div>
-          <div v-if="r.keputusan"><h3 class="mb-1 font-bold">Keputusan/hasil rapat</h3><p class="whitespace-pre-line text-sm text-teks2">{{ r.keputusan }}</p></div>
+          <!-- eslint-disable vue/no-v-html -- teksKaya() meng-escape isi lebih dahulu -->
+          <div v-if="r.pembahasan"><h3 class="mb-1 font-bold">Pokok pembahasan</h3><p class="teks-kaya whitespace-pre-line text-sm text-teks2" v-html="teksKaya(r.pembahasan)" /></div>
+          <div v-if="r.keputusan"><h3 class="mb-1 font-bold">Keputusan/hasil rapat</h3><p class="teks-kaya whitespace-pre-line text-sm text-teks2" v-html="teksKaya(r.keputusan)" /></div>
           <div v-if="(r.tindak_lanjut || []).length"><h3 class="mb-1 font-bold">Tindak lanjut</h3>
             <ul class="divide-y divide-garis rounded-xl border border-garis text-sm"><li v-for="(t, i) in r.tindak_lanjut" :key="i" class="flex flex-wrap gap-x-3 px-3 py-2"><b class="flex-1">{{ i + 1 }}. {{ t.tugas }}</b>
               <span v-if="t.pj" class="text-teks2">PJ: {{ t.pj }}</span><span v-if="t.tenggat" class="text-teks3">tenggat {{ formatPanjang(t.tenggat) }}</span></li></ul></div>
-          <div v-if="r.catatan"><h3 class="mb-1 font-bold">Catatan</h3><p class="whitespace-pre-line text-sm text-teks2">{{ r.catatan }}</p></div>
+          <div v-if="r.catatan"><h3 class="mb-1 font-bold">Catatan</h3><p class="teks-kaya whitespace-pre-line text-sm text-teks2" v-html="teksKaya(r.catatan)" /></div>
+          <!-- eslint-enable vue/no-v-html -->
           <p v-if="r.notulen_pada" class="text-xs text-teks3">Notulen ditetapkan {{ formatWaktu(r.notulen_pada) }}.</p>
           <button v-if="kelola" class="tombol-utama w-full sm:w-auto" @click="suntingN = true"><PhPencilSimple :size="18" /> {{ r.pembahasan || r.keputusan ? 'Ubah notulen' : 'Tulis notulen' }}</button>
         </section>
         <section v-else class="kartu space-y-4 p-5">
-          <div><label class="label-isian" for="nt-bahas">Pokok pembahasan</label><textarea id="nt-bahas" v-model="notulen.pembahasan" rows="5" class="isian" placeholder="Hal-hal yang dibahas dalam rapat" @input="ubahN = true" /></div>
-          <div><label class="label-isian" for="nt-putus">Keputusan/hasil rapat</label><textarea id="nt-putus" v-model="notulen.keputusan" rows="5" class="isian" placeholder="1. …&#10;2. …" @input="ubahN = true" /></div>
+          <IsianTeksKaya id="nt-bahas" v-model="notulen.pembahasan" label="Pokok pembahasan" tinggi="10rem" placeholder="Hal-hal yang dibahas dalam rapat" @update:model-value="ubahN = true" />
+          <IsianTeksKaya id="nt-putus" v-model="notulen.keputusan" label="Keputusan/hasil rapat" tinggi="10rem" placeholder="1. …" :petunjuk="false" @update:model-value="ubahN = true" />
           <div>
             <p class="label-isian">Tindak lanjut</p>
             <div v-for="(t, i) in notulen.tindak_lanjut" :key="i" class="mb-2 grid gap-2 rounded-xl border border-garis p-2 sm:grid-cols-[1fr_200px_170px_44px]">
@@ -252,7 +256,7 @@ const statistik = computed(() => {
             </div>
             <button type="button" class="tombol-garis min-h-[38px] px-3 text-sm" @click="tambahTL"><PhPlus :size="16" weight="bold" /> Tambah tindak lanjut</button>
           </div>
-          <div><label class="label-isian" for="nt-cat">Catatan lain</label><textarea id="nt-cat" v-model="notulen.catatan" rows="2" class="isian" @input="ubahN = true" /></div>
+          <IsianTeksKaya id="nt-cat" v-model="notulen.catatan" label="Catatan lain" tinggi="5rem" :petunjuk="false" @update:model-value="ubahN = true" />
           <div class="flex flex-wrap gap-2">
             <button class="tombol-garis" @click="salin(); suntingN = false">Batal</button>
             <button class="tombol-garis" :disabled="!!proses" @click="simpanNotulen(false)"><PhFloppyDisk :size="18" /> Simpan draf</button>
@@ -308,15 +312,17 @@ const statistik = computed(() => {
           </table>
         </template>
         <template v-else>
-          <p class="sub-cetak">A. Pokok Pembahasan</p><p class="isi-cetak">{{ r.pembahasan || '–' }}</p>
-          <p class="sub-cetak">B. Keputusan/Hasil Rapat</p><p class="isi-cetak">{{ r.keputusan || '–' }}</p>
+          <!-- eslint-disable vue/no-v-html -- teksKaya() meng-escape isi lebih dahulu -->
+          <p class="sub-cetak">A. Pokok Pembahasan</p><p class="isi-cetak teks-kaya" v-html="r.pembahasan ? teksKaya(r.pembahasan) : '–'" />
+          <p class="sub-cetak">B. Keputusan/Hasil Rapat</p><p class="isi-cetak teks-kaya" v-html="r.keputusan ? teksKaya(r.keputusan) : '–'" />
           <template v-if="(r.tindak_lanjut || []).length">
             <p class="sub-cetak">C. Tindak Lanjut</p>
             <table class="tabel"><colgroup><col style="width:6%"><col style="width:50%"><col style="width:26%"><col style="width:18%"></colgroup>
               <thead><tr><th>No.</th><th>Tugas</th><th>Penanggung jawab</th><th>Tenggat</th></tr></thead>
               <tbody><tr v-for="(t, i) in r.tindak_lanjut" :key="i"><td class="tengah">{{ i + 1 }}</td><td>{{ t.tugas }}</td><td>{{ t.pj || '–' }}</td><td class="tengah">{{ t.tenggat ? formatPanjang(t.tenggat) : '–' }}</td></tr></tbody></table>
           </template>
-          <template v-if="r.catatan"><p class="sub-cetak">{{ (r.tindak_lanjut || []).length ? 'D' : 'C' }}. Catatan</p><p class="isi-cetak">{{ r.catatan }}</p></template>
+          <template v-if="r.catatan"><p class="sub-cetak">{{ (r.tindak_lanjut || []).length ? 'D' : 'C' }}. Catatan</p><p class="isi-cetak teks-kaya" v-html="teksKaya(r.catatan)" /></template>
+          <!-- eslint-enable vue/no-v-html -->
         </template>
         <template #ttd><TandaTangan :kiri="ttdKiri" :kanan="ttdKanan" /></template>
       </DokumenCetak>
