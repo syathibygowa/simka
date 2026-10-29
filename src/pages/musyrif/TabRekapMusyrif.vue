@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.6 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Rekap kehadiran asrama satu kamar. Empat tampilan:
 //   kamar   : per santri pada rentang (sesi, hadir, I, S, B, A, T, %)
@@ -157,7 +157,7 @@ const subjudulCetak = computed(() => `${kamar.value?.nama || ''} · ${teksPeriod
           <button v-for="p in PRESET" :key="p.k" :class="['tab-garis', (presetAktif === p.k) && 'aktif']" role="tab" :aria-selected="presetAktif === p.k" @click="pakai(p)">{{ p.n }}</button>
         </div>
       </div>
-      <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari" wajib /></div><div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
+      <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari" wajib /></div><div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" wajib /></div>
     </SaringCorong>
 
     <BilahTab v-model="mode" class="mb-3" :tab="MODE" label="Tampilan rekap" />
@@ -222,7 +222,7 @@ const subjudulCetak = computed(() => `${kamar.value?.nama || ''} · ${teksPeriod
       <!-- Individu -->
       <div v-else class="space-y-4">
         <div class="kartu p-4">
-          <label class="label-isian" for="rk-sn">Santri</label>
+          <label class="label-isian sr-only" for="rk-sn">Santri</label>
           <select id="rk-sn" v-model="santriPilih" class="isian"><option v-for="s in santri" :key="s.id" :value="s.id">{{ s.nama }} · {{ s.nis }}</option></select>
           <template v-if="sIndividu">
             <div class="mt-3 grid grid-cols-3 gap-2 text-center sm:grid-cols-7">

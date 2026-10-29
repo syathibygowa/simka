@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jadwal/TabRekapMengajar.vue | v1.5 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/jadwal/TabRekapMengajar.vue | v1.6 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Rekap mengajar per guru dan penugasan: JP terjadwal (hari sekolah, di luar libur), terlaksana, tidak terlaksana,
 // belum diisi. Jurnal mengajar menjadi bukti kehadiran mengajar dan dasar tunjangan guru (Fase 11).
@@ -68,13 +68,13 @@ function ekspor() {
     <SubTabJenjang v-model="jenjang" class="mb-3" :jumlah="jumlahJ" label="Saring jenjang rekap" />
     <SaringCorong class="mb-4" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring rekap mengajar">
       <template #cari><input id="rm-c" v-model="cari" type="search" class="isian" placeholder="Cari nama guru" aria-label="Cari guru" /></template>
-      <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari" wajib /></div>
-      <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
-      <div><label class="label-isian" for="rm-ck">Cakupan cetak/unduh</label>
+      <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari" wajib /></div>
+      <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" wajib /></div>
+      <div><label class="label-isian sr-only" for="rm-ck">Cakupan cetak/unduh</label>
         <select id="rm-ck" v-model="cakupan" class="isian w-auto max-w-full"><option value="semua">Semua guru (kolektif)</option><option value="bidang">Per bidang</option><option value="guru">Per guru</option></select></div>
-      <div v-if="cakupan === 'bidang'"><label class="label-isian" for="rm-bd">Bidang</label>
+      <div v-if="cakupan === 'bidang'"><label class="label-isian sr-only" for="rm-bd">Bidang</label>
         <select id="rm-bd" v-model="bidang" class="isian"><option value="" disabled>Pilih bidang</option><option v-for="b in daftarBidang" :key="b.id" :value="b.id">{{ b.nama }}</option></select></div>
-      <div v-if="cakupan === 'guru'"><label class="label-isian" for="rm-gr">Guru</label>
+      <div v-if="cakupan === 'guru'"><label class="label-isian sr-only" for="rm-gr">Guru</label>
         <select id="rm-gr" v-model="guruPilih" class="isian"><option v-for="g in perGuruSemua" :key="g.employee_id" :value="g.employee_id">{{ g.guru }}</option></select></div>
       <label v-if="cakupan !== 'guru'" class="flex min-h-[46px] items-center gap-2 self-end text-sm"><input v-model="perHalaman" type="checkbox" class="h-5 w-5" /> Cetak satu halaman per guru</label>
     </SaringCorong>

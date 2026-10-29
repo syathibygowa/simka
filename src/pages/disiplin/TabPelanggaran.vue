@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/disiplin/TabPelanggaran.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/disiplin/TabPelanggaran.vue | v1.3 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Tab Pelanggaran: kartu statistik langsung, saringan (rentang tanggal, tingkat, kategori, jenjang, pencarian; corong di HP),
 // daftar catatan dengan lencana SP, ubah/hapus (pencatat atau Kesantrian), cetak rekap F4 mendatar berkop dan Excel.
@@ -116,7 +116,7 @@ function excel() {
         <select v-model="kategori" class="isian md:w-auto md:max-w-[16rem]" aria-label="Saring kategori"><option value="">Semua kategori</option>
           <option v-for="k in daftarKategori" :key="k" :value="k">{{ k }}</option></select>
         <select v-model="jenjang" class="isian md:w-auto" aria-label="Saring jenjang"><option value="">Semua jenjang</option><option value="wustha">Kesetaraan Wustha</option><option value="sma">SMA</option></select>
-        <div v-if="!santriId" class="grid w-full grid-cols-2 gap-3 md:w-auto md:min-w-[22rem]"><InputTanggal v-model="mulai" label="Dari tanggal" /><InputTanggal v-model="selesai" label="Sampai" /></div>
+        <div v-if="!santriId" class="grid w-full grid-cols-2 gap-3 md:w-auto md:min-w-[22rem]"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" /><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" /></div>
         <button v-if="ds.hak.catat" class="tombol-utama hidden lg:inline-flex" @click="tambah"><PhPlus :size="20" weight="bold" /> Catat pelanggaran</button>
       </SaringCorong>
       <div class="mt-3 flex flex-wrap items-end gap-2 md:justify-end">

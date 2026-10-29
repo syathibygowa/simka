@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabRekapLayanan.vue | v1.6 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabRekapLayanan.vue | v1.7 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Laporan periode modul layanan (menu Dokumen → Rekap layanan): Security, libur santri, pengajuan pegawai, klinik.
 // Pilihan laporan tampil sesuai hak (diperiksa server). Daftar santri berurutan NIS, Nama, JK. Data klinik tanpa diagnosis.
@@ -147,7 +147,7 @@ const ada = computed(() => !!d.value)
             <component :is="j.ikon" :size="18" weight="duotone" /><span>{{ j.n }}</span></button>
         </div>
         <p class="text-sm text-teks2">{{ info.ket }}.</p>
-        <label v-if="jenis === 'pengajuan' && pemantau" class="block max-w-md"><span class="label-isian">Bidang/unit</span>
+        <label v-if="jenis === 'pengajuan' && pemantau" class="block max-w-md"><span class="label-isian sr-only">Bidang/unit</span>
           <select v-model="unit" class="isian"><option value="">Semua yang dapat Anda lihat</option>
             <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ ' '.repeat(u.tingkat * 2) }}{{ u.nama }}</option></select></label>
         <div class="flex flex-wrap gap-2">
@@ -157,8 +157,8 @@ const ada = computed(() => !!d.value)
           </div>
         </div>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
-          <InputTanggal v-model="mulai" label="Dari tanggal" />
-          <InputTanggal v-model="selesai" label="Sampai tanggal" />
+          <InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" />
+          <InputTanggal class="tanpa-label" v-model="selesai" label="Sampai tanggal" />
           <button type="button" class="tombol-utama" :disabled="ll.memuat" @click="muat(); bukaSaring = false"><PhMagnifyingGlass :size="20" weight="bold" /> Tampilkan</button>
         </div>
       </fieldset>

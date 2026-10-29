@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/TabSuratTeguran.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/TabSuratTeguran.vue | v1.4 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Tab Persuratan → Surat Teguran.
 //   Daftar    : SP yang boleh dilihat (penerima tidak melihat usulan sebelum terbit; atasan langsung melihat anggota unitnya;
@@ -126,7 +126,7 @@ const direktur = computed(() => lembaga.signatories?.find((s) => /^direktur$/i.t
           <option v-for="t in [1, 2, 3]" :key="t" :value="t">{{ TINGKAT_SP[t].singkat }}</option></select>
         <select v-if="daftarBidang.length > 1" v-model="bidang" class="isian md:w-auto" aria-label="Saring bidang"><option value="">Semua bidang</option>
           <option v-for="b in daftarBidang" :key="b" :value="b">{{ b }}</option></select>
-        <div class="grid w-full grid-cols-2 gap-3 md:w-auto md:min-w-[22rem]"><InputTanggal v-model="mulai" label="Diusulkan dari" /><InputTanggal v-model="selesai" label="Sampai" /></div>
+        <div class="grid w-full grid-cols-2 gap-3 md:w-auto md:min-w-[22rem]"><InputTanggal class="tanpa-label" v-model="mulai" label="Diusulkan dari" /><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" /></div>
         <button v-if="hak.usul" class="tombol-utama hidden lg:inline-flex" @click="lembarUsul = true"><PhPlus :size="20" weight="bold" /> Usulkan SP</button>
       </SaringCorong>
       <div class="mt-3 flex flex-wrap items-end gap-2 md:justify-end">

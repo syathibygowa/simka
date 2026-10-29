@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/TabBukuAgenda.vue | v1.5 | 14.19.0: buku agenda per bagian (Yayasan, Pondok, Wustha, SMA) dengan kop bagian itu | 21/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/TabBukuAgenda.vue | v1.6 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Buku agenda surat masuk per rentang tanggal terima (paling lama satu tahun): tabel, Excel, cetak F4 mendatar.
 // Surat rahasia yang tidak boleh dibaca ditampilkan perihalnya sebagai "(Rahasia)". Pilihan Surat keluar membuka BukuAgendaKeluar.
@@ -57,7 +57,7 @@ function ekspor() {
     <BukuAgendaKeluar v-if="jenis === 'keluar'" :bagian="bagian" :nama-bagian="namaBagianPilih" />
     <template v-else>
     <div class="kartu mb-4 grid grid-cols-2 gap-3 p-4 sm:grid-cols-[1fr_1fr_auto]">
-      <InputTanggal v-model="mulai" label="Diterima dari" wajib /><InputTanggal v-model="selesai" label="Sampai" wajib />
+      <InputTanggal class="tanpa-label" v-model="mulai" label="Diterima dari" wajib /><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" wajib />
       <div class="col-span-2 flex items-end gap-2 sm:col-span-1">
         <button class="tombol-garis w-pengajuan min-h-[44px] px-3 text-sm" :disabled="!baris.length" @click="pratinjau = true"><PhEye :size="18" style="color: var(--c)" /> Cetak</button>
         <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" :disabled="!baris.length" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Ekspor</button>

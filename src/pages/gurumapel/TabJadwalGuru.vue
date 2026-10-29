@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabJadwalGuru.vue | v1.1 | Perbaikan: menu Roster menjadi Jadwal Pelajaran | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabJadwalGuru.vue | v1.2 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Jadwal mengajar pekanan seorang guru (Senin–Sabtu). Guru melihat jadwalnya sendiri; pemantau dapat memilih guru.
 // Cetak jadwal tersedia di menu Jadwal Pelajaran → Jadwal guru (kertas F4).
@@ -19,7 +19,7 @@ const jumlahJP = computed(() => jd.jadwal.filter((s) => s.employee_id === emp.va
 <template>
   <div>
     <div class="mb-3 flex flex-wrap items-end gap-2">
-      <div v-if="pemantau" class="min-w-[220px] flex-1 sm:max-w-sm"><label class="label-isian" for="jg-guru">Guru</label>
+      <div v-if="pemantau" class="min-w-[220px] flex-1 sm:max-w-sm"><label class="label-isian sr-only" for="jg-guru">Guru</label>
         <select id="jg-guru" v-model="emp" class="isian"><option v-for="g in guruList" :key="g.id" :value="g.id">{{ g.nama }}</option></select></div>
       <p class="flex-1 self-center text-sm text-teks2">{{ jumlahJP }} jam pelajaran per pekan</p>
       <button class="tombol-garis" @click="router.push('/jadwal-pelajaran/guru')"><PhPrinter :size="20" weight="duotone" /> Cetak di Jadwal Pelajaran</button>

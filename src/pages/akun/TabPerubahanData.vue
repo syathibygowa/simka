@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/akun/TabPerubahanData.vue | v1.0 | Fase 5 – Perbaikan: pegawai memperbarui data kepegawaiannya | 05/10/2026 -->
+<!-- SIMKA PRO | src/pages/akun/TabPerubahanData.vue | v1.1 | 14.30.0: saringan bawaan Semua | 29/10/2026 -->
 <script setup>
 // Superadmin: verifikasi-validasi pengajuan perubahan data kepegawaian dari pegawai. Dapat mengoreksi nilai sebelum menyetujui.
 import { ref, computed, onMounted, watch } from 'vue'
@@ -11,7 +11,7 @@ import { formatWaktu, formatPanjang } from '@/lib/tanggal'
 import LembarBawah from '@/components/LembarBawah.vue'
 
 const pd = usePerubahanData(); const ui = useUI()
-const status = ref('menunggu'); const lembar = ref(false); const pilih = ref(null); const koreksi = ref({}); const catatan = ref(''); const proses = ref(false)
+const status = ref(''); const lembar = ref(false); const pilih = ref(null); const koreksi = ref({}); const catatan = ref(''); const proses = ref(false)
 const muat = () => pd.muat(status.value || null).catch((e) => ui.toast(e.message, 'galat'))
 onMounted(muat); watch(status, muat)
 const STATUS = { menunggu: 'w-pengajuan', disetujui: 'w-presensi', ditolak: 'w-klinik', dibatalkan: 'w-hakakses' }

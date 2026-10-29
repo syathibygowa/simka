@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabDokumenResmi.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabDokumenResmi.vue | v1.4 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Registri dokumen resmi bertanda tangan elektronik: kode validasi, jenis, nomor, perihal, atas nama, penanda tangan,
 // status, dan berapa kali diperiksa. Admin/superadmin melihat semua; pegawai melihat dokumen yang diterbitkan atau
@@ -77,11 +77,11 @@ async function cetak() { penanda.value = await ambilPenandaTangan('Direktur').ca
 
     <section class="kartu space-y-3 p-4">
       <SaringCorong v-model:buka="bukaSaring" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring dokumen resmi" tanpa-tombol>
-        <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
-        <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai tanggal" /></div>
-        <label class="block"><span class="label-isian">Jenis dokumen</span>
+        <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" /></div>
+        <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai tanggal" /></div>
+        <label class="block"><span class="label-isian sr-only">Jenis dokumen</span>
           <select v-model="jenis" class="isian"><option value="">Semua jenis</option><option v-for="(n, k) in JENIS_DOKUMEN" :key="k" :value="k">{{ n }}</option></select></label>
-        <label class="block"><span class="label-isian">Status</span>
+        <label class="block"><span class="label-isian sr-only">Status</span>
           <select v-model="status" class="isian"><option value="">Semua status</option><option v-for="(s, k) in STATUS_DOKUMEN" :key="k" :value="k">{{ s.n }}</option></select></label>
         <button type="button" class="tombol-utama" @click="bukaSaring = false; muat()"><PhMagnifyingGlass :size="20" weight="bold" /> Tampilkan</button>
       </SaringCorong>

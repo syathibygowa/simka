@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabTahsin.vue | v1.4 | 14.26.0: sub-tab Santri/Ujian tahsin memakai gaya tab seragam | 25/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabTahsin.vue | v1.5 | 14.30.0: saringan bawaan Semua | 29/10/2026 -->
 <script setup>
 // Tahsin — pembinaan bacaan Al-Qur'an bagi santri yang belum menghafal (umumnya santri baru atau pindahan).
 //   Muhaffizh/pengelola: "Tandai santri tahsin" (mulai, asal, tahap awal, pembina).
@@ -34,7 +34,7 @@ import CetakDokumenTahfizh from './CetakDokumenTahfizh.vue'
 
 const ts = useTahsin(); const tz = useTahfizh(); const sesi = useSesi(); const ui = useUI()
 const semua = ref([]); const calon = ref([]); const memuat = ref(false); const proses = ref(false)
-const saring = ref('berjalan'); const halaqah = ref(''); const cari = ref('')
+const saring = ref(''); const halaqah = ref(''); const cari = ref('')
 async function muat() {
   memuat.value = true
   try {
@@ -336,9 +336,9 @@ async function cetakUjian() { kepala.value = await penandaTahfizh(); pratinjauUj
         </ul>
       </section>
       <div class="kartu mt-4 flex flex-wrap items-end gap-3 p-4">
-        <div class="sm:w-44"><InputTanggal v-model="ujMulai" label="Ujian dari" /></div>
-        <div class="sm:w-44"><InputTanggal v-model="ujSelesai" label="Sampai" /></div>
-        <div><label class="label-isian" for="uj-hasil">Hasil</label>
+        <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="ujMulai" label="Ujian dari" /></div>
+        <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="ujSelesai" label="Sampai" /></div>
+        <div><label class="label-isian sr-only" for="uj-hasil">Hasil</label>
           <select id="uj-hasil" v-model="ujHasil" class="isian w-auto"><option value="">Semua hasil</option><option value="lulus">Lulus</option><option value="belum_lulus">Belum lulus</option></select></div>
       </div>
       <p v-if="memuatUjian" class="py-8 text-center text-sm text-teks3">Memuat ujian tahsin…</p>

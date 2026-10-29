@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/ekskul/TabLegerEkskul.vue | v1.1 | 14.27.0: hanya NIS; lebar kolom cetak proporsional | 26/10/2026 -->
+<!-- SIMKA PRO | src/pages/ekskul/TabLegerEkskul.vue | v1.2 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Ekskul → Leger: satu baris per santri aktif (No, NIS, Nama, JK, Kelas), lalu untuk setiap ekskul: persentase kehadiran
 // semester ini dan nilai pengembangan diri (A–D). Santri yang tidak tercatat di ekskul mana pun (tanpa keanggotaan, kehadiran,
@@ -106,9 +106,9 @@ function ekspor() {
     <SaringCorong class="mt-4" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring leger" bisa-atur-ulang @atur-ulang="jenjang = ''; kelas = ''; hanyaTanpa = false">
       <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama atau NIS" aria-label="Cari santri" /></div></template>
-      <div><label class="label-isian" for="lg-jenjang">Jenjang</label>
+      <div><label class="label-isian sr-only" for="lg-jenjang">Jenjang</label>
         <select id="lg-jenjang" v-model="jenjang" class="isian w-auto max-w-full"><option value="">Semua jenjang</option><option value="wustha">Kesetaraan Wustha</option><option value="sma">SMA</option></select></div>
-      <div><label class="label-isian" for="lg-kelas">Kelas</label>
+      <div><label class="label-isian sr-only" for="lg-kelas">Kelas</label>
         <select id="lg-kelas" v-model="kelas" class="isian w-auto max-w-full"><option value="">Semua kelas</option><option v-for="k in daftarKelas" :key="k" :value="k">{{ k }}</option></select></div>
       <label class="flex min-h-[44px] items-center gap-2 self-end text-sm font-semibold"><input v-model="hanyaTanpa" type="checkbox" class="h-5 w-5 accent-[#C7332F]" /> Hanya santri tanpa ekskul</label>
     </SaringCorong>

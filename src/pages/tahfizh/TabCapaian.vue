@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabCapaian.vue | v1.4 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabCapaian.vue | v1.5 | 14.30.0: saringan bawaan Semua | 29/10/2026 -->
 <script setup>
 // Capaian tahfizh:
 //  * Status bulanan — dihitung otomatis dari setoran (penambahan sabaq sebulan vs target pekan × pekan efektif).
@@ -81,7 +81,7 @@ async function batalSahkan() {
 }
 
 // ===================== USULAN JUZ =====================
-const usulan = ref([]); const saringUsulan = ref('menunggu'); const pilihUsulan = ref([]); const catatanTolak = ref(''); const lembarTolak = ref(false)
+const usulan = ref([]); const saringUsulan = ref(''); const pilihUsulan = ref([]); const catatanTolak = ref(''); const lembarTolak = ref(false)
 async function muatUsulan() { try { usulan.value = await tz.daftarUsulan(saringUsulan.value || null) } catch (e) { ui.toast(e.message, 'galat') } pilihUsulan.value = [] }
 watch(saringUsulan, muatUsulan)
 const menunggu = computed(() => usulan.value.filter((u) => u.status === 'menunggu'))
@@ -105,7 +105,7 @@ async function ajukan() {
   proses.value = true
   try {
     const n = await tz.usulkanJuz(santriUsul.value.student_id, juzUsul.value, catatanUsul.value.trim())
-    lembarUsul.value = false; ui.toast(n ? `${n} juz diusulkan. Validator menerima notifikasi.` : 'Juz tersebut sudah menunggu validasi.'); saringUsulan.value = 'menunggu'; await muatUsulan()
+    lembarUsul.value = false; ui.toast(n ? `${n} juz diusulkan. Validator menerima notifikasi.` : 'Juz tersebut sudah menunggu validasi.'); await muatUsulan()
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 
@@ -134,7 +134,7 @@ async function cetak() { kepala.value = await penandaTahfizh(); pratinjau.value 
       <template v-if="bagian === 'bulanan'">
         <div class="flex items-start gap-2">
           <SaringCorong class="min-w-0 flex-1" :jumlah="jumlahSaringCp" :ringkasan="[labelBulan(bulan), halaqahList.find((h) => h.id === halaqah)?.nama, statusSaring ? STATUS_BULANAN[statusSaring].n : ''].filter(Boolean).join(' · ')" judul="Saring capaian bulanan">
-            <div><label class="label-isian" for="cp-bulan">Bulan</label>
+            <div><label class="label-isian sr-only" for="cp-bulan">Bulan</label>
               <select id="cp-bulan" v-model="bulan" class="isian w-auto"><option v-for="b in daftarBulan" :key="b" :value="b">{{ labelBulan(b) }}</option></select></div>
             <select v-model="halaqah" class="isian w-auto" aria-label="Saring halaqah"><option value="">Semua halaqah</option><option v-for="h in halaqahList" :key="h.id" :value="h.id">{{ h.nama }}</option></select>
             <select v-model="statusSaring" class="isian w-auto" aria-label="Saring status"><option value="">Semua status</option><option v-for="(v, k) in STATUS_BULANAN" :key="k" :value="k">{{ v.n }}</option></select>

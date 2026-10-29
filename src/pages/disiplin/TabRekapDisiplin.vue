@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/disiplin/TabRekapDisiplin.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/disiplin/TabRekapDisiplin.vue | v1.3 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Rekap kedisiplinan santri pada rentang tanggal: dikelompokkan per santri, kelas, kamar, atau kategori pelanggaran.
 // Kolom ringan/sedang/berat/jumlah (tanpa poin) dan surat peringatan yang terbit pada rentang. Baris santri yang mencapai ambang
@@ -85,9 +85,9 @@ function excel() {
     <div class="layar-saja">
       <BilahTab v-model="per" :tab="PER" kecil label="Kelompokkan rekap" class="mb-3" />
       <SaringCorong :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring rekap kedisiplinan">
-        <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
-        <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai tanggal" /></div>
-        <div><label class="label-isian" for="rd-jenjang">Jenjang</label>
+        <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" /></div>
+        <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai tanggal" /></div>
+        <div><label class="label-isian sr-only" for="rd-jenjang">Jenjang</label>
           <select id="rd-jenjang" v-model="jenjang" class="isian w-auto max-w-full"><option value="">Semua jenjang</option><option value="wustha">Kesetaraan Wustha</option><option value="sma">SMA</option></select></div>
       </SaringCorong>
       <div class="mt-3 flex flex-wrap gap-2">

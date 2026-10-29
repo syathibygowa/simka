@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/ekskul/TabRekapEkskul.vue | v1.4 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/ekskul/TabRekapEkskul.vue | v1.5 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Rekap ekskul per periode: kehadiran anggota (HISBAT) dan jurnal materi setiap pertemuan.
 // Dapat dicetak oleh pembina, pimpinan, admin, dan superadmin (F4 mendatar, berkop pondok).
@@ -78,13 +78,13 @@ function ekspor() {
 <template>
   <div>
     <SaringCorong class="mb-4" :ringkasan="[g?.nama, `${formatPendek(mulai)} – ${formatPendek(selesai)}`].filter(Boolean).join(' · ')" judul="Saring rekap ekskul">
-      <div class="min-w-[220px] flex-1"><label class="label-isian" for="re-g">Ekskul</label>
+      <div class="min-w-[220px] flex-1"><label class="label-isian sr-only" for="re-g">Ekskul</label>
         <select id="re-g" v-model="groupId" class="isian">
           <option v-for="x in pilihan" :key="x.id" :value="x.id">{{ x.nama }}{{ x.asuhan_saya ? ' (binaan saya)' : '' }}{{ x.aktif ? '' : ' (nonaktif)' }}</option>
           <option v-if="!pilihan.length" value="">Belum ada ekskul</option>
         </select></div>
-      <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari" wajib /></div>
-      <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
+      <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari" wajib /></div>
+      <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" wajib /></div>
     </SaringCorong>
 
     <template v-if="g">

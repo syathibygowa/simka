@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabJurnalGuru.vue | v1.1 | 14.13.0: pilihan laporan di tombol corong pada HP | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabJurnalGuru.vue | v1.2 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Guru Mapel → Jurnal mengajar: laporan jurnal untuk dicetak/diunduh.
 //   Per kelas dan mapel (disarankan untuk arsip kurikulum) · Per mapel (semua kelas yang diampu) · Semua yang diampu.
@@ -28,13 +28,13 @@ const siap = computed(() => !!emp.value && (mode.value !== 'tugas' || !!pilihTug
 <template>
   <div>
     <SaringCorong class="mb-3" :ringkasan="[pemantau ? guruList.find((g) => g.id === emp)?.nama : '', MODE.find((m) => m.k === mode)?.n].filter(Boolean).join(' · ')" judul="Pilih laporan jurnal">
-      <div v-if="pemantau"><label class="label-isian" for="jg-guru">Guru</label>
+      <div v-if="pemantau"><label class="label-isian sr-only" for="jg-guru">Guru</label>
         <select id="jg-guru" v-model="emp" class="isian"><option v-for="g in guruList" :key="g.id" :value="g.id">{{ g.nama }}</option></select></div>
       <div><label class="label-isian" for="jg-mode">Bentuk laporan</label>
         <select id="jg-mode" v-model="mode" class="isian"><option v-for="m in MODE" :key="m.k" :value="m.k">{{ m.n }}</option></select></div>
       <div v-if="mode === 'tugas'"><label class="label-isian" for="jg-tugas">Kelas dan mapel</label>
         <select id="jg-tugas" v-model="pilihTugas" class="isian"><option v-for="t in tugasGuru" :key="t.id" :value="t.id">{{ t.label }}</option></select></div>
-      <div v-else-if="mode === 'mapel'"><label class="label-isian" for="jg-mapel">Mata pelajaran</label>
+      <div v-else-if="mode === 'mapel'"><label class="label-isian sr-only" for="jg-mapel">Mata pelajaran</label>
         <select id="jg-mapel" v-model="pilihMapel" class="isian"><option v-for="m in mapelGuru" :key="m.id" :value="m.id">{{ m.nama }}</option></select></div>
     </SaringCorong>
     <p v-if="!tugasGuru.length" class="kartu p-8 text-center text-sm text-teks3">Belum ada penugasan mengajar.</p>

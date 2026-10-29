@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/prestasi/PrestasiSantri.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/prestasi/PrestasiSantri.vue | v1.3 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Prestasi dan capaian santri (santri yang terlihat oleh pengguna): kartu statistik langsung, saringan rentang tanggal,
 // bidang, tingkat, jenjang, dan pencarian; catat/ubah/hapus (wali kelas, musyrif, muhaffizh, pembina ekskul santri tersebut,
@@ -93,13 +93,13 @@ function eksporExcel() {
       <SaringCorong class="mt-4" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring prestasi" bisa-atur-ulang @atur-ulang="aturUlangSaring">
         <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama santri, NIS, kegiatan" aria-label="Cari prestasi" /></div></template>
-        <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
-        <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai tanggal" /></div>
-        <div><label class="label-isian" for="ps-bidang">Bidang</label>
+        <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" /></div>
+        <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai tanggal" /></div>
+        <div><label class="label-isian sr-only" for="ps-bidang">Bidang</label>
           <select id="ps-bidang" v-model="bidang" class="isian w-auto max-w-full"><option value="">Semua bidang</option><option v-for="(b, k) in BIDANG_PRESTASI" :key="k" :value="k">{{ b.n }}</option></select></div>
-        <div><label class="label-isian" for="ps-tingkat">Tingkat</label>
+        <div><label class="label-isian sr-only" for="ps-tingkat">Tingkat</label>
           <select id="ps-tingkat" v-model="tingkat" class="isian w-auto max-w-full"><option value="">Semua tingkat</option><option v-for="(n, k) in TINGKAT_PRESTASI" :key="k" :value="k">{{ n }}</option></select></div>
-        <div><label class="label-isian" for="ps-jenjang">Jenjang</label>
+        <div><label class="label-isian sr-only" for="ps-jenjang">Jenjang</label>
           <select id="ps-jenjang" v-model="jenjang" class="isian w-auto max-w-full"><option value="">Semua jenjang</option><option value="wustha">Kesetaraan Wustha</option><option value="sma">SMA</option></select></div>
       </SaringCorong>
 

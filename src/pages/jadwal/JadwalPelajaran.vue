@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jadwal/JadwalPelajaran.vue | v1.7 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/jadwal/JadwalPelajaran.vue | v1.8 | 14.30.0: label saringan disembunyikan; pilihan sel kosong menjelaskan dirinya | 29/10/2026 -->
 <script setup>
 // Jadwal pelajaran. Tab: Jadwal kelas, Jadwal guru, Penugasan mengajar, Pengaturan (mapel dan jam pelajaran),
 // Rekap mengajar. Pengatur: admin ber-izin atur_jadwal (atau hak fitur jadwal_mengajar tingkat 3).
@@ -93,14 +93,14 @@ const namaGuru = computed(() => guruList.value.find((x) => x.id === employeeId.v
       <SubTabJenjang v-if="aktif === 'kelas'" v-model="jenjangKelas" class="mb-3" :jumlah="jumlahJenjang" label="Saring jenjang kelas" />
       <div class="kartu mb-4 flex flex-wrap items-end gap-3 p-4">
        <SaringCorong class="min-w-0 flex-1" :ringkasan="selKosong === 'garis' ? 'Sel kosong diberi garis' : ''" judul="Pengaturan cetak jadwal">
-        <template #cari><div v-if="aktif === 'kelas'"><label class="label-isian" for="jp-kelas">Kelas</label>
+        <template #cari><div v-if="aktif === 'kelas'"><label class="label-isian sr-only" for="jp-kelas">Kelas</label>
           <select id="jp-kelas" v-model="groupId" class="isian"><option v-for="x in kelasList" :key="x.id" :value="x.id">{{ judulKelompok(x) }}{{ x.asuhan_saya ? ' (kelas saya)' : '' }}</option>
             <option v-if="!kelasList.length" value="">{{ semuaKelas.length ? 'Tidak ada kelas pada jenjang ini' : 'Belum ada kelas di Kelompok Santri' }}</option></select></div>
-        <div v-else><label class="label-isian" for="jp-guru">Guru</label>
+        <div v-else><label class="label-isian sr-only" for="jp-guru">Guru</label>
           <select id="jp-guru" v-model="employeeId" class="isian"><option v-for="x in guruList" :key="x.id" :value="x.id">{{ x.nama }}{{ x.id === jd.idSaya() ? ' (saya)' : '' }}</option>
             <option v-if="!guruList.length" value="">Belum ada penugasan mengajar</option></select></div></template>
-        <div class="w-full sm:w-auto"><label class="label-isian" for="jp-kosong">Sel tanpa pelajaran saat dicetak</label>
-          <select id="jp-kosong" v-model="selKosong" class="isian"><option value="kosong">Dikosongkan</option><option value="garis">Diberi garis (—)</option></select></div>
+        <div class="w-full sm:w-auto"><label class="label-isian sr-only" for="jp-kosong">Sel tanpa pelajaran saat dicetak</label>
+          <select id="jp-kosong" v-model="selKosong" class="isian"><option value="kosong">Cetak: sel kosong dibiarkan</option><option value="garis">Cetak: sel kosong diberi garis (—)</option></select></div>
        </SaringCorong>
         <button class="tombol-garis" @click="cetak"><PhEye :size="20" weight="duotone" /> Cetak</button>
       </div>

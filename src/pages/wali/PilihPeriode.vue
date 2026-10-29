@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/wali/PilihPeriode.vue | v1.0 | Fase 9 – Tahap 13.1.0 Periode data Portal Wali | 15/10/2026 -->
+<!-- SIMKA PRO | src/pages/wali/PilihPeriode.vue | v1.1 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Pilihan periode Portal Wali: Bulan ini (bawaan), Bulan lalu, 30 hari, atau Rentang tanggal (paling panjang satu semester ≈ 186 hari).
 // v-model = { mulai: 'yyyy-mm-dd', selesai: 'yyyy-mm-dd' }
@@ -45,8 +45,8 @@ if (!model.value?.mulai) model.value = hitung('bulan')
                  pilihan === p.k ? 'border-[#C7332F]/40 bg-[#C7332F]/10 text-teks' : 'border-garis bg-permukaan text-teks2 hover:text-teks']">{{ p.n }}</button>
     </div>
     <div v-if="pilihan === 'rentang'" class="kartu grid gap-3 p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-      <InputTanggal v-model="mulaiR" label="Dari tanggal" bawaan-kosong />
-      <InputTanggal v-model="selesaiR" label="Sampai tanggal" bawaan-kosong />
+      <InputTanggal class="tanpa-label" v-model="mulaiR" label="Dari tanggal" bawaan-kosong />
+      <InputTanggal class="tanpa-label" v-model="selesaiR" label="Sampai tanggal" bawaan-kosong />
       <button type="button" class="tombol-utama" @click="terapkan">Tampilkan</button>
       <p v-if="galat" class="text-sm font-semibold text-merah sm:col-span-3" role="alert">{{ galat }}</p>
     </div>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabRekapGuru.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabRekapGuru.vue | v1.4 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Rekap keterlaksanaan mengajar seorang guru untuk satu periode (paling lama 62 hari): per kelas-mapel dan daftar jurnal
 // per tanggal (materi atau keterangan). Guru melihat dirinya; pemantau dapat memilih guru.
@@ -44,11 +44,11 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
 <template>
   <div>
     <SaringCorong class="mb-3" :ringkasan="[pemantau ? guruList.find((g) => g.id === emp)?.nama : '', `${formatPendek(mulai)} – ${formatPendek(selesai)}`].filter(Boolean).join(' · ')" judul="Saring rekap mengajar">
-      <div v-if="pemantau" class="min-w-[12rem] flex-1"><label class="label-isian" for="rg-guru">Guru</label>
+      <div v-if="pemantau" class="min-w-[12rem] flex-1"><label class="label-isian sr-only" for="rg-guru">Guru</label>
         <select id="rg-guru" v-model="emp" class="isian"><option v-for="g in guruList" :key="g.id" :value="g.id">{{ g.nama }}</option></select></div>
       <p v-else class="self-center font-bold">{{ guru.nama }}</p>
-      <div class="sm:w-40"><InputTanggal v-model="mulai" label="Dari" wajib /></div>
-      <div class="sm:w-40"><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
+      <div class="sm:w-40"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari" wajib /></div>
+      <div class="sm:w-40"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" wajib /></div>
       <div class="bilah-tab kecil w-full" role="tablist" aria-label="Periode cepat">
         <button v-for="x in PERIODE" :key="x.k" type="button" role="tab" :aria-selected="mulai === x.m && selesai === x.s" :class="['tab-garis', mulai === x.m && selesai === x.s && 'aktif']" @click="pilihCepat(x)">{{ x.n }}</button>
       </div>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/audit/AuditLog.vue | v2.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/audit/AuditLog.vue | v2.4 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Audit log 30 hari terakhir, KHUSUS SUPERADMIN (server juga menolak akun lain).
 // Kartu statistik per kategori aktivitas sekaligus menjadi saringan; saring tanggal, pelaku, dan jenis data;
@@ -140,9 +140,9 @@ const namaPelaku = computed(() => (pelaku.value ? peg.cari(pelaku.value)?.nama_l
       <SaringCorong class="mb-4" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring audit log" bisa-atur-ulang @atur-ulang="aturUlangSaring">
         <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
           <input id="au-cari" v-model="cari" type="search" class="isian pl-10" placeholder="Cari nama, aktivitas, atau isi perubahan" aria-label="Cari aktivitas" /></div></template>
-        <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
-        <div class="sm:w-44"><InputTanggal v-model="akhir" label="Sampai tanggal" /></div>
-        <div v-if="semua"><label class="label-isian" for="au-pelaku">Pelaku</label>
+        <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" /></div>
+        <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="akhir" label="Sampai tanggal" /></div>
+        <div v-if="semua"><label class="label-isian sr-only" for="au-pelaku">Pelaku</label>
           <select id="au-pelaku" v-model="pelaku" class="isian w-auto max-w-full"><option value="">Semua pegawai</option>
             <option v-for="p in peg.daftar.filter((x) => x.status_akun === 'aktif')" :key="p.id" :value="p.id">{{ p.nama_lengkap }}</option></select></div>
         <div><label class="label-isian" for="au-tabel">Jenis data</label>

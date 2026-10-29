@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKinerjaBidang.vue | v1.0 | 14.18.0: laporan indikator kinerja bidang untuk Direktur dan Yayasan | 21/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKinerjaBidang.vue | v1.1 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Rekap dan Laporan → Kinerja bidang. Enam indikator yang SAMA untuk setiap bidang (lib/kinerja.js): kehadiran, ketepatan
 // waktu, ketertiban perizinan, pengisian jurnal harian, pengabsenan santri, pelaksanaan tupoksi. Skor = rata-rata indikator
@@ -108,8 +108,8 @@ const judulCetak = computed(() => (modeCetak.value === 'bidang' && pilih.value ?
           <button v-for="p in PERIODE_KINERJA" :key="p.k" type="button" role="tab" :aria-selected="cepat === p.k" :class="['tab-garis w-rekap', cepat === p.k && 'aktif']" @click="pilihCepat(p.k)">{{ p.n }}</button>
         </div>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
-          <InputTanggal v-model="mulai" label="Dari tanggal" />
-          <InputTanggal v-model="selesai" label="Sampai tanggal" />
+          <InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" />
+          <InputTanggal class="tanpa-label" v-model="selesai" label="Sampai tanggal" />
           <button type="button" class="tombol-utama" :disabled="kn.memuat" @click="muat"><PhMagnifyingGlass :size="20" weight="bold" /> Tampilkan</button>
         </div>
       </div>

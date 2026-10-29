@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/TabPermintaanNilai.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/TabPermintaanNilai.vue | v1.3 | 14.30.0: saringan bawaan Semua | 29/10/2026 -->
 <script setup>
 // Penilaian → Permintaan: permintaan ubah nilai setelah periode ditutup (nilai mapel dari guru pengampu, nilai UTAS dari
 // penguji). Pengelola nilai menyetujui (nilai langsung diperbarui; mode akumulasi memakai nilai koreksi) atau menolak
@@ -15,7 +15,7 @@ import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
 
 const un = useUbahNilai(); const sesi = useSesi(); const ui = useUI()
-const saring = ref('menunggu'); const galat = ref(''); const proses = ref('')
+const saring = ref('semua'); const galat = ref(''); const proses = ref('')
 async function muat() { galat.value = ''; try { await un.muat(saring.value === 'semua' ? null : saring.value) } catch (e) { galat.value = e.message } }
 onMounted(muat)
 const daftar = computed(() => un.data?.daftar || [])

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.7 | 14.22.0: konfirmasi WA ke semua pemutus (kepala bidang, Direktur, Wakil Direktur) untuk pengusul, admin, superadmin | 25/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.8 | 14.30.0: saringan bawaan Semua | 29/10/2026 -->
 <script setup>
 // Daftar izin santri. Dipakai di menu Perizinan (cakupan tetap) dan menu Musyrif (disaring per kamar,
 // dengan pilihan Menunggu/Aktif/Semua). Aksi sesuai hak dari server: setujui/tolak, ubah, batalkan,
@@ -38,7 +38,7 @@ const props = defineProps({
   peranUtama: { type: String, default: '' },     // peran pengusul yang didahulukan (menu Musyrif: musyrif)
 })
 const iz = useIzin(); const san = useSantri(); const sesi = useSesi(); const ui = useUI()
-const pilihan = ref('menunggu'); const daftar = ref([]); const memuat = ref(false); const cari = ref('')
+const pilihan = ref('semua'); const daftar = ref([]); const memuat = ref(false); const cari = ref('')
 const awal = () => { const d = new Date(`${hariIniISO()}T00:00:00`); d.setDate(d.getDate() - 30); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const mulai = ref(awal()); const selesai = ref(hariIniISO())
 const cak = computed(() => props.cakupan || pilihan.value)
@@ -159,7 +159,7 @@ const kosong = computed(() => ({ persetujuan: 'Tidak ada izin yang menunggu kepu
       <SaringCorong class="min-w-[220px] flex-1" :lipat="cak === 'semua'" :ringkasan="cak === 'semua' ? `${formatPendek(mulai)} – ${formatPendek(selesai)}` : ''" judul="Saring tanggal">
         <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri atau alasan" aria-label="Cari izin" /></div></template>
-        <template v-if="cak === 'semua'"><div class="sm:w-40"><InputTanggal v-model="mulai" label="Keluar dari" /></div><div class="sm:w-40"><InputTanggal v-model="selesai" label="Sampai" /></div></template>
+        <template v-if="cak === 'semua'"><div class="sm:w-40"><InputTanggal v-model="mulai" label="Keluar dari" /></div><div class="sm:w-40"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" /></div></template>
       </SaringCorong>
       <button v-if="iz.hak.ajukan" class="tombol-utama hidden lg:inline-flex" @click="ajukan"><PhPaperPlaneTilt :size="20" weight="duotone" /> Ajukan izin</button>
     </div>

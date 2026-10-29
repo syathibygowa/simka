@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/lapor/Lapor.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/lapor/Lapor.vue | v1.4 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Laporan Terkait (Blueprint Bagian 30).
 //   Laporan saya : laporan yang saya kirim beserta statusnya
@@ -63,7 +63,7 @@ async function simpanKategori(k) {
 
     <template v-else-if="aktif === 'rekap'">
       <div class="kartu mb-4 grid grid-cols-2 gap-3 p-4 sm:grid-cols-[1fr_1fr_auto]">
-        <InputTanggal v-model="mulai" label="Dari" wajib /><InputTanggal v-model="selesai" label="Sampai" wajib />
+        <InputTanggal class="tanpa-label" v-model="mulai" label="Dari" wajib /><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" wajib />
         <div class="col-span-2 flex items-end gap-2 sm:col-span-1">
           <button class="tombol-garis w-pengajuan min-h-[44px] px-3 text-sm" @click="pratinjau = true"><PhEye :size="18" style="color: var(--c)" /> Cetak</button>
           <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Ekspor</button>

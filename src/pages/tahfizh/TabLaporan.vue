@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabLaporan.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabLaporan.vue | v1.3 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Laporan tahfizh: 15 format (Blueprint Bagian 20) dengan periode bulan/semester/tahun, pengelompokan per halaqah, kelas,
 // tingkatan, kamar, atau seluruh santri. Pratinjau di layar, ekspor Excel, dan cetak F4 berkop (tiap kelompok satu halaman
@@ -97,7 +97,7 @@ const lebarKolom = (b) => { const t = b.kolom.reduce((s, k) => s + Number(k.leba
       <section class="kartu p-4">
        <SaringCorong v-model:buka="bukaSaring" :lipat="!!lap" tanpa-tombol :ringkasan="lap ? lap.judul : ''" judul="Pilih laporan">
         <div class="grid w-full gap-3 lg:grid-cols-[1fr_auto]">
-          <div><label class="label-isian" for="lp-jenis">Laporan</label>
+          <div><label class="label-isian sr-only" for="lp-jenis">Laporan</label>
             <select id="lp-jenis" v-model="jenis" class="isian">
               <optgroup label="Laporan tabel"><option v-for="k in KATALOG.filter((x) => !x.grafik)" :key="k.k" :value="k.k">{{ k.n }}</option></optgroup>
               <optgroup label="Grafik"><option v-for="k in KATALOG.filter((x) => x.grafik)" :key="k.k" :value="k.k">{{ k.n }}</option></optgroup>
@@ -107,22 +107,22 @@ const lebarKolom = (b) => { const t = b.kolom.reduce((s, k) => s + Number(k.leba
           </div>
         </div>
         <div class="mt-3 flex w-full flex-wrap items-end gap-2">
-          <div v-if="kat.periode === 'bulan'"><label class="label-isian" for="lp-bulan">Bulan</label>
+          <div v-if="kat.periode === 'bulan'"><label class="label-isian sr-only" for="lp-bulan">Bulan</label>
             <select id="lp-bulan" v-model="bulan" class="isian w-auto"><option v-for="b in daftarBulan" :key="b" :value="b">{{ labelBulan(b) }}</option></select></div>
-          <div v-if="kat.periode === 'semester' || kat.periode === 'santri'"><label class="label-isian" for="lp-smt">Semester</label>
+          <div v-if="kat.periode === 'semester' || kat.periode === 'santri'"><label class="label-isian sr-only" for="lp-smt">Semester</label>
             <select id="lp-smt" v-model.number="semester" class="isian w-auto"><option :value="1">Semester 1 (Juli–Desember)</option><option :value="2">Semester 2 (Januari–Juni)</option></select></div>
           <p v-if="kat.periode === 'tahun'" class="pb-3 text-sm text-teks3">Tahun ajaran {{ kel.taSekarang?.nama }} (Juli–Juni, sampai bulan berjalan)</p>
           <template v-if="!kat.tanpaKelompok">
-            <div><label class="label-isian" for="lp-kel">Kelompokkan</label>
+            <div><label class="label-isian sr-only" for="lp-kel">Kelompokkan</label>
               <select id="lp-kel" v-model="kelompok" class="isian w-auto"><option v-for="(n, k) in KELOMPOK" :key="k" :value="k">{{ n }}</option></select></div>
-            <div v-if="kelompok !== 'seluruh'"><label class="label-isian" for="lp-nilai">Pilih</label>
+            <div v-if="kelompok !== 'seluruh'"><label class="label-isian sr-only" for="lp-nilai">Pilih</label>
               <select id="lp-nilai" v-model="nilaiKelompok" class="isian w-auto"><option value="">Semua (satu halaman per kelompok)</option><option v-for="n in pilihanNilai" :key="n" :value="n">{{ n }}</option></select></div>
           </template>
           <template v-if="kat.rentang">
             <div><label class="label-isian" for="lp-min">Total hafalan dari</label><input id="lp-min" v-model.number="rentang.min" type="number" min="0" max="30" class="isian w-24" /></div>
             <div><label class="label-isian" for="lp-maks">s.d. (juz)</label><input id="lp-maks" v-model.number="rentang.maks" type="number" min="0" max="30" class="isian w-24" /></div>
           </template>
-          <div v-if="kat.periode === 'santri'" class="relative min-w-[260px] flex-1"><label class="label-isian" for="lp-santri">Santri</label>
+          <div v-if="kat.periode === 'santri'" class="relative min-w-[260px] flex-1"><label class="label-isian sr-only" for="lp-santri">Santri</label>
             <div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
               <input id="lp-santri" v-model="cariSantri" type="search" class="isian pl-11" :placeholder="santriPilih ? santriPilih.nama : 'Ketik nama atau NIS'" /></div>
             <ul v-if="calonSantri.length" class="absolute z-20 mt-1 w-full divide-y divide-garis rounded-xl border border-garis bg-permukaan shadow-apung">

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/Penilaian.vue | v1.2 | 14.26.0: warna tab tidak kembar (gaya tab seragam) | 25/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/Penilaian.vue | v1.3 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Menu Penilaian (kelompok menu Penilaian). v1.1: Rekap (kemajuan pengisian untuk pimpinan) dan Permintaan ubah nilai.
 //   Rekap          : kemajuan pengisian rapor per kelas, guru, UTAS, ekskul (semester berjalan)
@@ -58,7 +58,7 @@ const bisaUbah = computed(() => pn.bolehAtur() && !pn.terkunci)
         <h2 class="text-lg font-bold">Penilaian dan rapor</h2>
         <p class="text-sm text-teks2">Rapor SMA (Kurikulum Merdeka), Rapor Wustha (K13 disesuaikan), dan Rapor Tahfizh. Pengaturan berlaku per tahun ajaran dan disalin otomatis ke tahun ajaran berikutnya.</p>
       </div>
-      <div class="w-full sm:w-56"><label class="label-isian" for="pn-ta">Tahun ajaran</label>
+      <div class="w-full sm:w-56"><label class="label-isian sr-only" for="pn-ta">Tahun ajaran</label>
         <select id="pn-ta" v-model="ta" class="isian" @change="gantiTA">
           <option v-for="t in kel.tahunAjaran" :key="t.id" :value="t.id">{{ t.nama }}{{ t.aktif ? ' (aktif)' : '' }}{{ t.terkunci ? ' – arsip' : '' }}</option></select></div>
       <p v-if="pn.dimuat && !bisaUbah" class="flex w-full items-center gap-2 text-sm text-teks3"><PhLockSimple :size="16" />

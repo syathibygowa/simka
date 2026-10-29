@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/beban/BebanKerja.vue | v1.6 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/beban/BebanKerja.vue | v1.7 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Ekuivalensi jam beban kerja per pekan.
 //   Beban saya   : rincian jam pegawai yang masuk, total, jam wajib, kelebihan/kekurangan.
@@ -159,9 +159,9 @@ const KELOMPOK = { struktural: 'Jabatan struktural', fungsional: 'Jabatan fungsi
         <SaringCorong class="mb-3" :jumlah="[unit, status].filter(Boolean).length" :ringkasan="[org.units.find((u) => u.id === unit)?.nama, status ? STATUS[status] : ''].filter(Boolean).join(' · ')" judul="Saring rekap beban kerja">
           <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
             <input id="bk-cari" v-model="cari" type="search" class="isian pl-10" placeholder="Cari nama atau NIY" aria-label="Cari pegawai" /></div></template>
-          <div><label class="label-isian" for="bk-unit">Bidang/Unit</label><select id="bk-unit" v-model="unit" class="isian w-auto max-w-full"><option value="">Semua bidang</option>
+          <div><label class="label-isian sr-only" for="bk-unit">Bidang/Unit</label><select id="bk-unit" v-model="unit" class="isian w-auto max-w-full"><option value="">Semua bidang</option>
             <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
-          <div><label class="label-isian" for="bk-status">Status</label><select id="bk-status" v-model="status" class="isian w-auto"><option value="">Semua status</option>
+          <div><label class="label-isian sr-only" for="bk-status">Status</label><select id="bk-status" v-model="status" class="isian w-auto"><option value="">Semua status</option>
             <option v-for="(n, k) in STATUS" :key="k" :value="k">{{ n }}</option></select></div>
         </SaringCorong>
         <div class="mb-3 flex flex-wrap items-center gap-2">

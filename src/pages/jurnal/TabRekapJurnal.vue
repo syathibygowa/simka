@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabRekapJurnal.vue | v1.6 | 14.24.0: tabel ceklist memuat persentase per butir (kolom akhir) dan per hari (baris akhir) | 25/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabRekapJurnal.vue | v1.7 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 import { namaBerkas, periodeRentang } from '@/lib/namaBerkas'
 // Rekap jurnal per periode: persentase pengisian (hari terisi ÷ hari wajib), butir ceklist, dan kegiatan per status.
@@ -84,9 +84,9 @@ const namaUnit = computed(() => (unit.value ? org.cariUnit(unit.value)?.nama : '
     <SaringCorong class="mb-3" :jumlah="unit ? 1 : 0" :ringkasan="[`${formatPendek(mulai)} – ${formatPendek(akhir)}`, org.units.find((u) => u.id === unit)?.nama].filter(Boolean).join(' · ')" judul="Saring rekap jurnal">
       <template v-if="banyak" #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
         <input id="rj-cari" v-model="cari" type="search" class="isian pl-10" placeholder="Cari nama atau NIY" aria-label="Cari pegawai" /></div></template>
-      <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
-      <div class="sm:w-44"><InputTanggal v-model="akhir" label="Sampai tanggal" /></div>
-      <div v-if="banyak"><label class="label-isian" for="rj-unit">Bidang/Unit</label>
+      <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" /></div>
+      <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="akhir" label="Sampai tanggal" /></div>
+      <div v-if="banyak"><label class="label-isian sr-only" for="rj-unit">Bidang/Unit</label>
         <select id="rj-unit" v-model="unit" class="isian w-auto max-w-full"><option value="">Semua bidang</option>
           <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
       <div class="flex flex-wrap items-end gap-2">

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/arsip/ArsipTA.vue | v1.1 | 14.26.0: bilah tab di atas (seragam dengan menu lain) | 25/10/2026 -->
+<!-- SIMKA PRO | src/pages/arsip/ArsipTA.vue | v1.2 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Arsip Tahun Ajaran (khusus admin dan superadmin). Pergantian tahun ajaran (menu Naik Kelas) membuka lembaran baru tanpa
 // menghapus data lama: kelompok, keanggotaan, nilai, dan rapor tahun ajaran sebelumnya tetap tersimpan dan dapat dibuka di sini.
@@ -104,7 +104,7 @@ watch([kelas, semester], () => { D.value = null })
     <BilahTab class="mb-4" :tab="TAB" :model-value="aktif" label="Bagian arsip tahun ajaran" @update:model-value="pindahTab" />
 
     <section class="kartu flex flex-wrap items-end gap-3 p-4">
-      <div class="min-w-[200px] flex-1"><label class="label-isian" for="ar-ta">Tahun ajaran</label>
+      <div class="min-w-[200px] flex-1"><label class="label-isian sr-only" for="ar-ta">Tahun ajaran</label>
         <select id="ar-ta" v-model="taId" class="isian"><option v-for="t in daftarTA" :key="t.id" :value="t.id">{{ labelTA(t) }}</option></select></div>
       <p v-if="ta.terkunci" class="lencana w-hakakses mb-2"><PhLockSimple :size="14" weight="fill" /> Terkunci (hanya baca)</p>
       <p v-if="ta.mulai" class="mb-2 text-sm text-teks3">{{ formatPanjang(ta.mulai) }} – {{ formatPanjang(ta.selesai) }}</p>
@@ -184,7 +184,7 @@ watch([kelas, semester], () => { D.value = null })
       <!-- Rapor -->
       <template v-else>
         <section class="kartu w-rapor flex flex-wrap items-end gap-3 p-4">
-          <div class="min-w-[160px] flex-1"><label class="label-isian" for="ar-kelas">Kelas</label>
+          <div class="min-w-[160px] flex-1"><label class="label-isian sr-only" for="ar-kelas">Kelas</label>
             <select id="ar-kelas" v-model="kelas" class="isian" aria-label="Pilih kelas arsip"><option value="">Pilih kelas</option><option v-for="g in daftarKelas" :key="g.id" :value="g.id">{{ g.nama }} · {{ JENJANG_PENDEK[g.jenjang] || '' }}</option></select></div>
           <div class="bilah-tab kecil" role="tablist" aria-label="Semester">
             <button v-for="s in [1, 2]" :key="s" type="button" role="tab" :aria-selected="semester === s" @click="semester = s" :class="['tab-garis', semester === s && 'aktif']">{{ LABEL_SEMESTER[s] }}</button>

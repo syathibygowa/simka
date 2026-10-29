@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabLaporanKeu.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabLaporanKeu.vue | v1.3 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Laporan keuangan satu halaman untuk pimpinan pada rentang tanggal (bawaan bulan berjalan):
 //   A. Arus kas per rekening (saldo awal, masuk, keluar, saldo akhir)
@@ -83,7 +83,7 @@ function excel() {
         <button type="button" role="tab" :aria-selected="preset === 'atur'" :class="['tab-garis', preset === 'atur' && 'aktif']" @click="preset = 'atur'">Atur sendiri</button>
       </div>
       <div class="kartu mb-3 grid grid-cols-2 gap-3 p-4 md:grid-cols-[1fr_1fr_auto]">
-        <InputTanggal v-model="mulai" label="Dari tanggal" @update:model-value="preset = 'atur'" /><InputTanggal v-model="selesai" label="Sampai tanggal" @update:model-value="preset = 'atur'" />
+        <InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" @update:model-value="preset = 'atur'" /><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai tanggal" @update:model-value="preset = 'atur'" />
         <div class="col-span-2 flex items-end gap-2 md:col-span-1">
           <button class="tombol-garis min-h-[48px] flex-1 px-3 text-sm" :disabled="!L" @click="excel"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
           <button class="tombol-utama min-h-[48px] flex-1 px-3 text-sm" :disabled="!L" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak 1 halaman</button></div>

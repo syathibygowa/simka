@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/TabSuratKeluar.vue | v1.2 | 14.19.0: saringan dan penanda bagian penerbit (kop) | 21/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/TabSuratKeluar.vue | v1.3 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Daftar surat keluar: yang perlu tindakan (diperiksa TU, menunggu tanda tangan saya, ditolak) di atas, lalu draf dan surat terbit.
 // Diketuk membuka rincian; Tata Usaha dan pimpinan menyusun surat baru dari template.
@@ -44,7 +44,7 @@ const ketTindakan = (o) => (o.menunggu_saya ? 'Menunggu tanda tangan Anda' : o.s
         <option v-for="b in BAGIAN" :key="b.k" :value="b.k">{{ b.n }}</option></select>
       <select v-model="status" class="isian md:w-auto" aria-label="Saring status"><option value="">Semua status</option>
         <option v-for="(v, k) in STATUS_KELUAR" :key="k" :value="k">{{ v.n }}</option></select>
-      <div class="grid w-full grid-cols-2 gap-3 md:w-auto md:min-w-[22rem]"><InputTanggal v-model="mulai" label="Tanggal surat dari" /><InputTanggal v-model="selesai" label="Sampai" /></div>
+      <div class="grid w-full grid-cols-2 gap-3 md:w-auto md:min-w-[22rem]"><InputTanggal class="tanpa-label" v-model="mulai" label="Tanggal surat dari" /><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" /></div>
       <button v-if="ps.hak.susun" class="tombol-utama hidden lg:inline-flex" @click="emit('susun')"><PhPlus :size="20" weight="bold" /> Susun surat</button>
     </SaringCorong>
 

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabKasKeu.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabKasKeu.vue | v1.3 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Tab Kas dan bank:
 //   • Kartu saldo setiap rekening/kas (langsung) dan total saldo.
@@ -107,7 +107,7 @@ function excel() {
       </div>
 
       <SaringCorong class="mt-3" :jumlah="akun ? 1 : 0" :ringkasan="[`${formatPendek(mulai)} – ${formatPendek(selesai)}`, keu.akun.find((a) => a.id === akun)?.nama || 'Gabungan semua'].join(' · ')" judul="Saring kas dan bank">
-        <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div><div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai tanggal" /></div>
+        <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" /></div><div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai tanggal" /></div>
         <div><label class="label-isian" for="kas-akun">Rekening/kas</label>
           <select id="kas-akun" v-model="akun" class="isian w-auto max-w-full"><option value="">Gabungan semua</option><option v-for="a in keu.akun" :key="a.id" :value="a.id">{{ a.nama }}{{ a.aktif ? '' : ' (nonaktif)' }}</option></select></div>
       </SaringCorong>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kartu/Kartu.vue | v1.5 | 14.13.0: saringan corong di HP (bidang, tata letak cetak), tombol Pratinjau | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/kartu/Kartu.vue | v1.6 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Kartu pegawai. Kartu saya: lihat depan/belakang, ganti pas foto, cetak, dan ganti kode bila kartu hilang.
 // Cetak massal (admin ber-izin cetak_kartu): pilih pegawai, cetak 9 kartu tegak per F4 (bolak-balik) atau berdampingan.
@@ -138,7 +138,7 @@ async function siapkanMassal() {
           <div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
             <input id="km-cari" v-model="cari" type="search" class="isian pl-10" placeholder="Cari nama atau NIY" aria-label="Cari pegawai" /></div>
         </template>
-        <div><label class="label-isian" for="km-unit">Bidang/Unit</label>
+        <div><label class="label-isian sr-only" for="km-unit">Bidang/Unit</label>
           <select id="km-unit" v-model="unit" class="isian w-auto max-w-full"><option value="">Semua bidang</option>
             <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
         <fieldset><legend class="label-isian">Tata letak cetak</legend>

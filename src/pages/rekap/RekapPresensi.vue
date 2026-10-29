@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/rekap/RekapPresensi.vue | v1.7 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/rekap/RekapPresensi.vue | v1.8 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Rekap presensi pegawai (admin dan superadmin): harian (semua sesi semua pegawai) dan periode
 // (ringkasan per pegawai), saring per bidang, ekspor Excel, dan cetak F4 dengan kop + tanda tangan.
@@ -117,12 +117,12 @@ const namaUnit = computed(() => unit.value ? org.cariUnit(unit.value)?.nama : 'S
           <div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
             <input id="rk-cari" v-model="cari" type="search" class="isian pl-10" placeholder="Cari nama atau NIY" aria-label="Cari pegawai" /></div>
         </template>
-        <div v-if="aktif.k === 'harian'" class="sm:w-44"><InputTanggal v-model="tgl" label="Tanggal" /></div>
+        <div v-if="aktif.k === 'harian'" class="sm:w-44"><InputTanggal class="tanpa-label" v-model="tgl" label="Tanggal" /></div>
         <template v-else>
-          <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
-          <div class="sm:w-44"><InputTanggal v-model="akhir" label="Sampai tanggal" /></div>
+          <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" /></div>
+          <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="akhir" label="Sampai tanggal" /></div>
         </template>
-        <div><label class="label-isian" for="rk-unit">Bidang/Unit</label>
+        <div><label class="label-isian sr-only" for="rk-unit">Bidang/Unit</label>
           <select id="rk-unit" v-model="unit" class="isian w-auto max-w-full"><option value="">Semua bidang</option>
             <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
         <div v-if="aktif.k === 'periode'" class="flex flex-wrap items-end gap-2">

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabKhataman.vue | v1.2 | 14.21.0: hapus usulan khataman yang dibatalkan/ditolak (admin/superadmin) | 24/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabKhataman.vue | v1.3 | 14.30.0: saringan bawaan Semua | 29/10/2026 -->
 <script setup>
 // Khataman Al-Qur'an 30 juz.
 //   Muhaffizh: "Usulkan khataman" untuk santri yang sudah khatam 30 juz (usulan tanggal, jam, tempat).
@@ -31,7 +31,7 @@ import CetakUndanganKhataman from './CetakUndanganKhataman.vue'
 import CetakDokumenTahfizh from './CetakDokumenTahfizh.vue'
 
 const tz = useTahfizh(); const ui = useUI(); const sesi = useSesi()
-const status = ref('berjalan'); const daftar = ref([]); const memuat = ref(false); const proses = ref(false); const calon = ref([])
+const status = ref(''); const daftar = ref([]); const memuat = ref(false); const proses = ref(false); const calon = ref([])
 async function muat() {
   memuat.value = true
   try { [daftar.value, calon.value] = await Promise.all([tz.daftarKhataman(status.value || null), tz.calonKhataman().catch(() => [])]) }
@@ -56,7 +56,7 @@ async function kirimUsul() {
   if (!fu.value.tgl) return ui.toast('Isi tanggal khataman.', 'galat')
   proses.value = true
   try { await tz.usulkanKhataman({ student_id: pilihSantri.value.student_id, jadwal: keISO(fu.value.tgl, fu.value.jam), tempat: fu.value.tempat.trim(), catatan: fu.value.catatan.trim() })
-    lembarUsul.value = false; ui.toast('Usulan khataman terkirim kepada Kepala Bidang Tahfizh.'); status.value = 'berjalan'; await muat() }
+    lembarUsul.value = false; ui.toast('Usulan khataman terkirim kepada Kepala Bidang Tahfizh.'); await muat() }
   catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 
@@ -80,7 +80,7 @@ async function simpanSusulan() {
   try {
     await tz.catatKhatamanSusulan({ student_id: f.santri.id, tanggal: f.tgl, jam: f.jam, tempat: f.tempat.trim(), keterangan: f.keterangan.trim(), konfirmasi_30: f.konfirmasi })
     lembarSusulan.value = false; ui.toast('Khataman susulan tercatat. Sertifikat terbit dan menunggu tanda tangan elektronik Direktur dan Kepala Bidang Tahfizh.')
-    status.value = 'selesai'; await muat()
+    await muat()
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
 }
 

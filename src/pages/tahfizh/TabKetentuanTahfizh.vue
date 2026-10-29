@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabKetentuanTahfizh.vue | v1.3 | 14.21.0: penguji ujian tahsin | 24/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabKetentuanTahfizh.vue | v1.4 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Ketentuan tahfizh per tahun ajaran: umum (KKM, bobot Tajwid/Itqan, batas isian janggal, ambang rekap), target per program
 // dan tingkat, rentang predikat, bulan dan pekan efektif, serta penguji. Semua pegawai berhak-lihat dapat membaca;
@@ -106,7 +106,7 @@ const juzHal = (h) => `${h} hal${h >= HAL_PER_JUZ ? ` (${formatPosisi(h)})` : ''
   <div>
     <div class="layar-saja space-y-4">
       <div class="kartu flex flex-wrap items-end gap-3 p-4">
-        <div class="min-w-[180px] flex-1"><label class="label-isian" for="kt-ta">Tahun ajaran</label>
+        <div class="min-w-[180px] flex-1"><label class="label-isian sr-only" for="kt-ta">Tahun ajaran</label>
           <select id="kt-ta" v-model="ta" class="isian"><option v-for="t in kel.tahunAjaran" :key="t.id" :value="t.id">{{ t.nama }}{{ t.aktif ? ' (aktif)' : '' }}{{ t.terkunci ? ' – arsip' : '' }}</option></select></div>
         <button class="tombol-garis" @click="cetak"><PhEye :size="20" weight="duotone" /> Cetak ketentuan</button>
         <p v-if="!boleh" class="flex w-full items-center gap-2 text-sm text-teks3"><PhLockSimple :size="16" /> Baca saja. Ketentuan diubah oleh admin ber-izin "Mengatur tahfizh".</p>

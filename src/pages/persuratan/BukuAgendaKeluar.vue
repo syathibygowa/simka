@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/BukuAgendaKeluar.vue | v1.6 | 14.19.0: buku agenda surat keluar per bagian (kop) | 21/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/BukuAgendaKeluar.vue | v1.7 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Buku agenda surat keluar = inventaris SEMUA surat yang terbit di SIMKA PRO per rentang tanggal surat:
 //   Persuratan (surat Tata Usaha, termasuk yang dicabut/direvisi), surat pengajuan pegawai, surat keterangan sakit (Klinik),
@@ -65,8 +65,8 @@ function ekspor() {
 <template>
   <div>
     <div class="kartu mb-3 grid grid-cols-2 gap-3 p-4 sm:grid-cols-[1fr_1fr_1.4fr_auto]">
-      <InputTanggal v-model="mulai" label="Tanggal surat dari" wajib /><InputTanggal v-model="selesai" label="Sampai" wajib />
-      <div class="col-span-2 sm:col-span-1"><label class="label-isian" for="bak-cari">Cari</label>
+      <InputTanggal class="tanpa-label" v-model="mulai" label="Tanggal surat dari" wajib /><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" wajib />
+      <div class="col-span-2 sm:col-span-1"><label class="label-isian sr-only" for="bak-cari">Cari</label>
         <div class="relative"><PhMagnifyingGlass :size="18" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
           <input id="bak-cari" v-model="cari" class="isian pl-10" placeholder="Nomor, perihal, nama, kode" /></div></div>
       <div class="col-span-2 flex items-end gap-2 sm:col-span-1">

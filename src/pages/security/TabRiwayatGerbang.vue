@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/security/TabRiwayatGerbang.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/security/TabRiwayatGerbang.vue | v1.3 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Riwayat gerbang santri pada rentang tanggal (keluar, kembali, ditolak), saring jenis dan nama,
 // unduh Excel, cetak F4 mendatar berkop (Mengetahui Kepala Bidang Kesantrian kiri, pembuat rekap kanan).
@@ -48,8 +48,8 @@ function ekspor() {
     <SaringCorong :jumlah="jenis ? 1 : 0" :ringkasan="[`${formatPendek(mulai)} – ${formatPendek(selesai)}`, jenis].filter(Boolean).join(' · ')" judul="Saring riwayat gerbang">
       <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIS, kelas, atau kamar" aria-label="Saring riwayat" /></div></template>
-      <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari" wajib /></div><div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
-      <div><label class="label-isian" for="rg-j">Kejadian</label>
+      <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari" wajib /></div><div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" wajib /></div>
+      <div><label class="label-isian sr-only" for="rg-j">Kejadian</label>
         <select id="rg-j" v-model="jenis" class="isian w-auto"><option value="">Semua</option><option value="keluar">Keluar</option><option value="kembali">Kembali</option><option value="ditolak">Ditolak</option></select></div>
     </SaringCorong>
     <div class="mt-3 flex flex-wrap items-center gap-2">

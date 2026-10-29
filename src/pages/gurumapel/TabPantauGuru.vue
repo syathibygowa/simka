@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.6 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.7 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Pantauan guru mapel (admin, superadmin, pimpinan sesuai cakupannya):
 //   Harian  : tanggal dengan tombol sebelum/sesudah; statistik jam pelajaran (terjadwal, terlaksana, belum diisi, tidak
@@ -86,7 +86,7 @@ function ekspor() {
     <template v-if="mode === 'harian'">
       <div class="mb-3 flex flex-wrap items-end gap-1.5">
         <button class="tombol-garis h-12 w-12 shrink-0 px-0" aria-label="Hari sebelumnya" title="Hari sebelumnya" @click="tgl = tambahHari(tgl, -1)"><PhCaretLeft :size="20" weight="bold" /></button>
-        <div class="w-40"><InputTanggal v-model="tgl" label="Tanggal" /></div>
+        <div class="w-40"><InputTanggal class="tanpa-label" v-model="tgl" label="Tanggal" /></div>
         <button class="tombol-garis h-12 w-12 shrink-0 px-0" aria-label="Hari berikutnya" title="Hari berikutnya" @click="tgl = tambahHari(tgl, 1)"><PhCaretRight :size="20" weight="bold" /></button>
         <button v-if="tgl !== hari" class="tombol-teks h-12 px-2 text-sm" @click="tgl = hari">Hari ini</button>
         <p class="ml-1 self-center text-sm font-bold">{{ formatHari(tgl) }}</p>

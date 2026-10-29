@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/TabRekapAbsensi.vue | v1.6 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/TabRekapAbsensi.vue | v1.7 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Rekap kehadiran santri per kelompok dan periode: kelas, halaqah, asrama, dan gabungan program pokok
 // (Terlambat dan Bolos dihitung hadir). Ekspor Excel, cetak F4 mendatar, WA rekap ke wali, salin rekap umum untuk grup.
@@ -90,13 +90,13 @@ const pesanKe = (p) => pesanWA('rekap_santri', { nama_wali: p.k?.nama, nama_sant
 <template>
   <div>
     <SaringCorong class="mb-4" :ringkasan="ringkasSaring" judul="Saring rekap absensi">
-      <div v-if="!group" class="min-w-[220px] flex-1"><label class="label-isian" for="rk-g">Kelompok</label>
+      <div v-if="!group" class="min-w-[220px] flex-1"><label class="label-isian sr-only" for="rk-g">Kelompok</label>
         <select id="rk-g" v-model="groupId" class="isian">
           <option v-for="x in pilihan" :key="x.id" :value="x.id">{{ x.jenis === 'kelas' ? judulKelompok(x) : `${JENIS_KELOMPOK[x.jenis].n} · ${judulKelompok(x)}` }}{{ x.asuhan_saya ? ' (asuhan saya)' : '' }}</option>
           <option v-if="!pilihan.length" value="">Belum ada kelompok</option>
         </select></div>
-      <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari" wajib /></div>
-      <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai" wajib /></div>
+      <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari" wajib /></div>
+      <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" wajib /></div>
       <div class="flex flex-wrap gap-2">
         <button v-for="p in [{ k: 'pekan', n: 'Pekan ini' }, { k: 'bulan', n: 'Bulan ini' }, { k: '30', n: '30 hari terakhir' }]" :key="p.k" class="tombol-garis min-h-[44px] px-3 text-sm" @click="periode(p.k)">{{ p.n }}</button>
       </div>

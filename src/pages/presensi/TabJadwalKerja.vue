@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/presensi/TabJadwalKerja.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/TabJadwalKerja.vue | v1.3 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Penjadwalan → Jadwal kerja: jam presensi setiap pegawai per hari dalam satu pekan, persis seperti yang dibaca sistem
 // (pola dan sesi aktif, sesi yang dipegang, jadwal shift, dan hari libur). Saring putra/putri, bidang/unit, pola, dan nama;
@@ -91,10 +91,10 @@ function ekspor() {
       <SaringCorong :jumlah="[unit, pola].filter(Boolean).length" :ringkasan="[org.units.find((u) => u.id === unit)?.nama, pola].filter(Boolean).join(' · ')" judul="Saring jadwal kerja">
         <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
             <input id="jk-cari" v-model="cari" type="search" class="isian pl-10" placeholder="Cari nama, NIY, atau bidang" aria-label="Cari pegawai" /></div></template>
-        <div><label class="label-isian" for="jk-unit">Bidang/unit</label>
+        <div><label class="label-isian sr-only" for="jk-unit">Bidang/unit</label>
           <select id="jk-unit" v-model="unit" class="isian w-auto max-w-full"><option value="">Semua bidang/unit</option>
             <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
-        <div><label class="label-isian" for="jk-pola">Pola presensi</label>
+        <div><label class="label-isian sr-only" for="jk-pola">Pola presensi</label>
           <select id="jk-pola" v-model="pola" class="isian w-auto max-w-full"><option value="">Semua pola</option><option v-for="p in daftarPola" :key="p" :value="p">{{ p }}</option></select></div>
       </SaringCorong>
       <div class="flex flex-wrap items-center gap-2">

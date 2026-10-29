@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/rapat/DetailRapat.vue | v1.1 | 14.29.0: peserta urut jabatan; notulen berformat (tebal, miring, penomoran otomatis) | 26/10/2026 -->
+<!-- SIMKA PRO | src/pages/rapat/DetailRapat.vue | v1.2 | 14.30.0: tombol Kembali/Sebelumnya/Berikutnya; status konfirmasi dan kehadiran tidak ganda | 29/10/2026 -->
 <script setup>
 // Rincian satu rapat (/rapat/:id) — dibuka peserta yang diundang dan admin/superadmin.
 //   Peserta  : konfirmasi Hadir/Izin/Sakit/Dinas luar (dengan alasan), tombol "Saya hadir" saat rapat berlangsung, baca notulen.
@@ -26,6 +26,7 @@ import InputTanggal from '@/components/InputTanggal.vue'
 import IsianTeksKaya from '@/components/IsianTeksKaya.vue'
 import { teksKaya } from '@/lib/teksKaya'
 import LembarRapat from './LembarRapat.vue'
+import NavUrutan from '@/components/NavUrutan.vue'
 
 const route = useRoute(); const router = useRouter(); const rp = useRapat(); const sesi = useSesi(); const ui = useUI()
 const D = ref(null); const galat = ref(''); const proses = ref('')
@@ -136,6 +137,7 @@ const statistik = computed(() => {
 </script>
 <template>
   <div :class="['pb-24', 'w-' + jenis.w]">
+    <NavUrutan class="mb-3" jenis="rapat" kembali="/rapat" label-kembali="Kembali ke Rapat" />
     <div v-if="galat" class="kartu w-klinik flex flex-wrap items-center gap-3 p-5">
       <PhWarningCircle :size="24" class="shrink-0" style="color: var(--c)" /><p class="min-w-[200px] flex-1 text-sm font-semibold" style="color: var(--c)">{{ galat }}</p>
       <button class="tombol-garis" @click="router.push('/rapat')">Kembali ke Rapat</button>
@@ -174,7 +176,7 @@ const statistik = computed(() => {
       <section v-if="saya && r.status !== 'batal'" class="kartu mt-3 p-4">
         <div class="flex flex-wrap items-center gap-2">
           <p class="flex-1 font-bold">Kehadiran saya</p>
-          <span :class="['lencana', 'w-' + KONFIRMASI[saya.konfirmasi].w]">{{ KONFIRMASI[saya.konfirmasi].n }}</span>
+          <span v-if="!saya.kehadiran" :class="['lencana', 'w-' + KONFIRMASI[saya.konfirmasi].w]">{{ KONFIRMASI[saya.konfirmasi].n }}</span>
           <span v-if="saya.kehadiran" :class="['lencana', 'w-' + KEHADIRAN[saya.kehadiran].w]">{{ KEHADIRAN[saya.kehadiran].n }}{{ saya.hadir_pada ? ' · ' + formatWaktu(saya.hadir_pada) : '' }}</span>
         </div>
         <button v-if="bukaPresensi && !HADIR(saya.kehadiran)" class="tombol-utama mt-3 w-full" :disabled="!!proses" @click="sayaHadir"><PhHandWaving :size="22" weight="duotone" /> {{ proses === 'hadir' ? 'Mencatat…' : 'Saya hadir di rapat ini' }}</button>
@@ -213,7 +215,7 @@ const statistik = computed(() => {
               <p class="font-semibold">{{ p.nama }}<span v-if="p.employee_id === r.pimpinan_id" class="lencana ml-1.5 text-[11px]">Pimpinan</span><span v-if="p.employee_id === r.notulis_id" class="lencana ml-1.5 text-[11px]">Notulis</span></p>
               <p class="text-xs text-teks3">{{ [p.jabatan, p.unit].filter(Boolean).join(' · ') || '–' }}</p>
               <p class="mt-0.5 flex flex-wrap gap-1.5 text-xs">
-                <span :class="['lencana', 'w-' + KONFIRMASI[p.konfirmasi].w]">{{ KONFIRMASI[p.konfirmasi].n }}</span>
+                <span v-if="kelola || !p.kehadiran" :class="['lencana', 'w-' + KONFIRMASI[p.konfirmasi].w]">{{ kelola && p.kehadiran ? 'Konfirmasi: ' : '' }}{{ KONFIRMASI[p.konfirmasi].n }}</span>
                 <span v-if="p.alasan" class="text-teks2">{{ p.alasan }}</span>
                 <span v-if="!kelola && p.kehadiran" :class="['lencana', 'w-' + KEHADIRAN[p.kehadiran].w]">{{ KEHADIRAN[p.kehadiran].n }}</span></p>
             </div>
@@ -328,6 +330,7 @@ const statistik = computed(() => {
       </DokumenCetak>
     </template>
     <p v-else class="kartu p-8 text-center text-sm text-teks3">Memuat rapat…</p>
+    <NavUrutan v-if="D" class="mt-6" jenis="rapat" kembali="/rapat" label-kembali="Kembali ke Rapat" />
   </div>
 </template>
 <style scoped>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabJurnalMusyrif.vue | v1.1 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabJurnalMusyrif.vue | v1.2 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Jurnal musyrif satu kamar: catatan kegiatan kepengasuhan per hari (waktu, kategori, uraian, santri terkait,
 // foto opsional ke Drive, tanda "penting" → Kepala Bidang Kesantrian). Pimpinan Kesantrian memberi tanggapan.
@@ -97,7 +97,7 @@ const musyrifSaya = computed(() => mu.kamarPilih?.musyrif.find((m) => m.employee
 <template>
   <div>
     <div class="kartu mb-4 grid grid-cols-2 gap-3 p-4 sm:grid-cols-[1fr_1fr_auto]">
-      <InputTanggal v-model="mulai" label="Dari" wajib /><InputTanggal v-model="selesai" label="Sampai" wajib />
+      <InputTanggal class="tanpa-label" v-model="mulai" label="Dari" wajib /><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" wajib />
       <div class="col-span-2 flex items-end gap-2 sm:col-span-1">
         <button class="tombol-garis w-agenda min-h-[44px] px-3 text-sm" @click="salin"><PhCopy :size="18" style="color: var(--c)" /> Salin</button>
         <button class="tombol-garis w-pengajuan min-h-[44px] px-3 text-sm" @click="pratinjau = true"><PhEye :size="18" style="color: var(--c)" /> Cetak</button>

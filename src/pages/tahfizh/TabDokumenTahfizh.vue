@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabDokumenTahfizh.vue | v1.4 | 14.21.0: WA minta tanda tangan, suket ujian tahsin, kepala sertifikat dari Setelan Lembaga | 24/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabDokumenTahfizh.vue | v1.5 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Tab Dokumen pada menu Tahfizh:
 //   Dokumen terbit : suket ujian kenaikan juz, sertifikat hafalan, Sertifikat Tahfizhul Quran (kartu statistik, saringan, cetak, cabut)
@@ -142,9 +142,9 @@ const BAGIAN = computed(() => [{ k: 'terbit', n: 'Dokumen terbit', i: PhCertific
       <SaringCorong class="mb-4" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring dokumen tahfizh">
         <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIS, nomor" aria-label="Cari dokumen" /></div></template>
-        <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
-        <div class="sm:w-44"><InputTanggal v-model="selesai" label="Sampai tanggal" /></div>
-        <div><label class="label-isian" for="dt-jenis">Jenis dokumen</label>
+        <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" /></div>
+        <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai tanggal" /></div>
+        <div><label class="label-isian sr-only" for="dt-jenis">Jenis dokumen</label>
           <select id="dt-jenis" v-model="jenis" class="isian w-auto max-w-full"><option value="">Semua jenis</option><option v-for="(j, k) in JENIS_DOK_TAHFIZH" :key="k" :value="k">{{ j.n }}</option></select></div>
       </SaringCorong>
       <p v-if="memuat" class="py-10 text-center text-teks3">Memuat dokumen…</p>

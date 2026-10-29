@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/presensi/DataPresensi.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/DataPresensi.vue | v1.4 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Data Presensi (admin ber-izin verval_presensi dan superadmin), dipisah dari tab Verval Presensi:
 //   Harian  : semua pegawai satu bidang (beserta cabangnya) pada satu tanggal, tombol sebelum/sesudah, saring status,
@@ -192,15 +192,15 @@ const ringkasB = (p) => ['hadir', 'terlambat', 'dinas_luar', 'izin', 'sakit', 'c
       <!-- Bilah saringan (14.2.0: HP memakai tombol corong) -->
       <div class="kartu p-3">
       <SaringCorong :jumlah="unit ? 1 : 0" :ringkasan="ringkasSaring" judul="Saring data presensi">
-        <template #cari><div class="relative"><label class="label-isian hidden md:block" for="dp-cari">Cari pegawai</label>
+        <template #cari><div class="relative"><label class="label-isian hidden md:block sr-only" for="dp-cari">Cari pegawai</label>
           <PhMagnifyingGlass :size="20" class="pointer-events-none absolute bottom-3.5 left-3 text-teks3" />
           <input id="dp-cari" v-model="cari" type="search" class="isian pl-10" placeholder="Nama, NIY, atau jabatan" aria-label="Cari pegawai" /></div></template>
-        <div class="md:w-64"><label class="label-isian" for="dp-unit">Bidang</label>
+        <div class="md:w-64"><label class="label-isian sr-only" for="dp-unit">Bidang</label>
           <select id="dp-unit" v-model="unit" class="isian"><option value="">Seluruh bidang</option>
             <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ ' '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
         <div v-if="aktif === 'harian'" class="flex items-end gap-1.5">
           <button class="tombol-garis h-12 w-12 shrink-0 px-0" aria-label="Hari sebelumnya" title="Hari sebelumnya" @click="geserHari(-1)"><PhCaretLeft :size="20" weight="bold" /></button>
-          <div class="w-40"><InputTanggal v-model="tgl" label="Tanggal" /></div>
+          <div class="w-40"><InputTanggal class="tanpa-label" v-model="tgl" label="Tanggal" /></div>
           <button class="tombol-garis h-12 w-12 shrink-0 px-0" aria-label="Hari berikutnya" title="Hari berikutnya" @click="geserHari(1)"><PhCaretRight :size="20" weight="bold" /></button>
           <button v-if="tgl !== hariIniISO()" class="tombol-teks h-12 shrink-0 px-2 text-sm" @click="tgl = hariIniISO()">Hari ini</button>
         </div>

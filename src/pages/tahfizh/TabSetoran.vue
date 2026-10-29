@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabSetoran.vue | v1.2 | 14.27.0: urutan Sebelumnya/Berikutnya untuk halaman isian | 26/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabSetoran.vue | v1.3 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Daftar sesi setoran halaqah pada satu tanggal (bawaan hari ini). Muhaffizh: halaqah asuhannya.
 // Admin/pimpinan Bidang Tahfizh: dapat beralih ke "Semua halaqah" untuk memantau kepatuhan pengisian (langsung/realtime).
@@ -46,7 +46,7 @@ function buka(x) {
 <template>
   <div>
     <div class="flex flex-wrap items-end gap-2">
-      <div class="w-48"><InputTanggal v-model="tanggal" label="Tanggal setoran" /></div>
+      <div class="w-48"><InputTanggal class="tanpa-label" v-model="tanggal" label="Tanggal setoran" /></div>
       <select v-model="sesiPilih" class="isian w-auto" aria-label="Saring sesi"><option value="">Semua sesi</option><option v-for="[k, n] in daftarSesi" :key="k" :value="k">{{ n }}</option></select>
       <div v-if="bolehSemua" class="bilah-tab kecil" role="tablist" aria-label="Cakupan">
         <button type="button" role="tab" :aria-selected="!semua" @click="semua = false" :class="['tab-garis', !semua && 'aktif']">Asuhan saya</button>

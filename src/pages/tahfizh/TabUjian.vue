@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.7 | 14.21.0: hapus usulan ujian yang dibatalkan (admin/superadmin) | 24/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.8 | 14.30.0: saringan bawaan Semua | 29/10/2026 -->
 <script setup>
 // Ujian tahfizh: kenaikan juz, sertifikasi berjenjang (5, 10, 15 … juz), dan UTAS (Fase 12, TabUtas.vue).
 // Muhaffizh merekomendasikan → penguji aktif menerima notifikasi (dan dapat dikabari WA) → penguji mengambil/menjadwalkan
@@ -36,7 +36,7 @@ import CetakDokumenTahfizh from './CetakDokumenTahfizh.vue'
 
 const props = defineProps({ hanyaUtas: Boolean })
 const tz = useTahfizh(); const sesi = useSesi(); const ui = useUI()
-const jenis = ref(props.hanyaUtas ? 'utas' : 'kenaikan'); const status = ref('aktif'); const daftar = ref([]); const memuat = ref(false); const proses = ref(false); const cari = ref('')
+const jenis = ref(props.hanyaUtas ? 'utas' : 'kenaikan'); const status = ref(''); const daftar = ref([]); const memuat = ref(false); const proses = ref(false); const cari = ref('')
 const pengelola = computed(() => tz.hak.atur || tz.hak.validasi)
 async function muat() {
   memuat.value = true
@@ -95,7 +95,7 @@ async function rekomendasikan() {
   proses.value = true
   try {
     await tz.rekomendasikanUjian(s.student_id, jenis.value, juzRek.value, jenis.value === 'sertifikasi' ? jenjangBerikut.value : null, catRek.value.trim())
-    lembarRek.value = false; ui.toast('Rekomendasi terkirim. Penguji aktif menerima notifikasi.'); status.value = 'aktif'; await muat()
+    lembarRek.value = false; ui.toast('Rekomendasi terkirim. Penguji aktif menerima notifikasi.'); await muat()
     const baru = daftar.value.find((u) => u.student_id === s.student_id && u.status === 'menunggu' && u.jenis === jenis.value)
     if (baru) bukaKirim('rekomendasi', baru)
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
@@ -142,7 +142,6 @@ async function simpanNilai() {
     const h = await tz.nilaiUjian(idUjian, a, b, catNilai.value.trim(), ketNilai.value, perbaikan.value)
     lembarNilai.value = false
     ui.toast(`${ujianPilih.value.nama}: ${KETERANGAN_UJIAN[h.keterangan || (h.hasil === 'tuntas' ? 'lulus' : 'perbaikan')].n} (${h.nilai_akhir}, ${h.huruf}).${h.hasil === 'tuntas' && ujianPilih.value.jenis === 'kenaikan' ? ' Juz diusulkan untuk divalidasi.' : ''}`)
-    if (status.value === 'aktif') status.value = 'selesai'
     await muat()
     const u = daftar.value.find((x) => x.id === idUjian); if (u) bukaKirim('hasil', u)
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }

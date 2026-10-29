@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/AbsensiSantri.vue | v1.6 | 14.27.0: urutan Sebelumnya/Berikutnya untuk halaman isian | 26/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/AbsensiSantri.vue | v1.7 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Absensi santri HISBAT. Tab: Sesi saya (pengasuh), Pantauan (admin/pimpinan: semua kelompok, langsung),
 // Rekap (per kelompok dan periode; Excel, cetak F4, WA ke wali).
@@ -63,7 +63,7 @@ const pilihTab = (k) => router.replace(`/absensi-santri/${k}`)
 
     <template v-else>
       <div class="mb-4 flex flex-wrap items-end gap-3">
-        <div class="w-48"><InputTanggal v-model="tanggal" label="Tanggal" wajib /></div>
+        <div class="w-48"><InputTanggal class="tanpa-label" v-model="tanggal" label="Tanggal" wajib /></div>
         <p class="flex-1 pb-3 text-sm text-teks3">{{ formatHari(tanggal) }} · halaqah dan asrama mengikuti jam sesi di Penjadwalan.</p>
       </div>
 

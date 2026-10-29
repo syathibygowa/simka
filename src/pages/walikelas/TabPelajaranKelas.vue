@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/walikelas/TabPelajaranKelas.vue | v1.6 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/walikelas/TabPelajaranKelas.vue | v1.7 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Pelajaran di satu kelas berdasarkan jurnal mengajar guru: rekap keterlaksanaan per mapel/guru, materi per tanggal,
 // dan roster (jadwal pelajaran pekanan). Wali kelas dapat memantau mapel yang kosong; cetak F4 rekap keterlaksanaan.
@@ -57,7 +57,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan
     </div>
 
     <template v-if="tampilan === 'jurnal'">
-      <div class="mb-3"><label class="label-isian" for="pk-mapel">Mata pelajaran</label>
+      <div class="mb-3"><label class="label-isian sr-only" for="pk-mapel">Mata pelajaran</label>
         <select id="pk-mapel" v-model="mapelJurnal" class="isian md:max-w-md"><option value="">Semua mapel kelas ini</option>
           <option v-for="t in tugasKelas" :key="t.id" :value="t.id">{{ jd.cariMapel(t.subject_id)?.nama || 'Mapel' }} · {{ t.nama_guru }}</option></select></div>
       <LaporanJurnalMengajar :key="wk.pilih + mapelJurnal" :cakupan="mapelJurnal ? { assignment_id: mapelJurnal } : { group_id: wk.pilih }" :judul="mapelJurnal ? 'Jurnal Mengajar' : 'Jurnal Pelajaran Kelas'" :kanan="mapelJurnal ? 'guru' : 'wali'" />

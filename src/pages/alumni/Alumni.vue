@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/alumni/Alumni.vue | v1.0 | 14.25.0: menu Alumni (daftar, rencana lanjut studi, buku alumni) | 25/10/2026 -->
+<!-- SIMKA PRO | src/pages/alumni/Alumni.vue | v1.1 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Menu Alumni (khusus admin dan superadmin). Alumni = santri berstatus Lulus; santri yang diluluskan di Naik Kelas
 // otomatis pindah ke sini (tidak lagi tampil di Data Santri aktif), dan seluruh catatan semasa aktif tetap terbaca.
@@ -138,13 +138,13 @@ const tentangBuku = computed(() => `${tampil.value.length} alumni · ${tampil.va
     <SaringCorong class="mt-4" :jumlah="jumlahSaring" :ringkasan="ringkasSaring" judul="Saring alumni" bisa-atur-ulang @atur-ulang="aturUlang">
       <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
         <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari nama, NIS, kampus, prodi" aria-label="Cari alumni" /></div></template>
-      <div><label class="label-isian" for="al-tahun">Tahun lulus</label>
+      <div><label class="label-isian sr-only" for="al-tahun">Tahun lulus</label>
         <select id="al-tahun" v-model="tahun" class="isian w-auto max-w-full"><option value="">Semua angkatan</option><option v-for="t in daftarTahun" :key="t" :value="String(t)">{{ t }}</option></select></div>
-      <div><label class="label-isian" for="al-jenjang">Jenjang</label>
+      <div><label class="label-isian sr-only" for="al-jenjang">Jenjang</label>
         <select id="al-jenjang" v-model="jenjang" class="isian w-auto max-w-full"><option value="">Semua jenjang</option><option value="wustha">Kesetaraan Wustha</option><option value="sma">SMA</option></select></div>
-      <div><label class="label-isian" for="al-lanjut">Rencana</label>
+      <div><label class="label-isian sr-only" for="al-lanjut">Rencana</label>
         <select id="al-lanjut" v-model="lanjut" class="isian w-auto max-w-full"><option value="">Semua rencana</option><option v-for="(v, k) in LANJUT" :key="k" :value="k">{{ v.n }}</option><option value="-">Belum diisi</option></select></div>
-      <div><label class="label-isian" for="al-lengkap">Profil</label>
+      <div><label class="label-isian sr-only" for="al-lengkap">Profil</label>
         <select id="al-lengkap" v-model="lengkap" class="isian w-auto max-w-full"><option value="">Semua</option><option value="lengkap">Lengkap</option><option value="belum">Belum lengkap</option></select></div>
     </SaringCorong>
 

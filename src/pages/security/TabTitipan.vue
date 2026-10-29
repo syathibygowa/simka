@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/security/TabTitipan.vue | v1.4 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/security/TabTitipan.vue | v1.5 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Titipan barang/uang untuk santri (Blueprint Bagian 24). Mencegah paket hilang di pos:
 //   Terima : santri penerima, jenis, uraian, pengirim, ekspedisi, FOTO BARANG WAJIB → musyrif dinotifikasi.
@@ -127,7 +127,7 @@ watch(pratinjau, async (v) => { if (v) penanda.value = await penandaKelompok({ j
       <SaringCorong class="min-w-[220px] flex-1" :lipat="cakupan === 'semua'" :ringkasan="cakupan === 'semua' ? `${formatPendek(mulai)} – ${formatPendek(selesai)}` : ''" judul="Saring tanggal">
         <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri, barang, atau pengirim" aria-label="Cari titipan" /></div></template>
-        <template v-if="cakupan === 'semua'"><div class="sm:w-40"><InputTanggal v-model="mulai" label="Diterima dari" /></div><div class="sm:w-40"><InputTanggal v-model="selesai" label="Sampai" /></div></template>
+        <template v-if="cakupan === 'semua'"><div class="sm:w-40"><InputTanggal class="tanpa-label" v-model="mulai" label="Diterima dari" /></div><div class="sm:w-40"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" /></div></template>
       </SaringCorong>
       <button class="tombol-garis w-pengajuan min-h-[44px] px-3 text-sm" @click="pratinjau = true"><PhEye :size="18" style="color: var(--c)" /> Cetak</button>
       <button class="tombol-garis w-santri min-h-[44px] px-3 text-sm" @click="ekspor"><PhDownloadSimple :size="18" style="color: var(--c)" /> Ekspor</button>

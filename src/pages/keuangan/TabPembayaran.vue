@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabPembayaran.vue | v1.4 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabPembayaran.vue | v1.5 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Pembayaran santri per rentang tanggal (bawaan: awal bulan ini s.d. hari ini): jumlah, tunai/transfer, per jenis biaya.
 // Setiap baris: cetak kuitansi, kirim konfirmasi WA ke wali, buka rincian santri, batalkan beralasan (kuitansi dicabut).
@@ -72,9 +72,9 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
 <template>
   <div>
     <SaringCorong class="mb-2" :jumlah="[cara, tampilBatal].filter(Boolean).length" :ringkasan="[`${formatPendek(mulai)} – ${formatPendek(akhir)}`, cara ? CARA_BAYAR[cara] : ''].filter(Boolean).join(' · ')" judul="Saring pembayaran">
-      <div class="sm:w-44"><InputTanggal v-model="mulai" label="Dari tanggal" /></div>
-      <div class="sm:w-44"><InputTanggal v-model="akhir" label="Sampai tanggal" /></div>
-      <div><label class="label-isian" for="pb-cara">Cara bayar</label><select id="pb-cara" v-model="cara" class="isian w-auto"><option value="">Semua</option><option v-for="(n, k) in CARA_BAYAR" :key="k" :value="k">{{ n }}</option></select></div>
+      <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" /></div>
+      <div class="sm:w-44"><InputTanggal class="tanpa-label" v-model="akhir" label="Sampai tanggal" /></div>
+      <div><label class="label-isian sr-only" for="pb-cara">Cara bayar</label><select id="pb-cara" v-model="cara" class="isian w-auto"><option value="">Semua</option><option v-for="(n, k) in CARA_BAYAR" :key="k" :value="k">{{ n }}</option></select></div>
       <label class="flex min-h-[44px] items-center gap-2 text-sm"><input v-model="tampilBatal" type="checkbox" class="h-5 w-5" /> Tampilkan yang dibatalkan</label>
     </SaringCorong>
     <div class="mb-3 flex flex-wrap items-end justify-end gap-2">

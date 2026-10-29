@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/NavUrutan.vue | v1.0 | 14.27.0: tombol Kembali, Sebelumnya, Berikutnya di halaman isian | 26/10/2026 -->
+<!-- SIMKA PRO | src/components/NavUrutan.vue | v1.1 | 14.30.0: dipakai juga di Rincian Rapat | 29/10/2026 -->
 <script setup>
 // Bilah navigasi halaman isian (Isi Absensi, Lembar Nilai): Kembali ke halaman asal, serta Sebelumnya/Berikutnya menurut urutan
 // daftar asal (lib/urutan.js). Dipasang di atas dan di bawah isi halaman. Bila ada perubahan belum tersimpan, halaman isian
@@ -13,7 +13,7 @@ const route = useRoute(); const router = useRouter()
 const t = computed(() => tetangga(props.jenis, route.path))
 function balik() {
   const asal = window.history.state?.back
-  if (asal && !/^\/(absensi-santri\/isi|guru-mapel\/nilai\/)/.test(asal)) return router.back()
+  if (asal && !/^\/(absensi-santri\/isi|guru-mapel\/nilai\/|rapat\/)/.test(asal)) return router.back()
   router.push(props.kembali || route.meta?.kembali || '/')
 }
 const pergi = (x) => x && router.push(x.ke)

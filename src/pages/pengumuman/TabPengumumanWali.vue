@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pengumuman/TabPengumumanWali.vue | v1.2 | Perbaikan 13.9.0: label "Tandai Penting" | 16/10/2026 -->
+<!-- SIMKA PRO | src/pages/pengumuman/TabPengumumanWali.vue | v1.3 | 14.30.0: saringan bawaan Semua | 29/10/2026 -->
 <script setup>
 // Pengumuman → tab "Untuk wali": pengumuman yang tampil di Portal Wali (dan notifikasi HP wali yang berlangganan).
 // Sasaran: semua wali, jenjang, tingkat kelas, kelompok (kelas/kamar/halaqah/ekskul), santri tertentu, dan putra/putri.
@@ -85,7 +85,7 @@ async function hapus(p) {
 }
 
 // ---------- Pembaca ----------
-const pembaca = ref(null); const saring = ref('belum')
+const pembaca = ref(null); const saring = ref('semua')
 async function lihatPembaca(p) {
   try { pembaca.value = { p, daftar: await pw.pembaca(p.id) }; saring.value = 'belum' } catch (e) { ui.toast(e.message, 'galat') }
 }

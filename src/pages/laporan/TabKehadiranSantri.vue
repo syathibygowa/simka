@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.8 | 14.13.0: tombol disederhanakan (Pratinjau, Ekspor, Impor, Cetak Rekap) | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.9 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Laporan kehadiran santri (menu Dokumen → Kehadiran santri), absensi HISBAT.
 // Jenis: rekap ringkas, rekap matriks (F4 mendatar), laporan individu, daftar perhatian, kepatuhan pengisian (pemantau).
@@ -195,15 +195,15 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
           <label class="block"><span class="label-isian">Kegiatan</span>
             <select v-model="kegiatan" class="isian"><option v-for="(n, k) in KEGIATAN_SANTRI" :key="k" :value="k">{{ n }}</option></select></label>
           <template v-if="jenis !== 'individu'">
-            <label v-if="pemantau" class="block"><span class="label-isian">Cakupan</span>
+            <label v-if="pemantau" class="block"><span class="label-isian sr-only">Cakupan</span>
               <select v-model="cakupan" class="isian"><option value="semua">Seluruh santri</option><option value="jenjang">Per jenjang</option><option value="kelompok">Per kelompok</option></select></label>
-            <label v-if="cakupan === 'kelompok'" class="block"><span class="label-isian">Kelompok</span>
+            <label v-if="cakupan === 'kelompok'" class="block"><span class="label-isian sr-only">Kelompok</span>
               <select v-model="kelompok" class="isian"><option value="" disabled>Pilih kelompok</option>
                 <option v-for="g in kelompokPilihan" :key="g.id" :value="g.id">{{ JENIS_KELOMPOK[g.jenis]?.n }} {{ g.nama }}</option></select></label>
-            <label v-else-if="cakupan === 'jenjang'" class="block"><span class="label-isian">Jenjang</span>
+            <label v-else-if="cakupan === 'jenjang'" class="block"><span class="label-isian sr-only">Jenjang</span>
               <select v-model="jenjang" class="isian"><option value="wustha">Kesetaraan Wustha</option><option value="sma">SMA</option></select></label>
           </template>
-          <label v-else class="block sm:col-span-2"><span class="label-isian">Santri</span>
+          <label v-else class="block sm:col-span-2"><span class="label-isian sr-only">Santri</span>
             <select v-model="santriId" class="isian"><option value="" disabled>Pilih santri</option>
               <option v-for="s in santriPilihan" :key="s.id" :value="s.id">{{ s.nama_lengkap }} ({{ s.nis }})</option></select></label>
           <label v-if="jenis === 'perhatian'" class="block"><span class="label-isian">Ambang persentase</span>
@@ -216,8 +216,8 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
           </div>
         </div>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
-          <InputTanggal v-model="mulai" label="Dari tanggal" />
-          <InputTanggal v-model="selesai" label="Sampai tanggal" />
+          <InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" />
+          <InputTanggal class="tanpa-label" v-model="selesai" label="Sampai tanggal" />
           <button type="button" class="tombol-utama" :disabled="ls.memuat" @click="muat(); bukaSaring = false"><PhMagnifyingGlass :size="20" weight="bold" /> Tampilkan</button>
         </div>
       </fieldset>

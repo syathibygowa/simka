@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/LaporanJurnalMengajar.vue | v1.2 | 14.15.0: penanda tangan dari Setelan → Penanda tangan (pilihan di halaman dihapus) | 19/10/2026 -->
+<!-- SIMKA PRO | src/components/LaporanJurnalMengajar.vue | v1.3 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Laporan jurnal mengajar untuk satu cakupan: satu kelas × mapel, satu mapel di semua kelas yang diampu guru,
 // semua yang diampu guru, atau semua mapel satu kelas (wali kelas/kurikulum).
@@ -95,7 +95,7 @@ async function excel() {
     <SaringCorong class="mb-3" :ringkasan="`${PERIODE.find((x) => x.k === periode)?.n} · ${formatPendek(mulai)} – ${formatPendek(selesai)}`" judul="Periode jurnal" :jumlah="0">
       <div class="bilah-tab kecil" role="tablist" aria-label="Periode"><button v-for="x in PERIODE" :key="x.k" type="button" role="tab" :aria-selected="periode === x.k"
         :class="['tab-garis', periode === x.k && 'aktif']" @click="periode = x.k">{{ x.n }}</button></div>
-      <div v-if="periode === 'atur'" class="grid w-full grid-cols-2 gap-2 md:w-auto md:min-w-[22rem]"><InputTanggal v-model="mulai" label="Dari" /><InputTanggal v-model="selesai" label="Sampai" /></div>
+      <div v-if="periode === 'atur'" class="grid w-full grid-cols-2 gap-2 md:w-auto md:min-w-[22rem]"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari" /><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" /></div>
       <button v-if="periode === 'atur'" class="tombol-utama min-h-[44px] px-4 text-sm" @click="muat"><PhArrowClockwise :size="18" /> Tampilkan</button>
     </SaringCorong>
 

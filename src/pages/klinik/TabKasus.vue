@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/klinik/TabKasus.vue | v1.1 | 14.2.0: saringan corong di HP | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/klinik/TabKasus.vue | v1.2 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Daftar kasus klinik untuk empat cakupan:
 //   antrean      : rujukan menunggu pemeriksaan; yang lewat batas waktu ditandai merah dan tampil paling atas
@@ -112,7 +112,7 @@ const ikonStatus = (k) => (k.status === 'ditangani' && k.tindak_lanjut ? TINDAK_
         <option value="">Klinik putra dan putri</option><option value="putra">{{ KLINIK.putra }}</option><option value="putri">{{ KLINIK.putri }}</option>
       </select>
       <div v-if="cakupan === 'riwayat' || cakupan === 'rujukan_saya'" class="grid w-full grid-cols-2 gap-3 md:w-auto md:min-w-[22rem]">
-        <InputTanggal v-model="mulai" label="Dari tanggal" /><InputTanggal v-model="selesai" label="Sampai tanggal" />
+        <InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" /><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai tanggal" />
       </div>
     </SaringCorong>
     <div v-else class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />

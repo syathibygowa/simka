@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/keuangan/TabTunggakan.vue | v1.6 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/keuangan/TabTunggakan.vue | v1.7 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Posisi tunggakan per tanggal (bawaan hari ini): tagihan yang jatuh tempo paling lambat tanggal itu dan masih bersisa
 // pada tanggal itu. Dikelompokkan per santri, kelas, kamar, halaqah, jenis biaya, atau jenjang. Cetak F4 dan Excel.
@@ -72,7 +72,7 @@ const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.te
     <div class="mb-3 flex flex-wrap items-end gap-2">
       <SaringCorong class="min-w-0 flex-1" :jumlah="[periode, jenjang, tanggal !== hariIniISO()].filter(Boolean).length"
         :ringkasan="[PERIODE.find((x) => x.k === periode)?.n, formatPendek(tanggal), jenjang ? JENJANG[jenjang] : ''].filter(Boolean).join(' · ')" judul="Saring tunggakan">
-      <div class="w-52"><label class="label-isian" for="tg-per">Periode</label>
+      <div class="w-52"><label class="label-isian sr-only" for="tg-per">Periode</label>
         <select id="tg-per" v-model="periode" class="isian"><option v-for="x in PERIODE" :key="x.k" :value="x.k">{{ x.n }}</option></select></div>
       <div v-if="periode === 'rentang'" class="w-44"><InputTanggal v-model="dari" label="Jatuh tempo dari" /></div>
       <div class="w-44"><InputTanggal v-model="tanggal" :label="periode ? 'Sampai tanggal' : 'Posisi per tanggal'" /></div>

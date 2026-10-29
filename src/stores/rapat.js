@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/rapat.js | v1.1 | 14.29.0: demo peserta dan rekap urut jabatan | 26/10/2026
+// SIMKA PRO | src/stores/rapat.js | v1.2 | 14.30.0: demo tanda notulen dan cuplikan | 29/10/2026
 // Rapat lahir dari Agenda berjenis Rapat (peserta = sasaran agenda: tim kerja, bidang, jabatan, pegawai) atau dibuat admin.
 // Peserta melihat rapatnya, konfirmasi hadir/izin, menekan "Saya hadir", dan membaca notulen. Admin/superadmin mengelola.
 import { defineStore } from 'pinia'
@@ -48,7 +48,7 @@ function ringkasDemo(m) {
   const n = (f) => m.peserta.filter(f).length; const s = saya()
   const p = m.peserta.find((x) => x.employee_id === s)
   return { id: m.id, agenda_id: m.agenda_id, tanggal: m.tanggal, judul: m.judul, jenis: m.jenis, unit: m.unit, jam_mulai: m.jam_mulai, jam_selesai: m.jam_selesai, lokasi: m.lokasi, status: m.status,
-    ringkasan_sasaran: m.ringkasan_sasaran, pimpinan: usePegawai().cari(m.pimpinan_id)?.nama_lengkap, ada_notulen: !!m.notulen_pada, peserta: m.peserta.length,
+    ringkasan_sasaran: m.ringkasan_sasaran, pimpinan: usePegawai().cari(m.pimpinan_id)?.nama_lengkap, ada_notulen: !!(m.pembahasan || m.keputusan), notulen_selesai: !!m.notulen_pada, cuplikan: String(m.keputusan || m.pembahasan || '').replace(/[*_]/g, '').slice(0, 240), peserta: m.peserta.length,
     konf_hadir: n((x) => x.konfirmasi === 'hadir'), konf_izin: n((x) => ['izin', 'sakit', 'dinas_luar'].includes(x.konfirmasi)), hadir: n((x) => ['hadir', 'terlambat'].includes(x.kehadiran)),
     tercatat: n((x) => x.kehadiran), saya: p ? { konfirmasi: p.konfirmasi, kehadiran: p.kehadiran } : null }
 }

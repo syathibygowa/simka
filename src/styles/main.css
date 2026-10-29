@@ -1,4 +1,4 @@
-/* SIMKA PRO | src/styles/main.css | v1.5 | 14.3.0: warna baris kehadiran di bawah ambang | 17/10/2026 */
+/* SIMKA PRO | src/styles/main.css | v1.6 | 14.30.0: kelas .tanpa-label (label saringan disembunyikan) | 29/10/2026 */
 @import './token.css';
 @import './cetak.css';
 @tailwind base;
@@ -63,6 +63,8 @@
     width: 44px; height: 44px;
   }
   .label-isian { @apply block text-sm font-semibold text-teks2 mb-1.5; }
+  /* 14.30.0: label saringan yang sudah jelas dari isinya (tanggal, bidang, kelas, cari, …) disembunyikan dari tampilan; tetap terbaca pembaca layar */
+  .tanpa-label .label-isian { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
   .isian {
     @apply w-full rounded-xl border border-garis bg-permukaan px-3.5 text-teks placeholder:text-teks3
            focus:outline-none focus:border-merah focus:ring-2 focus:ring-merah/20 transition;

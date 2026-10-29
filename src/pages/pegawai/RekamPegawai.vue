@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pegawai/RekamPegawai.vue | v1.3 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/pegawai/RekamPegawai.vue | v1.4 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Rekam Kepegawaian: laporan menyeluruh satu pegawai pada satu periode, seperti rekam medis.
 //   Kepala     : foto, nama, NIY, jabatan struktural/fungsional/Plt, unit, status, masa kerja
@@ -168,7 +168,7 @@ function excel() {
         <button v-for="p in PRESET" :key="p.k" type="button" role="tab" :aria-selected="preset === p.k" :class="['tab-garis', preset === p.k && 'aktif']" @click="pilih(p)">{{ p.n }}</button>
         <button type="button" role="tab" :aria-selected="preset === 'atur'" :class="['tab-garis', preset === 'atur' && 'aktif']" @click="preset = 'atur'">Atur sendiri</button>
       </div>
-      <div v-if="preset === 'atur'" class="kartu mt-3 grid grid-cols-2 gap-3 p-4 sm:max-w-xl"><InputTanggal v-model="mulai" label="Dari tanggal" /><InputTanggal v-model="selesai" label="Sampai tanggal" /></div>
+      <div v-if="preset === 'atur'" class="kartu mt-3 grid grid-cols-2 gap-3 p-4 sm:max-w-xl"><InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" /><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai tanggal" /></div>
 
       <p v-if="memuat && !r" class="py-10 text-center text-teks3">Menyusun rekam kepegawaian…</p>
       <template v-else-if="r">

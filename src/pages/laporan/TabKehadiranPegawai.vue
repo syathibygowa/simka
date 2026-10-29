@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.11 | 14.26.0: laporan fungsional menjadi tab tersendiri (prop fungsional); pilihan tugas bergaya tab | 25/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.12 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Laporan kehadiran pegawai (menu Rekap → Kehadiran pegawai).
 // Jenis: rekap ringkas, rekap matriks (nama × tanggal, F4 mendatar), laporan individu, daftar perhatian.
@@ -211,7 +211,7 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
       <fieldset :disabled="!!resmi" :class="['kartu w-full min-w-0 space-y-4 p-4', resmi && 'opacity-60']">
         <!-- 14.26.0: tab Laporan fungsional — pilih satu jenis tugas sesi -->
         <div v-if="ragam === 'fungsional'">
-          <p class="label-isian">Tugas yang dilaporkan</p>
+          <p class="label-isian sr-only">Tugas yang dilaporkan</p>
           <div class="bilah-tab kecil" role="tablist" aria-label="Jenis tugas">
             <button v-for="t in daftarTugas" :key="t.k" type="button" role="tab" :aria-selected="tugas === t.k" @click="tugas = t.k"
               :class="['tab-garis', 'w-' + t.w, tugas === t.k && 'aktif']"><component :is="t.ikon" :size="18" weight="duotone" /><span>{{ t.n }}</span></button>
@@ -227,18 +227,18 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
 
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <template v-if="pemantau && jenis !== 'individu'">
-            <label class="block"><span class="label-isian">Cakupan</span>
+            <label class="block"><span class="label-isian sr-only">Cakupan</span>
               <select v-model="cakupan" class="isian"><option value="semua">Semua pegawai</option><option value="bidang">Bidang/unit (beserta cabangnya)</option><option value="fungsional">Jabatan fungsional</option><option value="pilih">Pilih pegawai (centang)</option></select></label>
             <div v-if="cakupan === 'pilih'" class="block"><span class="label-isian">Pegawai pilihan</span>
               <button type="button" class="tombol-garis w-full justify-start" @click="lembarPilih = true"><PhCheckSquare :size="20" weight="duotone" /> {{ pilihPeg.length ? `${pilihPeg.length} pegawai dicentang` : 'Centang pegawai…' }}</button></div>
-            <label v-if="cakupan === 'bidang'" class="block"><span class="label-isian">Bidang/unit</span>
+            <label v-if="cakupan === 'bidang'" class="block"><span class="label-isian sr-only">Bidang/unit</span>
               <select v-model="nilai" class="isian"><option value="" disabled>Pilih bidang/unit</option>
                 <option v-for="u in unitPilihan" :key="u.id" :value="u.id">{{ ' '.repeat(u.tingkat * 2) }}{{ u.nama }}</option></select></label>
             <label v-else-if="cakupan === 'fungsional'" class="block"><span class="label-isian">Jabatan fungsional</span>
               <select v-model="nilai" class="isian"><option value="" disabled>Pilih jabatan</option>
                 <option v-for="f in org.fungsional" :key="f.id" :value="f.id">{{ f.nama }}</option></select></label>
           </template>
-          <label v-if="pemantau && jenis === 'individu'" class="block sm:col-span-2"><span class="label-isian">Pegawai</span>
+          <label v-if="pemantau && jenis === 'individu'" class="block sm:col-span-2"><span class="label-isian sr-only">Pegawai</span>
             <select v-model="nilai" class="isian"><option value="" disabled>Pilih pegawai</option>
               <option v-for="p in pegawaiPilihan" :key="p.id" :value="p.id">{{ p.nama_lengkap }}{{ p.nama_unit ? ' – ' + p.nama_unit : '' }}</option></select></label>
           <label v-if="jenis === 'perhatian'" class="block"><span class="label-isian">Ambang persentase</span>
@@ -252,8 +252,8 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
           </div>
         </div>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
-          <InputTanggal v-model="mulai" label="Dari tanggal" />
-          <InputTanggal v-model="selesai" label="Sampai tanggal" />
+          <InputTanggal class="tanpa-label" v-model="mulai" label="Dari tanggal" />
+          <InputTanggal class="tanpa-label" v-model="selesai" label="Sampai tanggal" />
           <button type="button" class="tombol-utama" :disabled="lk.memuat" @click="muat(); bukaSaring = false"><PhMagnifyingGlass :size="20" weight="bold" /> Tampilkan</button>
         </div>
       </fieldset>

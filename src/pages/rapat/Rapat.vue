@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/rapat/Rapat.vue | v1.1 | 14.29.0: rekap per bulan atau rentang tanggal; persentase di bawah ambang batas merah lembut; urut jabatan | 26/10/2026 -->
+<!-- SIMKA PRO | src/pages/rapat/Rapat.vue | v1.2 | 14.30.0: tab Notulen; tanda notulen di kartu; status saya tidak ganda; urutan Sebelumnya/Berikutnya | 29/10/2026 -->
 <script setup>
 // Menu Rapat. Semua pegawai melihat rapat yang mengundangnya (dari Agenda jenis Rapat atau dibuat admin), konfirmasi hadir/izin,
 // lalu membaca notulen. Admin dan superadmin melihat seluruh rapat, membuat/mengubah rapat, dan membuka Rekap kehadiran rapat.
@@ -7,7 +7,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
-import { PhUsersThree, PhPlus, PhCalendarCheck, PhChartBar, PhCaretRight, PhClock, PhMapPin, PhNotebook, PhCheckCircle, PhHourglassMedium, PhPercent, PhPrinter, PhFileXls, PhCaretLeft } from '@phosphor-icons/vue'
+import { PhUsersThree, PhPlus, PhCalendarCheck, PhChartBar, PhCaretRight, PhClock, PhMapPin, PhNotebook, PhCheckCircle, PhHourglassMedium, PhPercent, PhPrinter, PhFileXls, PhCaretLeft, PhClockCounterClockwise, PhNotePencil } from '@phosphor-icons/vue'
 import { useRapat } from '@/stores/rapat'
 import { useSesi } from '@/stores/sesi'
 import { useUI } from '@/stores/ui'
@@ -19,6 +19,7 @@ import BilahTab from '@/components/BilahTab.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import TombolAksi from '@/components/TombolAksi.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
+import { aturUrutan } from '@/lib/urutan'
 import { useAmbang } from '@/stores/ambang'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -28,7 +29,9 @@ const route = useRoute(); const router = useRouter(); const rp = useRapat(); con
 const admin = computed(() => sesi.isAdmin)
 const TAB = computed(() => [
   { k: 'mendatang', n: 'Rapat mendatang', ikon: PhCalendarCheck, w: 'rapat' },
-  { k: 'lewat', n: 'Sudah lewat', ikon: PhNotebook, w: 'tatausaha' },
+  { k: 'lewat', n: 'Sudah lewat', ikon: PhClockCounterClockwise, w: 'audit' },
+  // 14.30.0: semua notulen rapat (yang mengundang saya; admin: semua) dalam satu tab
+  { k: 'notulen', n: 'Notulen', ikon: PhNotebook, w: 'tatausaha' },
   ...(admin.value ? [{ k: 'rekap', n: 'Rekap kehadiran', ikon: PhChartBar, w: 'rekap' }] : []),
 ])
 const aktif = computed(() => (TAB.value.some((t) => t.k === route.query.tab) ? route.query.tab : 'mendatang'))
@@ -36,10 +39,14 @@ const pindah = (k) => router.replace({ query: { tab: k } })
 const hari = hariIniISO()
 const geser = (iso, n) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) }
 const jenis = ref('')
-onMounted(() => rp.muat(geser(hari, -120), geser(hari, 60)).catch((e) => ui.toast(e.message, 'galat')))
+onMounted(() => rp.muat(geser(hari, -365), geser(hari, 60)).catch((e) => ui.toast(e.message, 'galat')))
 const saring = (d) => d.filter((m) => !jenis.value || m.jenis === jenis.value)
 const mendatang = computed(() => saring(rp.daftar.filter((m) => m.tanggal >= hari && m.status !== 'selesai')).sort((a, b) => a.tanggal.localeCompare(b.tanggal) || String(a.jam_mulai).localeCompare(String(b.jam_mulai))))
 const lewat = computed(() => saring(rp.daftar.filter((m) => m.tanggal < hari || m.status === 'selesai')))
+const notulen = computed(() => saring(rp.daftar.filter((m) => m.ada_notulen)))
+const daftarTab = computed(() => (aktif.value === 'mendatang' ? mendatang.value : aktif.value === 'notulen' ? notulen.value : lewat.value))
+/** Status saya pada kartu: kehadiran tercatat menggantikan konfirmasi (tidak tampil ganda). */
+const statusSaya = (m) => (!m.saya ? null : m.saya.kehadiran ? { n: KEHADIRAN[m.saya.kehadiran].n, w: KEHADIRAN[m.saya.kehadiran].w } : m.status === 'dijadwalkan' ? { n: KONFIRMASI[m.saya.konfirmasi].n, w: KONFIRMASI[m.saya.konfirmasi].w } : null)
 const statistik = computed(() => {
   const n = rp.memuat && !rp.daftar.length ? '…' : null
   const minggu = mendatang.value.filter((m) => m.tanggal <= geser(hari, 7) && m.status !== 'batal')
@@ -48,13 +55,13 @@ const statistik = computed(() => {
   return [
     { judul: 'Rapat pekan ini', nilai: n ?? minggu.length, ikon: PhCalendarCheck, warna: 'rapat', ket: '7 hari ke depan' },
     { judul: admin.value ? 'Menunggu konfirmasi' : 'Perlu konfirmasi saya', nilai: n ?? (admin.value ? mendatang.value.reduce((a, m) => a + Math.max(0, m.peserta - m.konf_hadir - m.konf_izin), 0) : belumKonf.length), ikon: PhHourglassMedium, warna: 'pengajuan', ket: admin.value ? 'Undangan belum dijawab' : 'Rapat yang belum Anda jawab' },
-    { judul: 'Notulen tersedia', nilai: n ?? lewat.value.filter((m) => m.ada_notulen).length, ikon: PhNotebook, warna: 'tatausaha', ket: '4 bulan terakhir' },
+    { judul: 'Notulen tersedia', nilai: n ?? lewat.value.filter((m) => m.ada_notulen).length, ikon: PhNotebook, warna: 'tatausaha', ket: '12 bulan terakhir' },
     { judul: 'Kehadiran rapat', nilai: n ?? (tot ? persenHadir(hd, tot) : '–'), satuan: tot ? '%' : '', ikon: PhPercent, warna: 'presensi', ket: `${ls.length} rapat selesai` },
   ]
 })
-const buka = (m) => router.push(`/rapat/${m.id}`)
+const buka = (m) => { aturUrutan('rapat', daftarTab.value.map((x) => ({ ke: `/rapat/${x.id}`, label: x.judul }))); router.push(`/rapat/${m.id}`) }
 const lembar = ref(false)
-const selesaiBuat = (id) => { rp.muat(geser(hari, -120), geser(hari, 60)); if (id) router.push(`/rapat/${id}`) }
+const selesaiBuat = (id) => { rp.muat(geser(hari, -365), geser(hari, 60)); if (id) router.push(`/rapat/${id}`) }
 
 // ---------- Rekap (admin) ----------
 const amb = useAmbang(); amb.muat()   // 14.29.0: persentase di bawah ambang batas (Pelaporan → Ambang batas, batas pegawai) merah lembut
@@ -107,9 +114,11 @@ function ekspor() {
     <!-- Daftar rapat -->
     <template v-if="aktif !== 'rekap'">
       <p v-if="rp.memuat && !rp.daftar.length" class="py-10 text-center text-teks3">Memuat rapat…</p>
-      <ul v-else-if="(aktif === 'mendatang' ? mendatang : lewat).length" class="grid gap-3 lg:grid-cols-2">
-        <li v-for="m in (aktif === 'mendatang' ? mendatang : lewat)" :key="m.id">
-          <button type="button" :class="['kartu flex w-full items-start gap-3 p-4 text-left transition hover:shadow-lg', 'w-' + JENIS_RAPAT[m.jenis]?.w, m.status === 'batal' && 'opacity-60']" @click="buka(m)">
+      <ul v-else-if="daftarTab.length" class="grid gap-3 lg:grid-cols-2">
+        <li v-for="m in daftarTab" :key="m.id">
+          <button type="button" :class="['kartu relative flex w-full items-start gap-3 overflow-hidden p-4 text-left transition hover:shadow-lg', 'w-' + JENIS_RAPAT[m.jenis]?.w, m.status === 'batal' && 'opacity-60', m.ada_notulen && 'ada-notulen']" @click="buka(m)">
+            <!-- 14.30.0: pita penanda notulen -->
+            <span v-if="m.ada_notulen" class="pita-notulen" :title="m.notulen_selesai ? 'Notulen tersedia' : 'Notulen masih draf'"><PhNotePencil :size="13" weight="bold" /> {{ m.notulen_selesai ? 'Notulen' : 'Draf notulen' }}</span>
             <span class="grid w-14 shrink-0 place-items-center rounded-2xl py-2 text-center" style="background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--c)">
               <span class="text-xl font-extrabold leading-none">{{ m.tanggal.slice(8, 10) }}</span><span class="text-[11px] font-bold uppercase">{{ BULAN[Number(m.tanggal.slice(5, 7)) - 1].slice(0, 3) }}</span></span>
             <span class="min-w-0 flex-1">
@@ -119,20 +128,19 @@ function ekspor() {
               <span class="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
                 <span class="lencana">{{ JENIS_RAPAT[m.jenis]?.n }}</span>
                 <span v-if="m.status !== 'dijadwalkan'" :class="['lencana', 'w-' + STATUS_RAPAT[m.status].w]">{{ STATUS_RAPAT[m.status].n }}</span>
-                <span v-if="m.saya && m.status === 'dijadwalkan'" :class="['lencana', 'w-' + KONFIRMASI[m.saya.konfirmasi].w]">Saya: {{ KONFIRMASI[m.saya.konfirmasi].n }}</span>
-                <span v-if="m.saya?.kehadiran" :class="['lencana', 'w-' + KEHADIRAN[m.saya.kehadiran].w]">Saya: {{ KEHADIRAN[m.saya.kehadiran].n }}</span>
-                <span v-if="m.ada_notulen" class="lencana w-tatausaha"><PhNotebook :size="12" weight="fill" /> Notulen</span>
+                <span v-if="statusSaya(m)" :class="['lencana', 'w-' + statusSaya(m).w]">Saya: {{ statusSaya(m).n }}</span>
                 <span class="text-teks3">{{ m.status === 'selesai' || m.tercatat ? `hadir ${m.hadir}/${m.peserta} (${persenHadir(m.hadir, m.peserta)}%)` : `${m.peserta} peserta · ${m.konf_hadir} akan hadir · ${m.konf_izin} izin` }}</span>
               </span>
-              <span v-if="m.ringkasan_sasaran" class="mt-1 block truncate text-xs text-teks3">Peserta: {{ m.ringkasan_sasaran }}</span>
+              <span v-if="aktif === 'notulen' && m.cuplikan" class="mt-1.5 line-clamp-3 block whitespace-pre-line rounded-xl bg-permukaan2 p-2.5 text-xs text-teks2">{{ m.cuplikan }}</span>
+              <span v-else-if="m.ringkasan_sasaran" class="mt-1 block truncate text-xs text-teks3">Peserta: {{ m.ringkasan_sasaran }}</span>
             </span>
-            <PhCaretRight :size="18" class="mt-1 shrink-0 text-teks3" />
+            <PhCaretRight :size="18" :class="['shrink-0 text-teks3', m.ada_notulen ? 'mt-6' : 'mt-1']" />
           </button>
         </li>
       </ul>
       <div v-else class="kartu p-8 text-center">
         <PhUsersThree :size="40" weight="duotone" class="mx-auto text-teks3" />
-        <p class="mt-2 font-semibold">{{ aktif === 'mendatang' ? 'Belum ada rapat mendatang.' : 'Belum ada rapat yang lewat.' }}</p>
+        <p class="mt-2 font-semibold">{{ aktif === 'mendatang' ? 'Belum ada rapat mendatang.' : aktif === 'notulen' ? 'Belum ada notulen rapat.' : 'Belum ada rapat yang lewat.' }}</p>
         <p class="text-sm text-teks3">Rapat yang dijadwalkan di Agenda (jenis Rapat) tampil otomatis 14 hari sebelumnya{{ admin ? '; rapat lain dapat dibuat dengan tombol Rapat baru' : '' }}.</p>
       </div>
     </template>
@@ -151,8 +159,8 @@ function ekspor() {
           <span class="text-xs text-teks3">{{ formatPendek(rMulai) }} – {{ formatPendek(rSelesai) }}</span>
         </template>
         <template v-else>
-          <div class="w-44"><InputTanggal v-model="rMulai" label="Dari tanggal" /></div>
-          <div class="w-44"><InputTanggal v-model="rSelesai" label="Sampai tanggal" /></div>
+          <div class="w-44"><InputTanggal class="tanpa-label" v-model="rMulai" label="Dari tanggal" /></div>
+          <div class="w-44"><InputTanggal class="tanpa-label" v-model="rSelesai" label="Sampai tanggal" /></div>
         </template>
         <span class="flex-1" />
         <button class="w-pengajuan tombol-garis px-4 text-sm" :disabled="!R?.rapat?.length" @click="pratinjau = true"><PhPrinter :size="20" weight="duotone" style="color: var(--c)" /> Cetak rekap</button>
@@ -209,3 +217,9 @@ function ekspor() {
     <LembarRapat v-model="lembar" @selesai="selesaiBuat" />
   </div>
 </template>
+<style scoped>
+.ada-notulen { box-shadow: inset 4px 0 0 #0F6E5A; }
+.pita-notulen { position: absolute; top: 0; right: 0; display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px 3px 10px; border-bottom-left-radius: 12px;
+  font-size: 11px; font-weight: 700; color: #fff; background: #0F6E5A; }
+:global(.dark) .pita-notulen { background: #5BD6A9; color: #0B2A22; }
+</style>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/persuratan/TabSuratMasuk.vue | v1.2 | 14.19.0: saringan dan penanda bagian (Yayasan, Pondok, Wustha, SMA) | 21/10/2026 -->
+<!-- SIMKA PRO | src/pages/persuratan/TabSuratMasuk.vue | v1.3 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
 <script setup>
 // Daftar surat masuk. cakupan "untuk_saya": surat yang perlu saya disposisikan/tindak lanjuti (paling atas) dan yang melibatkan saya;
 // "masuk": semua surat yang boleh saya baca pada rentang tanggal terima. Diketuk membuka rincian. TU mencatat surat dari sini.
@@ -54,7 +54,7 @@ function keteranganSaya(s) {
         <option v-for="(v, k) in SIFAT_SURAT" :key="k" :value="k">{{ v.n }}</option></select>
       <select v-model="status" class="isian md:w-auto" aria-label="Saring status"><option value="">Semua status</option>
         <option v-for="(v, k) in STATUS_SURAT" :key="k" :value="k">{{ v.n }}</option></select>
-      <div class="grid w-full grid-cols-2 gap-3 md:w-auto md:min-w-[22rem]"><InputTanggal v-model="mulai" label="Diterima dari" /><InputTanggal v-model="selesai" label="Sampai" /></div>
+      <div class="grid w-full grid-cols-2 gap-3 md:w-auto md:min-w-[22rem]"><InputTanggal class="tanpa-label" v-model="mulai" label="Diterima dari" /><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" /></div>
       <button v-if="cakupan === 'masuk' && ps.hak.kelola" class="tombol-utama hidden lg:inline-flex" @click="lembarCatat = true"><PhPlus :size="20" weight="bold" /> Catat surat masuk</button>
     </SaringCorong>
 
