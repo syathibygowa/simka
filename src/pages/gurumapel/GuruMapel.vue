@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/gurumapel/GuruMapel.vue | v1.4 | 14.4.0: tab Jurnal mengajar (cetak/unduh) | 17/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/GuruMapel.vue | v1.5 | 14.32.0: tab Pantauan harian dan Rekap periode terpisah | 29/10/2026 -->
 <script setup>
 // Menu Guru Mapel. Guru melihat tugas mengajarnya; admin, superadmin, dan pimpinan (pemegang hak Jadwal mengajar menurut
 // jenjangnya) memantau seluruh guru. Tab:
@@ -13,7 +13,7 @@
 //   Nilai (Fase 12)     : isian nilai per kelas–mapel dan semester (guru: miliknya; pengelola nilai/pimpinan: semua)
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhBroadcast, PhSun, PhGridFour, PhChartBar, PhLockSimple, PhExam, PhUserCheck, PhNotebook } from '@phosphor-icons/vue'
+import { PhBroadcast, PhPresentationChart, PhSun, PhGridFour, PhChartBar, PhLockSimple, PhExam, PhUserCheck, PhNotebook } from '@phosphor-icons/vue'
 import { useSesi } from '@/stores/sesi'
 import BilahTab from '@/components/BilahTab.vue'
 import TabPantauGuru from './TabPantauGuru.vue'
@@ -29,7 +29,8 @@ const router = useRouter(); const sesi = useSesi()
 const pemantau = computed(() => sesi.isAdmin || sesi.luas('jadwal_mengajar') || sesi.tingkat('jadwal_mengajar') >= 3 || !!sesi.tugas?.pimpinan)
 const mengajar = computed(() => !!sesi.tugas?.mengajar)
 const TAB = computed(() => [
-  ...(pemantau.value ? [{ k: 'pantauan', n: 'Pantauan guru', ikon: PhBroadcast, w: 'gurumapel' }] : []),
+  // 14.32.0: pengontrolan harian dan rekap periode sebagai dua tab
+  ...(pemantau.value ? [{ k: 'pantauan', n: 'Pantauan harian', ikon: PhBroadcast, w: 'gurumapel' }, { k: 'periode', n: 'Rekap periode', ikon: PhPresentationChart, w: 'agenda' }] : []),
   ...(mengajar.value ? [{ k: 'hari', n: 'Hari ini', ikon: PhSun, w: 'beranda' }] : []),
   ...(mengajar.value || pemantau.value ? [{ k: 'jadwal', n: 'Jadwal mengajar', ikon: PhGridFour, w: 'jadwal' }, { k: 'rekap', n: 'Rekap mengajar', ikon: PhChartBar, w: 'rekap' }, { k: 'jurnal', n: 'Jurnal mengajar', ikon: PhNotebook, w: 'tatausaha' }, { k: 'kehadiran', n: 'Kehadiran santri', ikon: PhUserCheck, w: 'presensi' }] : []),
   ...(mengajar.value || pemantau.value || sesi.penilaian ? [{ k: 'nilai', n: 'Nilai', ikon: PhExam, w: 'penilaian' }] : []),
@@ -44,7 +45,8 @@ const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.t
     </div>
     <template v-else>
       <BilahTab class="mb-4" :tab="TAB" :model-value="aktif" label="Bagian guru mapel" @update:model-value="(x) => router.replace(`/guru-mapel/${x}`)" />
-      <TabPantauGuru v-if="aktif === 'pantauan'" />
+      <TabPantauGuru v-if="aktif === 'pantauan'" key="harian" mode="harian" />
+      <TabPantauGuru v-else-if="aktif === 'periode'" key="periode" mode="periode" />
       <TabHariIniGuru v-else-if="aktif === 'hari'" />
       <TabJadwalGuru v-else-if="aktif === 'jadwal'" :pemantau="pemantau" :mengajar="mengajar" />
       <TabNilaiGuru v-else-if="aktif === 'nilai'" />

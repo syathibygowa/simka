@@ -1,10 +1,13 @@
-<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.7 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/gurumapel/TabPantauGuru.vue | v1.8 | 14.32.0: Pantauan harian dan Rekap periode menjadi tab tersendiri; posting jadwal hari ini ke WA; pengingat rekap jurnal per guru | 29/10/2026 -->
 <script setup>
 // Pantauan guru mapel (admin, superadmin, pimpinan sesuai cakupannya):
 //   Harian  : tanggal dengan tombol sebelum/sesudah; statistik jam pelajaran (terjadwal, terlaksana, belum diisi, tidak
 //             terlaksana) dan daftar per guru beserta status setiap jamnya; WA pengingat bagi yang belum mengisi jurnal.
 //   Periode : rekap keterlaksanaan per guru (pekan/bulan/bulan lalu), ketuk guru untuk rincian per kelas-mapel;
 //             cetak F4 mendatar dan Excel.
+// v1.8 (14.32.0): prop mode — menu Guru Mapel menampilkan "Pantauan harian" dan "Rekap periode" sebagai tab tersendiri.
+//   Harian: Posting jadwal hari ini ke grup WA (per jam atau per guru; ✅/❌/⏳/🕒 mengikuti jurnal; menyesuaikan saringan status dan jenjang).
+//   Periode: Ingatkan guru via WA (jurnal terisi dan yang belum diisi per guru) dan laporan rekap ke grup.
 import { ref, computed, watch, onMounted } from 'vue'
 import * as XLSX from 'xlsx'
 import { PhCaretLeft, PhCaretRight, PhCalendarCheck, PhChartBar, PhChalkboardTeacher, PhCheckCircle, PhHourglassMedium, PhXCircle, PhWhatsappLogo, PhPrinter, PhFileXls, PhMagnifyingGlass } from '@phosphor-icons/vue'
@@ -23,10 +26,16 @@ import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
+import LembarLaporanGrup from '@/components/LembarLaporanGrup.vue'
+import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
+import { teksJadwalHariIniWA, pesanRekapJurnalGuru } from '@/lib/guruMapel'
+import { halamanAplikasi } from '@/lib/wa'
+import { PhBellRinging, PhArrowClockwise } from '@phosphor-icons/vue'
 
+const props = defineProps({ mode: { type: String, default: 'harian' } })
 const jd = useJadwal(); const lembaga = useLembaga(); const sesi = useSesi(); const ui = useUI(); const hari = hariIniISO()
-const mode = ref('harian'); const jenjang = ref(''); const cari = ref('')
-onMounted(() => { lembaga.muat(); muatH() })
+const mode = computed(() => props.mode); const jenjang = ref(''); const cari = ref('')
+onMounted(() => { lembaga.muat(); if (mode.value === 'harian') muatH(); else muatP() })
 
 // ---------- Harian ----------
 const tgl = ref(hari); const slotH = ref([]); const memuatH = ref(false); const saring = ref('')
@@ -50,6 +59,12 @@ const guruH = computed(() => rekapGuru(hSaring.value)
   .sort((a, b) => b.belum.length - a.belum.length || String(a.guru).localeCompare(String(b.guru), 'id')))
 const SARING = [{ k: '', n: 'Semua' }, { k: 'belum', n: 'Belum diisi' }, { k: 'tidak_terlaksana', n: 'Tidak terlaksana' }, { k: 'terlaksana', n: 'Terlaksana' }]
 
+// ---------- 14.32.0: posting jadwal hari ini ke grup WA ----------
+const lembarJadwalWA = ref(false); const formatJadwal = ref('jam')
+const FORMAT_JADWAL = [{ k: 'jam', n: 'Per jam pelajaran', ket: 'Urut jam ke-1, ke-2, …' }, { k: 'guru', n: 'Per guru', ket: 'Jadwal setiap guru' }]
+const teksJadwal = computed(() => teksJadwalHariIniWA(hSaring.value, { tanggal: tgl.value, jenjang: jenjang.value, saring: saring.value, format: formatJadwal.value, tautan: halamanAplikasi('/jurnal/mengajar') }))
+async function bukaJadwalWA() { await muatH(); lembarJadwalWA.value = true }   // selalu data terbaru (jurnal yang baru diisi ikut bercentang)
+
 // ---------- Periode ----------
 const PERIODE = [{ k: 'pekan', n: 'Pekan ini', m: awalPekan(hari), s: hari }, { k: 'bulan', n: 'Bulan ini', m: awalBulanDari(hari), s: hari },
   { k: 'lalu', n: 'Bulan lalu', m: awalBulanDari(tambahHari(awalBulanDari(hari), -1)), s: akhirBulanDari(tambahHari(awalBulanDari(hari), -1)) }]
@@ -57,9 +72,21 @@ const periode = ref('bulan'); const slotP = ref([]); const memuatP = ref(false);
 const p = computed(() => PERIODE.find((x) => x.k === periode.value))
 async function muatP() { memuatP.value = true; try { slotP.value = await jd.slot(p.value.m, p.value.s) } catch (e) { ui.toast(e.message, 'galat') } finally { memuatP.value = false } }
 watch(periode, muatP)
-watch(mode, (m) => { if (m === 'periode' && !slotP.value.length) muatP() })
+watch(mode, (m) => { if (m === 'periode' && !slotP.value.length) muatP(); if (m === 'harian' && !slotH.value.length) muatH() })
 const guruP = computed(() => rekapGuru(slotP.value.filter(cocok)).filter((g) => !cari.value.trim() || String(g.guru).toLowerCase().includes(cari.value.toLowerCase().trim())))
 const totP = computed(() => guruP.value.reduce((a, g) => ({ terjadwal: a.terjadwal + g.terjadwal, terlaksana: a.terlaksana + g.terlaksana, tidak: a.tidak + g.tidak, kosong: a.kosong + g.kosong }), { terjadwal: 0, terlaksana: 0, tidak: 0, kosong: 0 }))
+// 14.32.0: pengingat rekap jurnal per guru via WA, dan laporan rekap ke grup
+const lembarIngat = ref(false); const lembarRekapWA = ref(false)
+const rentangTeks = computed(() => teksRentang(p.value.m, p.value.s))
+const penerimaIngat = computed(() => guruP.value.map((g) => ({ ...g, nama: g.guru, unit: `Belum diisi ${g.kosong} JP · ${g.persen ?? 0}%` })))
+const SARING_INGAT = [{ k: 'belum', n: 'Belum lengkap', f: (g) => g.kosong > 0 }, { k: 'semua', n: 'Semua guru', f: () => true }, { k: 'lengkap', n: 'Sudah lengkap', f: (g) => !g.kosong }]
+const teksRekapGrup = computed(() => {
+  const t = totP.value; const urut = [...guruP.value].sort((a, b) => b.kosong - a.kosong || String(a.guru).localeCompare(String(b.guru), 'id'))
+  return [`*REKAP JURNAL MENGAJAR${jenjang.value ? ' · ' + (jenjang.value === 'sma' ? 'SMA' : 'WUSTHA') : ''}*`, `🗓️ ${rentangTeks.value}`, '',
+    `Terlaksana ${t.terlaksana}/${t.terjadwal} JP (${teksPersen(persenJP(t.terlaksana, t.terjadwal))}) · ⏳ belum diisi ${t.kosong} · ❌ tidak terlaksana ${t.tidak}`, '',
+    '*Per guru:*', ...urut.map((g, i) => `${i + 1}. ${g.kosong ? '⏳' : '✅'} ${g.guru} — ${teksPersen(g.persen)}${g.kosong ? ` (belum diisi ${g.kosong} JP)` : ''}`), '',
+    'Mohon Bapak/Ibu guru yang bertanda ⏳ segera melengkapi jurnal mengajar di SIMKA PRO.', halamanAplikasi('/jurnal/mengajar')].join('\n')
+})
 const direktur = computed(() => lembaga.signatories.find((s) => s.sumber_jabatan === 'DIREKTUR' || /^direktur/i.test(s.jabatan_tertulis)) || {})
 function ekspor() {
   const aoa = [['No.', 'NIY', 'Nama guru', 'Kelas', 'Mata pelajaran', 'JP terjadwal', 'JP terlaksana', 'JP tidak terlaksana', 'JP belum diisi', 'Keterlaksanaan (%)'],
@@ -71,10 +98,6 @@ function ekspor() {
 <template>
   <div>
     <div class="mb-3 flex flex-wrap items-center gap-2">
-      <div class="bilah-tab kecil" role="tablist" aria-label="Tampilan pantauan">
-        <button v-for="t in [{ k: 'harian', n: 'Harian', ikon: PhCalendarCheck }, { k: 'periode', n: 'Rekap periode', ikon: PhChartBar }]" :key="t.k" type="button" role="tab" :aria-selected="mode === t.k" @click="mode = t.k"
-          :class="['tab-garis', mode === t.k && 'aktif']"><component :is="t.ikon" :size="18" weight="duotone" /><span>{{ t.n }}</span></button>
-      </div>
       <SaringCorong class="min-w-[220px] flex-1" :jumlah="jenjang ? 1 : 0" :ringkasan="jenjang === 'wustha' ? 'Wustha' : jenjang === 'sma' ? 'SMA' : ''" judul="Saring pantauan guru">
         <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" type="search" class="isian h-11 pl-10" placeholder="Cari nama guru" aria-label="Cari guru" /></div></template>
@@ -90,6 +113,9 @@ function ekspor() {
         <button class="tombol-garis h-12 w-12 shrink-0 px-0" aria-label="Hari berikutnya" title="Hari berikutnya" @click="tgl = tambahHari(tgl, 1)"><PhCaretRight :size="20" weight="bold" /></button>
         <button v-if="tgl !== hari" class="tombol-teks h-12 px-2 text-sm" @click="tgl = hari">Hari ini</button>
         <p class="ml-1 self-center text-sm font-bold">{{ formatHari(tgl) }}</p>
+        <span class="flex-1" />
+        <button class="tombol-garis h-12 px-3 text-sm" :disabled="memuatH" title="Muat ulang status jurnal" @click="muatH"><PhArrowClockwise :size="18" /> Perbarui</button>
+        <button class="tombol-wa h-12 px-4 text-sm" :disabled="!slotH.length" @click="bukaJadwalWA"><PhWhatsappLogo :size="20" weight="duotone" /> Posting jadwal ke WA</button>
       </div>
       <div class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
         <KartuStatistik v-for="k in statH" :key="k.judul" class="w-[44%] shrink-0 snap-start sm:w-auto" :judul="k.judul" :nilai="memuatH && !slotH.length ? '…' : k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket" />
@@ -119,6 +145,8 @@ function ekspor() {
       <div class="mb-3 flex flex-wrap items-center gap-2">
         <div class="bilah-tab kecil" role="tablist" aria-label="Periode"><button v-for="x in PERIODE" :key="x.k" :class="['tab-garis', periode === x.k && 'aktif']" type="button" role="tab" :aria-selected="periode === x.k" @click="periode = x.k">{{ x.n }}</button></div>
         <span class="text-xs text-teks3">{{ teksRentang(p.m, p.s) }}</span><span class="flex-1" />
+        <button class="tombol-wa-garis min-h-[40px] px-3 text-sm" :disabled="!guruP.length" @click="lembarIngat = true"><PhBellRinging :size="18" weight="duotone" /> Ingatkan guru via WA</button>
+        <button class="tombol-wa-garis min-h-[40px] px-3 text-sm" :disabled="!guruP.length" @click="lembarRekapWA = true"><PhWhatsappLogo :size="18" weight="duotone" /> Rekap ke grup</button>
         <button class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!guruP.length" @click="ekspor"><PhFileXls :size="18" weight="duotone" /> Ekspor</button>
         <button class="tombol-garis min-h-[40px] px-3 text-sm" :disabled="!guruP.length" @click="pratinjau = true"><PhPrinter :size="18" weight="duotone" /> Cetak</button>
       </div>
@@ -137,6 +165,16 @@ function ekspor() {
         </li>
       </ul>
     </template>
+
+    <!-- 14.32.0: WhatsApp -->
+    <LembarLaporanGrup v-model="lembarJadwalWA" v-model:format="formatJadwal" judul="Posting jadwal mengajar hari ini" :teks="teksJadwal" :pilihan-format="FORMAT_JADWAL" />
+    <LembarLaporanGrup v-model="lembarRekapWA" judul="Rekap jurnal mengajar ke grup WhatsApp" :teks="teksRekapGrup" />
+    <LembarBawah v-model="lembarIngat" judul="Ingatkan guru: rekap jurnal mengajar" lebar>
+      <div class="pb-2">
+        <p class="mb-3 text-sm text-teks2">{{ rentangTeks }}. Pesan berisi jumlah jurnal terisi dan daftar jam yang belum diisi. Ketuk nama guru untuk membuka WhatsApp.</p>
+        <DaftarKirimWA :penerima="penerimaIngat" :pesan="(g) => pesanRekapJurnalGuru(g, { rentang: rentangTeks, tautan: halamanAplikasi('/jurnal/mengajar') })" :kunci="'rekap-jurnal-' + p.m + '-' + p.s" :saringan="SARING_INGAT" />
+      </div>
+    </LembarBawah>
 
     <LembarBawah :model-value="!!rinci" @update:model-value="(v) => !v && (rinci = null)" :judul="rinci ? rinci.guru : ''">
       <div v-if="rinci" class="space-y-2 pb-2">
