@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/TabBerulang.vue | v1.4 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/TabBerulang.vue | v1.5 | 14.33.0: label Minimal disembunyikan (pilihan menjadi Minimal n kali) | 30/10/2026 -->
 <script setup>
 // Santri dengan ketidakhadiran berulang pada satu periode, untuk tindakan dan penanganan lanjutan:
 //   Sakit     = absen kode S (kelas, halaqah, asrama, ekskul, pelajaran) + kasus klinik
@@ -85,8 +85,8 @@ function ekspor() {
       <div class="grid grid-cols-2 gap-2">
         <div><label class="label-isian sr-only" for="br-jk">Santri</label>
           <select id="br-jk" v-model="jk" class="isian"><option value="">Semua</option><option value="L">Putra</option><option value="P">Putri</option></select></div>
-        <div><label class="label-isian" for="br-min">Minimal</label>
-          <select id="br-min" v-model.number="ambang" class="isian"><option v-for="n in [2, 3, 4, 5, 7, 10]" :key="n" :value="n">{{ n }} kali</option></select></div>
+        <div><label class="label-isian sr-only" for="br-min">Minimal</label>
+          <select id="br-min" v-model.number="ambang" class="isian"><option v-for="n in [2, 3, 4, 5, 7, 10]" :key="n" :value="n">Minimal {{ n }} kali</option></select></div>
       </div>
       <div class="flex flex-wrap gap-2">
         <button v-for="n in [7, 30, 90]" :key="n" class="tombol-garis min-h-[44px] text-sm" @click="periode(n)">{{ n }} hari terakhir</button>

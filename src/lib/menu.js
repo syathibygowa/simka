@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/menu.js | v4.6 | 14.28.0: menu Rapat (semua pegawai; kelola admin/superadmin) | 26/10/2026
+// SIMKA PRO | src/lib/menu.js | v4.7 | 14.33.0: menu Arsip Tahun Ajaran menjadi Arsip | 30/10/2026
 // Daftar menu SIMKA PRO, dikelompokkan: Utama, Presensi, Layanan Pegawai (milik setiap pegawai),
 // Kepegawaian (pengelolaan data), Santri, Fungsional, Layanan, Administrasi, Sistem. Setiap menu memiliki ikon Phosphor (duotone) dan
 // warna sendiri (kelas .w-* di token.css). "fase" menandai menu yang dibangun
@@ -100,7 +100,7 @@ export const MENU = [
   { kode: 'auditlog',   nama: 'Audit Log',       ikon: PhClockCounterClockwise, warna: 'audit', ke: '/audit-log',     grup: 'Sistem', fitur: 'audit_log' },
   { kode: 'organisasi', nama: 'Organisasi', ikon: PhTreeStructure, warna: 'sistem',  ke: '/organisasi',        grup: 'Sistem', fitur: 'organisasi' },
   // Arsip tahun ajaran (14.25.0): kelompok, santri, dan rapor tahun ajaran lalu — khusus admin dan superadmin
-  { kode: 'arsip',      nama: 'Arsip Tahun Ajaran', ikon: PhArchive,       warna: 'arsip',      ke: '/arsip',             grup: 'Sistem', admin: true },
+  { kode: 'arsip',      nama: 'Arsip', ikon: PhArchive,       warna: 'arsip',      ke: '/arsip',             grup: 'Sistem', admin: true },
   { kode: 'hakakses',   nama: 'Hak Akses',       ikon: PhKey,            warna: 'hakakses',   ke: '/hak-akses',         grup: 'Sistem', kunci: 'superadmin' },
   { kode: 'pengaturan', nama: 'Setelan',         ikon: PhGearSix,        warna: 'pengaturan', ke: '/pengaturan',        grup: 'Sistem', kunci: 'superadmin' },
   { kode: 'profil',     nama: 'Profil',          ikon: PhUserCircle,     warna: 'profil',     ke: '/profil',            grup: 'Akun', kunci: 'semua' },

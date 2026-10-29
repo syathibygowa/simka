@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.6 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.7 | 14.33.0: laporan grup WA memakai LembarLaporanGrup (pratinjau WhatsApp, kirim/salin/buka grup) | 30/10/2026 -->
 <script setup>
 // Rekap kehadiran asrama satu kamar. Empat tampilan:
 //   kamar   : per santri pada rentang (sesi, hadir, I, S, B, A, T, %)
@@ -9,7 +9,7 @@
 // WA rekap ke wali per santri, dan salin rekap kamar untuk grup WA (ringkas atau rinci per santri).
 import { ref, computed, watch, onMounted } from 'vue'
 import * as XLSX from 'xlsx'
-import { PhDownloadSimple, PhEye, PhWhatsappLogo, PhCopy, PhUsersThree, PhCalendarDots, PhCalendarBlank, PhUser, PhArrowSquareOut } from '@phosphor-icons/vue'
+import { PhDownloadSimple, PhEye, PhWhatsappLogo, PhUsersThree, PhCalendarDots, PhCalendarBlank, PhUser, PhArrowSquareOut } from '@phosphor-icons/vue'
 import { useMusyrif } from '@/stores/musyrif'
 import { useAmbang, unduhExcelAmbang } from '@/stores/ambang'
 import { useSantri } from '@/stores/santri'
@@ -27,6 +27,7 @@ import BilahTab from '@/components/BilahTab.vue'
 import InputTanggal from '@/components/InputTanggal.vue'
 import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
+import LembarLaporanGrup from '@/components/LembarLaporanGrup.vue'
 import DaftarKirimWA from '@/components/DaftarKirimWA.vue'
 import DokumenCetak from '@/components/cetak/DokumenCetak.vue'
 import TandaTangan from '@/components/cetak/TandaTangan.vue'
@@ -104,7 +105,7 @@ function waIndividu() {
 }
 
 // ---------- Salin untuk grup WA ----------
-const lembarGrup = ref(false); const gayaGrup = ref('rinci'); const tampilAlasan = ref(false)
+const lembarGrup = ref(false); const gayaGrup = ref('rinci')
 const teksGrup = computed(() => {
   const baris = santri.value.filter((s) => totalDari(s.id).sesi).map((s, i) => {
     const r = totalDari(s.id); const lain = ['I', 'S', 'A', 'B', 'T'].filter((k) => r[k]).map((k) => `${k}${r[k]}`)
@@ -114,13 +115,6 @@ const teksGrup = computed(() => {
   return pesanWA('rekap_kamar', { kamar: kamar.value?.nama, periode: teksPeriode.value, persen: teksPersen(ringkas.value.persen), jumlah_sesi: `${ringkas.value.sesi} sesi`,
     hadir_penuh: `${ringkas.value.penuh} dari ${ringkas.value.santri} santri`, rincian, pengirim: sesi.pengguna?.nama_lengkap, jabatan_pengirim: `Musyrif ${kamar.value?.nama || ''}`.trim() })
 })
-const teksSunting = ref('')
-watch([lembarGrup, gayaGrup], () => { if (lembarGrup.value) teksSunting.value = teksGrup.value })
-async function salin(buka) {
-  try { await navigator.clipboard.writeText(teksSunting.value); ui.toast(buka ? 'Rekap disalin. Grup WA dibuka; tempel di sana.' : 'Rekap disalin. Tempel di grup WA.') }
-  catch { ui.toast('Tidak dapat menyalin otomatis. Tekan lama teks lalu pilih Salin.', 'galat'); return }
-  if (buka) window.open(buka, '_blank', 'noopener')
-}
 
 // ---------- Excel ----------
 async function ekspor() {
@@ -164,7 +158,7 @@ const subjudulCetak = computed(() => `${kamar.value?.nama || ''} · ${teksPeriod
 
     <div class="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
       <button class="w-presensi tombol-wa-garis shrink-0 px-4 text-sm" @click="mode === 'individu' ? waIndividu() : (lembarWA = true)"><PhWhatsappLogo :size="20" weight="duotone" /> {{ mode === 'individu' ? 'WA ke wali santri ini' : 'WA rekap ke wali' }}</button>
-      <button class="w-agenda tombol-garis shrink-0 px-4 text-sm" @click="lembarGrup = true"><PhCopy :size="20" weight="duotone" style="color: var(--c)" /> Salin untuk grup WA</button>
+      <button class="w-agenda tombol-garis shrink-0 px-4 text-sm" @click="lembarGrup = true"><PhWhatsappLogo :size="20" weight="duotone" style="color: var(--c)" /> Laporan grup WA</button>
       <button class="w-pengajuan tombol-garis shrink-0 px-4 text-sm" @click="pratinjau = true"><PhEye :size="20" weight="duotone" style="color: var(--c)" /> Cetak</button>
       <button class="w-santri tombol-garis shrink-0 px-4 text-sm" @click="ekspor"><PhDownloadSimple :size="20" weight="duotone" style="color: var(--c)" /> Ekspor</button>
     </div>
@@ -271,22 +265,10 @@ const subjudulCetak = computed(() => `${kamar.value?.nama || ''} · ${teksPeriod
           :saringan="[{ k: 'semua', n: 'Semua', f: () => true }, { k: 'tidak', n: 'Ada ketidakhadiran', f: (p) => p.tidak.some((x) => ['I', 'S', 'A'].includes(x.kode)) }, { k: 'absen', n: 'Ada Absen', f: (p) => p.r.A > 0 }]" /></div>
     </LembarBawah>
 
-    <!-- Salin grup -->
-    <LembarBawah v-model="lembarGrup" judul="Salin rekap untuk grup WA">
-      <div class="space-y-3 pb-2">
-        <div class="bilah-tab kecil" role="tablist" aria-label="Isi rekap">
-          <button v-for="g in [{ k: 'rinci', n: 'Rinci per santri' }, { k: 'ringkas', n: 'Ringkas' }]" :key="g.k" type="button" role="tab" :aria-selected="gayaGrup === g.k" @click="gayaGrup = g.k"
-            :class="['tab-garis', gayaGrup === g.k && 'aktif']">{{ g.n }}</button></div>
-        <textarea v-model="teksSunting" rows="12" class="isian font-mono text-xs leading-relaxed" aria-label="Teks rekap untuk grup WA" />
-        <p class="text-xs text-teks3">Teks dapat disunting sebelum disalin. Keterangan sakit atau alasan pribadi santri tidak dicantumkan.</p>
-        <div class="grid gap-2 sm:grid-cols-2">
-          <button class="tombol-utama" @click="salin(null)"><PhCopy :size="20" weight="duotone" /> Salin teks</button>
-          <button v-if="kamar?.wa_wali" class="tombol-wa-garis w-presensi" @click="salin(kamar.wa_wali)"><PhWhatsappLogo :size="20" weight="duotone" /> Salin & buka grup wali</button>
-          <button v-if="kamar?.wa_internal" class="tombol-wa-garis w-agenda" @click="salin(kamar.wa_internal)"><PhWhatsappLogo :size="20" weight="duotone" /> Salin & buka grup internal</button>
-        </div>
-        <p v-if="!kamar?.wa_wali && !kamar?.wa_internal" class="text-xs text-teks3">Tautan grup WA kamar dapat diisi di Kelompok Santri → kamar ini → Ubah.</p>
-      </div>
-    </LembarBawah>
+    <!-- Laporan grup WA (14.33.0: sama dengan laporan WA Guru Mapel) -->
+    <LembarLaporanGrup v-model="lembarGrup" v-model:format="gayaGrup" judul="Laporan rekap asrama ke grup WhatsApp" :teks="teksGrup"
+      :pilihan-format="[{ k: 'rinci', n: 'Rinci', ket: 'Per santri' }, { k: 'ringkas', n: 'Ringkas', ket: 'Angka kamar saja' }]"
+      :tautan-grup="kamar?.wa_internal || kamar?.wa_wali || ''" :nama-grup="kamar?.wa_internal ? 'grup internal kamar' : 'grup wali kamar'" />
 
     <!-- Cetak -->
     <DokumenCetak jenis="msy_rekap" v-if="d" kop="pondok" :judul="judulCetak" :subjudul="subjudulCetak" :mendatar="mode === 'pekan' || mode === 'bulan'" v-model:pratinjau="pratinjau" :pencetak="sesi.pengguna?.nama_lengkap">

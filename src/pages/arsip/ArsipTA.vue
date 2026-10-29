@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/arsip/ArsipTA.vue | v1.2 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/arsip/ArsipTA.vue | v1.3 | 14.33.0: nama menu menjadi Arsip | 30/10/2026 -->
 <script setup>
 // Arsip Tahun Ajaran (khusus admin dan superadmin). Pergantian tahun ajaran (menu Naik Kelas) membuka lembaran baru tanpa
 // menghapus data lama: kelompok, keanggotaan, nilai, dan rapor tahun ajaran sebelumnya tetap tersimpan dan dapat dibuka di sini.
@@ -97,7 +97,7 @@ watch([kelas, semester], () => { D.value = null })
   <div class="w-arsip">
     <div class="mb-4 hidden items-center gap-3 lg:flex">
       <span class="chip-ikon h-12 w-12"><PhArchive :size="28" weight="duotone" /></span>
-      <div class="flex-1"><h2 class="text-lg font-bold">Arsip Tahun Ajaran</h2>
+      <div class="flex-1"><h2 class="text-lg font-bold">Arsip</h2>
         <p class="text-sm text-teks3">Buka kembali kelompok, santri, dan rapor tahun ajaran mana pun. Pergantian tahun ajaran membuka lembaran baru tanpa menghapus data lama.</p></div>
     </div>
 

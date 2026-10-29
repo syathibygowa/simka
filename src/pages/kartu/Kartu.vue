@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/kartu/Kartu.vue | v1.6 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/kartu/Kartu.vue | v1.7 | 14.33.0: label Tata letak cetak disembunyikan | 30/10/2026 -->
 <script setup>
 // Kartu pegawai. Kartu saya: lihat depan/belakang, ganti pas foto, cetak, dan ganti kode bila kartu hilang.
 // Cetak massal (admin ber-izin cetak_kartu): pilih pegawai, cetak 9 kartu tegak per F4 (bolak-balik) atau berdampingan.
@@ -141,7 +141,7 @@ async function siapkanMassal() {
         <div><label class="label-isian sr-only" for="km-unit">Bidang/Unit</label>
           <select id="km-unit" v-model="unit" class="isian w-auto max-w-full"><option value="">Semua bidang</option>
             <option v-for="u in org.datar" :key="u.id" :value="u.id">{{ '— '.repeat(u.tingkat) }}{{ u.nama }}</option></select></div>
-        <fieldset><legend class="label-isian">Tata letak cetak</legend>
+        <fieldset><legend class="label-isian sr-only">Tata letak cetak</legend>
           <div class="flex flex-wrap gap-2">
             <label v-for="m in [{ k: 'berdampingan', n: 'Berdampingan (3 pegawai/lembar)' }, { k: 'bolak_balik', n: 'Bolak-balik (9 kartu/lembar)' }]" :key="m.k"
               class="flex min-h-[44px] items-center gap-2 rounded-xl border border-garis px-3 text-sm font-semibold"><input v-model="mode" type="radio" :value="m.k" class="h-5 w-5 accent-[#2C6680]" />{{ m.n }}</label>

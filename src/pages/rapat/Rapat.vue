@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/rapat/Rapat.vue | v1.2 | 14.30.0: tab Notulen; tanda notulen di kartu; status saya tidak ganda; urutan Sebelumnya/Berikutnya | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/rapat/Rapat.vue | v1.3 | 14.33.0: rentang data 10 bulan (batas daftar_rapat satu tahun) agar rapat mendatang, lewat, dan notulen terbaca kembali | 30/10/2026 -->
 <script setup>
 // Menu Rapat. Semua pegawai melihat rapat yang mengundangnya (dari Agenda jenis Rapat atau dibuat admin), konfirmasi hadir/izin,
 // lalu membaca notulen. Admin dan superadmin melihat seluruh rapat, membuat/mengubah rapat, dan membuka Rekap kehadiran rapat.
@@ -39,7 +39,7 @@ const pindah = (k) => router.replace({ query: { tab: k } })
 const hari = hariIniISO()
 const geser = (iso, n) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) }
 const jenis = ref('')
-onMounted(() => rp.muat(geser(hari, -365), geser(hari, 60)).catch((e) => ui.toast(e.message, 'galat')))
+onMounted(() => rp.muat(geser(hari, -300), geser(hari, 60)).catch((e) => ui.toast(e.message, 'galat')))
 const saring = (d) => d.filter((m) => !jenis.value || m.jenis === jenis.value)
 const mendatang = computed(() => saring(rp.daftar.filter((m) => m.tanggal >= hari && m.status !== 'selesai')).sort((a, b) => a.tanggal.localeCompare(b.tanggal) || String(a.jam_mulai).localeCompare(String(b.jam_mulai))))
 const lewat = computed(() => saring(rp.daftar.filter((m) => m.tanggal < hari || m.status === 'selesai')))
@@ -55,13 +55,13 @@ const statistik = computed(() => {
   return [
     { judul: 'Rapat pekan ini', nilai: n ?? minggu.length, ikon: PhCalendarCheck, warna: 'rapat', ket: '7 hari ke depan' },
     { judul: admin.value ? 'Menunggu konfirmasi' : 'Perlu konfirmasi saya', nilai: n ?? (admin.value ? mendatang.value.reduce((a, m) => a + Math.max(0, m.peserta - m.konf_hadir - m.konf_izin), 0) : belumKonf.length), ikon: PhHourglassMedium, warna: 'pengajuan', ket: admin.value ? 'Undangan belum dijawab' : 'Rapat yang belum Anda jawab' },
-    { judul: 'Notulen tersedia', nilai: n ?? lewat.value.filter((m) => m.ada_notulen).length, ikon: PhNotebook, warna: 'tatausaha', ket: '12 bulan terakhir' },
+    { judul: 'Notulen tersedia', nilai: n ?? lewat.value.filter((m) => m.ada_notulen).length, ikon: PhNotebook, warna: 'tatausaha', ket: '10 bulan terakhir' },
     { judul: 'Kehadiran rapat', nilai: n ?? (tot ? persenHadir(hd, tot) : '–'), satuan: tot ? '%' : '', ikon: PhPercent, warna: 'presensi', ket: `${ls.length} rapat selesai` },
   ]
 })
 const buka = (m) => { aturUrutan('rapat', daftarTab.value.map((x) => ({ ke: `/rapat/${x.id}`, label: x.judul }))); router.push(`/rapat/${m.id}`) }
 const lembar = ref(false)
-const selesaiBuat = (id) => { rp.muat(geser(hari, -365), geser(hari, 60)); if (id) router.push(`/rapat/${id}`) }
+const selesaiBuat = (id) => { rp.muat(geser(hari, -300), geser(hari, 60)); if (id) router.push(`/rapat/${id}`) }
 
 // ---------- Rekap (admin) ----------
 const amb = useAmbang(); amb.muat()   // 14.29.0: persentase di bawah ambang batas (Pelaporan → Ambang batas, batas pegawai) merah lembut

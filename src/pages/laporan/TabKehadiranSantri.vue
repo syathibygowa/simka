@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.9 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranSantri.vue | v1.10 | 14.33.0: label Kegiatan dan Ambang persentase disembunyikan | 30/10/2026 -->
 <script setup>
 // Laporan kehadiran santri (menu Dokumen → Kehadiran santri), absensi HISBAT.
 // Jenis: rekap ringkas, rekap matriks (F4 mendatar), laporan individu, daftar perhatian, kepatuhan pengisian (pemantau).
@@ -192,7 +192,7 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
         <p class="flex items-center gap-1.5 text-sm text-teks2"><PhInfo :size="16" /> {{ JENIS_LAP[jenis].ket }}.</p>
 
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label class="block"><span class="label-isian">Kegiatan</span>
+          <label class="block"><span class="label-isian sr-only">Kegiatan</span>
             <select v-model="kegiatan" class="isian"><option v-for="(n, k) in KEGIATAN_SANTRI" :key="k" :value="k">{{ n }}</option></select></label>
           <template v-if="jenis !== 'individu'">
             <label v-if="pemantau" class="block"><span class="label-isian sr-only">Cakupan</span>
@@ -206,8 +206,8 @@ const adaData = computed(() => (jenis.value === 'pengisian' ? pengisian.value.le
           <label v-else class="block sm:col-span-2"><span class="label-isian sr-only">Santri</span>
             <select v-model="santriId" class="isian"><option value="" disabled>Pilih santri</option>
               <option v-for="s in santriPilihan" :key="s.id" :value="s.id">{{ s.nama_lengkap }} ({{ s.nis }})</option></select></label>
-          <label v-if="jenis === 'perhatian'" class="block"><span class="label-isian">Ambang persentase</span>
-            <input v-model.number="ambang" type="number" min="1" max="100" class="isian" /></label>
+          <label v-if="jenis === 'perhatian'" class="block"><span class="label-isian sr-only">Ambang persentase</span>
+            <input v-model.number="ambang" type="number" min="1" max="100" class="isian" placeholder="Ambang (%)" title="Ambang persentase" /></label>
         </div>
         <div class="flex flex-wrap gap-2">
           <div class="bilah-tab kecil" role="tablist" aria-label="Periode cepat">

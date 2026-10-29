@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/jurnal/TabMengajar.vue | v2.6 | 14.18.1: metode/media dapat ditambah sendiri; ketikan pilihan lain ikut tersimpan | 21/10/2026 -->
+<!-- SIMKA PRO | src/pages/jurnal/TabMengajar.vue | v2.7 | 14.33.0: ikon pengaturan dihapus (sudah ada tab Pengaturan di sebelahnya) | 30/10/2026 -->
 <script setup>
 // Jurnal mengajar (sepaket dengan Jurnal Harian).
 // v2.6: perbaikan "sudah dipilih tetapi diminta memilih": (1) metode dan media kini juga punya kotak "+ lain" (sebelumnya tidak ada,
@@ -22,7 +22,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import {
   PhChalkboardTeacher, PhCheckCircle, PhLightning, PhFloppyDisk, PhListNumbers, PhXCircle, PhClock, PhCaretLeft, PhCaretRight, PhLockSimple,
-  PhGear, PhUsersThree, PhCaretDown, PhNotePencil, PhHourglass, PhWhatsappLogo, PhUserSwitch, PhPlus,
+  PhUsersThree, PhCaretDown, PhNotePencil, PhHourglass, PhWhatsappLogo, PhUserSwitch, PhPlus,
 } from '@phosphor-icons/vue'
 import { useJadwal } from '@/stores/jadwal'
 import { useSesi } from '@/stores/sesi'
@@ -164,8 +164,6 @@ const STATUS_P = { guru: { n: 'Sudah diisi guru pengampu', w: 'hakakses' }, teri
 const blokP = computed(() => blokMengajar(slotP.value).map((x) => ({ ...x, st: stP(x), pengganti: true })))
 function isiPengganti(x) { lembarP.value = false; buka(x) }
 
-// ---------- Pengaturan (superadmin/admin ber-izin Jadwal pelajaran) ----------
-const bolehAtur = computed(() => sesi.isSuperadmin || sesi.bolehAdmin('atur_jadwal'))
 // ---------- Laporan harian ke grup WA ----------
 const lembarGrup = ref(false); const teksLaporan = ref(''); const menyusun = ref('')
 const adaJurnal = (h) => h.blok.some((x) => ['terisi', 'tidak'].includes(x.st))
@@ -200,7 +198,6 @@ const jpLabel = (x) => (x.slot.length > 1 ? `${x.slot[0].jam_ke}–${x.slot[x.sl
       <button v-if="!pekanIni" class="tombol-garis min-h-[40px] px-3 text-sm" @click="pindahPekan(0)">Pekan ini</button>
       <p class="min-w-[180px] flex-1 text-sm text-teks3">{{ ringkas.isi }}/{{ ringkas.n }} pertemuan terisi<template v-if="ringkas.belum"> · <b class="text-merah">{{ ringkas.belum }} belum diisi</b></template> · batas pengisian H+{{ atur.batas_hari }}</p>
       <button class="tombol-garis w-gurumapel min-h-[40px] px-3 text-sm" @click="bukaPengganti"><PhUserSwitch :size="18" weight="duotone" style="color: var(--c)" /> Mengajar sebagai pengganti</button>
-      <router-link v-if="bolehAtur" to="/jurnal/pengaturan" class="tombol-ikon h-10 w-10" aria-label="Pengaturan jurnal mengajar" title="Pengaturan jurnal mengajar (Jurnal → Pengaturan)"><PhGear :size="20" weight="duotone" /></router-link>
     </div>
 
     <p v-if="memuat && !pekan.length" class="kartu py-10 text-center text-sm text-teks3">Memuat jadwal mengajar…</p>

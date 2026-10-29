@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.12 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/laporan/TabKehadiranPegawai.vue | v1.13 | 14.33.0: label Ambang persentase disembunyikan | 30/10/2026 -->
 <script setup>
 // Laporan kehadiran pegawai (menu Rekap → Kehadiran pegawai).
 // Jenis: rekap ringkas, rekap matriks (nama × tanggal, F4 mendatar), laporan individu, daftar perhatian.
@@ -241,8 +241,8 @@ const subjudul = computed(() => lk.data ? `Periode ${formatPanjang(lk.data.mulai
           <label v-if="pemantau && jenis === 'individu'" class="block sm:col-span-2"><span class="label-isian sr-only">Pegawai</span>
             <select v-model="nilai" class="isian"><option value="" disabled>Pilih pegawai</option>
               <option v-for="p in pegawaiPilihan" :key="p.id" :value="p.id">{{ p.nama_lengkap }}{{ p.nama_unit ? ' – ' + p.nama_unit : '' }}</option></select></label>
-          <label v-if="jenis === 'perhatian'" class="block"><span class="label-isian">Ambang persentase</span>
-            <input v-model.number="ambang" type="number" min="1" max="100" class="isian" /></label>
+          <label v-if="jenis === 'perhatian'" class="block"><span class="label-isian sr-only">Ambang persentase</span>
+            <input v-model.number="ambang" type="number" min="1" max="100" class="isian" placeholder="Ambang (%)" title="Ambang persentase" /></label>
         </div>
 
         <div class="flex flex-wrap gap-2">

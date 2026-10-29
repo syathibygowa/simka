@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.8 | 14.30.0: saringan bawaan Semua | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.9 | 14.33.0: label Keluar dari disembunyikan | 30/10/2026 -->
 <script setup>
 // Daftar izin santri. Dipakai di menu Perizinan (cakupan tetap) dan menu Musyrif (disaring per kamar,
 // dengan pilihan Menunggu/Aktif/Semua). Aksi sesuai hak dari server: setujui/tolak, ubah, batalkan,
@@ -159,7 +159,7 @@ const kosong = computed(() => ({ persetujuan: 'Tidak ada izin yang menunggu kepu
       <SaringCorong class="min-w-[220px] flex-1" :lipat="cak === 'semua'" :ringkasan="cak === 'semua' ? `${formatPendek(mulai)} – ${formatPendek(selesai)}` : ''" judul="Saring tanggal">
         <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri atau alasan" aria-label="Cari izin" /></div></template>
-        <template v-if="cak === 'semua'"><div class="sm:w-40"><InputTanggal v-model="mulai" label="Keluar dari" /></div><div class="sm:w-40"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" /></div></template>
+        <template v-if="cak === 'semua'"><div class="sm:w-40"><InputTanggal class="tanpa-label" v-model="mulai" label="Keluar dari" /></div><div class="sm:w-40"><InputTanggal class="tanpa-label" v-model="selesai" label="Sampai" /></div></template>
       </SaringCorong>
       <button v-if="iz.hak.ajukan" class="tombol-utama hidden lg:inline-flex" @click="ajukan"><PhPaperPlaneTilt :size="20" weight="duotone" /> Ajukan izin</button>
     </div>

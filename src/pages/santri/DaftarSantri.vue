@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.10 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/santri/DaftarSantri.vue | v1.11 | 14.33.0: label Tata letak cetak disembunyikan | 30/10/2026 -->
 <script setup>
 // Daftar santri sesuai cakupan pengguna (RLS): kartu statistik langsung, cari dan saring,
 // ekspor Excel, cetak daftar F4 berkop jenjang. v1.4: cetak kartu pelajar massal (santri aktif yang tampil, per rombel).
@@ -253,7 +253,7 @@ async function cetakSekarang() { await siapkanCetak(); opsiCetak.value = false; 
         <p class="text-sm text-teks2">Kartu dicetak untuk santri <b>aktif</b> yang tampil sesuai saringan halaman (jenjang, kelas, jenis kelamin, pencarian). Foto diambil dari biodata santri.</p>
         <div><label class="label-isian" for="kp-rombel">Rombel</label>
           <select id="kp-rombel" v-model="rombel" class="isian"><option value="">Semua rombel yang tampil</option><option v-for="r in daftarRombel" :key="r" :value="r">{{ r }}</option></select></div>
-        <fieldset><legend class="label-isian">Tata letak cetak</legend>
+        <fieldset><legend class="label-isian sr-only">Tata letak cetak</legend>
           <div class="grid gap-2">
             <label v-for="m in [{ k: 'bolak_balik', n: 'Bolak-balik (9 kartu per lembar, printer dua sisi)' }, { k: 'berdampingan', n: 'Depan–belakang berdampingan (3 santri per lembar)' }]" :key="m.k"
               class="flex min-h-[44px] items-center gap-2 rounded-xl border border-garis px-3 text-sm font-semibold"><input v-model="modeKartu" type="radio" :value="m.k" class="h-5 w-5 accent-[#0B6B57]" />{{ m.n }}</label>

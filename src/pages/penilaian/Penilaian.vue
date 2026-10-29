@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/penilaian/Penilaian.vue | v1.3 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/penilaian/Penilaian.vue | v1.4 | 14.33.0: tab Catatan otomatis menjadi Catatan | 30/10/2026 -->
 <script setup>
 // Menu Penilaian (kelompok menu Penilaian). v1.1: Rekap (kemajuan pengisian untuk pimpinan) dan Permintaan ubah nilai.
 //   Rekap          : kemajuan pengisian rapor per kelas, guru, UTAS, ekskul (semester berjalan)
@@ -43,7 +43,7 @@ const TAB = computed(() => [
   { k: 'mapel', n: 'Mapel rapor', ikon: PhListNumbers, w: 'rapor', lencana: kurangSumber.value || null },
   { k: 'komponen', n: 'Komponen nilai', ikon: PhScales, w: 'gurumapel' },
   { k: 'predikat', n: 'Predikat', ikon: PhMedal, w: 'prestasi' },
-  { k: 'catatan', n: 'Catatan otomatis', ikon: PhChatText, w: 'walikelas' },
+  { k: 'catatan', n: 'Catatan', ikon: PhChatText, w: 'walikelas' },
   { k: 'ketentuan', n: 'Ketentuan rapor', ikon: PhGearSix, w: 'pengaturan' },
 ])
 const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : 'rekap'))

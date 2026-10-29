@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/rekap/RekapPresensi.vue | v1.8 | 14.30.0: label saringan yang sudah jelas disembunyikan (hemat ruang) | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/rekap/RekapPresensi.vue | v1.9 | 14.33.0: kartu statistik harian memakai KartuStatistik (besar, berwarna) | 30/10/2026 -->
 <script setup>
 // Rekap presensi pegawai (admin dan superadmin): harian (semua sesi semua pegawai) dan periode
 // (ringkasan per pegawai), saring per bidang, ekspor Excel, dan cetak F4 dengan kop + tanda tangan.
@@ -6,7 +6,8 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
-import { PhCalendarCheck, PhCalendarDots, PhMagnifyingGlass, PhEye, PhFileXls, PhArrowClockwise, PhInfo } from '@phosphor-icons/vue'
+import { PhCalendarCheck, PhCalendarDots, PhMagnifyingGlass, PhEye, PhFileXls, PhArrowClockwise, PhInfo, PhUsersThree, PhCheckCircle, PhClockCountdown, PhFirstAidKit, PhWarningCircle, PhHourglassMedium } from '@phosphor-icons/vue'
+import KartuStatistik from '@/components/KartuStatistik.vue'
 import { useRekapPresensi } from '@/stores/rekapPresensi'
 import { useOrganisasi } from '@/stores/organisasi'
 import { useLembaga } from '@/stores/lembaga'
@@ -71,6 +72,18 @@ const ringkasH = computed(() => {
   const n = (f) => w.filter(f).length
   return { wajib: w.length, hadir: n((r) => ['hadir', 'terlambat', 'dinas_luar'].includes(r.status)), terlambat: n((r) => r.status === 'terlambat'),
     izin: n((r) => ['izin', 'sakit', 'cuti'].includes(r.status)), tk: n((r) => r.status === 'tanpa_keterangan' || (!r.status && r.keadaan === 'terlewat')), belum: n((r) => !r.status && r.keadaan !== 'terlewat') }
+})
+const statH = computed(() => {
+  const r = ringkasH.value
+  const pr = (x) => (r.wajib ? Math.round((100 * x) / r.wajib) + '% dari sesi wajib' : '')
+  return [
+    { judul: 'Sesi wajib', nilai: r.wajib, ikon: PhUsersThree, warna: 'hakakses', keterangan: 'Seluruh pegawai hari ini' },
+    { judul: 'Hadir', nilai: r.hadir, ikon: PhCheckCircle, warna: 'presensi', keterangan: pr(r.hadir) },
+    { judul: 'Terlambat', nilai: r.terlambat, ikon: PhClockCountdown, warna: 'tahfizh', keterangan: pr(r.terlambat) },
+    { judul: 'Izin/sakit/cuti', nilai: r.izin, ikon: PhFirstAidKit, warna: 'klinik', keterangan: pr(r.izin) },
+    { judul: 'Terlewat/TK', nilai: r.tk, ikon: PhWarningCircle, warna: 'beranda', keterangan: pr(r.tk) },
+    { judul: 'Belum/akan datang', nilai: r.belum, ikon: PhHourglassMedium, warna: 'santri', keterangan: 'Sesi belum berlangsung' },
+  ]
 })
 const tampilP = computed(() => periode.value.filter((r) => unitCocok(r.org_unit_id) && cocokCari(r)))
 const totalP = computed(() => {
@@ -139,10 +152,8 @@ const namaUnit = computed(() => unit.value ? org.cariUnit(unit.value)?.nama : 'S
 
       <!-- ===== Harian ===== -->
       <template v-else-if="aktif.k === 'harian'">
-        <div class="mb-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
-          <div v-for="k in [['Sesi wajib', ringkasH.wajib, 'hakakses'], ['Hadir', ringkasH.hadir, 'presensi'], ['Terlambat', ringkasH.terlambat, 'tahfizh'], ['Izin/sakit/cuti', ringkasH.izin, 'klinik'], ['Terlewat/TK', ringkasH.tk, 'beranda'], ['Belum/akan datang', ringkasH.belum, 'santri']]"
-            :key="k[0]" :class="['rounded-2xl border border-garis p-3', 'w-' + k[2]]" style="background: color-mix(in srgb, var(--c) 8%, rgb(var(--permukaan)))">
-            <p class="text-2xl font-extrabold tabular-nums">{{ k[1] }}</p><p class="text-xs font-semibold text-teks2">{{ k[0] }}</p></div>
+        <div class="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+          <KartuStatistik v-for="k in statH" :key="k.judul" v-bind="k" />
         </div>
         <div class="mb-3 flex flex-wrap gap-2">
           <div class="bilah-tab kecil" role="tablist" aria-label="Saring keadaan">
