@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/Musyrif.vue | v1.9 | 14.26.0: warna tab tidak kembar (gaya tab seragam) | 25/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/Musyrif.vue | v1.10 | 14.35.0: tab Sesi & kontrol dan Pengaturan sesi asrama | 30/10/2026 -->
 <script setup>
 // Menu Musyrif (kepengasuhan asrama). Musyrif/musyrifah melihat kamar asuhannya; admin, pimpinan, dan pemegang
 // hak fitur Absensi Asrama melihat semua kamar. Tab: Dasbor (statistik langsung, sesi hari ini, perlu perhatian)
@@ -7,10 +7,11 @@
 // v1.4: tab "Semua kamar" selalu tampil bagi superadmin/admin/pimpinan (juga saat belum ada kamar: tampil panduan);
 //       galat pemuatan ditampilkan di halaman dengan tombol Coba lagi (sebelumnya tertahan di "Memuat kamar…").
 // Ringkasan (v1.3): dasbor pemantauan semua kamar bagi admin/pimpinan (tampil bila dapat melihat lebih dari satu kamar).
+// Sesi & kontrol (v1.10): seluruh sesi asrama (wajib absen/sesi kontrol), pengontrolan kamar, laporan instan grup WA. Pengaturan (admin): peran sesi, butir kontrol.
 // Tab Jurnal dihapus (v1.5): kegiatan tercatat di Jurnal Harian (ceklist/aktivitas tambahan); laporan lewat Laporan.
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { PhGauge, PhChartBar, PhHouseLine, PhLockSimple, PhWhatsappLogo, PhUsersThree, PhSignOut, PhSquaresFour } from '@phosphor-icons/vue'
+import { PhGauge, PhChartBar, PhHouseLine, PhLockSimple, PhWhatsappLogo, PhUsersThree, PhSignOut, PhSquaresFour, PhShieldCheck, PhGearSix } from '@phosphor-icons/vue'
 import { useMusyrif } from '@/stores/musyrif'
 import { useUI } from '@/stores/ui'
 import { useSantri } from '@/stores/santri'
@@ -20,6 +21,8 @@ import TabDasborMusyrif from './TabDasborMusyrif.vue'
 import TabRekapMusyrif from './TabRekapMusyrif.vue'
 import TabIzin from '@/pages/izin/TabIzin.vue'
 import TabRingkasanMusyrif from './TabRingkasanMusyrif.vue'
+import TabSesiKontrol from './TabSesiKontrol.vue'
+import PengaturanSesiAsrama from './PengaturanSesiAsrama.vue'
 
 const props = defineProps({ tab: { type: String, default: '' } })
 const router = useRouter(); const mu = useMusyrif(); const ui = useUI(); const san = useSantri()
@@ -28,7 +31,10 @@ async function muat(paksa = false) { galat.value = ''; try { await mu.muatKamar(
 onMounted(() => muat(true))
 /** Pemantau = superadmin/admin, pemegang hak fitur Absensi Asrama (pimpinan), atau yang melihat lebih dari satu kamar. */
 const pemantau = computed(() => sesi.isAdmin || sesi.luas('absensi_asrama') || mu.kamar.some((k) => !k.asuhan_saya))
-const TAB = computed(() => [...(pemantau.value ? [{ k: 'ringkasan', n: 'Semua kamar', ikon: PhSquaresFour, w: 'kelompoksantri' }] : []), { k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'musyrif' }, { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' }, { k: 'izin', n: 'Perizinan', ikon: PhSignOut, w: 'pengajuan' }])
+/** 14.35.0: pengatur peran sesi asrama dan butir pengontrolan. */
+const bolehAtur = computed(() => sesi.isAdmin || sesi.tingkat('absensi_asrama') >= 3)
+const TAB = computed(() => [...(pemantau.value ? [{ k: 'ringkasan', n: 'Semua kamar', ikon: PhSquaresFour, w: 'kelompoksantri' }] : []), { k: 'dasbor', n: 'Dasbor', ikon: PhGauge, w: 'musyrif' }, { k: 'kontrol', n: 'Sesi & kontrol', ikon: PhShieldCheck, w: 'shift' }, { k: 'rekap', n: 'Rekap', ikon: PhChartBar, w: 'rekap' }, { k: 'izin', n: 'Perizinan', ikon: PhSignOut, w: 'pengajuan' },
+  ...(bolehAtur.value ? [{ k: 'pengaturan', n: 'Pengaturan', ikon: PhGearSix, w: 'pengaturan' }] : [])])
 const aktif = computed(() => (TAB.value.some((t) => t.k === props.tab) ? props.tab : pemantau.value ? 'ringkasan' : 'dasbor'))
 const k = computed(() => mu.kamarPilih)
 /** Santri kamar terpilih (calon pengajuan izin). */
@@ -68,7 +74,9 @@ const daftarMusyrif = computed(() => (k.value?.musyrif || []).map((m) => m.nama)
       </section>
       <BilahTab class="mb-4" :tab="TAB" :model-value="aktif" label="Bagian musyrif" @update:model-value="(x) => router.replace(`/musyrif/${x}`)" />
       <TabRingkasanMusyrif v-if="aktif === 'ringkasan'" @buka="router.replace('/musyrif/dasbor')" />
-      <TabDasborMusyrif v-else-if="aktif === 'dasbor'" :key="'d' + mu.pilih" @rekap="router.replace('/musyrif/rekap')" />
+      <TabDasborMusyrif v-else-if="aktif === 'dasbor'" :key="'d' + mu.pilih" @rekap="router.replace('/musyrif/rekap')" @kontrol="router.replace('/musyrif/kontrol')" />
+      <TabSesiKontrol v-else-if="aktif === 'kontrol'" :key="'k' + mu.pilih" />
+      <PengaturanSesiAsrama v-else-if="aktif === 'pengaturan'" />
       <TabRekapMusyrif v-else-if="aktif === 'rekap'" :key="'r' + mu.pilih" />
       <TabIzin v-else :key="'i' + mu.pilih" :group="mu.pilih" :calon="santriKamar" peran-utama="musyrif" />
     </template>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/KehadiranPerJP.vue | v1.0 | 14.34.0: kehadiran santri per jam pelajaran (HISBAT) satu kelas per hari | 30/10/2026 -->
+<!-- SIMKA PRO | src/components/KehadiranPerJP.vue | v1.1 | 14.35.0: judul tanggal tidak berulang (hari, tanggal sekali saja) | 30/10/2026 -->
 <script setup>
 // Kehadiran harian kelas per jam pelajaran: No · NIS · Nama · JP 1 · JP 2 · … · ringkasan, dari absensi yang diisi guru mapel
 // di Jurnal mengajar (santri yang tidak ditandai dianggap hadir). JP yang belum diisi jurnalnya ditandai "belum diisi";
@@ -9,7 +9,7 @@ import { useJadwal } from '@/stores/jadwal'
 import { useSesi } from '@/stores/sesi'
 import { useLembaga } from '@/stores/lembaga'
 import { useUI } from '@/stores/ui'
-import { hariIniISO, formatPanjang, formatHari } from '@/lib/tanggal'
+import { hariIniISO, formatHari } from '@/lib/tanggal'
 import { KODE } from '@/lib/absensi'
 import { tambahHari } from '@/lib/shift'
 import InputTanggal from './InputTanggal.vue'
@@ -58,7 +58,7 @@ const statistik = computed(() => {
 })
 const namaKelas = computed(() => d.value?.kelas?.nama || '')
 const judulCetak = 'Kehadiran Santri per Jam Pelajaran'
-const subjudul = computed(() => `Kelas ${namaKelas.value} · ${formatHari(tanggal.value)}, ${formatPanjang(tanggal.value)}`)
+const subjudul = computed(() => `Kelas ${namaKelas.value} · ${formatHari(tanggal.value)}`)
 
 async function excel() {
   const XLSX = await import('xlsx')
@@ -86,7 +86,7 @@ async function excel() {
     <div v-if="d" class="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-4"><KartuStatistik v-for="k in statistik" :key="k.judul" v-bind="k" /></div>
 
     <p v-if="memuat && !d" class="kartu p-8 text-center text-sm text-teks3">Memuat kehadiran per jam pelajaran…</p>
-    <p v-else-if="d && !jp.length" class="kartu p-8 text-center text-sm text-teks3">Tidak ada jam pelajaran terjadwal pada {{ formatHari(tanggal) }}, {{ formatPanjang(tanggal) }}.</p>
+    <p v-else-if="d && !jp.length" class="kartu p-8 text-center text-sm text-teks3">Tidak ada jam pelajaran terjadwal pada {{ formatHari(tanggal) }}.</p>
     <template v-else-if="d">
       <!-- HP: kartu per santri -->
       <ul class="space-y-2 md:hidden">

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/musyrif.js | v1.2 | Fase 6 – Tahap 4 Lapor ke bidang dan dasbor ringkasan | 06/10/2026
+// SIMKA PRO | src/stores/musyrif.js | v1.3 | 14.35.0: sesi asrama wajib/opsional, pengontrolan kamar, pengaturan butir kontrol | 30/10/2026
 // Menu Musyrif: daftar kamar yang terlihat, sesi asrama hari ini, dan rincian absensi asrama per kamar
 // (dasar dasbor dan rekap individu/kamar/pekan/bulan/rentang). Data hanya dibaca; pengisian tetap lewat Absensi Santri.
 // v1.1: jurnal musyrif per kamar (tulis, ubah, hapus, tanggapan pimpinan).
@@ -9,7 +9,7 @@ import { pesanGalat } from './lembaga'
 import { useSesi } from './sesi'
 import { useSantri } from './santri'
 import { dataKelompokDemo } from '@/lib/demoKelompok'
-import { SESI_DEMO } from '@/lib/demoAbsensi'
+import { SESI_DEMO, SESI_ASRAMA_SEMUA_DEMO } from '@/lib/demoAbsensi'
 import { hariIniISO } from '@/lib/tanggal'
 import { tambahHari } from '@/lib/musyrif'
 
@@ -17,6 +17,10 @@ const rpc = async (nama, arg) => { const { data, error } = await supabase.rpc(na
 const waktu = (tgl, j, menit = 0) => new Date(new Date(`${tgl}T${j}:00+08:00`).getTime() + menit * 60000)
 
 const JURNAL_DEMO = {}
+// 14.35.0: pengaturan dan pengontrolan contoh (mode demo)
+const KONTROL_DEMO = { butir: [{ kode: 'KUNCI', teks: 'Kamar sudah terkunci', sesi: [] }, { kode: 'MASJID', teks: 'Santri sudah diarahkan ke masjid', sesi: ['SUBUH', 'MAGRIB'] },
+  { kode: 'LISTRIK', teks: 'Alat kelistrikan sudah dipastikan mati', sesi: [] }, { kode: 'BERSIH', teks: 'Kamar sudah dibersihkan', sesi: ['PAGI', 'SORE'] }], catatan: {} }
+const butirUntuk = (kode) => KONTROL_DEMO.butir.filter((b) => !b.sesi?.length || b.sesi.includes(kode))
 /** Jurnal contoh per kamar (mode demo). */
 function jurnalDemo(group) {
   if (JURNAL_DEMO[group]) return JURNAL_DEMO[group]
@@ -138,6 +142,59 @@ export const useMusyrif = defineStore('musyrif', {
     async tanggapiJurnal(id, tanggapan, group) {
       if (!MODE_DEMO) return rpc('tanggapi_jurnal_musyrif', { p_id: id, p_tanggapan: tanggapan })
       Object.assign(jurnalDemo(group).find((j) => j.id === id), { tanggapan, ditanggapi_oleh: useSesi().pengguna?.nama_lengkap, ditanggapi_pada: new Date().toISOString() })
+    },
+
+    // ---------- 14.35.0: sesi asrama dan pengontrolan ----------
+    /** Semua sesi asrama satu kamar pada satu tanggal: peran (wajib/opsional), absensi (bila diisi), pengontrolan. */
+    async kontrolHari(group, tanggal) {
+      if (!MODE_DEMO) return rpc('kontrol_asrama_hari', { p_group: group, p_tanggal: tanggal })
+      const san = useSantri(); await san.muat(); const d = dataKelompokDemo(san.daftar); const g = d.kelompok.find((x) => x.id === group)
+      const anggota = d.anggota.filter((a) => a.group_id === group && !a.selesai).map((a) => san.cari(a.student_id)).filter((x) => x && x.status !== 'nonaktif')
+      const kini = new Date(); const hari = hariIniISO()
+      const sesi = SESI_ASRAMA_SEMUA_DEMO.map((x, i) => {
+        const selesai = waktu(tanggal, x.jam_selesai, x.jam_selesai <= x.jam_mulai ? 1440 : 0); const buka = waktu(tanggal, x.jam_mulai, -30)
+        const lewat = selesai < kini; const kunci = `${group}|${tanggal}|${x.kode}`
+        const isiAbsen = lewat && (x.mode === 'wajib' ? (group.length + i) % 7 !== 0 : x.kode === 'MAGRIB')
+        const tidak = isiAbsen ? anggota.filter((_, n) => (n + i + tanggal.length) % 9 === 0).map((st, n) => ({ nama: st.nama_lengkap, kode: ['I', 'S', 'T', 'A'][(n + i) % 4], keterangan: null })) : []
+        const n = (k) => tidak.filter((t) => t.kode === k).length
+        if (!(kunci in KONTROL_DEMO.catatan) && lewat && (tanggal < hari || i < 3)) {
+          KONTROL_DEMO.catatan[kunci] = { butir: butirUntuk(x.kode).map((b, j) => ({ kode: b.kode, teks: b.teks, ok: (i + j) % 5 !== 4 })), catatan: x.kode === 'MALAM' ? 'Dua santri masih murajaah di musala, sudah diarahkan tidur.' : null,
+            waktu: selesai.toISOString(), oleh: g.pengasuh[0]?.nama }
+        }
+        return { kode: x.kode, nama: x.nama, jam_mulai: x.jam_mulai, jam_selesai: x.jam_selesai, mulai: waktu(tanggal, x.jam_mulai).toISOString(), selesai: selesai.toISOString(),
+          buka: buka.toISOString(), tutup: new Date(selesai.getTime() + 45 * 60000).toISOString(), batas: new Date(selesai.getTime() + 45 * 60000).toISOString(), mode: x.mode, butir: butirUntuk(x.kode),
+          absensi: isiAbsen ? { session_id: `sa-${kunci}`, jumlah_anggota: anggota.length, hadir: anggota.length - n('I') - n('S') - n('A'), izin: n('I'), sakit: n('S'), bolos: 0, absen: n('A'), terlambat: n('T'),
+            diisi_pada: selesai.toISOString(), pengisi: g.pengasuh[0]?.nama, tidak } : null,
+          kontrol: KONTROL_DEMO.catatan[kunci] || null }
+      })
+      return { tanggal, sekarang: kini.toISOString(), kamar: { id: g.id, nama: g.nama, jenis_kelamin: g.jenis_kelamin, wa_wali: g.wa_wali, wa_internal: g.wa_internal },
+        pengasuh_saya: useSesi().peran === 'pegawai', boleh_atas_nama: useSesi().isAdmin, musyrif: g.pengasuh.map((p) => p.nama), jumlah_santri: anggota.length, sesi }
+    },
+    /** p: { group_id, tanggal, sesi, butir: [{ kode, ok }], catatan } */
+    async simpanKontrol(p) {
+      if (!MODE_DEMO) return rpc('simpan_kontrol_asrama', { p })
+      KONTROL_DEMO.catatan[`${p.group_id}|${p.tanggal}|${p.sesi}`] = { butir: butirUntuk(p.sesi).map((b) => ({ kode: b.kode, teks: b.teks, ok: !!p.butir.find((x) => x.kode === b.kode)?.ok })),
+        catatan: p.catatan?.trim() || null, waktu: new Date().toISOString(), oleh: useSesi().pengguna?.nama_lengkap }
+    },
+    async pengaturanKontrol() {
+      if (!MODE_DEMO) return rpc('pengaturan_kontrol_asrama')
+      return { pola: { kode: 'MUSYRIF', nama: 'Musyrif' }, boleh_atur: useSesi().isAdmin,
+        sesi: SESI_ASRAMA_SEMUA_DEMO.map((x) => ({ kode: x.kode, nama: x.nama, jam_mulai: x.jam_mulai, jam_selesai: x.jam_selesai, hari: [0, 1, 2, 3, 4, 5, 6], opsional_pegawai: false, mode: x.mode })),
+        butir: KONTROL_DEMO.butir.map((b) => ({ ...b, sesi: [...(b.sesi || [])] })) }
+    },
+    /** p: { mode: { KODE: 'wajib'|'opsional' }, butir: [{ kode?, teks, sesi: [] }] } */
+    async simpanPengaturanKontrol(p) {
+      if (!MODE_DEMO) return rpc('simpan_pengaturan_kontrol_asrama', { p })
+      if (p.mode) {
+        if (!Object.values(p.mode).includes('wajib')) throw new Error('Tetapkan minimal satu sesi asrama yang wajib absensi santri.')
+        SESI_ASRAMA_SEMUA_DEMO.forEach((x) => { if (p.mode[x.kode]) x.mode = p.mode[x.kode] })
+        SESI_DEMO.asrama = SESI_ASRAMA_SEMUA_DEMO.filter((x) => x.mode === 'wajib')
+      }
+      if (p.butir) {
+        const b = p.butir.filter((x) => (x.teks || '').trim().length >= 3)
+        if (!b.length || b.length > 30) throw new Error('Butir pengontrolan berisi 1 sampai 30 butir (minimal 3 huruf).')
+        KONTROL_DEMO.butir = b.map((x, i) => ({ kode: x.kode || 'B' + Date.now().toString(36) + i, teks: x.teks.trim(), sesi: x.sesi || [] }))
+      }
     },
 
     dengarkan(fn) {

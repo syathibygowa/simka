@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/demoAbsensi.js | v1.1 | Fase 4 – Tahap 4 Ekskul | 04/10/2026
+// SIMKA PRO | src/lib/demoAbsensi.js | v1.2 | 14.35.0: lima sesi asrama contoh (dua wajib absen, tiga sesi kontrol) | 30/10/2026
 // Absensi santri contoh untuk MODE DEMO (tujuh hari terakhir terisi acak, hari ini sebagian).
 import { dataKelompokDemo, ID_PEGAWAI_DEMO } from './demoKelompok'
 
@@ -10,6 +10,14 @@ export const SESI_DEMO = {
   asrama: [{ kode: 'PAGI', nama: 'Asrama pagi', jam_mulai: '04:00', jam_selesai: '07:00', buka: 30 },
     { kode: 'MALAM', nama: 'Asrama malam', jam_mulai: '21:00', jam_selesai: '00:00', buka: 30 }],
 }
+// 14.35.0: seluruh sesi asrama (pola musyrif lima waktu); SESI_DEMO.asrama = sesi berperan wajib absen
+export const SESI_ASRAMA_SEMUA_DEMO = [
+  { kode: 'PAGI', nama: 'Asrama pagi', jam_mulai: '04:00', jam_selesai: '07:00', buka: 30, mode: 'wajib' },
+  { kode: 'SUBUH', nama: 'Asrama subuh', jam_mulai: '04:15', jam_selesai: '05:15', buka: 30, mode: 'opsional' },
+  { kode: 'SORE', nama: 'Asrama sore', jam_mulai: '16:00', jam_selesai: '17:00', buka: 30, mode: 'opsional' },
+  { kode: 'MAGRIB', nama: 'Asrama petang', jam_mulai: '17:45', jam_selesai: '18:45', buka: 30, mode: 'opsional' },
+  { kode: 'MALAM', nama: 'Asrama malam', jam_mulai: '21:00', jam_selesai: '00:00', buka: 30, mode: 'wajib' },
+]
 const jenisDari = (g) => (g.jenis === 'kamar' ? 'asrama' : g.jenis)
 const dowWITA = (tgl) => new Date(`${tgl}T12:00:00+08:00`).getUTCDay()
 const hariIniWITA = () => new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10)

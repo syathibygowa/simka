@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.13 | 14.27.0: tombol Kembali, Sebelumnya, Berikutnya (atas dan bawah) | 26/10/2026 -->
+<!-- SIMKA PRO | src/pages/absensisantri/IsiAbsensi.vue | v1.14 | 14.35.0: penanda sesi kontrol (absensi santri opsional) | 30/10/2026 -->
 <script setup>
 // Pengisian absensi satu sesi: semua santri bawaan Hadir, ketuk kode HISBAT bagi yang tidak.
 // Pengampu halaqah/ekskul diminta presensi sekali bila sesi ini ada di jadwal presensinya dan belum presensi (asrama tidak).
@@ -215,6 +215,11 @@ const pesanKe = (p) => pesanWA('absen_santri', { nama_wali: p.kontak?.nama, nama
         :absensi="d" :atas-nama-id="modeAtasNama ? atasNama : ''" :tertutup="lewatBatas || belumBuka" />
       <template v-if="!(halaqah && tab === 'setoran')">
       <!-- Pemberitahuan -->
+      <div v-if="d?.absen_opsional" class="kartu w-shift mt-4 flex items-start gap-3 p-4">
+        <span class="chip-ikon h-10 w-10 shrink-0"><PhListChecks :size="22" weight="duotone" /></span>
+        <p class="text-sm text-teks2"><b class="text-teks">Sesi kontrol — absensi santri opsional.</b> Absensi sesi ini tidak wajib; bila diisi, keadaan santri ikut tercantum
+          pada laporan pengontrolan kamar (Musyrif → Sesi &amp; kontrol).</p>
+      </div>
       <div v-if="perluPresensi" class="kartu w-presensi mt-4 flex flex-wrap items-center gap-3 p-4">
         <span class="chip-ikon h-11 w-11"><PhFingerprint :size="24" weight="duotone" /></span>
         <div class="min-w-[200px] flex-1"><p class="font-bold">Presensi dulu sebelum mengabsen</p>

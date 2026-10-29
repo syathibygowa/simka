@@ -1,10 +1,10 @@
-// SIMKA PRO | src/stores/absensiSantri.js | v1.7 | 14.16.0: penanda santri yang sudah dirujuk dan menunggu pemeriksaan klinik | 19/10/2026
+// SIMKA PRO | src/stores/absensiSantri.js | v1.8 | 14.35.0: rincian sesi asrama berperan opsional (sesi kontrol) dapat dibuka di mode demo | 30/10/2026
 // Absensi santri HISBAT: sesi hari ini (pengasuh) atau semua kelompok (pantauan), detail sesi, simpan
 // (hanya pengecualian), rekap per santri, dan riwayat ketidakhadiran. Penulisan lewat fungsi SQL.
 // v1.2: detail() menyertakan "otomatis" — santri yang sedang sakit (Klinik → S) atau izin (Perizinan → I).
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
-import { dataAbsensiDemo, sesiAbsensiDemo, hitung, sesiDemoUntuk } from '@/lib/demoAbsensi'
+import { dataAbsensiDemo, sesiAbsensiDemo, hitung, sesiDemoUntuk, SESI_ASRAMA_SEMUA_DEMO } from '@/lib/demoAbsensi'
 import { pesanGalat } from './lembaga'
 import { useSesi } from './sesi'
 import { useSantri } from './santri'
@@ -38,15 +38,17 @@ export const useAbsensiSantri = defineStore('absensiSantri', {
     async detail(group, tanggal, sesi) {
       if (MODE_DEMO) {
         const d = dataAbsensiDemo(); const g = d.kelompok.kelompok.find((x) => x.id === group); const san = useSantri(); await san.muat()
-        const jenis = g.jenis === 'kamar' ? 'asrama' : g.jenis; const def = sesiDemoUntuk(g, tanggal).find((x) => x.kode === sesi)
+        const jenis = g.jenis === 'kamar' ? 'asrama' : g.jenis; const wajib = sesiDemoUntuk(g, tanggal).find((x) => x.kode === sesi)
+        const def = wajib || (jenis === 'asrama' ? SESI_ASRAMA_SEMUA_DEMO.find((x) => x.kode === sesi) : null)   // 14.35.0: sesi kontrol (absen opsional)
         const info = sesiAbsensiDemo(tanggal, true, useSesi().peran === 'pegawai').find((x) => x.group_id === group && x.sesi === sesi)
+          || { buka: new Date(new Date(`${tanggal}T${def.jam_mulai}:00+08:00`).getTime() - 1800000).toISOString(), tutup: new Date(new Date(`${tanggal}T${def.jam_selesai}:00+08:00`).getTime() + 2700000).toISOString(), batas: new Date(`${tanggal}T23:59:00+08:00`).toISOString(), asuhan_saya: true }
         const sa = d.sesi[`${group}|${tanggal}|${sesi}`]
         const anggota = d.kelompok.anggota.filter((a) => a.group_id === group && !a.selesai).map((a) => san.cari(a.student_id)).filter(Boolean)
           .map((s) => ({ id: s.id, nis: s.nis, nama: s.nama_lengkap, jenis_kelamin: s.jenis_kelamin, status: s.status })).sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
         const peg = useSesi().peran === 'pegawai'
         return { kelompok: { id: g.id, nama: g.nama, jenis: g.jenis, jenis_kelamin: g.jenis_kelamin, wa_wali: g.wa_wali, naqib_id: g.naqib_id },
           jenis, tanggal, sesi, nama_sesi: def.nama, jam_mulai: def.jam_mulai, jam_selesai: def.jam_selesai, buka: info.buka, tutup: info.tutup, batas: info.batas,
-          sekarang: new Date().toISOString(), pengasuh_saya: peg && info.asuhan_saya, perlu_presensi: false, boleh_atas_nama: useSesi().bolehAdmin('absensi_atas_nama'),
+          sekarang: new Date().toISOString(), absen_opsional: !wajib, pengasuh_saya: peg && info.asuhan_saya, perlu_presensi: false, boleh_atas_nama: useSesi().bolehAdmin('absensi_atas_nama'),
           pengasuh: g.pengasuh.map((p) => ({ employee_id: p.employee_id, nama: p.nama, peran: p.peran })), anggota,
           sesi_tercatat: sa ? { id: sa.id, atas_nama: sa.atas_nama, diisi_terlambat: sa.diisi_terlambat, diisi_pada: sa.diisi_pada, pengampu: sa.pengampu, diinput_oleh: sa.diinput_oleh, catatan: sa.catatan } : null,
           pengecualian: sa?.pengecualian || [], log: sa?.log || [], tempat: def.tempat || null, jurnal: sa?.jurnal || null,
@@ -95,7 +97,7 @@ export const useAbsensiSantri = defineStore('absensiSantri', {
         const anggota = d.kelompok.anggota.filter((a) => a.group_id === g.id && !a.selesai).length
         const nama = useSesi().pengguna?.nama_lengkap
         d.sesi[kunci] = { ...(lama || {}), id: lama?.id || 'sa' + Date.now(), group_id: isi.group_id, jenis, tanggal: isi.tanggal, sesi: isi.sesi,
-          nama_sesi: sesiDemoUntuk(g, isi.tanggal).find((x) => x.kode === isi.sesi).nama, jumlah_anggota: anggota, pengecualian: isi.pengecualian, catatan: isi.catatan,
+          nama_sesi: (sesiDemoUntuk(g, isi.tanggal).find((x) => x.kode === isi.sesi) || SESI_ASRAMA_SEMUA_DEMO.find((x) => x.kode === isi.sesi))?.nama, jumlah_anggota: anggota, pengecualian: isi.pengecualian, catatan: isi.catatan,
           jurnal: isi.jurnal ? { ...isi.jurnal } : lama?.jurnal || null,
           atas_nama: !!isi.atas_nama_id || lama?.atas_nama, diisi_pada: new Date().toISOString(), pengampu: lama?.pengampu || nama, diinput_oleh: nama,
           log: [{ waktu: new Date().toISOString(), aksi: lama ? 'koreksi' : 'isi', oleh: nama, perubahan: [] }, ...(lama?.log || [])] }

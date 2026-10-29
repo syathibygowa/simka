@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabDasborMusyrif.vue | v1.2 | 14.27.0: urutan Sebelumnya/Berikutnya untuk halaman isian | 26/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabDasborMusyrif.vue | v1.3 | 14.35.0: tombol Kontrol & laporan (sesi asrama dan laporan WA) menggantikan Salin | 30/10/2026 -->
 <script setup>
 // Dasbor musyrif untuk satu kamar: kartu statistik langsung (hari ini, pekan ini, bulan ini, tidak hadir hari ini),
 // sesi asrama hari ini dengan tombol isi absensi, grafik kehadiran 14 hari, santri yang perlu perhatian
@@ -8,7 +8,7 @@ import { aturUrutan, keAbsensi } from '@/lib/urutan'
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  PhSun, PhCalendarDots, PhCalendarBlank, PhUserMinus, PhCheckSquareOffset, PhWarningCircle, PhWhatsappLogo, PhFirstAidKit, PhChartBar, PhMoon, PhCopy,
+  PhSun, PhCalendarDots, PhCalendarBlank, PhUserMinus, PhCheckSquareOffset, PhWarningCircle, PhWhatsappLogo, PhFirstAidKit, PhChartBar, PhMoon,
 } from '@phosphor-icons/vue'
 import { useMusyrif } from '@/stores/musyrif'
 import { useKlinik } from '@/stores/klinik'
@@ -23,7 +23,7 @@ import { pesanWA, tautanWA } from '@/lib/wa'
 import { olahRinci, ringkasKamar, awalPekan, awalBulanDari, tambahHari, daftarTanggal, persenDari, teksRekapSantri, teksTidakHadir, teksRentang, namaHari, teksKode } from '@/lib/musyrif'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 
-const emit = defineEmits(['rekap'])
+const emit = defineEmits(['rekap', 'kontrol'])
 const mu = useMusyrif(); const kl = useKlinik(); const san = useSantri(); const sesi = useSesi(); const ui = useUI(); const router = useRouter()
 const hari = hariIniISO(); const awalPk = awalPekan(hari); const awalBl = awalBulanDari(hari); const awal14 = tambahHari(hari, -13)
 const d = ref(null); const sesiHari = ref([]); const sakit = ref([]); const memuat = ref(false)
@@ -80,13 +80,6 @@ const tidakDiisi = computed(() => olahRinci(d.value, (s) => s.tanggal >= awalBl)
 const statusSesi = (s) => STATUS_SESI[s.status] || STATUS_SESI.lewat
 const isi = (s) => { aturUrutan('absensi', sesiHari.value.filter((x) => x.status !== 'belum_buka').map((x) => ({ ke: keAbsensi(x, mu.pilih), label: x.nama || x.kode }))); router.push(keAbsensi(s, mu.pilih)) }
 
-// Salin kehadiran hari ini (cepat untuk grup)
-async function salinHariIni() {
-  const nama = (id) => d.value.santri.find((s) => s.id === id)?.nama || '–'
-  const baris = tidakHari.value.map((x) => `• ${nama(x.id)} — ${x.nama_sesi.toLowerCase()}: ${teksKode[x.kode]}`)
-  const teks = `Kehadiran asrama ${mu.kamarPilih?.nama}, ${formatHari(hari)}:\n• Kehadiran: ${teksPersen(rHari.value.persen)} (${rHari.value.sesi} sesi)\n${baris.length ? 'Tidak hadir:\n' + baris.join('\n') : '• Alhamdulillah, semua santri hadir.'}`
-  try { await navigator.clipboard.writeText(teks); ui.toast('Kehadiran hari ini disalin. Tempel di grup WA.') } catch { ui.toast('Tidak dapat menyalin otomatis.', 'galat') }
-}
 </script>
 <template>
   <div class="space-y-4">
@@ -98,7 +91,7 @@ async function salinHariIni() {
       <!-- Sesi hari ini -->
       <section class="kartu w-absensi p-4">
         <div class="mb-3 flex items-center gap-2"><PhCheckSquareOffset :size="22" weight="duotone" style="color: var(--c)" /><h2 class="judul-bagian flex-1">Absensi asrama hari ini</h2>
-          <button class="tombol-garis min-h-[36px] px-3 text-xs" @click="salinHariIni"><PhCopy :size="16" /> Salin</button></div>
+          <button class="tombol-garis min-h-[36px] px-3 text-xs" @click="emit('kontrol')"><PhWhatsappLogo :size="16" weight="duotone" /> Kontrol &amp; laporan</button></div>
         <ul class="space-y-2">
           <li v-for="s in sesiHari" :key="s.kode" class="flex items-center gap-3 rounded-xl border border-garis p-3" :class="'w-' + statusSesi(s).w">
             <span class="chip-ikon h-10 w-10 shrink-0"><component :is="s.kode === 'PAGI' ? PhSun : PhMoon" :size="22" weight="duotone" /></span>
