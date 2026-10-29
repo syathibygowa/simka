@@ -1,8 +1,8 @@
-// SIMKA PRO | src/lib/versi.js | v14.33.0 | 14.33.0: penamaan Arsip dan Catatan, label saringan diringkas, kartu statistik presensi harian, laporan WA musyrif, rapat terbaca kembali, santri nonaktif tersembunyi | 30/10/2026
+// SIMKA PRO | src/lib/versi.js | v14.34.0 | 14.34.0: rincian kehadiran santri per jam pelajaran dan per pertemuan mapel (Wali Kelas, Guru Mapel) | 30/10/2026
 // Nomor versi aplikasi yang tampil di halaman Profil. Naikkan setiap kali kode diunggah ke GitHub.
 // Keterangan versi tampil kepada pengguna, jadi ditulis tanpa kata "Fase".
-export const VERSI_APLIKASI = '14.33.0'
-export const KETERANGAN_VERSI = 'Menu Arsip dan tab Catatan, label saringan diringkas, kartu statistik presensi harian, laporan grup WA musyrif, daftar rapat terbaca kembali, santri nonaktif tidak tampil di kehadiran dan nilai'
+export const VERSI_APLIKASI = '14.34.0'
+export const KETERANGAN_VERSI = 'Tab Kehadiran kelas di Wali Kelas: kehadiran santri per jam pelajaran setiap hari dan per pertemuan mapel; tampilan per pertemuan juga di Guru Mapel'
 
 // Waktu kode dibangun oleh GitHub Actions; dipakai untuk memastikan versi yang tayang adalah yang terbaru.
 /* global __WAKTU_BUILD__ */

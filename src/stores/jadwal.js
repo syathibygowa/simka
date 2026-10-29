@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/jadwal.js | v1.7 | 14.16.0: peserta pelajaran menurut jam pelajaran (sakit/izin otomatis) | 19/10/2026
+// SIMKA PRO | src/stores/jadwal.js | v1.8 | 14.34.0: kehadiran santri per jam pelajaran (harian) dan per pertemuan mapel | 30/10/2026
 // Mata pelajaran, jam pelajaran, penugasan mengajar, jadwal pelajaran per kelas/guru, jurnal mengajar, dan rekap.
 // Penulisan lewat fungsi SQL (hak atur_jadwal; guru menulis jurnal dan rencana materinya sendiri).
 import { defineStore } from 'pinia'
@@ -10,6 +10,7 @@ import { useSesi } from './sesi'
 import { useKelompokSantri } from './kelompokSantri'
 import { useSantri } from './santri'
 import { HARI_JAM_BAWAAN } from '@/lib/jadwal'
+import { hariIniISO } from '@/lib/tanggal'
 
 const rpc = async (nama, arg) => { const { data, error } = await supabase.rpc(nama, arg); if (error) throw new Error(pesanGalat(error)); return data }
 const j5 = (t) => String(t || '').slice(0, 5)
@@ -221,6 +222,40 @@ export const useJadwal = defineStore('jadwal', {
         mapel, santri: anggota.map((st, si) => ({ student_id: st.id, nis: st.nis, nama: st.nama_lengkap, jk: st.jenis_kelamin,
           mapel: Object.fromEntries(mapel.map((m, mi) => { const tidak = (si * 3 + mi * 5) % 7 === 0 ? 3 : (si + mi) % 5 === 0 ? 1 : 0; const h = m.pertemuan - tidak
             return [m.assignment_id, { p: m.pertemuan, h, t: (si + mi) % 6 === 0 ? 1 : 0, s: tidak > 1 ? 1 : 0, i: tidak > 2 ? 1 : 0, a: tidak ? 1 : 0, b: 0, persen: Math.round((1000 * h) / m.pertemuan) / 10 }] })) })) }
+    },
+    /** 14.34.0: kehadiran santri per jam pelajaran (JP) satu kelas pada satu tanggal, dari absensi jurnal mengajar. */
+    async kehadiranKelasHarian(group, tanggal) {
+      if (!MODE_DEMO) return rpc('kehadiran_kelas_harian', { p_group: group, p_tanggal: tanggal })
+      await this.muat(); const d = dataJadwalDemo(); const san = useSantri(); await san.muat(); const kel = dataKelompokDemo(san.daftar)
+      const hari = new Date(tanggal + 'T00:00:00').getDay() || 7; const lewat = tanggal <= hariIniISO()
+      const jp = d.jadwal.filter((x) => x.group_id === group && x.hari === hari).map((x) => ({ x, p: d.jam.find((q) => q.id === x.period_id) })).filter((y) => y.p)
+        .sort((a, b) => a.p.urutan - b.p.urutan).map(({ x, p }, i) => { const t = d.penugasan.find((q) => q.id === x.assignment_id); const m = this.cariMapel(t?.subject_id)
+          return { period_id: p.id, urutan: Number(p.nama.replace(/\D/g, '')) || p.urutan, nama: p.nama, jam: `${p.jam_mulai}–${p.jam_selesai}`.replace(/:/g, '.'), assignment_id: t?.id, mapel: m?.nama, kode_mapel: m?.kode,
+            guru: t?.nama_guru, materi: null, keadaan: !lewat ? 'belum' : i === 5 ? 'belum' : i === 4 && hari === 3 ? 'tidak' : 'terisi' } })
+      const anggota = kel.anggota.filter((a) => a.group_id === group && !a.selesai).map((a) => san.cari(a.student_id)).filter((x) => x && x.status !== 'nonaktif')
+      const kode = ['S', 'I', 'A', 'T', 'B']
+      return { tanggal, kelas: { id: group, nama: kel.kelompok.find((g) => g.id === group)?.nama || 'Kelas' }, jp,
+        santri: anggota.sort((a, b) => a.nama_lengkap.localeCompare(b.nama_lengkap)).map((st, si) => ({ student_id: st.id, nis: st.nis, nama: st.nama_lengkap, jk: st.jenis_kelamin,
+          kode: Object.fromEntries(jp.filter((j) => j.keadaan === 'terisi').map((j, ji) => [j.period_id, si === 2 ? 'S' : (si * 7 + ji * 3 + hari) % 17 === 0 ? kode[(si + ji) % 5] : 'H'])) })) }
+    },
+    /** 14.34.0: kehadiran santri per pertemuan (P1, P2, …) satu penugasan mapel. */
+    async kehadiranPertemuanMapel(assignment, mulai, selesai) {
+      if (!MODE_DEMO) return rpc('kehadiran_pertemuan_mapel', { p_assignment: assignment, p_mulai: mulai, p_selesai: selesai })
+      await this.muat(); const d = dataJadwalDemo(); const san = useSantri(); await san.muat(); const kel = dataKelompokDemo(san.daftar)
+      const t = d.penugasan.find((x) => x.id === assignment); if (!t) throw new Error('Penugasan mengajar tidak ditemukan.')
+      const hariAjar = [...new Set(d.jadwal.filter((x) => x.assignment_id === assignment).map((x) => x.hari))]
+      const per = []; const akhir = selesai > hariIniISO() ? hariIniISO() : selesai
+      for (let x = new Date(mulai + 'T00:00:00'); x.toISOString().slice(0, 10) <= akhir && per.length < 40; x.setDate(x.getDate() + 1)) {
+        const tg = `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
+        if (hariAjar.includes(x.getDay() || 7) && tg <= akhir) per.push({ ke: per.length + 1, tanggal: tg, jp: 'JP ' + (1 + (per.length % 3) * 2) + '–' + (2 + (per.length % 3) * 2), materi: `Pembahasan ${per.length + 1}` })
+      }
+      const m = this.cariMapel(t.subject_id)
+      const anggota = kel.anggota.filter((a) => a.group_id === t.group_id && !a.selesai).map((a) => san.cari(a.student_id)).filter((x) => x && x.status !== 'nonaktif')
+      return { mulai, selesai, kelas: { id: t.group_id, nama: kel.kelompok.find((g) => g.id === t.group_id)?.nama || 'Kelas' }, mapel: { assignment_id: t.id, nama: m?.nama, kode: m?.kode, guru: t.nama_guru },
+        pertemuan: per, santri: anggota.sort((a, b) => a.nama_lengkap.localeCompare(b.nama_lengkap)).map((st, si) => {
+          const kode = per.map((p, pi) => ((si * 5 + pi * 3) % 13 === 0 ? ['S', 'I', 'A', 'T', 'B'][(si + pi) % 5] : 'H'))
+          const hadir = kode.filter((k) => ['H', 'T'].includes(k)).length
+          return { student_id: st.id, nis: st.nis, nama: st.nama_lengkap, jk: st.jenis_kelamin, kode, hadir, total: kode.length, persen: kode.length ? Math.round((1000 * hadir) / kode.length) / 10 : null } }) }
     },
     /** 14.4.0: laporan jurnal mengajar. p: { assignment_id | group_id | employee_id, subject_id?, mulai, selesai } */
     async laporanJurnal(p) {

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/aturanCetak.js | v1.4 | 14.21.0: penanda tangan dokumen tahfizh (tunggal/ganda), saring penanda tangan ganda | 24/10/2026
+// SIMKA PRO | src/lib/aturanCetak.js | v1.5 | 14.34.0: dokumen kehadiran per jam pelajaran dan per pertemuan mapel | 30/10/2026
 // Katalog dokumen cetak beserta penanda tangan kiri ("Mengetahui", pimpinan/atasan), kanan (pegawai terkait), dan kop.
 // Nilai yang dipilih superadmin disimpan di tabel signer_rules (kiri, kanan, kop_kode); setiap DokumenCetak yang diberi
 // prop `jenis` membaca aturan ini lalu TandaTangan memakainya.
@@ -42,6 +42,8 @@ const DAFTAR = {
     d('wk_nilai_mapel', 'Nilai santri per mata pelajaran', 'Wali Kelas → Rapor', 'direktur', 'pengasuh', 'kepala_unit'),
     d('rekap_absensi', 'Rekap kehadiran santri per kelompok', 'Wali Kelas, Musyrif, Absensi Santri → Rekap absensi', 'pimpinan_kelompok', 'pengasuh'),
     d('gm_kehadiran_mapel', 'Rekap kehadiran santri per mata pelajaran', 'Guru Mapel / Wali Kelas → Kehadiran', 'direktur', 'pengasuh', 'kepala_unit'),
+    d('wk_kehadiran_jp', 'Kehadiran santri per jam pelajaran', 'Wali Kelas → Kehadiran kelas', 'direktur', 'pengasuh', 'kepala_unit'),
+    d('gm_kehadiran_pertemuan', 'Kehadiran santri per pertemuan mapel', 'Guru Mapel / Wali Kelas → Kehadiran', 'direktur', 'pengasuh', 'kepala_unit'),
     d('gm_jurnal', 'Laporan jurnal mengajar', 'Guru Mapel / Wali Kelas → Jurnal mengajar', '-', 'pengasuh', 'kepala_unit'),
     d('gm_pantau', 'Rekap keterlaksanaan mengajar guru mapel', 'Guru Mapel → Pantau guru', 'direktur', 'pembuat', 'kepala_unit'),
     d('gm_rekap_guru', 'Laporan keterlaksanaan mengajar per guru', 'Guru Mapel → Rekap', 'direktur', 'pengasuh', 'kepala_unit'),
