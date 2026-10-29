@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabTahsin.vue | v1.5 | 14.30.0: saringan bawaan Semua | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabTahsin.vue | v1.6 | 14.31.0: penguji tahsin dapat menandai santri dan langsung menilai ujian tanpa menunggu pengajuan; saringan bawaan Semua | 29/10/2026 -->
 <script setup>
 // Tahsin — pembinaan bacaan Al-Qur'an bagi santri yang belum menghafal (umumnya santri baru atau pindahan).
 //   Muhaffizh/pengelola: "Tandai santri tahsin" (mulai, asal, tahap awal, pembina).
@@ -298,7 +298,7 @@ async function cetakUjian() { kepala.value = await penandaTahfizh(); pratinjauUj
                 <span :class="['lencana', 'w-' + HASIL_TAHSIN[t.ujian[0].hasil].w]">{{ HASIL_TAHSIN[t.ujian[0].hasil].n }}</span><span class="text-teks3">· {{ t.ujian[0].penguji }}</span></p>
               <p v-if="t.status !== 'berjalan'" class="mt-1 text-xs text-teks3">{{ t.status === 'lulus' ? 'Lulus' : 'Dihentikan' }} {{ formatPendek(t.selesai) }}{{ t.pemutus ? ' oleh ' + t.pemutus : '' }}{{ t.catatan_selesai ? ' · ' + t.catatan_selesai : '' }}</p>
               <div class="mt-3 flex flex-wrap gap-2">
-                <button v-if="t.boleh_uji && (t.diajukan_lulus_pada || t.boleh_putus)" :class="[t.diajukan_lulus_pada ? 'tombol-utama' : 'tombol-garis', 'min-h-[38px] px-3 text-sm']" @click="bukaUji(t)"><PhExam :size="18" weight="duotone" /> Nilai ujian</button>
+                <button v-if="t.boleh_uji" :class="[t.diajukan_lulus_pada ? 'tombol-utama' : 'tombol-garis', 'min-h-[38px] px-3 text-sm']" :title="t.diajukan_lulus_pada ? '' : 'Belum diajukan pembina; penguji dapat langsung menilai'" @click="bukaUji(t)"><PhExam :size="18" weight="duotone" /> {{ t.diajukan_lulus_pada ? 'Nilai ujian' : 'Uji langsung' }}</button>
                 <button v-if="t.diajukan_lulus_pada && t.boleh_bina" class="tombol-wa-garis w-presensi min-h-[38px] px-3 text-sm" @click="bukaMintaUji(t)"><PhWhatsappLogo :size="18" weight="duotone" /> WA penguji</button>
                 <button v-if="t.boleh_bina" class="tombol-garis min-h-[38px] px-3 text-sm" @click="bukaCatat(t)"><PhNotePencil :size="18" /> Catat</button>
                 <button class="tombol-garis min-h-[38px] px-3 text-sm" @click="bukaRiwayat(t)"><PhClockCounterClockwise :size="18" /> Riwayat</button>
@@ -317,7 +317,7 @@ async function cetakUjian() { kepala.value = await penandaTahfizh(); pratinjauUj
     <div v-if="!tampil.length && !memuat" class="kartu mt-4 flex flex-col items-center gap-2 p-8 text-center text-sm text-teks3">
       <PhUserSound :size="40" weight="duotone" style="color: var(--c)" />
       <p>Belum ada santri pada saringan ini.</p>
-      <button v-if="calon.length && saring === 'berjalan'" class="tombol-utama" @click="bukaTandai"><PhUserPlus :size="20" weight="duotone" /> Tandai santri tahsin</button>
+      <button v-if="calon.length && (saring === 'berjalan' || !saring)" class="tombol-utama" @click="bukaTandai"><PhUserPlus :size="20" weight="duotone" /> Tandai santri tahsin</button>
     </div>
 
     </template>

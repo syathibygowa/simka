@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.8 | 14.30.0: saringan bawaan Semua | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.9 | 14.31.0: penguji menambah santri yang diujinya; sertifikasi pilih jenjang 5–30 juz; saringan bawaan Semua | 29/10/2026 -->
 <script setup>
 // Ujian tahfizh: kenaikan juz, sertifikasi berjenjang (5, 10, 15 … juz), dan UTAS (Fase 12, TabUtas.vue).
 // Muhaffizh merekomendasikan → penguji aktif menerima notifikasi (dan dapat dikabari WA) → penguji mengambil/menjadwalkan
@@ -82,11 +82,17 @@ const ketUjian = (u) => (u.jenis === 'kenaikan' ? `Juz ${ringkasJuz(u.juz)}` : `
 // ---------- Rekomendasi ----------
 const lembarRek = ref(false); const santriRek = ref(null); const juzRek = ref([]); const catRek = ref(''); const cariSantri = ref('')
 const calon = computed(() => { const q = cariSantri.value.toLowerCase().trim(); return tz.santri.filter((s) => s.status === 'aktif' && (!q || `${s.nama} ${s.nis} ${s.halaqah || ''}`.toLowerCase().includes(q))).slice(0, 40) })
-const jenjangBerikut = computed(() => {
-  if (!santriRek.value) return 5
-  const tuntas = daftar.value.filter((u) => u.student_id === santriRek.value.student_id && u.jenis === 'sertifikasi' && u.hasil === 'tuntas').map((u) => u.jenjang)
-  return Math.max(0, ...tuntas) + 5
+// 14.31.0: sertifikasi tidak wajib berurutan — jenjang kelipatan 5 di atas jenjang yang sudah lulus dan tidak melebihi hafalan resmi
+const jenjangLulus = computed(() => {
+  if (!santriRek.value) return 0
+  return Math.max(0, ...daftar.value.filter((u) => u.student_id === santriRek.value.student_id && u.jenis === 'sertifikasi' && u.hasil === 'tuntas').map((u) => u.jenjang))
 })
+const pilihanJenjang = computed(() => [5, 10, 15, 20, 25, 30].map((j) => ({ j, boleh: !!santriRek.value && j > jenjangLulus.value && j <= santriRek.value.total_resmi })))
+const jenjangRek = ref(5)
+watch(santriRek, () => { const b = pilihanJenjang.value.filter((x) => x.boleh); jenjangRek.value = b.length ? b[b.length - 1].j : jenjangLulus.value + 5 })
+const jenjangBerikut = computed(() => jenjangRek.value)
+// Penguji yang bukan muhaffizh/pengelola: "Tambah santri diuji" — ujian langsung dipegangnya dan siap dinilai
+const modePenguji = computed(() => sayaPenguji.value && !tz.hak.muhaffizh && !pengelola.value)
 function bukaRek() { santriRek.value = null; juzRek.value = []; catRek.value = ''; cariSantri.value = ''; lembarRek.value = true }
 async function rekomendasikan() {
   const s = santriRek.value
@@ -95,7 +101,9 @@ async function rekomendasikan() {
   proses.value = true
   try {
     await tz.rekomendasikanUjian(s.student_id, jenis.value, juzRek.value, jenis.value === 'sertifikasi' ? jenjangBerikut.value : null, catRek.value.trim())
-    lembarRek.value = false; ui.toast('Rekomendasi terkirim. Penguji aktif menerima notifikasi.'); await muat()
+    lembarRek.value = false; await muat()
+    if (modePenguji.value) { ui.toast('Santri ditambahkan ke ujian Anda dan siap dinilai. Muhaffizh santri diberi tahu.'); return }
+    ui.toast('Rekomendasi terkirim. Penguji aktif menerima notifikasi.')
     const baru = daftar.value.find((u) => u.student_id === s.student_id && u.status === 'menunggu' && u.jenis === jenis.value)
     if (baru) bukaKirim('rekomendasi', baru)
   } catch (e) { ui.toast(e.message, 'galat') } finally { proses.value = false }
@@ -204,13 +212,14 @@ const bolehKirim = (u) => ({
     <template v-else>
 
     <div class="flex flex-wrap items-center gap-2">
-      <SaringCorong class="min-w-[220px] flex-1" :jumlah="status !== 'aktif' ? 1 : 0" :ringkasan="status === 'selesai' ? 'Selesai' : status === 'dibatalkan' ? 'Dibatalkan' : 'Daftar tunggu dan terjadwal'" judul="Saring ujian">
+      <SaringCorong class="min-w-[220px] flex-1" :jumlah="status ? 1 : 0" :ringkasan="{ aktif: 'Daftar tunggu dan terjadwal', selesai: 'Selesai', dibatalkan: 'Dibatalkan' }[status] || 'Semua ujian'" judul="Saring ujian">
         <template #cari><div class="relative"><PhMagnifyingGlass :size="20" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-teks3" />
           <input v-model="cari" type="search" class="isian pl-11" placeholder="Cari santri atau halaqah" aria-label="Cari santri" /></div></template>
-        <select v-model="status" class="isian w-auto" aria-label="Saring status"><option value="aktif">Daftar tunggu dan terjadwal</option><option value="selesai">Selesai (1 tahun)</option><option value="dibatalkan">Dibatalkan</option><option value="">Semua</option></select>
+        <select v-model="status" class="isian w-auto" aria-label="Saring status"><option value="">Semua ujian</option><option value="aktif">Daftar tunggu dan terjadwal</option><option value="selesai">Selesai (1 tahun)</option><option value="dibatalkan">Dibatalkan</option></select>
       </SaringCorong>
       <button v-if="batalHapus.length > 1" class="tombol-garis" @click="hapusBatal(batalHapus)"><PhTrash :size="20" /> Hapus {{ batalHapus.length }} dibatalkan</button>
       <button v-if="tz.hak.muhaffizh || pengelola" class="tombol-utama" @click="bukaRek"><PhPaperPlaneTilt :size="20" weight="duotone" /> Rekomendasikan</button>
+      <button v-else-if="sayaPenguji" class="tombol-utama" @click="bukaRek"><PhPaperPlaneTilt :size="20" weight="duotone" /> Tambah santri diuji</button>
       <button v-if="pengujiAktif.length" class="tombol-wa-garis w-presensi" @click="bukaWA"><PhWhatsappLogo :size="20" weight="duotone" /> Kabari penguji</button>
       <button v-if="sayaPenguji" :class="['tombol-garis w-agenda', antrianSaya && 'font-bold ring-2 ring-[var(--c)]']" :aria-pressed="antrianSaya" @click="antrianSaya = !antrianSaya">
         <PhListChecks :size="20" weight="duotone" style="color: var(--c)" /> Antrian saya <span class="lencana w-agenda">{{ jumlahAntrian }}</span></button>
@@ -268,8 +277,9 @@ const bolehKirim = (u) => ({
     <p v-if="!tampil.length && !memuat" class="kartu mt-4 p-8 text-center text-sm text-teks3">Tidak ada ujian pada saringan ini.</p>
 
     <!-- Rekomendasi -->
-    <LembarBawah v-model="lembarRek" :judul="`Rekomendasi ${JENIS_PENGUJI[jenis].toLowerCase()}`">
+    <LembarBawah v-model="lembarRek" :judul="modePenguji ? `Tambah santri diuji · ${JENIS_PENGUJI[jenis].toLowerCase()}` : `Rekomendasi ${JENIS_PENGUJI[jenis].toLowerCase()}`">
       <div class="space-y-3 pb-2">
+        <p v-if="modePenguji" class="rounded-xl bg-permukaan2 p-3 text-xs text-teks2">Untuk santri yang sedang Anda uji tetapi belum direkomendasikan muhaffizh. Ujian langsung tercatat atas nama Anda (siap dinilai) dan muhaffizh santri menerima pemberitahuan.</p>
         <template v-if="!santriRek">
           <input v-model="cariSantri" type="search" class="isian" placeholder="Cari santri" aria-label="Cari santri" />
           <ul class="max-h-[50dvh] divide-y divide-garis overflow-y-auto rounded-xl border border-garis">
@@ -286,13 +296,21 @@ const bolehKirim = (u) => ({
             <GridJuz v-model="juzRek" :terkunci="santriRek.juz_resmi" :sedang="santriRek.juz_sedang" label="Juz yang diujikan" label-pilih="Diujikan" label-kunci="Sudah resmi (terkunci)" />
           </template>
           <template v-else>
-            <p class="rounded-xl bg-permukaan2 p-3 text-sm">Jenjang berikutnya: <b>{{ jenjangBerikut }} juz</b> sekali duduk.
-              <span v-if="santriRek.total_resmi < jenjangBerikut" class="block font-semibold text-merah">Hafalan resmi baru {{ santriRek.total_resmi }} juz; belum mencukupi.</span></p>
+            <div>
+              <p class="label-isian">Jenjang sertifikasi (sekali duduk)</p>
+              <div class="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Jenjang sertifikasi">
+                <button v-for="x in pilihanJenjang" :key="x.j" type="button" role="radio" :aria-checked="jenjangRek === x.j" :disabled="!x.boleh" @click="jenjangRek = x.j"
+                  :class="['min-h-[42px] min-w-[64px] rounded-xl border-2 px-3 text-sm font-bold disabled:opacity-40', jenjangRek === x.j ? 'text-teks' : 'border-garis text-teks2']"
+                  :style="jenjangRek === x.j ? 'border-color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent)' : ''">{{ x.j }} juz</button>
+              </div>
+              <p class="mt-1 text-xs text-teks3">Hafalan resmi {{ santriRek.total_resmi }} juz{{ jenjangLulus ? ` · sudah lulus sertifikasi ${jenjangLulus} juz` : '' }}. Boleh langsung ke jenjang mana pun (kelipatan 5) yang tidak melebihi hafalan resmi.</p>
+              <p v-if="!pilihanJenjang.some((x) => x.boleh)" class="mt-1 text-xs font-semibold text-merah">Belum ada jenjang yang dapat diujikan untuk santri ini.</p>
+            </div>
             <p class="label-isian">Juz yang diujikan (opsional, dari juz resmi)</p>
             <GridJuz v-model="juzRek" :terkunci="Array.from({ length: 30 }, (_, i) => i + 1).filter((j) => !santriRek.juz_resmi.includes(j))" label="Juz sertifikasi" label-pilih="Diujikan" label-kunci="Belum resmi (tidak dapat dipilih)" />
           </template>
-          <div><label class="label-isian" for="rk-cat">Catatan untuk penguji</label><input id="rk-cat" v-model="catRek" class="isian" placeholder="Contoh: sudah lancar, siap diuji pekan ini" /></div>
-          <button class="tombol-utama w-full" :disabled="proses" @click="rekomendasikan"><PhPaperPlaneTilt :size="20" weight="duotone" /> Kirim rekomendasi</button>
+          <div><label class="label-isian" for="rk-cat">{{ modePenguji ? 'Catatan (opsional)' : 'Catatan untuk penguji' }}</label><input id="rk-cat" v-model="catRek" class="isian" placeholder="Contoh: sudah lancar, siap diuji pekan ini" /></div>
+          <button class="tombol-utama w-full" :disabled="proses || (jenis === 'sertifikasi' && !pilihanJenjang.some((x) => x.boleh && x.j === jenjangRek))" @click="rekomendasikan"><PhPaperPlaneTilt :size="20" weight="duotone" /> {{ modePenguji ? 'Tambahkan dan siap dinilai' : 'Kirim rekomendasi' }}</button>
         </template>
       </div>
     </LembarBawah>
