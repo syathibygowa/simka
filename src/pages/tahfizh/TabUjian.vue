@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.9 | 14.31.0: penguji menambah santri yang diujinya; sertifikasi pilih jenjang 5–30 juz; saringan bawaan Semua | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabUjian.vue | v1.10 | 14.36.0: tampilan baris (rincian di jendela) atau kartu | 30/10/2026 -->
 <script setup>
 // Ujian tahfizh: kenaikan juz, sertifikasi berjenjang (5, 10, 15 … juz), dan UTAS (Fase 12, TabUtas.vue).
 // Muhaffizh merekomendasikan → penguji aktif menerima notifikasi (dan dapat dikabari WA) → penguji mengambil/menjadwalkan
@@ -22,6 +22,7 @@ import { STATUS_UJIAN, HASIL_UJIAN, JENIS_PENGUJI, KETERANGAN_UJIAN, ringkasJuz,
 import { formatWaktu, formatHari, formatJam, hariIniISO } from '@/lib/tanggal'
 import { tautanWA, halamanAplikasi, pesanWA } from '@/lib/wa'
 import BilahTab from '@/components/BilahTab.vue'
+import TampilanDaftar from '@/components/TampilanDaftar.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import SaringCorong from '@/components/SaringCorong.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
@@ -229,8 +230,13 @@ const bolehKirim = (u) => ({
       <KartuStatistik v-for="k in statistik" :key="k.judul" class="w-[44%] shrink-0 snap-start sm:w-auto" :judul="k.judul" :nilai="memuat ? '…' : k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket" />
     </div>
 
-    <ul class="mt-4 grid gap-3 md:grid-cols-2">
-      <li v-for="u in tampil" :key="u.id" class="kartu p-4" :class="'w-' + (u.hasil ? HASIL_UJIAN[u.hasil].w : STATUS_UJIAN[u.status].w)">
+    <TampilanDaftar class="mt-4" :item="tampil" simpan-ke="ujian" :kelas-kartu="(u) => 'w-' + (u.hasil ? HASIL_UJIAN[u.hasil].w : STATUS_UJIAN[u.status].w)"
+      :judul-rinci="(u) => `${u.jenis === 'kenaikan' ? 'Ujian kenaikan juz' : 'Sertifikasi hafalan'} · ${u.nama}`"
+      :lencana="(u) => (u.hasil ? HASIL_UJIAN[u.hasil] : STATUS_UJIAN[u.status])"
+      :kolom="[{ n: 'Santri', f: (u) => u.nama }, { n: 'NIS', f: (u) => u.nis, hp: true }, { n: 'Ujian', f: (u) => ketUjian(u), hp: true },
+        { n: 'Halaqah', f: (u) => u.halaqah || '–', kelas: 'hidden lg:table-cell' }, { n: 'Penguji', f: (u) => u.penguji || '–', hp: true },
+        { n: 'Jadwal', f: (u) => (u.jadwal ? formatWaktu(u.jadwal) : '–'), kelas: 'whitespace-nowrap' }, { n: 'Nilai', f: (u) => (u.status === 'selesai' ? `${u.nilai_akhir ?? '–'}${u.huruf ? ' (' + u.huruf + ')' : ''}` : '–'), kelas: 'text-center' }]">
+      <template #kartu="{ x: u }">
         <div class="flex items-start gap-3">
           <span class="chip-ikon h-11 w-11 shrink-0"><component :is="u.jenis === 'kenaikan' ? PhExam : PhCertificate" :size="24" weight="duotone" /></span>
           <div class="min-w-0 flex-1">
@@ -272,8 +278,8 @@ const bolehKirim = (u) => ({
             </div>
           </div>
         </div>
-      </li>
-    </ul>
+      </template>
+    </TampilanDaftar>
     <p v-if="!tampil.length && !memuat" class="kartu mt-4 p-8 text-center text-sm text-teks3">Tidak ada ujian pada saringan ini.</p>
 
     <!-- Rekomendasi -->

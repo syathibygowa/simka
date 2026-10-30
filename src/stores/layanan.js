@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/layanan.js | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026
+// SIMKA PRO | src/stores/layanan.js | v1.2 | 14.36.0: pembaruan langsung dihentikan saat kartu ditutup (hemat beban server) | 30/10/2026
 // Ringkasan layanan santri (Klinik, Perizinan, Laporan) untuk Beranda dan profil santri terpadu.
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -36,6 +36,7 @@ export const useLayanan = defineStore('layanan', {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'student_permits' }, muat)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'incident_reports' }, muat).subscribe()
     },
+    berhentiBeranda() { if (this.saluran) { supabase.removeChannel(this.saluran); this.saluran = null } },
     async riwayatSantri(id) {
       if (!MODE_DEMO) return rpc('riwayat_layanan_santri', { p_santri: id })
       const kl = await useKlinik().demo(); const iz = await useIzin().daftar('semua'); const lp = await useLapor().daftar('semua')

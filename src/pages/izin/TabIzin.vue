@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.9 | 14.33.0: label Keluar dari disembunyikan | 30/10/2026 -->
+<!-- SIMKA PRO | src/pages/izin/TabIzin.vue | v1.10 | 14.36.0: tampilan baris (rincian di jendela) atau kartu | 30/10/2026 -->
 <script setup>
 // Daftar izin santri. Dipakai di menu Perizinan (cakupan tetap) dan menu Musyrif (disaring per kamar,
 // dengan pilihan Menunggu/Aktif/Semua). Aksi sesuai hak dari server: setujui/tolak, ubah, batalkan,
@@ -21,6 +21,7 @@ import { STATUS_IZIN, PERAN_PENGUSUL, JENIS_IZIN, labelIzin, rentangIzin, adaSur
 import { kontakUtama, labelRombel } from '@/lib/santri'
 import { formatWaktu, hariIniISO, formatPendek } from '@/lib/tanggal'
 import { pesanWA, tautanWA } from '@/lib/wa'
+import TampilanDaftar from '@/components/TampilanDaftar.vue'
 import TombolWA from '@/components/TombolWA.vue'
 import CetakSuratIzin from './CetakSuratIzin.vue'
 import CetakSuratKolektif from './CetakSuratKolektif.vue'
@@ -168,8 +169,11 @@ const kosong = computed(() => ({ persetujuan: 'Tidak ada izin yang menunggu kepu
       <KartuStatistik v-for="k in statistik" :key="k.judul" class="w-[44%] shrink-0 snap-start sm:w-auto" :judul="k.judul" :nilai="memuat && !daftar.length ? '…' : k.nilai" :ikon="k.ikon" :warna="k.warna" :keterangan="k.ket" />
     </div>
 
-    <ul class="mt-4 grid gap-3 md:grid-cols-2">
-      <li v-for="x in tampil" :key="x.id" class="kartu p-4" :class="['w-' + labelIzin(x).w, x.terlambat && x.status === 'keluar' ? 'izin-lewat' : '']">
+    <TampilanDaftar class="mt-4" :item="tampil" simpan-ke="izin" :kelas-kartu="(x) => ['w-' + labelIzin(x).w, x.terlambat && x.status === 'keluar' ? 'izin-lewat' : ''].join(' ')"
+      :judul-rinci="(x) => `Izin ${JENIS_IZIN[x.jenis] || ''} · ${x.nama}`" :lencana="labelIzin"
+      :kolom="[{ n: 'Santri', f: (x) => x.nama }, { n: 'NIS', f: (x) => x.nis, hp: true }, { n: 'Kamar', f: (x) => x.kamar || '–', kelas: 'hidden lg:table-cell' },
+        { n: 'Jenis', f: (x) => `${JENIS_IZIN[x.jenis]} · ${x.lama_hari} hari`, hp: true }, { n: 'Alasan', f: (x) => x.alasan, kelas: 'max-w-[220px] truncate' }, { n: 'Waktu', f: (x) => rentangIzin(x), kelas: 'hidden xl:table-cell' }]">
+      <template #kartu="{ x }">
         <div class="flex items-start gap-3">
           <span class="chip-ikon h-11 w-11 shrink-0"><component :is="STATUS_IZIN[x.status]?.ikon || PhUser" :size="24" weight="duotone" /></span>
           <div class="min-w-0 flex-1">
@@ -204,8 +208,8 @@ const kosong = computed(() => ({ persetujuan: 'Tidak ada izin yang menunggu kepu
             </div>
           </div>
         </div>
-      </li>
-    </ul>
+      </template>
+    </TampilanDaftar>
     <p v-if="!tampil.length && !memuat" class="kartu mt-4 p-8 text-center text-sm text-teks3">{{ kosong }}</p>
     <p class="mt-4 text-xs text-teks3">Pencatatan keluar dan kembali santri dilakukan petugas Security di gerbang (menu Security).</p>
 
@@ -272,5 +276,5 @@ const kosong = computed(() => ({ persetujuan: 'Tidak ada izin yang menunggu kepu
   </div>
 </template>
 <style scoped>
-.izin-lewat { border-color: var(--c); box-shadow: inset 4px 0 0 var(--c); }
+:deep(.izin-lewat) { border-color: var(--c); box-shadow: inset 4px 0 0 var(--c); }
 </style>

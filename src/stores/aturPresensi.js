@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/aturPresensi.js | v1.1 | Perbaikan 13.6.0: data jadwal kerja semua pegawai | 15/10/2026
+// SIMKA PRO | src/stores/aturPresensi.js | v1.2 | 14.36.0: pola bawaan jabatan putri (pegawai perempuan) | 30/10/2026
 // Data pengaturan presensi: titik GPS, pola tugas, sesi, jadwal pegawai, dan pengaturan umum.
 // Hak (diperiksa server/RLS): titik dan pengaturan umum = superadmin; pola, sesi, jadwal = izin atur_presensi.
 import { defineStore } from 'pinia'
@@ -97,7 +97,7 @@ export const useAturPresensi = defineStore('aturPresensi', {
       this.pola = this.pola.filter((x) => x.id !== id)
       this.sesi = this.sesi.filter((x) => x.pattern_id !== id)
       this.jadwal = this.jadwal.filter((x) => x.pattern_id !== id)
-      useOrganisasi().fungsional.forEach((f) => { if (f.pola_id === id) f.pola_id = null })
+      useOrganisasi().fungsional.forEach((f) => { if (f.pola_id === id) f.pola_id = null; if (f.pola_putri_id === id) f.pola_putri_id = null })
     },
     async simpanSesi(s) {
       const angka = ['buka_menit', 'toleransi_terlambat_menit', 'tutup_menit', 'pulang_buka_menit', 'toleransi_cepat_pulang_menit', 'batas_pulang_menit', 'urutan']
@@ -119,15 +119,15 @@ export const useAturPresensi = defineStore('aturPresensi', {
       this.jadwal.forEach((j) => { if (j.sesi_dipegang?.includes(id)) j.sesi_dipegang = j.sesi_dipegang.filter((x) => x !== id) })
     },
     /** Pola bawaan jabatan fungsional (server menyinkronkan jadwal semua pemegang jabatan). */
-    async aturPolaJabatan(jabatanId, polaId) {
-      const org = useOrganisasi()
+    async aturPolaJabatan(jabatanId, polaId, putri = false) {
+      const org = useOrganisasi(); const kolom = putri ? 'pola_putri_id' : 'pola_id'
       if (MODE_DEMO) {
-        const f = org.fungsional.find((x) => x.id === jabatanId); if (f) f.pola_id = polaId
+        const f = org.fungsional.find((x) => x.id === jabatanId); if (f) f[kolom] = polaId
         usePegawai().daftar.forEach((p) => this.sinkronDemo(p.id))
         return
       }
-      await jalankan(supabase.rpc('atur_pola_jabatan', { p_jabatan: jabatanId, p_pola: polaId }))
-      const f = org.fungsional.find((x) => x.id === jabatanId); if (f) f.pola_id = polaId
+      await jalankan(supabase.rpc('atur_pola_jabatan', { p_jabatan: jabatanId, p_pola: polaId, p_putri: putri }))
+      const f = org.fungsional.find((x) => x.id === jabatanId); if (f) f[kolom] = polaId
       this.jadwal = await jalankan(supabase.from('employee_schedules').select('*'))
     },
 
@@ -187,7 +187,7 @@ export const useAturPresensi = defineStore('aturPresensi', {
     /** Mode demo: tiru fungsi server sinkron_jadwal(). */
     sinkronDemo(empId) {
       const org = useOrganisasi(); const p = usePegawai().cari(empId); if (!p) return
-      const polaJab = [...new Set((p.fungsional_ids || []).map((id) => org.fungsional.find((f) => f.id === id)?.pola_id).filter(Boolean))]
+      const polaJab = [...new Set((p.fungsional_ids || []).map((id) => { const f = org.fungsional.find((x) => x.id === id); return p.jenis_kelamin === 'P' && f?.pola_putri_id ? f.pola_putri_id : f?.pola_id }).filter(Boolean))]
       this.jadwal = this.jadwal.filter((j) => !(j.employee_id === empId && ((j.sumber === 'jabatan' && !polaJab.includes(j.pattern_id)) || (j.sumber === 'struktural' && polaJab.length))))
       polaJab.forEach((pid) => { if (!this.jadwal.some((j) => j.employee_id === empId && j.pattern_id === pid)) this.jadwal.push({ id: idDemo('js'), employee_id: empId, pattern_id: pid, sumber: 'jabatan', aktif: true, sesi_dipegang: null, catatan: null }) })
       const str = this.pola.find((x) => x.pola_struktural)

@@ -1,14 +1,15 @@
-<!-- SIMKA PRO | src/components/KartuSantriBeranda.vue | v1.0 | Fase 4 – Tahap 6 Tahun ajaran, statistik, laporan | 05/10/2026 -->
+<!-- SIMKA PRO | src/components/KartuSantriBeranda.vue | v1.1 | 14.36.0: pembaruan langsung dihentikan saat kartu ditutup (hemat beban server) | 30/10/2026 -->
 <script setup>
 // Kartu statistik santri langsung di beranda (admin, superadmin, dan pimpinan pemegang hak data santri).
 // Diperbarui otomatis (Realtime) saat data santri atau absensi berubah.
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { PhStudent, PhGenderMale, PhGenderFemale, PhCheckSquareOffset, PhWarningCircle, PhBooks } from '@phosphor-icons/vue'
 import { useTahunAjaran } from '@/stores/tahunAjaran'
 import { persen, teksPersen } from '@/lib/absensi'
 import KartuStatistik from './KartuStatistik.vue'
 const ta = useTahunAjaran()
 onMounted(() => { ta.muatStatistik(); ta.dengarkan() })
+onBeforeUnmount(() => ta.berhenti())
 const d = computed(() => ta.statistik || {})
 const h = computed(() => d.value.hari_ini || {})
 </script>

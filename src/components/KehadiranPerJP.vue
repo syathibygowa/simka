@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/components/KehadiranPerJP.vue | v1.1 | 14.35.0: judul tanggal tidak berulang (hari, tanggal sekali saja) | 30/10/2026 -->
+<!-- SIMKA PRO | src/components/KehadiranPerJP.vue | v1.2 | 14.36.0: keterangan ditulis lengkap (Sakit 4 JP), bukan singkatan S4 | 30/10/2026 -->
 <script setup>
 // Kehadiran harian kelas per jam pelajaran: No · NIS · Nama · JP 1 · JP 2 · … · ringkasan, dari absensi yang diisi guru mapel
 // di Jurnal mengajar (santri yang tidak ditandai dianggap hadir). JP yang belum diisi jurnalnya ditandai "belum diisi";
@@ -44,7 +44,7 @@ const ringkasSantri = (s) => {
 }
 const baris = computed(() => (d.value?.santri || []).map((s) => {
   const n = ringkasSantri(s); const hadir = (n.H || 0) + (n.T || 0)
-  return { ...s, n, hadir, teks: URUT.filter((k) => n[k]).map((k) => `${k}${n[k] > 1 ? n[k] : ''}`).join(' ') }
+  return { ...s, n, hadir, teks: URUT.filter((k) => n[k]).map((k) => `${KODE[k].n} ${n[k]} JP`).join(', ') }
 }))
 const statistik = computed(() => {
   const sel = baris.value.length * jpIsi.value.length; const hadir = baris.value.reduce((a, s) => a + s.hadir, 0)

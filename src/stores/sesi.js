@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/sesi.js | v1.35 | 14.19.0: sesi tetap masuk saat aplikasi dibuka ulang meski koneksi tersendat | 21/10/2026
+// SIMKA PRO | src/stores/sesi.js | v1.36 | 14.36.0: data hak akun dimuat bersamaan saat masuk (lebih cepat saat banyak pegawai masuk) | 30/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
 // v1.35: aplikasi tidak lagi meminta masuk ulang setiap dibuka. Sebelumnya galat sementara saat memuat data pegawai (sinyal lemah,
 //        token sedang diperbarui) langsung memutus sesi (signOut) atau menampilkan halaman Masuk. Kini: data pegawai dicoba ulang,
@@ -114,38 +114,32 @@ export const useSesi = defineStore('sesi', {
       this.pengguna = { ...data, jabatan }
       this.wajibGantiSandi = data.wajib_ganti_sandi
       this.muatFoto()
-      const { data: fitur } = await supabase.rpc('fitur_saya')
-      this.fitur = fitur || {}
-      // Izin admin efektif (dicentang superadmin atau didapat dari hak fitur di Hak Akses) untuk menampilkan menu/tombol;
-      // keamanan tetap diperiksa server. Sejak 14.0.0 dimuat untuk semua pegawai.
-      try { const { data: izin } = await supabase.rpc('izin_admin_saya'); this.izinAdmin = izin || [] } catch { this.izinAdmin = [] }
-      // Template WA dibaca semua pegawai (pengasuh mengirim rekap ke wali dengan template yang diatur superadmin)
-      muatTemplatWA()
-      // Pegawai yang memegang pola shift melihat menu Jadwal Shift
-      try {
-        const { data: sh } = await supabase.from('employee_schedules').select('id, task_patterns!inner(jenis)')
-          .eq('employee_id', data.id).eq('aktif', true).eq('task_patterns.jenis', 'shift').limit(1)
-        this.punyaShift = !!sh?.length
-      } catch { this.punyaShift = false }
-      // Tupoksi akun: pimpinan atau bukan, jabatan fungsional, kelompok asuhan, petugas klinik/gerbang, cakupan luas per fitur
-      try { const { data: tg } = await supabase.rpc('profil_tugas_saya'); this.tugas = tg || {} } catch { this.tugas = {} }
-      // Persuratan: menu tampil bagi Tata Usaha, pimpinan penerima surat, dan penerima disposisi
-      try { const { data: hp } = await supabase.rpc('hak_persuratan'); this.persuratan = !!hp?.tampil } catch { this.persuratan = false }
-      // Gaji: pengelola/pembaca gaji, atau semua pegawai bila slip ditampilkan di akun pegawai (Ketentuan gaji)
-      try { const { data: hg } = await supabase.rpc('hak_gaji'); this.gaji = !!hg?.tampil; this.gajiLihat = !!hg?.lihat } catch { this.gaji = false; this.gajiLihat = false }
-      // Keuangan santri: hanya superadmin dan pegawai yang ditunjuk superadmin
-      try { const { data: hk } = await supabase.rpc('hak_keuangan'); this.keuangan = !!hk?.lihat } catch { this.keuangan = false }
-      // Penilaian: pengatur penilaian (per jenis rapor), pengelola nilai, dan pimpinan bidang SMA/Wustha/Tahfizh
-      try { const { data: hn } = await supabase.rpc('hak_penilaian'); this.penilaian = !!hn?.menu } catch { this.penilaian = false }
-      // Penguji UTAS (bukan muhaffizh pun) melihat menu Tahfizh → Ujian → UTAS
-      try { const { data: hu } = await supabase.rpc('hak_utas'); this.pengujiUtas = !!hu?.penguji } catch { this.pengujiUtas = false }
-      // Beban kerja: tampil di akun pegawai bila diizinkan admin; rekap untuk admin, pengatur beban kerja, dan pimpinan
-      try { const { data: hb } = await supabase.rpc('hak_beban'); this.beban = { saya: !!hb?.saya, atur: !!hb?.atur, rekap: !!hb?.rekap } } catch { this.beban = { saya: false, atur: false, rekap: false } }
-      // Kelompok santri yang sedang diasuh (wali kelas, musyrif, muhaffizh, pembina)
-      try {
-        const { data: kel } = await supabase.from('v_kelompok').select('id, jenis, nama').eq('asuhan_saya', true)
-        this.kelompokSaya = kel || []
-      } catch { this.kelompokSaya = [] }
+      // 14.36.0: data hak akun dimuat BERSAMAAN (sebelumnya berurutan ±12 permintaan, terasa lambat saat banyak pegawai masuk bersamaan).
+      const ambil = async (fn, cadangan) => { try { return await fn() } catch { return cadangan } }
+      const rpcData = (nama) => async () => { const { data: x, error: g } = await supabase.rpc(nama); if (g) throw g; return x }
+      muatTemplatWA()   // Template WA dibaca semua pegawai (pengasuh mengirim rekap ke wali dengan template yang diatur superadmin)
+      const [fitur, izin, sh, tg, hp, hg, hk, hn, hu, hb, kel] = await Promise.all([
+        ambil(rpcData('fitur_saya'), {}),
+        // Izin admin efektif (dicentang superadmin atau didapat dari hak fitur di Hak Akses); keamanan tetap diperiksa server
+        ambil(rpcData('izin_admin_saya'), []),
+        // Pegawai yang memegang pola shift melihat menu Jadwal Shift
+        ambil(async () => { const { data: x, error: g } = await supabase.from('employee_schedules').select('id, task_patterns!inner(jenis)')
+          .eq('employee_id', data.id).eq('aktif', true).eq('task_patterns.jenis', 'shift').limit(1); if (g) throw g; return x }, []),
+        // Tupoksi akun: pimpinan atau bukan, jabatan fungsional, kelompok asuhan, petugas klinik/gerbang, cakupan luas per fitur
+        ambil(rpcData('profil_tugas_saya'), {}),
+        ambil(rpcData('hak_persuratan'), null),   // Persuratan: Tata Usaha, pimpinan penerima surat, penerima disposisi
+        ambil(rpcData('hak_gaji'), null),         // Gaji: pengelola/pembaca gaji, atau semua pegawai bila slip ditampilkan
+        ambil(rpcData('hak_keuangan'), null),     // Keuangan santri: superadmin dan pegawai yang ditunjuk
+        ambil(rpcData('hak_penilaian'), null),    // Penilaian: pengatur penilaian, pengelola nilai, pimpinan bidang
+        ambil(rpcData('hak_utas'), null),         // Penguji UTAS melihat menu Tahfizh → Ujian → UTAS
+        ambil(rpcData('hak_beban'), null),        // Beban kerja
+        // Kelompok santri yang sedang diasuh (wali kelas, musyrif, muhaffizh, pembina)
+        ambil(async () => { const { data: x, error: g } = await supabase.from('v_kelompok').select('id, jenis, nama').eq('asuhan_saya', true); if (g) throw g; return x }, []),
+      ])
+      this.fitur = fitur || {}; this.izinAdmin = izin || []; this.punyaShift = !!sh?.length; this.tugas = tg || {}
+      this.persuratan = !!hp?.tampil; this.gaji = !!hg?.tampil; this.gajiLihat = !!hg?.lihat; this.keuangan = !!hk?.lihat
+      this.penilaian = !!hn?.menu; this.pengujiUtas = !!hu?.penguji
+      this.beban = { saya: !!hb?.saya, atur: !!hb?.atur, rekap: !!hb?.rekap }; this.kelompokSaya = kel || []
     },
 
     /** Masuk dengan username + kata sandi (melalui Edge Function "masuk"). */

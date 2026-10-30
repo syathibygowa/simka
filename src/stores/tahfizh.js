@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/tahfizh.js | v1.13 | 14.21.0: hapus usulan dibatalkan, penguji tahsin, nomor HP penanda tangan (WA) | 24/10/2026
+// SIMKA PRO | src/stores/tahfizh.js | v1.14 | 14.36.0: pembaruan langsung dihentikan saat kartu ditutup (hemat beban server) | 30/10/2026
 // Tahfizh: hak pengguna, pengaturan per tahun ajaran (KKM, bobot, target, predikat, pekan efektif), penguji,
 // daftar santri beserta program, posisi hafalan, dan capaian juz resmi. Penulisan hanya lewat fungsi SQL.
 import { defineStore } from 'pinia'
@@ -540,6 +540,7 @@ export const useTahfizh = defineStore('tahfizh', {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'memorization_sessions' }, segar)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'tahfizh_exams' }, segar).subscribe()
     },
+    berhentiBeranda() { if (this.saluranBeranda) { supabase.removeChannel(this.saluranBeranda); this.saluranBeranda = null } },
     async hafalanSantri(id) {
       if (MODE_DEMO) {
         await this.muatSantri(); const t = this.cariSantri(id)

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/lembaga.js | v1.5 | 14.21.0: pengaturan penanda tangan dokumen tahfizh, alamat resmi aplikasi | 24/10/2026
+// SIMKA PRO | src/stores/lembaga.js | v1.6 | 14.36.0: pesan galat server ramai/koneksi putus dalam bahasa yang jelas | 30/10/2026
 // Pengaturan lembaga: identitas, kalender, kop surat, penanda tangan, penomoran, integrasi.
 // Dibaca semua pengguna masuk (kop dan penanda tangan dipakai saat mencetak);
 // diubah hanya oleh superadmin (dijaga RLS di server).
@@ -16,6 +16,8 @@ export function pesanGalat(e) {
   if (k === '42501' || /row-level security|permission/i.test(e?.message || '')) return 'Anda tidak berwenang mengubah data ini.'
   if (k === '23503') return 'Data ini masih dipakai di bagian lain sehingga tidak dapat dihapus.'
   if (k === '23514') return 'Isian tidak sesuai ketentuan. Periksa kembali format isian.'
+  if (k === '57014') return 'Server sedang ramai sehingga permintaan dihentikan. Silakan coba lagi sebentar.'
+  if (/Failed to fetch|NetworkError|Load failed/i.test(e?.message || '')) return 'Tidak dapat terhubung ke server. Periksa koneksi internet lalu coba lagi.'
   return e?.message || 'Terjadi kesalahan. Silakan coba lagi.'
 }
 

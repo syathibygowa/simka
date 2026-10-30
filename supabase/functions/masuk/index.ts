@@ -1,4 +1,4 @@
-// SIMKA PRO | supabase/functions/masuk/index.ts | v1.0 | Tahap 4 | 03/10/2026
+// SIMKA PRO | supabase/functions/masuk/index.ts | v1.1 | 14.36.0: pesan jelas saat batas laju masuk server Auth tercapai (bimtek/masuk bersamaan) | 30/10/2026
 // Versi satu berkas (modul bersama sudah digabung) agar dapat ditempel di editor dashboard Supabase.
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
@@ -187,6 +187,11 @@ layani(async (req) => {
   if (!p || !p.email) throw salah;
 
   const { data, error } = await klienAnon().auth.signInWithPassword({ email: p.email, password: sandi });
+  // v1.1: batas laju server Auth (banyak pegawai masuk bersamaan) → pesan jelas, bukan "sandi salah", dan tidak dicatat sebagai gagal masuk
+  const kodeG = (error as { code?: string; status?: number } | null);
+  if (kodeG && (kodeG.status === 429 || kodeG.code === "over_request_rate_limit")) {
+    throw new Galat("Server sedang menerima banyak permintaan masuk bersamaan. Tunggu sekitar 1 menit, lalu coba masuk lagi.", 429);
+  }
   if (error || !data.session) {
     await audit(admin, p.id, "gagal_masuk", "Percobaan masuk gagal");
     throw salah;

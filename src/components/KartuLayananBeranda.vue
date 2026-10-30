@@ -1,14 +1,15 @@
-<!-- SIMKA PRO | src/components/KartuLayananBeranda.vue | v1.1 | Fase 8 – Perbaikan: nama menu ringkas | 10/10/2026 -->
+<!-- SIMKA PRO | src/components/KartuLayananBeranda.vue | v1.2 | 14.36.0: pembaruan langsung dihentikan saat kartu ditutup (hemat beban server) | 30/10/2026 -->
 <script setup>
 // Kartu statistik langsung layanan santri di Beranda: Klinik (antrean, lewat batas, dirawat, kontrol), Perizinan
 // (menunggu keputusan, di luar pondok, terlambat kembali), dan Laporan (laporan baru, mendesak, laporan saya).
 // Kartu tampil sesuai hak; diperbarui otomatis saat ada perubahan.
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { PhHourglass, PhSiren, PhBed, PhCalendarCheck, PhSealCheck, PhSignOut, PhWarningCircle, PhMegaphone, PhTray, PhPaperPlaneTilt, PhFirstAidKit } from '@phosphor-icons/vue'
 import { useLayanan } from '@/stores/layanan'
 import KartuStatistik from './KartuStatistik.vue'
 const ly = useLayanan()
 onMounted(() => { ly.muatBeranda(); ly.dengarkanBeranda() })
+onBeforeUnmount(() => ly.berhentiBeranda())
 const kartu = computed(() => {
   const d = ly.beranda; if (!d) return []
   const k = []

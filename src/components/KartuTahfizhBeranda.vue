@@ -1,13 +1,14 @@
-<!-- SIMKA PRO | src/components/KartuTahfizhBeranda.vue | v1.0 | Fase 5 – Tahap 6 Penutup fase tahfizh | 05/10/2026 -->
+<!-- SIMKA PRO | src/components/KartuTahfizhBeranda.vue | v1.1 | 14.36.0: pembaruan langsung dihentikan saat kartu ditutup (hemat beban server) | 30/10/2026 -->
 <script setup>
 // Kartu statistik tahfizh langsung di beranda (muhaffizh: halaqah asuhannya; pimpinan/admin: seluruh pondok).
 // Diperbarui otomatis (Realtime) saat setoran disimpan atau ujian berubah.
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { PhNotebook, PhExam, PhSealCheck, PhBookOpenText, PhCrown, PhTarget } from '@phosphor-icons/vue'
 import { useTahfizh } from '@/stores/tahfizh'
 import KartuStatistik from './KartuStatistik.vue'
 const tz = useTahfizh()
 onMounted(() => { tz.muatBeranda(); tz.dengarkanBeranda() })
+onBeforeUnmount(() => tz.berhentiBeranda())
 const d = computed(() => tz.beranda || {})
 const persenCapai = computed(() => (d.value.terdata ? `${Math.round(((d.value.tercapai || 0) / d.value.terdata) * 100)}%` : '–'))
 </script>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.7 | 14.33.0: laporan grup WA memakai LembarLaporanGrup (pratinjau WhatsApp, kirim/salin/buka grup) | 30/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/TabRekapMusyrif.vue | v1.8 | 14.36.0: rincian WA ditulis lengkap (izin 4 kali), bukan singkatan I4 | 30/10/2026 -->
 <script setup>
 // Rekap kehadiran asrama satu kamar. Empat tampilan:
 //   kamar   : per santri pada rentang (sesi, hadir, I, S, B, A, T, %)
@@ -108,10 +108,10 @@ function waIndividu() {
 const lembarGrup = ref(false); const gayaGrup = ref('rinci')
 const teksGrup = computed(() => {
   const baris = santri.value.filter((s) => totalDari(s.id).sesi).map((s, i) => {
-    const r = totalDari(s.id); const lain = ['I', 'S', 'A', 'B', 'T'].filter((k) => r[k]).map((k) => `${k}${r[k]}`)
-    return `${i + 1}. ${s.nama} — ${hadirDari(r)}/${r.sesi} (${teksPersen(persenDari(r))})${lain.length ? ' · ' + lain.join(' ') : ''}`
+    const r = totalDari(s.id); const lain = ['I', 'S', 'A', 'B', 'T'].filter((k) => r[k]).map((k) => `${teksKode[k].toLowerCase()} ${r[k]} kali`)
+    return `${i + 1}. ${s.nama} — hadir ${hadirDari(r)} dari ${r.sesi} sesi (${teksPersen(persenDari(r))})${lain.length ? '; ' + lain.join(', ') : ''}`
   })
-  const rincian = gayaGrup.value === 'rinci' ? `\nRincian per santri (hadir/sesi):\n${baris.join('\n')}\n\nKeterangan: I = izin, S = sakit, A = absen, B = bolos, T = terlambat.` : '\nRincian per santri dapat ditanyakan langsung kepada musyrif.'
+  const rincian = gayaGrup.value === 'rinci' ? `\nRincian per santri:\n${baris.join('\n')}` : '\nRincian per santri dapat ditanyakan langsung kepada musyrif.'
   return pesanWA('rekap_kamar', { kamar: kamar.value?.nama, periode: teksPeriode.value, persen: teksPersen(ringkas.value.persen), jumlah_sesi: `${ringkas.value.sesi} sesi`,
     hadir_penuh: `${ringkas.value.penuh} dari ${ringkas.value.santri} santri`, rincian, pengirim: sesi.pengguna?.nama_lengkap, jabatan_pengirim: `Musyrif ${kamar.value?.nama || ''}`.trim() })
 })

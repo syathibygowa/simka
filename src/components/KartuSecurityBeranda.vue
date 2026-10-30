@@ -1,14 +1,15 @@
-<!-- SIMKA PRO | src/components/KartuSecurityBeranda.vue | v1.1 | Fase 7 – Tahap 2 Titipan, buku tamu, kunjungan | 06/10/2026 -->
+<!-- SIMKA PRO | src/components/KartuSecurityBeranda.vue | v1.2 | 14.36.0: pembaruan langsung dihentikan saat kartu ditutup (hemat beban server) | 30/10/2026 -->
 <script setup>
 // Kartu statistik langsung Security di Beranda (petugas Security, pimpinan, yayasan, admin, superadmin):
 // gerbang (siap keluar, di luar, terlambat, catatan hari ini) dan layanan pos (titipan, tamu, kunjungan).
 // Diperbarui otomatis (Realtime).
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { PhCheckCircle, PhSignOut, PhSiren, PhSignIn, PhPackage, PhIdentificationBadge, PhUsersThree, PhHandArrowDown } from '@phosphor-icons/vue'
 import { useSecurity } from '@/stores/security'
 import KartuStatistik from './KartuStatistik.vue'
 const sc = useSecurity()
 onMounted(() => { sc.muatBeranda(); sc.dengarkanBeranda() })
+onBeforeUnmount(() => sc.berhentiBeranda())
 const d = computed(() => sc.beranda)
 const kartu = computed(() => !d.value ? [] : [
   { j: 'Siap keluar', v: d.value.siap, i: PhCheckCircle, w: 'presensi', ke: '/security/gerbang', ket: 'Izin berlaku hari ini' },

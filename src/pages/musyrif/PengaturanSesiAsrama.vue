@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/musyrif/PengaturanSesiAsrama.vue | v1.0 | 14.35.0: pengaturan peran sesi asrama dan butir pengontrolan kamar | 30/10/2026 -->
+<!-- SIMKA PRO | src/pages/musyrif/PengaturanSesiAsrama.vue | v1.1 | 14.36.0: sesi pola putra dan putri terpisah; peran per sesi | 30/10/2026 -->
 <script setup>
 // Musyrif → Pengaturan (admin, superadmin, pemegang hak Absensi asrama tingkat atur).
 //   1. Peran sesi: setiap sesi pada pola presensi musyrif ditetapkan "Wajib absen" atau "Absen opsional" (sesi kontrol).
@@ -16,12 +16,20 @@ async function muat() {
   galat.value = ''
   try {
     d.value = await mu.pengaturanKontrol()
-    mode.value = Object.fromEntries(d.value.sesi.map((s) => [s.kode, s.mode]))
+    mode.value = Object.fromEntries(d.value.sesi.map((s) => [kunci(s), s.mode]))
     butir.value = (d.value.butir || []).map((b) => ({ kode: b.kode, teks: b.teks, sesi: [...(b.sesi || [])] }))
   } catch (e) { galat.value = e.message }
 }
 onMounted(muat)
 const boleh = computed(() => !!d.value?.boleh_atur)
+/** 14.36.0: peran disimpan per sesi (id) agar sesi putra dan putri bernama sama dapat berbeda. */
+const kunci = (s) => s.id || s.kode
+const kelompokSesi = computed(() => {
+  const g = [{ putri: false, nama: d.value?.pola?.nama || 'Musyrif', judul: d.value?.pola_putri ? 'Asrama putra' : 'Semua asrama' }]
+  if (d.value?.pola_putri) g.push({ putri: true, nama: d.value.pola_putri.nama, judul: 'Asrama putri' })
+  return g.map((x) => ({ ...x, sesi: (d.value?.sesi || []).filter((s) => !!s.putri === x.putri) }))
+})
+const namaSesiUnik = computed(() => { const m = new Map(); (d.value?.sesi || []).forEach((s) => { if (!m.has(s.kode)) m.set(s.kode, s.nama + (s.putri ? ' (putri)' : '')) }); return [...m].map(([kode, nama]) => ({ kode, nama })) })
 const jumlahWajib = computed(() => Object.values(mode.value).filter((m) => m === 'wajib').length)
 const tambah = () => butir.value.push({ kode: '', teks: '', sesi: [] })
 const hapus = (i) => butir.value.splice(i, 1)
@@ -46,20 +54,24 @@ async function simpan() {
     <template v-else>
       <section class="kartu w-musyrif p-4 sm:p-5">
         <div class="mb-1 flex items-center gap-2"><PhListChecks :size="22" weight="duotone" style="color: var(--c)" /><h2 class="judul-bagian">Peran sesi asrama</h2></div>
-        <p class="mb-3 text-sm text-teks2">Sesi mengikuti pola presensi <b>{{ d.pola?.nama || 'Musyrif' }}</b> (Presensi → Pola dan sesi). Tentukan sesi yang <b>wajib</b> absensi santri;
+        <p class="mb-3 text-sm text-teks2">Sesi mengikuti pola presensi <b>{{ d.pola?.nama || 'Musyrif' }}</b><template v-if="d.pola_putri"> (kamar putra) dan <b>{{ d.pola_putri.nama }}</b> (kamar putri)</template>
+          — diatur di Penjadwalan → Pola bawaan per jabatan fungsional (Musyrif: umum/putra dan putri). Tentukan sesi yang <b>wajib</b> absensi santri;
           sesi lainnya menjadi sesi kontrol (absensi santri boleh diisi, tidak wajib). Pengontrolan kamar dicatat pada semua sesi.</p>
+        <div v-for="kel in kelompokSesi" :key="String(kel.putri)" class="mt-2">
+        <p v-if="kelompokSesi.length > 1" class="mt-2 text-xs font-bold uppercase tracking-wide text-teks3">{{ kel.judul }} · pola {{ kel.nama }}</p>
         <ul class="divide-y divide-garis">
-          <li v-for="s in d.sesi" :key="s.kode" class="flex flex-wrap items-center gap-3 py-3">
+          <li v-for="s in kel.sesi" :key="kunci(s)" class="flex flex-wrap items-center gap-3 py-3">
             <div class="min-w-[160px] flex-1"><p class="font-semibold">{{ s.nama }}</p>
               <p class="text-xs text-teks3">{{ s.jam_mulai.replace(':', '.') }}–{{ s.jam_selesai.replace(':', '.') }} WITA · {{ teksHari(s.hari) }}{{ s.opsional_pegawai ? ' · presensi pegawai opsional' : '' }}</p></div>
             <div class="grid grid-cols-2 gap-1 rounded-2xl bg-permukaan2 p-1" role="radiogroup" :aria-label="'Peran ' + s.nama">
-              <button v-for="(m, k) in MODE_SESI" :key="k" type="button" role="radio" :aria-checked="mode[s.kode] === k" :disabled="!boleh" @click="mode[s.kode] = k"
-                :class="['min-h-[40px] rounded-xl px-3 text-sm font-semibold', mode[s.kode] === k ? 'w-' + m.w + ' bg-permukaan shadow-kartu' : 'text-teks2']"
-                :style="mode[s.kode] === k ? 'color: var(--c)' : ''">{{ m.n }}</button>
+              <button v-for="(m, k) in MODE_SESI" :key="k" type="button" role="radio" :aria-checked="mode[kunci(s)] === k" :disabled="!boleh" @click="mode[kunci(s)] = k"
+                :class="['min-h-[40px] rounded-xl px-3 text-sm font-semibold', mode[kunci(s)] === k ? 'w-' + m.w + ' bg-permukaan shadow-kartu' : 'text-teks2']"
+                :style="mode[kunci(s)] === k ? 'color: var(--c)' : ''">{{ m.n }}</button>
             </div>
           </li>
-          <li v-if="!d.sesi.length" class="py-4 text-sm text-teks3">Pola presensi musyrif belum memiliki sesi aktif.</li>
+          <li v-if="!kel.sesi.length" class="py-4 text-sm text-teks3">Pola ini belum memiliki sesi aktif.</li>
         </ul>
+        </div>
         <p class="mt-2 text-xs text-teks3">{{ jumlahWajib }} sesi wajib absen · {{ d.sesi.length - jumlahWajib }} sesi kontrol.</p>
       </section>
 
@@ -82,7 +94,7 @@ async function simpan() {
             <div class="mt-2 flex flex-wrap items-center gap-1 pl-8">
               <span class="text-xs text-teks3">Berlaku:</span>
               <span v-if="!b.sesi.length" class="lencana w-presensi">Semua sesi</span>
-              <button v-for="s in d.sesi" :key="s.kode" type="button" :disabled="!boleh" @click="togSesi(b, s.kode)"
+              <button v-for="s in namaSesiUnik" :key="s.kode" type="button" :disabled="!boleh" @click="togSesi(b, s.kode)"
                 :class="['rounded-full border px-2.5 py-1 text-xs font-semibold', b.sesi.includes(s.kode) ? 'w-shift border-[color:var(--c)] text-[color:var(--c)]' : 'border-garis text-teks3']">{{ s.nama }}</button>
             </div>
           </li>

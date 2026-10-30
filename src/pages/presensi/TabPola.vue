@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/presensi/TabPola.vue | v1.2 | 14.15.0: penanda tangan dan kop dari Setelan → Penanda tangan | 19/10/2026 -->
+<!-- SIMKA PRO | src/pages/presensi/TabPola.vue | v1.3 | 14.36.0: pola bawaan jabatan untuk putra (umum) dan putri | 30/10/2026 -->
 <script setup>
 // Pola sesi per tugas (Bagian 9): setiap jabatan fungsional membawa pola bawaan;
 // setiap sesi memiliki jam, hari, jendela buka, toleransi, dan batas yang dapat diubah.
@@ -26,15 +26,16 @@ const jabatanTerbuka = ref(false); const pratinjau = ref(false)
 const namaKalender = (k) => lembaga.holiday_calendars.find((x) => x.jenis_tugas === k)?.nama || 'Tanpa kalender'
 // Hari sesi dikurangi libur pekanan kalender polanya (contoh: setiap hari − Ahad = Senin–Sabtu)
 const hariEfektif = (s, p) => { const libur = lembaga.holiday_calendars.find((k) => k.jenis_tugas === p.kalender)?.hari_libur || []; return teksHari(s.hari.filter((h) => !libur.includes(h))) }
-const jabatanPola = (id) => org.fungsional.filter((f) => f.pola_id === id).map((f) => f.nama)
+const jabatanPola = (id) => org.fungsional.filter((f) => f.pola_id === id || f.pola_putri_id === id)
+  .map((f) => f.nama + (f.pola_putri_id === id && f.pola_id !== id ? ' (putri)' : f.pola_putri_id && f.pola_id === id ? ' (putra)' : ''))
 const rentangJam = (s) => `${jamTitik(keMenit(s.jam_mulai))}–${jamTitik(keMenit(s.jam_mulai) + durasi(s))}`
 function ubahPola(p) { polaDipilih.value = p; lembarPola.value = true }
 function tambahSesi(p) { sesiDipilih.value = null; polaUntukSesi.value = p.id; lembarSesi.value = true }
 function ubahSesi(s) { sesiDipilih.value = s; polaUntukSesi.value = s.pattern_id; lembarSesi.value = true }
-async function aturJabatan(f, e) {
+async function aturJabatan(f, e, putri = false) {
   const nilai = e.target.value || null
-  try { await atur.aturPolaJabatan(f.id, nilai); ui.toast(`Pola ${f.nama} diperbarui. Jadwal pegawai yang memegang jabatan ini ikut disesuaikan.`) }
-  catch (er) { ui.toast(er.message, 'galat'); e.target.value = f.pola_id || '' }
+  try { await atur.aturPolaJabatan(f.id, nilai, putri); ui.toast(`Pola ${putri ? 'putri ' : ''}${f.nama} diperbarui. Jadwal pegawai yang memegang jabatan ini ikut disesuaikan.`) }
+  catch (er) { ui.toast(er.message, 'galat'); e.target.value = (putri ? f.pola_putri_id : f.pola_id) || '' }
 }
 const direktur = computed(() => lembaga.signatories.find((s) => /^direktur$/i.test(s.jabatan_tertulis)) || lembaga.signatories[0] || {})
 const barisCetak = computed(() => atur.polaUmum.flatMap((p) => atur.sesiPola(p.id).filter((s) => s.aktif).map((s) => ({ p, s, j: jendela(s) }))))
@@ -53,16 +54,22 @@ const barisCetak = computed(() => atur.polaUmum.flatMap((p) => atur.sesiPola(p.i
       <button class="flex w-full items-center gap-3 p-4 text-left" @click="jabatanTerbuka = !jabatanTerbuka" :aria-expanded="jabatanTerbuka">
         <span class="chip-ikon h-10 w-10"><PhIdentificationBadge :size="22" weight="duotone" /></span>
         <span class="flex-1"><span class="judul-bagian block">Pola bawaan per jabatan fungsional</span>
-          <span class="text-sm text-teks3">Pegawai otomatis mendapat pola dari jabatannya; dapat disesuaikan per orang di tab Jadwal pegawai.</span></span>
+          <span class="text-sm text-teks3">Pegawai otomatis mendapat pola dari jabatannya; pegawai perempuan memakai pola putri bila diisi. Musyrif dan Muhaffizh: pola putri juga menjadi sesi kamar/halaqah putri. Dapat disesuaikan per orang di tab Jadwal pegawai.</span></span>
         <PhCaretDown :size="20" :class="['transition', jabatanTerbuka && 'rotate-180']" />
       </button>
       <ul v-if="jabatanTerbuka" class="divide-y divide-garis border-t border-garis px-4">
         <li v-for="f in org.fungsional.filter((x) => x.aktif)" :key="f.id" class="flex flex-wrap items-center gap-2 py-2">
           <span class="min-w-[12rem] flex-1 font-semibold">{{ f.nama }}</span>
-          <select class="isian w-full sm:w-64" :value="f.pola_id || ''" :disabled="!bolehUbah" @change="aturJabatan(f, $event)" :aria-label="`Pola bawaan ${f.nama}`">
-            <option value="">Tanpa pola sendiri</option>
-            <option v-for="p in atur.polaUmum" :key="p.id" :value="p.id">{{ p.nama }}</option>
-          </select>
+          <label class="flex w-full items-center gap-2 sm:w-auto"><span class="w-24 shrink-0 text-xs font-semibold text-teks3 sm:w-auto">Umum/putra</span>
+            <select class="isian w-full sm:w-56" :value="f.pola_id || ''" :disabled="!bolehUbah" @change="aturJabatan(f, $event)" :aria-label="`Pola bawaan ${f.nama} (umum/putra)`">
+              <option value="">Tanpa pola sendiri</option>
+              <option v-for="p in atur.polaUmum" :key="p.id" :value="p.id">{{ p.nama }}</option>
+            </select></label>
+          <label class="flex w-full items-center gap-2 sm:w-auto"><span class="w-24 shrink-0 text-xs font-semibold text-teks3 sm:w-auto">Putri</span>
+            <select class="isian w-full sm:w-56" :value="f.pola_putri_id || ''" :disabled="!bolehUbah" @change="aturJabatan(f, $event, true)" :aria-label="`Pola bawaan ${f.nama} (putri)`">
+              <option value="">Sama dengan umum</option>
+              <option v-for="p in atur.polaUmum" :key="p.id" :value="p.id">{{ p.nama }}</option>
+            </select></label>
         </li>
       </ul>
     </section>

@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/tahfizh/TabKhataman.vue | v1.3 | 14.30.0: saringan bawaan Semua | 29/10/2026 -->
+<!-- SIMKA PRO | src/pages/tahfizh/TabKhataman.vue | v1.4 | 14.36.0: tampilan baris (rincian di jendela) atau kartu | 30/10/2026 -->
 <script setup>
 // Khataman Al-Qur'an 30 juz.
 //   Muhaffizh: "Usulkan khataman" untuk santri yang sudah khatam 30 juz (usulan tanggal, jam, tempat).
@@ -19,6 +19,7 @@ import { STATUS_KHATAMAN, PENGATURAN_KHATAMAN } from '@/lib/dokumenTahfizh'
 import { formatHari, formatJam, formatWaktu, formatPendek, hariIniISO } from '@/lib/tanggal'
 import { pesanWA, halamanAplikasi } from '@/lib/wa'
 import { alamatCek } from '@/lib/dokumen'
+import TampilanDaftar from '@/components/TampilanDaftar.vue'
 import KartuStatistik from '@/components/KartuStatistik.vue'
 import LembarBawah from '@/components/LembarBawah.vue'
 import LembarLaporanGrup from '@/components/LembarLaporanGrup.vue'
@@ -174,8 +175,11 @@ const STATUS_TTD = { sah: 'Sah', draf: 'Menunggu tanda tangan', dicabut: 'Dicabu
         <button class="tombol-garis min-h-[40px] px-3 text-sm" @click="bukaUsul(s)"><b>{{ s.nama }}</b> <span class="text-teks3">· {{ s.halaqah || '–' }}</span></button></li></ul>
     </section>
 
-    <ul class="mt-4 grid gap-3 md:grid-cols-2">
-      <li v-for="k in daftar" :key="k.id" :class="['kartu p-4', 'w-' + STATUS_KHATAMAN[k.status].w]">
+    <TampilanDaftar class="mt-4" :item="daftar" simpan-ke="khataman" :kelas-kartu="(k) => 'w-' + STATUS_KHATAMAN[k.status].w"
+      :judul-rinci="(k) => `Khataman · ${k.nama}`" :lencana="(k) => STATUS_KHATAMAN[k.status]"
+      :kolom="[{ n: 'Santri', f: (k) => k.nama + (k.susulan ? ' (susulan)' : '') }, { n: 'NIS', f: (k) => k.nis, hp: true }, { n: 'Halaqah', f: (k) => k.halaqah || '–', kelas: 'hidden lg:table-cell' },
+        { n: 'Jadwal', f: (k) => (k.jadwal ? `${formatHari(k.jadwal)}, ${formatJam(k.jadwal)}` : '–'), hp: true }, { n: 'Tempat', f: (k) => k.tempat || '–', kelas: 'hidden lg:table-cell' }]">
+      <template #kartu="{ x: k }">
         <div class="flex items-start gap-3">
           <span class="chip-ikon h-11 w-11 shrink-0"><PhCrown :size="24" weight="duotone" /></span>
           <div class="min-w-0 flex-1">
@@ -206,8 +210,8 @@ const STATUS_TTD = { sah: 'Sah', draf: 'Menunggu tanda tangan', dicabut: 'Dicabu
             </div>
           </div>
         </div>
-      </li>
-    </ul>
+      </template>
+    </TampilanDaftar>
     <p v-if="!daftar.length && !memuat" class="kartu mt-4 p-8 text-center text-sm text-teks3">Belum ada khataman pada saringan ini.</p>
 
     <!-- Usul -->

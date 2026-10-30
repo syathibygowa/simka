@@ -1,4 +1,4 @@
-<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.7 | 14.22.0: baris belum/tidak hadir pada rincian kartu diberi warna merah lembut | 25/10/2026 -->
+<!-- SIMKA PRO | src/pages/pantauan/Pantauan.vue | v2.8 | 14.36.0: pembaruan langsung dihentikan saat kartu ditutup (hemat beban server) | 30/10/2026 -->
 <script setup>
 // Layar Pantauan (Blueprint Bagian 28) berbentuk SLIDE layar penuh untuk presentasi dan SmartTV.
 //   Dibuka dari tombol "Layar Pantauan" di Beranda (bukan menu). Slide: Santri, Pegawai, SMP, SMA, Tahfizh, Hafalan, Asrama,
@@ -126,7 +126,7 @@ onMounted(() => {
   window.addEventListener('keydown', tombol); document.addEventListener('fullscreenchange', cekPenuh)
 })
 onBeforeUnmount(() => {
-  pt.berhenti(); clearInterval(detak); clearInterval(pewaktu); clearTimeout(jeda); clearInterval(pewaktuKinerja); if (bolehRinci.value) rp.berhenti()
+  pt.berhenti(); ta.berhenti?.(); tz.berhentiBeranda?.(); clearInterval(detak); clearInterval(pewaktu); clearTimeout(jeda); clearInterval(pewaktuKinerja); if (bolehRinci.value) rp.berhenti()
   window.removeEventListener('keydown', tombol); document.removeEventListener('fullscreenchange', cekPenuh)
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
 })

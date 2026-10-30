@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/tahunAjaran.js | v1.1 | 14.5.0: usulan dari keputusan rapor; SK Kenaikan Kelas per jenjang | 18/10/2026
+// SIMKA PRO | src/stores/tahunAjaran.js | v1.2 | 14.36.0: pembaruan langsung dihentikan saat kartu ditutup (hemat beban server) | 30/10/2026
 // Pergantian tahun ajaran (draf kenaikan, kelompok draf, aktivasi) dan statistik santri (beranda, laporan, kohort).
 import { defineStore } from 'pinia'
 import { supabase, MODE_DEMO } from '@/lib/supabase'
@@ -46,6 +46,7 @@ export const useTahunAjaran = defineStore('tahunAjaran', {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'student_attendance_sessions' }, ulang)
         .subscribe()
     },
+    berhenti() { if (this.saluran) { supabase.removeChannel(this.saluran); this.saluran = null } },
 
     // ---------- Pergantian tahun ajaran ----------
     async rencana() {

@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/security.js | v1.2 | Fase 7 – Tahap 5 Penutup fase | 06/10/2026
+// SIMKA PRO | src/stores/security.js | v1.3 | 14.36.0: pembaruan langsung dihentikan saat kartu ditutup (hemat beban server) | 30/10/2026
 // Security di gerbang (Blueprint Bagian 24): hak, ketentuan, cari santri (status hijau/merah), daftar gerbang hari ini,
 // catat keluar/kembali/ditolak dengan foto opsional, izin cepat, riwayat, titipan (foto terima dan ambil wajib), buku tamu,
 // kunjungan orang tua, ringkasan beranda, dan pembaruan langsung.
@@ -229,6 +229,7 @@ export const useSecurity = defineStore('security', {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'student_permits' }, () => fn())
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'gate_logs' }, () => fn()).subscribe()
     },
+    berhentiBeranda() { if (this.saluranBeranda) { supabase.removeChannel(this.saluranBeranda); this.saluranBeranda = null } },
     berhenti() { if (this.saluran) { supabase.removeChannel(this.saluran); this.saluran = null } },
   },
 })
