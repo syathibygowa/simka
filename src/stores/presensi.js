@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/presensi.js | v1.3 | Fase 8 – Sesi hari ini hanya tanggal hari ini | 10/10/2026
+// SIMKA PRO | src/stores/presensi.js | v1.4 | 14.37.0: riwayat presensi dihitung dari tanggal WITA (sebelum 08.00 tidak bergeser sehari) | 30/10/2026
 // v1.3: getter sesiHariIni; hitungan dan sesi berikutnya hanya untuk tanggal hari ini (sesi kemarin tampil di Riwayat 14 hari).
 // Presensi pegawai: sesi hari ini, periksa lokasi (waktu dan jarak dari server), kirim selfie
 // ke Edge Function "presensi", dan riwayat. Server adalah penentu; tampilan hanya pratinjau.
@@ -132,7 +132,7 @@ export const useDataPresensi = defineStore('dataPresensi', {
     async muatRiwayat(hari = 14) {
       if (MODE_DEMO) { this.riwayat = []; return }
       const id = useSesi().pengguna?.id; if (!id) return
-      const dari = new Date(Date.now() - hari * 86400000).toISOString().slice(0, 10)
+      const dari = new Date(Date.parse(hariIniISO() + 'T00:00:00Z') - hari * 86400000).toISOString().slice(0, 10)   // 14.37.0: tanggal WITA, bukan UTC
       const { data, error } = await supabase.from('attendances')
         .select('id, tanggal, nama_pola, nama_sesi, jadwal_mulai, status, terlambat_menit, status_pulang, cepat_pulang_menit, datang_pada, pulang_pada, opsional, keterangan')
         .eq('employee_id', id).gte('tanggal', dari).order('tanggal', { ascending: false }).order('jadwal_mulai')

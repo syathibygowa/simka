@@ -1,4 +1,4 @@
-// SIMKA PRO | src/stores/sesi.js | v1.36 | 14.36.0: data hak akun dimuat bersamaan saat masuk (lebih cepat saat banyak pegawai masuk) | 30/10/2026
+// SIMKA PRO | src/stores/sesi.js | v1.37 | 14.37.0: keluar membersihkan seluruh data di memori (tidak terbawa ke akun berikutnya) dan hanya berlaku di perangkat ini | 30/10/2026
 // Sesi pengguna: masuk/keluar, data pegawai, peran sistem, dan hak akses fitur.
 // v1.35: aplikasi tidak lagi meminta masuk ulang setiap dibuka. Sebelumnya galat sementara saat memuat data pegawai (sinyal lemah,
 //        token sedang diperbarui) langsung memutus sesi (signOut) atau menampilkan halaman Masuk. Kini: data pegawai dicoba ulang,
@@ -107,7 +107,7 @@ export const useSesi = defineStore('sesi', {
       }
       if (error) { const e = new Error('Data akun belum dapat dimuat karena koneksi atau server. Coba lagi sebentar.'); e.sementara = true; throw e }
       // Hanya bila akun benar-benar tidak punya data pegawai, sesi diputus
-      if (!data) { await supabase.auth.signOut(); const e = new Error('Data pegawai untuk akun ini tidak ditemukan.'); e.tanpaPegawai = true; throw e }
+      if (!data) { await supabase.auth.signOut({ scope: 'local' }); const e = new Error('Data pegawai untuk akun ini tidak ditemukan.'); e.tanpaPegawai = true; throw e }
       this.sesiTertunda = false; this.galatSesi = ''
       const jabatan = [data.jabatan_struktural, ...(data.jabatan_fungsional || [])].filter(Boolean).join(', ')
         || (data.peran === 'superadmin' ? 'Pengelola sistem' : data.peran === 'admin' ? 'Admin' : 'Pegawai')
@@ -159,10 +159,18 @@ export const useSesi = defineStore('sesi', {
       this.fitur = fitur
       this.pengguna = { ...PENGGUNA_DEMO[peran] }; this.izinAdmin = peran === 'admin' ? ['verval_akun', 'kelola_pengumuman', 'kelola_pegawai', 'verval_presensi', 'atur_presensi', 'kalender', 'lihat_pengajuan', 'atur_pengajuan', 'verval_jurnal', 'atur_jurnal', 'kelola_berkas', 'cetak_kartu', 'kelola_agenda', 'kelola_kelompok', 'atur_beban_kerja', 'kelola_santri', 'kelompok_santri', 'absensi_atas_nama', 'atur_jadwal', 'atur_tahfizh', 'validasi_tahfizh', 'kelola_klinik', 'atur_penilaian', 'kelola_nilai'] : PETA_IZIN.filter((i) => Number(fitur[i.fitur] ?? 0) >= i.min).map((i) => i.kode); this.kelompokSaya = peran === 'pegawai' ? [{ id: 'g-7a', jenis: 'kelas', nama: '7A' }, { id: 'g-hhb', jenis: 'halaqah', nama: 'Halaqah Ust. Hasan' }, { id: 'g-kum', jenis: 'kamar', nama: 'Kamar Umar' }] : []; this.tugas = TUGAS_DEMO[peran] || {}; this.persuratan = true; this.gaji = peran !== 'pegawai'; this.gajiLihat = peran !== 'pegawai'; this.keuangan = peran === 'superadmin'; this.penilaian = peran !== 'pegawai'; this.beban = { saya: true, atur: peran !== 'pegawai', rekap: peran !== 'pegawai' }; simpan('simka.demo.peran', peran) },
 
+    // 14.37.0: keluar membersihkan SELURUH data di memori. Sebelumnya hanya data sesi yang dikosongkan, sedangkan data menu lain
+    // (hak Perizinan/Security/Klinik/Disiplin, daftar santri, dsb.) masih tersimpan; bila pegawai lain masuk di HP/laptop yang sama
+    // tanpa memuat ulang, tampilannya dapat memakai hak dan data akun sebelumnya. Kini aplikasi dimuat ulang ke halaman Masuk.
+    // Keluar juga hanya berlaku di perangkat ini (scope local): akun yang sama di perangkat lain tidak ikut keluar.
     async keluar() {
-      if (!MODE_DEMO) await supabase.auth.signOut()
+      if (!MODE_DEMO) {
+        try { supabase.removeAllChannels() } catch { /* kanal sudah tertutup */ }
+        try { await supabase.auth.signOut({ scope: 'local' }) } catch { /* sinyal putus: sesi lokal tetap dihapus pustaka */ }
+      }
       simpan('simka.demo.peran', null)
       this.$reset(); this.siap = true
+      if (typeof window !== 'undefined') { window.location.hash = '#/masuk'; window.location.reload() }
     },
 
     /** Tingkat akses fitur: 0 tidak ada, 1 lihat, 2 input/ubah, 3 kelola. Superadmin selalu 3. */

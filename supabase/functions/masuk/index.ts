@@ -1,4 +1,4 @@
-// SIMKA PRO | supabase/functions/masuk/index.ts | v1.1 | 14.36.0: pesan jelas saat batas laju masuk server Auth tercapai (bimtek/masuk bersamaan) | 30/10/2026
+// SIMKA PRO | supabase/functions/masuk/index.ts | v1.2 | 14.37.0: username/email dicocokkan persis (username bergaris bawah tidak lagi gagal masuk) | 30/10/2026
 // Versi satu berkas (modul bersama sudah digabung) agar dapat ditempel di editor dashboard Supabase.
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
@@ -181,7 +181,7 @@ layani(async (req) => {
   const admin = klienAdmin();
   const { data: p } = await admin.from("employees")
     .select("id, email, status_akun, status_keaktifan, wajib_ganti_sandi, catatan_verifikasi")
-    .ilike("username", username.trim()).maybeSingle();
+    .eq("username", username.trim()).maybeSingle();
 
   const salah = new Galat("Username atau kata sandi salah.", 401);
   if (!p || !p.email) throw salah;

@@ -1,4 +1,4 @@
-// SIMKA PRO | supabase/functions/kelola-akun/index.ts | v1.2 | Perbaikan 14.0.0: izin verifikasi akun dan reset sandi juga dari hak fitur (Hak Akses) | 17/10/2026
+// SIMKA PRO | supabase/functions/kelola-akun/index.ts | v1.3 | 14.37.0: username/email dicocokkan persis (username bergaris bawah tidak lagi gagal masuk) | 30/10/2026
 // Versi satu berkas (modul bersama sudah digabung) agar dapat ditempel di editor dashboard Supabase.
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
@@ -260,7 +260,7 @@ layani(async (req) => {
       const email = (b.email ?? "").trim().toLowerCase();
       if (!/^[a-z0-9._]{4,30}$/.test(username)) throw new Galat("Username 4–30 karakter: huruf kecil, angka, titik, garis bawah.");
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Galat("Alamat email tidak valid.");
-      const { data: du } = await admin.from("employees").select("id").ilike("username", username).maybeSingle();
+      const { data: du } = await admin.from("employees").select("id").eq("username", username).maybeSingle();
       if (du) throw new Galat("Username sudah dipakai.");
       const sandi = sandiSementara();
       const { data: u, error } = await admin.auth.admin.createUser({ email, password: sandi, email_confirm: true });

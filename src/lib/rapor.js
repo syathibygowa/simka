@@ -1,10 +1,10 @@
-// SIMKA PRO | src/lib/rapor.js | v1.4 | 14.26.0: deskripsi capaian tertinggi/terendah dari ceklist TP (SMA dan Wustha) | 25/10/2026
+// SIMKA PRO | src/lib/rapor.js | v1.5 | 14.37.0: tanggal rapor bawaan memakai tanggal WITA hari ini | 30/10/2026
 // Pengolah data cetak rapor (data_rapor / data_rapor_tahfizh): nilai per mapel rapor (pembulatan, predikat, deskripsi
 // otomatis), jumlah/rata-rata/peringkat untuk leger, kehadiran (persentase dan kalimat), keputusan akhir tahun,
 // identitas sekolah, serta label kelas Romawi.
 import { predikatDari, bulatkan } from './penilaian'
 import { deskripsiOtomatis, deskripsiCapaian } from './nilai'
-import { formatPanjang } from './tanggal'
+import { formatPanjang, hariIniISO } from './tanggal'
 import { deskripsiKokurikuler, deskripsiPd } from './catatanRapor'
 
 export const ROMAWI = { 7: 'VII', 8: 'VIII', 9: 'IX', 10: 'X', 11: 'XI', 12: 'XII' }
@@ -138,7 +138,7 @@ export const ttl = (s) => [s.tempat_lahir, s.tanggal_lahir ? formatPanjang(s.tan
 export const nisNisn = (s) => [s.nis, s.nisn].filter(Boolean).join('/')
 export const JK_PANJANG = { L: 'Laki-laki', P: 'Perempuan' }
 /** Tanggal rapor: dari periode penilaian, bawaan hari ini. */
-export const tanggalRapor = (D) => D?.periode?.tanggal_rapor || new Date().toISOString().slice(0, 10)
+export const tanggalRapor = (D) => D?.periode?.tanggal_rapor || hariIniISO()
 /** Kode kop: ketentuan, bawaan jenjang (SMA → Kop SMA; Wustha → Kop Kesetaraan Wustha; tahfizh → jenjang santri/pondok). */
 export const kopRapor = (ket, jenjang) => ket?.kop_kode || (jenjang === 'sma' ? 'sma' : jenjang === 'wustha' ? 'wustha' : 'pondok')
 /** Nama wali kelas utama. */

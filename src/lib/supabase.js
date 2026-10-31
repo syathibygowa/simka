@@ -1,4 +1,4 @@
-// SIMKA PRO | src/lib/supabase.js | v1.4 | 14.36.0: batas waktu 30 detik per permintaan (tidak lagi memproses tanpa akhir saat server ramai) | 30/10/2026
+// SIMKA PRO | src/lib/supabase.js | v1.5 | 14.37.0: batas waktu juga untuk Edge Function (masuk tidak lagi memproses terus); peredam kanal dibatalkan saat kanal dihentikan | 30/10/2026
 // Klien Supabase. Tanpa VITE_SUPABASE_URL aplikasi berjalan dalam MODE DEMO
 // (data contoh di memori) agar tampilan dapat dicoba sebelum server siap.
 import { createClient } from '@supabase/supabase-js'
@@ -35,7 +35,15 @@ if (supabase) {
   const kanalAsli = supabase.channel.bind(supabase)
   supabase.channel = (...arg) => {
     const ch = kanalAsli(...arg); const onAsli = ch.on.bind(ch)
-    ch.on = (jenis, saring, fn) => onAsli(jenis, saring, jenis === 'postgres_changes' && typeof fn === 'function' && fn.length === 0 ? redam(fn) : fn)
+    // 14.37.0: peredam dicatat per kanal lalu dibatalkan saat kanal dihentikan (removeChannel memanggil unsubscribe),
+    // agar muat ulang yang tertunda tidak berjalan untuk halaman yang sudah ditutup.
+    const peredam = []
+    ch.on = (jenis, saring, fn) => {
+      if (jenis === 'postgres_changes' && typeof fn === 'function' && fn.length === 0) { const r = redam(fn); peredam.push(r); return onAsli(jenis, saring, r) }
+      return onAsli(jenis, saring, fn)
+    }
+    const lepasAsli = ch.unsubscribe.bind(ch)
+    ch.unsubscribe = (...a) => { peredam.splice(0).forEach((r) => r.batal()); return lepasAsli(...a) }
     return ch
   }
 }
@@ -44,17 +52,27 @@ if (supabase) {
 if (supabase) pasangHalamanOtomatis(supabase)
 
 /** Memanggil Edge Function dan mengembalikan JSON; galat dari server dilempar sebagai Error berbahasa Indonesia. */
+// 14.37.0: Edge Function (termasuk "masuk") sebelumnya dipanggil tanpa batas waktu, sehingga tombol Masuk dapat "memproses terus"
+// saat server ramai. Kini dibatasi 30 detik dengan pesan yang jelas; sinyal putus juga diberi pesan yang dapat dipahami.
 export async function panggilFungsi(nama, isi = {}) {
   const { data: { session } = {} } = await supabase.auth.getSession()
-  const r = await fetch(`${url}/functions/v1/${nama}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      apikey: anon,
-      Authorization: `Bearer ${session?.access_token ?? anon}`,
-    },
-    body: JSON.stringify(isi),
-  })
+  const henti = new AbortController(); const t = setTimeout(() => henti.abort(), BATAS_PERMINTAAN_MS)
+  let r
+  try {
+    r = await fetch(`${url}/functions/v1/${nama}`, {
+      method: 'POST', signal: henti.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: anon,
+        Authorization: `Bearer ${session?.access_token ?? anon}`,
+      },
+      body: JSON.stringify(isi),
+    })
+  } catch (e) {
+    throw new Error(e?.name === 'AbortError'
+      ? 'Server belum menjawab dalam 30 detik (sedang ramai atau koneksi lambat). Silakan coba lagi sebentar.'
+      : 'Koneksi terputus atau sinyal lemah. Periksa internet lalu coba lagi.')
+  } finally { clearTimeout(t) }
   let data = {}
   try { data = await r.json() } catch { /* bukan JSON */ }
   if (!r.ok && !data.status) throw new Error(data.galat || 'Server tidak dapat dihubungi. Periksa koneksi lalu coba lagi.')

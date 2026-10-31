@@ -1,4 +1,4 @@
-// SIMKA PRO | supabase/functions/reset-sandi/index.ts | v1.0 | Tahap 4 | 03/10/2026
+// SIMKA PRO | supabase/functions/reset-sandi/index.ts | v1.1 | 14.37.0: username/email dicocokkan persis (username bergaris bawah tidak lagi gagal masuk) | 30/10/2026
 // Versi satu berkas (modul bersama sudah digabung) agar dapat ditempel di editor dashboard Supabase.
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
@@ -184,7 +184,7 @@ layani(async (req) => {
     const umum = json({ ok: true, pesan: "Bila username terdaftar, tautan atur ulang kata sandi telah dikirim ke email Anda. Periksa juga folder Spam." });
     if (!b.username) throw new Galat("Username wajib diisi.");
     const { data: p } = await admin.from("employees").select("id, email, nama_lengkap, status_akun")
-      .ilike("username", b.username.trim()).maybeSingle();
+      .eq("username", b.username.trim()).maybeSingle();
     if (!p || !p.email || p.status_akun !== "aktif") return umum;
 
     // batasi: maksimal 3 permintaan per jam

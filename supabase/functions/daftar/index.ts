@@ -1,4 +1,4 @@
-// SIMKA PRO | supabase/functions/daftar/index.ts | v1.0 | Tahap 4 | 03/10/2026
+// SIMKA PRO | supabase/functions/daftar/index.ts | v1.1 | 14.37.0: username/email dicocokkan persis (username bergaris bawah tidak lagi gagal masuk) | 30/10/2026
 // Versi satu berkas (modul bersama sudah digabung) agar dapat ditempel di editor dashboard Supabase.
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
@@ -209,9 +209,9 @@ layani(async (req) => {
   }
 
   // username/email unik
-  const { data: dupU } = await admin.from("employees").select("id").ilike("username", username).maybeSingle();
+  const { data: dupU } = await admin.from("employees").select("id").eq("username", username).maybeSingle();
   if (dupU) throw new Galat("Username sudah dipakai. Silakan pilih username lain.");
-  const { data: dupE } = await admin.from("employees").select("id, user_id, status_akun").ilike("email", email).maybeSingle();
+  const { data: dupE } = await admin.from("employees").select("id, user_id, status_akun").eq("email", email).maybeSingle();
   if (dupE && dupE.user_id) throw new Galat("Email sudah terdaftar. Gunakan menu Lupa kata sandi bila lupa.");
 
   // tautkan ke data impor (tanpa akun) berdasarkan NIY atau email
